@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1736263066599,
+    "user_id": "admin_default",
+    "username": "admin",
+    "role": "authority",
+    "requested_at": "2025-01-07T10:59:26.599Z",
+    "reason": "System Administrator - Full Access",
+    "status": "approved",
+    "granted_by": "system",
+    "granted_at": "2025-01-07T10:59:26.599Z",
+    "is_active": true
+  }
+]

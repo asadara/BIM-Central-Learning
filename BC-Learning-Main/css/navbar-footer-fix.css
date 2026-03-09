@@ -1,0 +1,116 @@
+/* BCL Navbar dan Footer Fixed Styles */
+/* Memastikan navbar dan footer konsisten di semua halaman */
+
+/* KONSISTEN FIXED NAVBAR - Selalu terlihat */
+.navbar.sticky-top {
+    position: fixed !important;
+    top: 0 !important;
+    width: 100% !important;
+    z-index: 1030 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: none !important;
+    /* Hilangkan auto-hide behavior */
+    transform: none !important;
+    min-height: 80px !important;
+    /* Ensure navbar height accommodates the 70px logo */
+}
+
+/* Hilangkan semua behavior auto-hide */
+.navbar-light.sticky-top {
+    top: 0 !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Body adjustment untuk navbar yang lebih besar */
+body {
+    padding-top: 110px !important;
+    /* Lebih besar untuk logo 70px */
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Logo styling - Lebih besar dengan background transparent */
+.navbar-brand img {
+    height: 70px !important;
+    width: auto !important;
+    margin-right: 10px !important;
+    mix-blend-mode: multiply !important;
+    /* Untuk efek transparansi yang lebih baik */
+}
+
+/* Ensure navbar-brand content is properly aligned */
+.navbar-brand {
+    position: static !important;
+    display: flex !important;
+    align-items: center !important;
+    height: 100% !important;
+    padding: 5px 0 !important;
+}
+
+.navbar-brand p {
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    height: 100% !important;
+}
+
+/* Footer compact styling */
+.footer {
+    margin-top: auto !important;
+    position: relative !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    clear: both !important;
+}
+
+.footer h5 {
+    font-size: 16px !important;
+    margin-bottom: 10px !important;
+}
+
+.footer p,
+.footer a {
+    font-size: 13px !important;
+    margin-bottom: 5px !important;
+}
+
+.footer .btn.btn-social {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+}
+
+/* Main content flex */
+.container-xxl,
+.container-xl,
+.container-lg,
+.container-md,
+.container-sm,
+.container {
+    flex: 1 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    body {
+        padding-top: 90px !important;
+    }
+
+    .navbar-brand img {
+        height: 55px !important;
+    }
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Dropdown menus z-index */
+.navbar .dropdown-menu {
+    z-index: 1040 !important;
+}

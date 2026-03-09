@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Tim BIM</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        .team-member {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 30px;
+            height: 100%;
+        }
+
+        .team-member:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .member-image {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .member-image img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+        }
+
+        .member-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(102, 126, 234, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .team-member:hover .member-overlay {
+            opacity: 1;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .social-links a {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .member-info {
+            padding: 25px;
+            text-align: center;
+        }
+
+        .member-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .member-role {
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .member-bio {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .team-intro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .team-intro h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .team-intro p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Team Intro -->
+    <section class="team-intro">
+        <div class="container">
+            <h2>Tim BIM NKE</h2>
+            <p>Kami adalah tim ahli yang berdedikasi untuk mendorong inovasi dalam Building Information Modeling.
+                Dengan pengalaman bertahun-tahun di industri konstruksi dan teknologi, kami berkomitmen untuk memberikan
+                pendidikan BIM berkualitas tinggi kepada para profesional dan siswa di Indonesia.</p>
+        </div>
+    </section>
+
+    <!-- Team Grid -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Aji Sadara -->
+                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/img/team-1.png" alt="Aji Sadara">
+                            <div class="member-overlay">
+                                <div class="social-links">
+                                    <a href="https://www.linkedin.com/in/aji-sadara-aaa430119/" target="_blank">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="#" onclick="alert('Email: aji.sadara@nusakonstruksi.co.id'); return false;"></a>
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    <a href="https://github.com/ajisadara" target="_blank">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-info">
+                            <h3 class="member-name">Aji Sadara</h3>
+                            <p class="member-role">Team Leader & Founder</p>
+                            <p class="member-bio">Pemimpin tim dengan pengalaman lebih dari 10 tahun di bidang BIM dan
+                                digital construction. Ahli dalam implementasi BIM di proyek-proyek nasional.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Khalijah H W -->
+                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/img/team-2.png" alt="Khalijah H W">
+                            <div class="member-overlay">
+                                <div class="social-links">
+                                    <a href="https://www.linkedin.com/in/keerti-vishwkarma-8ba754243/" target="_blank">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="#" onclick="alert('Email: keertidvcorai@gmail.com'); return false;">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    <a href="https://github.com/keerti1924" target="_blank">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-info">
+                            <h3 class="member-name">Khalijah H W</h3>
+                            <p class="member-role">Senior BIM Specialist</p>
+                            <p class="member-bio">Spesialis BIM dengan keahlian dalam modeling struktur dan MEP
+                                coordination. Berpengalaman dalam software Autodesk suite dan open-source BIM tools.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rina Anggraini -->
+                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/img/testimonial-3.jpg" alt="Rina Anggraini">
+                            <div class="member-overlay">
+                                <div class="social-links">
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="mailto:rina@nke-bim.com">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-researchgate"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-info">
+                            <h3 class="member-name">Rina Anggraini</h3>
+                            <p class="member-role">Educational Content Specialist</p>
+                            <p class="member-bio">Pengembang kurikulum dan konten pembelajaran BIM. Ahli dalam
+                                metodologi pembelajaran blended dan pengembangan materi e-learning interaktif.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budi Santoso -->
+                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/img/testimonial-1.jpg" alt="Budi Santoso">
+                            <div class="member-overlay">
+                                <div class="social-links">
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="mailto:budi@nke-bim.com">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-youtube"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-info">
+                            <h3 class="member-name">Budi Santoso</h3>
+                            <p class="member-role">Technical Support Specialist</p>
+                            <p class="member-bio">Spesialis dukungan teknis dengan fokus pada troubleshooting software
+                                BIM dan implementasi workflow digital di perusahaan konstruksi.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maya Sari -->
+                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/img/testimonial-4.jpg" alt="Maya Sari">
+                            <div class="member-overlay">
+                                <div class="social-links">
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="mailto:maya@nke-bim.com">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-dribbble"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-info">
+                            <h3 class="member-name">Maya Sari</h3>
+                            <p class="member-role">UI/UX Designer</p>
+                            <p class="member-bio">Desainer antarmuka pengguna yang fokus pada pengalaman belajar
+                                digital. Ahli dalam desain responsif dan visualisasi data BIM yang intuitif.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ahmad Rahman -->
+                <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
+                    <div class="team-member">
+                        <div class="member-image">
+                            <img src="/img/testimonial-2.jpg" alt="Ahmad Rahman">
+                            <div class="member-overlay">
+                                <div class="social-links">
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-linkedin"></i>
+                                    </a>
+                                    <a href="mailto:ahmad@nke-bim.com">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    <a href="#" target="_blank">
+                                        <i class="fab fa-github"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="member-info">
+                            <h3 class="member-name">Ahmad Rahman</h3>
+                            <p class="member-role">Full Stack Developer</p>
+                            <p class="member-bio">Developer platform e-learning dengan keahlian dalam teknologi web
+                                modern. Bertanggung jawab atas pengembangan dan maintenance sistem pertama.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Join Our Team Section -->
+            <div class="text-center mt-5">
+                <h3>BERGABUNGLAH DENGAN KAMI</h3>
+                <p class="mb-4">Kami selalu mencari talenta terbaik untuk bergabung dalam tim kami dan berkontribusi
+                    pada revolusi BIM di Indonesia.</p>
+                <a href="/pages/contact.html" class="btn btn-primary btn-lg">
+                    <i class="fas fa-envelope me-2"></i>Kirim Lamaran
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/user.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c">
+    <title>BIM Methode Gallery - BCL</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amarante&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../lib/animate/animate.min.css">
+    <link rel="stylesheet" href="../lib/owlcarousel/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/bim-methode.css">
+    <link rel="icon" href="/img/icon.png">
+
+</head>
+
+<body>
+
+    <!-- Spinner Start -->
+    <div id="spinner"
+        class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <!-- Spinner End -->
+
+    <!-- Navbar Universal -->
+    <div id="navbar-container"></div>
+
+    <!-- BIM Methode Gallery Start -->
+    <div class="container-fluid py-2">
+        <div class="container-fluid">
+            <div class="row g-4">
+                <!-- Sidebar with Categories -->
+                <div class="col-lg-5 col-xl-4 col-xxl-3">
+                    <div class="bg-light rounded p-4 mb-4">
+                        <h5 class="mb-3">Kategori Methode</h5>
+                        <div id="category-list" class="category-list">
+                            <!-- Categories will be loaded here -->
+                            <div class="text-center">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <small class="text-muted d-block mt-2">Memuat kategori...</small>
+                            </div>
+                        </div>
+                        <div id="category-status" class="category-status mt-2" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Upload Section -->
+                    <div class="bg-light rounded p-4">
+                        <h6 class="mb-3">Upload Media Baru</h6>
+                        <form id="upload-form" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="upload-category" class="form-label">Pilih Kategori</label>
+                                <select class="form-select" id="upload-category" name="category" required>
+                                    <option value="">Pilih kategori...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="upload-files" class="form-label">Pilih File</label>
+                                <input type="file" class="form-control" id="upload-files" name="files" multiple
+                                    accept="image/*,video/*,.pdf,.dwg,.rvt,.rfa,.skp,.fbx,.tm,.pptx,.docx" required>
+                                <div class="form-text">Maksimal 50MB per file</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="upload-btn">
+                                <i class="fas fa-upload me-2"></i>Upload
+                            </button>
+                        </form>
+                        <div id="upload-progress" class="mt-3" style="display: none;">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted mt-1 d-block" id="upload-status">Mengupload...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-lg-7 col-xl-8 col-xxl-9">
+                    <!-- Search and Filter Bar -->
+                    <div class="bg-light rounded p-3 mb-4">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="search-input"
+                                        placeholder="Cari media...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filter-type">
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="image" selected>Gambar</option>
+                                    <option value="video">Video</option>
+                                    <option value="document">Dokumen</option>
+                                    <option value="model">3D Model</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="sort-by">
+                                    <option value="date-desc">Terbaru</option>
+                                    <option value="date-asc">Terlama</option>
+                                    <option value="name-asc">Nama A-Z</option>
+                                    <option value="name-desc">Nama Z-A</option>
+                                    <option value="size-desc">Ukuran Terbesar</option>
+                                    <option value="size-asc">Ukuran Terkecil</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="media-status" class="media-status mt-2" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Media Grid -->
+                    <div id="media-grid" class="row g-4">
+                        <!-- Media items will be loaded here -->
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-3 text-muted">Memuat media...</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="pagination-container" class="d-flex justify-content-center mt-4" style="display: none;">
+                        <nav aria-label="Media pagination">
+                            <ul class="pagination" id="pagination">
+                                <!-- Pagination will be generated here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- BIM Methode Gallery End -->
+
+    <!-- Media Viewer Modal -->
+    <div class="modal fade" id="mediaModal" tabindex="-1" aria-labelledby="mediaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mediaModalLabel">Preview Media</h5>
+                    <span class="small text-muted ms-3" id="mediaModalCounter"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="media-viewer">
+                        <!-- Media content will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" id="delete-btn" style="display: none;">
+                        <i class="fas fa-trash-alt me-2"></i>Delete
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="preview-prev-btn">
+                        <i class="fas fa-chevron-left me-2"></i>Prev
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="preview-next-btn">
+                        Next<i class="fas fa-chevron-right ms-2"></i>
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <a href="#" class="btn btn-primary" id="download-btn" download>
+                        <i class="fas fa-download me-2"></i>Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js"></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/bim-methode.js?v=20260306a"></script>
+
+</body>
+
+</html>

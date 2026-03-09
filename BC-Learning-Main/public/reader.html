@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIM Learning Reader</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --toolbar-height: 48px;
+            --sidebar-width: 220px;
+            --bg-dark: #333333;
+            --bg-viewer: #525659;
+            --bg-sidebar: #2a2a2a;
+            --text-light: #f0f0f0;
+            --accent-color: #007bff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-viewer);
+            overflow: hidden;
+            height: 100vh;
+            color: var(--text-light);
+        }
+
+        .reader-app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Toolbar Styles */
+        .toolbar {
+            height: var(--toolbar-height);
+            background-color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-btn {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .toolbar-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toolbar-btn.primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .toolbar-btn.primary:hover {
+            background-color: #0056b3;
+        }
+
+        .toolbar-btn.success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .toolbar-btn.success:hover {
+            background-color: #218838;
+        }
+
+        .title-text {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
+            color: white;
+        }
+
+        .page-info {
+            font-size: 13px;
+            color: #ccc;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .divider {
+            width: 1px;
+            height: 24px;
+            background-color: #555;
+            margin: 0 4px;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar (Minimap) */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            border-right: none;
+        }
+
+        .sidebar-header {
+            padding: 12px;
+            border-bottom: 1px solid #444;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .thumbnail-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .thumbnail-wrapper {
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .thumbnail-wrapper:hover {
+            transform: scale(1.02);
+        }
+
+        .thumbnail-wrapper.active {
+            outline: 2px solid var(--accent-color);
+            border-radius: 2px;
+        }
+
+        .thumbnail-wrapper canvas {
+            display: block;
+            border: 1px solid #444;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .thumbnail-label {
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .thumbnail-wrapper.active .thumbnail-label {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Viewer Area */
+        .viewer-area {
+            flex: 1;
+            background-color: var(--bg-viewer);
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Ensure scrolling works properly */
+            padding: 32px;
+            position: relative;
+        }
+
+        .pdf-canvas {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            background-color: white;
+            display: block;
+            margin: auto; /* Centers in flex container */
+            flex-shrink: 0; /* CRITICAL: Prevent flexbox from shrinking canvas */
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
+            display: none;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2a2a2a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        /* Helper classes */
+        .hidden { display: none !important; }
+    </style>
+</head>
+
+<body>
+    <div class="reader-app">
+        <!-- Top Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="sidebar-toggle" title="Toggle Sidebar">
+                    <i class="fas fa-th-large"></i>
+                </button>
+                <div class="title-text" id="course-title">Loading...</div>
+            </div>
+
+            <div class="toolbar-group">
+                <button class="toolbar-btn" id="prev-btn" title="Previous Page">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+                <div class="page-info" id="page-info">-- / --</div>
+                <button class="toolbar-btn" id="next-btn" title="Next Page">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div class="divider"></div>
+                
+                <button class="toolbar-btn" id="zoom-out" title="Zoom Out">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="toolbar-btn" id="zoom-in" title="Zoom In">
+                    <i class="fas fa-plus"></i>
+                </button>
+
+                <div class="divider"></div>
+
+                <button class="toolbar-btn" id="fit-width" title="Fit Width">
+                    <i class="fas fa-arrows-alt-h"></i>
+                </button>
+                <button class="toolbar-btn" id="fit-page" title="Fit Page">
+                    <i class="fas fa-compress"></i>
+                </button>
+                
+                <div class="divider"></div>
+                
+                <button class="toolbar-btn" id="mouse-mode-btn" title="Toggle Mouse Wheel: Scroll / Zoom">
+                    <i class="fas fa-hand-paper"></i> <span style="font-size: 11px; margin-left: 4px;">Scroll</span>
+                </button>
+
+                <button class="toolbar-btn" id="last-read-btn" title="Go to Last Read Page" style="display: none;">
+                    <i class="fas fa-history"></i> <span style="font-size: 12px; margin-left: 4px;">Resume</span>
+                </button>
+            </div>
+
+            <div class="toolbar-group">
+                <span id="reading-progress" style="font-size: 12px; color: #aaa; margin-right: 8px;">0%</span>
+                <button class="toolbar-btn success" id="finish-reading-btn" title="Finish Reading">
+                    <i class="fas fa-check"></i> <span style="display: none; @media(min-width: 800px){display:inline;}">Finish</span>
+                </button>
+                <button class="toolbar-btn primary" id="next-module-btn" title="Next Module">
+                    <i class="fas fa-forward"></i> <span style="display: none; @media(min-width: 800px){display:inline;}">Next</span>
+                </button>
+                <div class="divider"></div>
+                <button class="toolbar-btn" onclick="closePDFReader()" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-container">
+            <!-- Sidebar (Minimap) -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">Pages</div>
+                <div class="thumbnail-container" id="thumbnail-container">
+                    <!-- Thumbnails generated by JS -->
+                </div>
+            </div>
+
+            <!-- Viewer -->
+            <div class="viewer-area" id="viewer-container">
+                <div class="loading-overlay" id="loading-indicator">
+                    <i class="fas fa-spinner fa-spin fa-2x" style="color: white; margin-bottom: 10px;"></i>
+                    <div style="color: white;">Loading Document...</div>
+                </div>
+                
+                <div class="error-message" id="error-box">
+                    <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                    <div id="error-message">Error loading PDF</div>
+                </div>
+
+                <canvas class="pdf-canvas" id="pdf-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden elements required by existing logic, though repurposed or unused -->
+    <ul id="toc-list" style="display: none;"></ul>
+
+    <!-- PDF.js Scripts -->
+    <script src="/public/vendor/pdfjs/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/public/vendor/pdfjs/pdf.worker.min.js";
+    </script>
+    <script src="/public/js/reader.js?v=fix_zoom_scroll_v2"></script>
+</body>
+
+</html>

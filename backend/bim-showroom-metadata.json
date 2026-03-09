@@ -1,0 +1,251 @@
+{
+    "projects": {
+        "mall-grand-indonesia-2024": {
+            "id": "mall-grand-indonesia-2024",
+            "name": "Mall Grand Indonesia",
+            "year": 2024,
+            "bimDimension": "5D",
+            "location": "Jawa",
+            "city": "Jakarta",
+            "type": "Commercial",
+            "description": "Mixed-use development dengan retail dan office spaces",
+            "featured": true,
+            "tags": [
+                "mall",
+                "commercial",
+                "mixed-use"
+            ]
+        },
+        "hospital-bekasi-medical-center-2024": {
+            "id": "hospital-bekasi-medical-center-2024",
+            "name": "RS Bekasi Medical Center",
+            "year": 2024,
+            "bimDimension": "5D",
+            "location": "Jawa",
+            "city": "Bekasi",
+            "type": "Healthcare",
+            "description": "Rumah sakit modern dengan sistem MEP terintegrasi",
+            "featured": true,
+            "tags": [
+                "hospital",
+                "healthcare",
+                "mep"
+            ]
+        },
+        "apartment-green-valley-2023": {
+            "id": "apartment-green-valley-2023",
+            "name": "Green Valley Apartment",
+            "year": 2023,
+            "bimDimension": "4D",
+            "location": "Jawa",
+            "city": "Bogor",
+            "type": "Residential",
+            "description": "Apartemen hijau dengan konstruksi ramah lingkungan",
+            "featured": false,
+            "tags": [
+                "apartment",
+                "residential",
+                "green-building"
+            ]
+        },
+        "office-tower-plaza-indonesia-2023": {
+            "id": "office-tower-plaza-indonesia-2023",
+            "name": "Plaza Indonesia Office Tower",
+            "year": 2023,
+            "bimDimension": "5D",
+            "location": "Jawa",
+            "city": "Jakarta",
+            "type": "Commercial",
+            "description": "High-rise office building dengan smart building system",
+            "featured": true,
+            "tags": [
+                "office",
+                "high-rise",
+                "smart-building"
+            ]
+        },
+        "bridge-suramadu-expansion-2024": {
+            "id": "bridge-suramadu-expansion-2024",
+            "name": "Suramadu Bridge Expansion",
+            "year": 2024,
+            "bimDimension": "6D",
+            "location": "Jawa",
+            "city": "Surabaya",
+            "type": "Infrastructure",
+            "description": "Ekspansi jembatan Suramadu dengan BIM infrastructure modeling",
+            "featured": true,
+            "tags": [
+                "bridge",
+                "infrastructure",
+                "transportation"
+            ]
+        },
+        "university-campus-ui-depok-2023": {
+            "id": "university-campus-ui-depok-2023",
+            "name": "Universitas Indonesia Campus Development",
+            "year": 2023,
+            "bimDimension": "4D",
+            "location": "Jawa",
+            "city": "Depok",
+            "type": "Education",
+            "description": "Pengembangan kampus universitas dengan fasilitas terintegrasi",
+            "featured": false,
+            "tags": [
+                "university",
+                "education",
+                "campus"
+            ]
+        },
+        "airport-ngurah-rai-expansion-2024": {
+            "id": "airport-ngurah-rai-expansion-2024",
+            "name": "Ngurah Rai Airport Terminal Expansion",
+            "year": 2024,
+            "bimDimension": "6D",
+            "location": "Nusa Tenggara",
+            "city": "Denpasar",
+            "type": "Infrastructure",
+            "description": "Ekspansi terminal bandara dengan BIM aviation modeling",
+            "featured": true,
+            "tags": [
+                "airport",
+                "aviation",
+                "infrastructure"
+            ]
+        },
+        "shopping-mall-palembang-2023": {
+            "id": "shopping-mall-palembang-2023",
+            "name": "Palembang Grand Mall",
+            "year": 2023,
+            "bimDimension": "4D",
+            "location": "Sumatra",
+            "city": "Palembang",
+            "type": "Commercial",
+            "description": "Mall modern di Palembang dengan desain kontemporer",
+            "featured": false,
+            "tags": [
+                "mall",
+                "commercial",
+                "sumatra"
+            ]
+        },
+        "hospital-balikpapan-medical-2024": {
+            "id": "hospital-balikpapan-medical-2024",
+            "name": "Balikpapan Medical Center",
+            "year": 2024,
+            "bimDimension": "5D",
+            "location": "Kalimantan",
+            "city": "Balikpapan",
+            "type": "Healthcare",
+            "description": "Rumah sakit terdepan di Kalimantan Timur",
+            "featured": true,
+            "tags": [
+                "hospital",
+                "healthcare",
+                "kalimantan"
+            ]
+        },
+        "highway-jakarta-cikampek-2023": {
+            "id": "highway-jakarta-cikampek-2023",
+            "name": "Jakarta-Cikampek Highway Upgrade",
+            "year": 2023,
+            "bimDimension": "6D",
+            "location": "Jawa",
+            "city": "Jakarta",
+            "type": "Infrastructure",
+            "description": "Upgrade jalan tol dengan smart infrastructure BIM",
+            "featured": false,
+            "tags": [
+                "highway",
+                "infrastructure",
+                "transportation"
+            ]
+        }
+    },
+    "categories": {
+        "byType": {
+            "Commercial": [
+                "mall-grand-indonesia-2024",
+                "office-tower-plaza-indonesia-2023",
+                "shopping-mall-palembang-2023"
+            ],
+            "Healthcare": [
+                "hospital-bekasi-medical-center-2024",
+                "hospital-balikpapan-medical-2024"
+            ],
+            "Residential": [
+                "apartment-green-valley-2023"
+            ],
+            "Education": [
+                "university-campus-ui-depok-2023"
+            ],
+            "Infrastructure": [
+                "bridge-suramadu-expansion-2024",
+                "airport-ngurah-rai-expansion-2024",
+                "highway-jakarta-cikampek-2023"
+            ]
+        },
+        "byLocation": {
+            "Jawa": [
+                "mall-grand-indonesia-2024",
+                "hospital-bekasi-medical-center-2024",
+                "apartment-green-valley-2023",
+                "office-tower-plaza-indonesia-2023",
+                "bridge-suramadu-expansion-2024",
+                "university-campus-ui-depok-2023",
+                "highway-jakarta-cikampek-2023"
+            ],
+            "Sumatra": [
+                "shopping-mall-palembang-2023"
+            ],
+            "Kalimantan": [
+                "hospital-balikpapan-medical-2024"
+            ],
+            "Nusa Tenggara": [
+                "airport-ngurah-rai-expansion-2024"
+            ]
+        },
+        "byYear": {
+            "2024": [
+                "mall-grand-indonesia-2024",
+                "hospital-bekasi-medical-center-2024",
+                "bridge-suramadu-expansion-2024",
+                "airport-ngurah-rai-expansion-2024",
+                "hospital-balikpapan-medical-2024"
+            ],
+            "2023": [
+                "apartment-green-valley-2023",
+                "office-tower-plaza-indonesia-2023",
+                "university-campus-ui-depok-2023",
+                "shopping-mall-palembang-2023",
+                "highway-jakarta-cikampek-2023"
+            ]
+        },
+        "byBimDimension": {
+            "3D": [],
+            "4D": [
+                "apartment-green-valley-2023",
+                "university-campus-ui-depok-2023",
+                "shopping-mall-palembang-2023"
+            ],
+            "5D": [
+                "mall-grand-indonesia-2024",
+                "hospital-bekasi-medical-center-2024",
+                "office-tower-plaza-indonesia-2023",
+                "hospital-balikpapan-medical-2024"
+            ],
+            "6D": [
+                "bridge-suramadu-expansion-2024",
+                "airport-ngurah-rai-expansion-2024",
+                "highway-jakarta-cikampek-2023"
+            ],
+            "7D": []
+        }
+    },
+    "featured": [
+        "mall-grand-indonesia-2024",
+        "hospital-bekasi-medical-center-2024",
+        "bridge-suramadu-expansion-2024",
+        "airport-ngurah-rai-expansion-2024",
+        "hospital-balikpapan-medical-2024"
+    ]
+}

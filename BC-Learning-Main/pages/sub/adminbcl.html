@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - BCL</title>
+    <meta name="description" content="BCL Admin Panel - Building Information Management System">
+    <meta name="robots" content="noindex, nofollow">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon" type="image/png">
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <!-- Google Web Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+
+    <!-- Custom Admin Styles -->
+    <link href="adminbcl.css?v=20260303b" rel="stylesheet">
+    
+
+</head>
+
+<body class="adminbcl-page">
+    <!-- Navigation Bar Component -->
+    <div id="navbar-container"></div>
+
+    
+
+    <!-- Modern Admin Login Section -->
+    <div id="auth-section" class="auth-container">
+        <div class="auth-card animate-fade-in">
+            <div class="card-title">
+                <i class="fas fa-shield-alt text-primary mb-3" style="font-size: 3rem;"></i>
+                <h1>Akses Administrator</h1>
+                <p class="text-muted mb-4">Halaman ini hanya dapat diakses oleh Administrator Sistem dengan kredensial
+                    resmi</p>
+            </div>
+
+            <form id="admin-login-form">
+                <div class="mb-4">
+                    <label for="adminEmail" class="form-label fw-semibold">
+                        <i class="fas fa-envelope me-2"></i>Administrator Email
+                    </label>
+                    <input type="email" class="form-control" id="adminEmail" placeholder="Enter administrator email"
+                        required style="padding: 1rem; font-size: 1.1rem;">
+                </div>
+
+                <div class="mb-4">
+                    <label for="adminPassword" class="form-label fw-semibold">
+                        <i class="fas fa-lock me-2"></i>Security Password
+                    </label>
+                    <input type="password" class="form-control" id="adminPassword" placeholder="Enter security password"
+                        required style="padding: 1rem; font-size: 1.1rem;">
+                </div>
+
+                <div class="mb-4">
+                    <button class="btn btn-modern btn-modern-primary w-100 py-3" type="submit">
+                        <i class="fas fa-sign-in-alt me-2"></i>Access Admin Panel
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <div class="alert alert-warning py-2" style="font-size: 0.9rem;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Security Notice:</strong><br>
+                        Contact system administrator for login credentials
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard (Loaded dynamically after authentication) -->
+    <div id="admin-interface" class="container-fluid d-none">
+        <div class="row">
+            <!-- Modern Sidebar -->
+            <div id="admin-sidebar" class="admin-sidebar col-md-2">
+                <div class="sidebar-title">
+                    <i class="fas fa-crown"></i>
+                    Admin Panel
+                    <button class="btn btn-sm ms-auto" onclick="toggleSidebar()" id="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+
+                <nav class="mt-4">
+                    <a class="nav-link-modern active mb-2" href="#dashboard" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#users" onclick="showSection('users')">
+                        <i class="fas fa-users"></i>
+                        Users
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#questions" onclick="showSection('questions')">
+                        <i class="fas fa-question-circle"></i>
+                        BIM Questions
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#videos" onclick="showSection('videos')">
+                        <i class="fas fa-video"></i>
+                        Video Tags
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#video-display"
+                        onclick="showSection('video-display'); safeCall('videoDisplay', 'loadVideoDisplayManagement');">
+                        <i class="fas fa-tv"></i>
+                        Video Display
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#pdf-management"
+                        onclick="showSection('pdf-management'); safeCall('contentManagement', 'loadPDFManagement');">
+                        <i class="fas fa-file-pdf"></i>
+                        PDF Management
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#bim-media"
+                        onclick="showSection('bim-media'); safeCall('contentManagement', 'loadBIMMedia');">
+                        <i class="fas fa-tags"></i>
+                        BIM Media
+                    </a>
+
+                    <hr class="my-4 border-secondary">
+
+                    <a class="nav-link-modern mb-2" href="#news" onclick="showSection('news')">
+                        <i class="fas fa-newspaper"></i>
+                        News
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#plugins" onclick="showSection('plugins')">
+                        <i class="fas fa-plug"></i>
+                        Plugins
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#library" onclick="showSection('library')">
+                        <i class="fas fa-book"></i>
+                        Library
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#system" onclick="showSection('system')">
+                        <i class="fas fa-server"></i>
+                        System
+                    </a>
+
+                    <hr class="my-4 border-secondary">
+
+                    <a class="nav-link-modern mb-2" href="#change-password" onclick="showSection('change-password'); loadChangePasswordSection();">
+                        <i class="fas fa-key"></i>
+                        Change Password
+                    </a>
+
+                    <hr class="my-4 border-secondary">
+
+                    <a class="nav-link-modern mb-2" href="/" target="_blank">
+                        <i class="fas fa-home"></i>
+                        Main Page
+                    </a>
+
+                    <hr class="my-4 border-secondary">
+
+                    <button class="btn btn-modern-primary w-100 mt-3" onclick="adminLogout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div id="admin-content" class="col-md-9">
+                <div class="container-fluid py-4">
+
+                    <!-- Dashboard Section -->
+                    <div id="dashboard-section" class="admin-section">
+                        <!-- System Overview -->
+                        <div class="stats-overview mb-5">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users" style="color: var(--primary-gradient);"></i>
+                                </div>
+                                <div class="stat-value" id="user-count">0</div>
+                                <div class="stat-label">Total Users</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-question-circle" style="color: var(--success-gradient);"></i>
+                                </div>
+                                <div class="stat-value" id="question-count">0</div>
+                                <div class="stat-label">BIM Questions</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-video" style="color: var(--warning-gradient);"></i>
+                                </div>
+                                <div class="stat-value" id="video-count">0</div>
+                                <div class="stat-label">Video Tutorials</div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-tags" style="color: var(--info-gradient);"></i>
+                                </div>
+                                <div class="stat-value" id="media-count">0</div>
+                                <div class="stat-label">Tagged Media</div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-bolt"></i>
+                                    Quick Actions
+                                </div>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="row g-3">
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-modern-primary w-100 py-3"
+                                            onclick="showSection('users')">
+                                            <i class="fas fa-users fa-lg mb-2"></i><br>
+                                            <span class="fw-bold">Manage Users</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-modern-primary w-100 py-3"
+                                            onclick="showSection('questions')"
+                                            style="background: var(--success-gradient);">
+                                            <i class="fas fa-question-circle fa-lg mb-2"></i><br>
+                                            <span class="fw-bold">BIM Questions</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-modern-primary w-100 py-3"
+                                            onclick="showSection('videos')"
+                                            style="background: var(--warning-gradient);">
+                                            <i class="fas fa-video fa-lg mb-2"></i><br>
+                                            <span class="fw-bold">Video Management</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-modern-primary w-100 py-3"
+                                            onclick="showSection('bim-media')"
+                                            style="background: var(--info-gradient);">
+                                            <i class="fas fa-tags fa-lg mb-2"></i><br>
+                                            <span class="fw-bold">BIM Media Tagging</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-secondary w-100 py-2"
+                                            onclick="showSection('news')">
+                                            <i class="fas fa-newspaper me-2"></i>News
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-secondary w-100 py-2"
+                                            onclick="showSection('plugins')">
+                                            <i class="fas fa-plug me-2"></i>Plugins
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-secondary w-100 py-2"
+                                            onclick="showSection('system')">
+                                            <i class="fas fa-server me-2"></i>System
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Users Section -->
+                    <div id="users-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-users"></i>
+                                    User Management System
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('users', 'showCreateUserModal')">
+                                    <i class="fas fa-user-plus me-2"></i>Add New User
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h5 class="mb-0">Registered Users</h5>
+                                        <small class="text-muted">Manage all BCL platform users</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-primary fs-6" id="totalUsersCount">
+                                                <i class="fas fa-users me-1"></i>Total: 0 users
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-primary" onclick="safeCall('users', 'loadUsers')">
+                                        <i class="fas fa-sync-alt me-2"></i>Refresh Users
+                                    </button>
+                                </div>
+
+                                <!-- Search and Filter Controls -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="userSearchInput"
+                                            placeholder="Search by name or email..." onkeyup="filterUsers()">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select" id="bimLevelFilter" onchange="filterUsers()">
+                                            <option value="">All BIM Levels</option>
+                                            <option value="BIM Modeller">BIM Modeller</option>
+                                            <option value="BIM Coordinator">BIM Coordinator</option>
+                                            <option value="BIM Manager">BIM Manager</option>
+                                            <option value="Expert">Expert</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="statusFilter" onchange="filterUsers()">
+                                            <option value="">All Status</option>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                onclick="clearUserFilters()">
+                                                <i class="fas fa-times me-1"></i>Clear
+                                            </button>
+                                            <button class="btn btn-outline-info btn-sm" onclick="safeCall('users', 'exportUsers')">
+                                                <i class="fas fa-download me-1"></i>Export
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Users Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th style="width: 60px;">No</th>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>BIM Level</th>
+                                                <th>Job Role</th>
+                                                <th>Organization</th>
+                                                <th>Password</th>
+                                                <th>Status</th>
+                                                <th>Registered</th>
+                                                <th>Mapping Kompetensi Access</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="usersTableBody">
+                                            <tr>
+                                                <td colspan="12" class="text-center py-4">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                                        <p class="text-muted mb-2">No users loaded yet</p>
+                                                            <button class="btn btn-primary" onclick="safeCall('users', 'loadUsers')">
+                                                            <i class="fas fa-sync-alt me-2"></i>Load Users
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <nav id="usersPagination" class="mt-4" style="display: none;">
+                                    <ul class="pagination justify-content-center" id="usersPaginationControls"></ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Questions Section -->
+                    <div id="questions-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-question-circle"></i>
+                                    BIM Questions Management
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('questions', 'showCreateQuestionModal')">
+                                    <i class="fas fa-plus me-2"></i>Add Question
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h5 class="mb-0">User Questions & Answers</h5>
+                                        <small class="text-muted">Manage BIM questions displayed on bim.html</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-info fs-6" id="totalQuestionsCount">
+                                                <i class="fas fa-question-circle me-1"></i>Total: 0 questions
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-primary" onclick="safeCall('questions', 'loadQuestions')">
+                                        <i class="fas fa-sync-alt me-2"></i>Refresh Questions
+                                    </button>
+                                </div>
+
+                                <!-- Search and Filter Controls -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="questionSearchInput"
+                                            placeholder="Search questions or answers..." onkeyup="filterQuestions()">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="questionStatusFilter"
+                                            onchange="filterQuestions()">
+                                            <option value="">All Status</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="answered">Answered</option>
+                                            <option value="postponed">Postponed</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="questionTagFilter" onchange="filterQuestions()">
+                                            <option value="">All Tags</option>
+                                            <option value="autocad">AutoCAD</option>
+                                            <option value="revit">Revit</option>
+                                            <option value="general">General BIM</option>
+                                            <option value="career">Career</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="questionSortFilter"
+                                            onchange="filterQuestions()">
+                                            <option value="newest">Newest First</option>
+                                            <option value="oldest">Oldest First</option>
+                                            <option value="unanswered">Unanswered First</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                onclick="clearQuestionFilters()">
+                                                <i class="fas fa-times me-1"></i>Clear
+                                            </button>
+                                            <button class="btn btn-outline-info btn-sm" onclick="safeCall('questions', 'exportQuestions')">
+                                                <i class="fas fa-download me-1"></i>Export
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Questions Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th style="width: 60px;">No</th>
+                                                <th>Question</th>
+                                                <th>Answer</th>
+                                                <th>Status</th>
+                                                <th>Tag</th>
+                                                <th>Questioner</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="questionsTableBody">
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                                                        <p class="text-muted mb-2">No questions loaded yet</p>
+                                                        <button class="btn btn-primary" onclick="safeCall('questions', 'loadQuestions')">
+                                                            <i class="fas fa-sync-alt me-2"></i>Load Questions
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <nav id="questionsPagination" class="mt-4" style="display: none;">
+                                    <ul class="pagination justify-content-center" id="questionsPaginationControls"></ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Videos Section -->
+                    <div id="videos-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-video"></i>
+                                    Video Tags Management System
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="window.adminPanel.modules.get('videos').instance.scanVideoSources()">
+                                    <i class="fas fa-search me-2"></i>Scan Video Sources
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h5 class="mb-0">Video Organization & Tagging</h5>
+                                        <small class="text-muted">Tag and categorize videos for proper display on
+                                            tutorial pages</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-warning fs-6" id="totalVideosCount">
+                                                <i class="fas fa-video me-1"></i>Total: 0 videos
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-primary" onclick="window.adminPanel.modules.get('videos').instance.refreshVideos()">
+                                        <i class="fas fa-sync-alt me-2"></i>Refresh Videos
+                                    </button>
+                                </div>
+
+                                <!-- Video Search and Filter Controls -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="videoSearchInput"
+                                            placeholder="Search videos by name or category..."
+                                            onkeyup="safeCall('videos', 'filterVideoTags')">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="videoCategoryFilter"
+                                            onchange="safeCall('videos', 'filterVideoTags')">
+                                            <option value="">All Categories</option>
+                                            <option value="autocad">AutoCAD</option>
+                                            <option value="revit">Revit BIM</option>
+                                            <option value="sketchup">SketchUp</option>
+                                            <option value="3dsmax">3ds Max</option>
+                                            <option value="lumion">Lumion</option>
+                                            <option value="general">General BIM</option>
+                                            <option value="tutorial">Tutorial</option>
+                                            <option value="advanced">Advanced</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="videoTagStatusFilter"
+                                            onchange="safeCall('videos', 'filterVideoTags')">
+                                            <option value="">All Videos</option>
+                                            <option value="tagged">Tagged Only</option>
+                                            <option value="untagged">Untagged Only</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="videoSortFilter" onchange="safeCall('videos', 'filterVideoTags')">
+                                            <option value="name">Sort by Name</option>
+                                            <option value="category">Sort by Category</option>
+                                            <option value="views">Sort by Views</option>
+                                            <option value="newest">Newest First</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                onclick="safeCall('videos', 'clearVideoFilters')">
+                                                <i class="fas fa-times me-1"></i>Clear
+                                            </button>
+                                            <button class="btn btn-outline-info btn-sm" onclick="safeCall('videos', 'exportTaggedVideos')">
+                                                <i class="fas fa-download me-1"></i>Export
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Videos Grid -->
+                                <div class="row" id="videosGrid">
+                                    <div class="col-12">
+                                        <div class="text-center py-5">
+                                            <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted mb-3">No videos loaded yet</p>
+                                            <button class="btn btn-primary" onclick="window.adminPanel.modules.get('videos').instance.scanVideoSources()">
+                                                <i class="fas fa-search me-2"></i>Scan Video Sources
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Video Tagging Modal -->
+                                <div class="modal fade" id="videoTagModal" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-tag me-2"></i>Tag Video
+                                                </h5>
+                                                <button type="button" class="btn-close"
+                                                    data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div id="videoInfo" class="mb-4 p-3 bg-light rounded">
+                                                    <h6>Selected Video:</h6>
+                                                    <p id="selectedVideoName" class="mb-1 fw-bold"></p>
+                                                    <small id="selectedVideoPath" class="text-muted"></small>
+                                                </div>
+
+                                                <form id="videoTagForm">
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Video Category *</label>
+                                                            <div class="input-group">
+                                                                <select class="form-select" id="videoCategory" required>
+                                                                    <option value="">Select Category</option>
+                                                                    <option value="autocad">AutoCAD</option>
+                                                                    <option value="revit">Revit BIM</option>
+                                                                    <option value="sketchup">SketchUp</option>
+                                                                    <option value="3dsmax">3ds Max</option>
+                                                                    <option value="lumion">Lumion</option>
+                                                                    <option value="general">General BIM</option>
+                                                                    <option value="tutorial">Tutorial</option>
+                                                                    <option value="advanced">Advanced</option>
+                                                                </select>
+                                                                <button class="btn btn-outline-secondary" type="button"
+                                                                    onclick="safeCall('videos', 'toggleCustomCategory')" id="addCategoryBtn"
+                                                                    title="Add New Category">
+                                                                    <i class="fas fa-plus"></i>
+                                                                </button>
+                                                            </div>
+                                                            <div class="mt-2 d-none" id="customCategoryDiv">
+                                                                <div class="input-group">
+                                                                    <input type="text" class="form-control"
+                                                                        id="customCategoryInput"
+                                                                        placeholder="Enter new category name..."
+                                                                        maxlength="50">
+                                                                    <button class="btn btn-success" type="button"
+                                                                        onclick="safeCall('videos', 'addCustomCategory')">
+                                                                        <i class="fas fa-check me-1"></i>Add
+                                                                    </button>
+                                                                    <button class="btn btn-secondary" type="button"
+                                                                        onclick="safeCall('videos', 'cancelCustomCategory')">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                                <small class="text-muted">Category will be saved and
+                                                                    available for future use</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">BIM Level *</label>
+                                                            <select class="form-select" id="videoBimLevel" required>
+                                                                <option value="">Select Level</option>
+                                                                <option value="beginner">Beginner</option>
+                                                                <option value="intermediate">Intermediate</option>
+                                                                <option value="advanced">Advanced</option>
+                                                                <option value="expert">Expert</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Duration (minutes)</label>
+                                                            <input type="number" class="form-control" id="videoDuration"
+                                                                min="1" placeholder="e.g., 15">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Language</label>
+                                                            <select class="form-select" id="videoLanguage">
+                                                                <option value="id">Bahasa Indonesia</option>
+                                                                <option value="en">English</option>
+                                                                <option value="mixed">Mixed</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <label class="form-label">Description</label>
+                                                            <textarea class="form-control" id="videoDescription"
+                                                                rows="3"
+                                                                placeholder="Brief description of what this video teaches..."></textarea>
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <label class="form-label">Tags (comma-separated)</label>
+                                                            <input type="text" class="form-control" id="videoTags"
+                                                                placeholder="e.g., modeling, rendering, tutorial, beginner">
+
+                                                            <!-- Previously Used Tags Section -->
+                                                            <div id="previousTagsSection" class="mt-3 d-none">
+                                                                <label class="form-label text-muted small">Previously
+                                                                    Used Tags:</label>
+                                                                <div id="previousTagsContainer"
+                                                                    class="d-flex flex-wrap gap-2 mt-2">
+                                                                    <!-- Previous tags will be populated here -->
+                                                                </div>
+                                                                <small class="text-muted">Click on tags to add them to
+                                                                    the current video</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Cancel</button>
+                                                <button type="button" class="btn btn-success" onclick="safeCall('videos', 'saveVideoTags')">
+                                                    <i class="fas fa-save me-2"></i>Save Tags
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Display Section -->
+                    <div id="video-display-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-tv"></i>
+                                    Display Video System
+                                </div>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h5 class="mb-0">Display Video System</h5>
+                                        <small class="text-muted">Select which videos appear in the homepage display
+                                            system</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-info fs-6" id="totalDisplayVideosCount">
+                                                <i class="fas fa-video me-1"></i>Total: 0 videos
+                                            </span>
+                                            <span class="badge bg-success fs-6 ms-2" id="selectedDisplayVideosCount">
+                                                <i class="fas fa-check me-1"></i>Selected: 0 videos
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- Sorting and Filtering Controls -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Sort by</label>
+                                        <select class="form-select" id="videoDisplaySortBy"
+                                            onchange="safeCall('videoDisplay', 'sortVideoDisplayTable')">
+                                            <option value="name_asc">Name (A-Z)</option>
+                                            <option value="name_desc">Name (Z-A)</option>
+                                            <option value="date_desc">Date Created (Newest)</option>
+                                            <option value="date_asc">Date Created (Oldest)</option>
+                                            <option value="category_asc">Category (A-Z)</option>
+                                            <option value="category_desc">Category (Z-A)</option>
+                                            <option value="views_desc">Views (Most)</option>
+                                            <option value="views_asc">Views (Least)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Filter by Category</label>
+                                        <select class="form-select" id="videoDisplayCategoryFilter"
+                                            onchange="safeCall('videoDisplay', 'filterVideoDisplayTable')">
+                                            <option value="">All Categories</option>
+                                            <option value="autocad">AutoCAD</option>
+                                            <option value="revit">Revit BIM</option>
+                                            <option value="sketchup">SketchUp</option>
+                                            <option value="3dsmax">3ds Max</option>
+                                            <option value="lumion">Lumion</option>
+                                            <option value="general">General BIM</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Search Videos</label>
+                                        <input type="text" class="form-control" id="videoDisplaySearch"
+                                            placeholder="Search by name..." onkeyup="safeCall('videoDisplay', 'filterVideoDisplayTable')">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Items per page</label>
+                                        <select class="form-select" id="videoDisplayItemsPerPage"
+                                            onchange="safeCall('videoDisplay', 'changeVideoDisplayItemsPerPage')">
+                                            <option value="20">20 items</option>
+                                            <option value="50">50 items</option>
+                                            <option value="100">100 items</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+
+
+                                <!-- Video Selection Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th style="width: 60px;">No</th>
+                                                <th style="width: 80px;">Select</th>
+                                                <th>Name</th>
+                                                <th style="width: 100px;">Format</th>
+                                                <th>Duration</th>
+                                                <th>Date</th>
+                                                <th>Views</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="videoDisplayTableBody">
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <div class="spinner-border text-primary mb-2" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                        <p class="text-muted mb-2">Loading videos...</p>
+                                                        <button class="btn btn-primary"
+                                                            onclick="loadVideoDisplayManagement()">
+                                                            <i class="fas fa-sync-alt me-2"></i>Load Videos
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <nav id="videoDisplayPagination" class="mt-4" style="display: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-muted small" id="videoDisplayPageInfo">
+                                            Showing 1 to 20 of 100 videos
+                                        </div>
+                                        <ul class="pagination pagination-sm mb-0" id="videoDisplayPaginationControls">
+                                        </ul>
+                                    </div>
+                                </nav>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    <div class="text-muted small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Selected videos will appear in the homepage carousel. Changes take effect
+                                        immediately after saving.
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-secondary" onclick="selectAllDisplayVideos()">
+                                            <i class="fas fa-check-square me-1"></i>Select All
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="clearAllDisplayVideos()">
+                                            <i class="fas fa-square me-1"></i>Clear All
+                                        </button>
+                                        <button class="btn btn-success" onclick="saveVideoDisplaySelection()">
+                                            <i class="fas fa-save me-2"></i>Save Selection
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Management Section -->
+                    <div id="pdf-management-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-file-pdf"></i>
+                                    PDF Management System
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('contentManagement', 'showPDFUploadModal')">
+                                    <i class="fas fa-plus me-2"></i>Add New PDF
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div>
+                                        <h5 class="mb-0">PDF Learning Materials & Display Management</h5>
+                                        <small class="text-muted">Manage PDF materials and control which ones appear on
+                                            the courses page</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-info fs-6" id="totalPDFManagementCount">
+                                                <i class="fas fa-file-pdf me-1"></i>Total: 0 PDFs
+                                            </span>
+                                            <span class="badge bg-success fs-6 ms-2" id="selectedPDFManagementCount">
+                                                <i class="fas fa-check me-1"></i>Displayed: 0 PDFs
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-primary" onclick="window.adminPanel.modules.get('content-management').instance.loadPDFManagement()">
+                                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="window.adminPanel.modules.get('content-management').instance.savePDFDisplaySelection()">
+                                            <i class="fas fa-save me-2"></i>Save Display Settings
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Search and Filter Controls -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" id="pdfManagementSearchInput"
+                                            placeholder="Search by title, category, or description..."
+                                            onkeyup="filterPDFManagement()">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="pdfManagementCategoryFilter"
+                                            onchange="filterPDFManagement()">
+                                            <option value="">All Categories</option>
+                                            <option value="autocad">AutoCAD</option>
+                                            <option value="revit">Revit BIM</option>
+                                            <option value="sketchup">SketchUp</option>
+                                            <option value="3dsmax">3ds Max</option>
+                                            <option value="general">General BIM</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="pdfManagementLevelFilter"
+                                            onchange="filterPDFManagement()">
+                                            <option value="">All Levels</option>
+                                            <option value="beginner">Beginner</option>
+                                            <option value="intermediate">Intermediate</option>
+                                            <option value="advanced">Advanced</option>
+                                            <option value="expert">Expert</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select class="form-select" id="pdfManagementSortFilter"
+                                            onchange="filterPDFManagement()">
+                                            <option value="display-order">Display Order</option>
+                                            <option value="title">Sort by Title</option>
+                                            <option value="category">Sort by Category</option>
+                                            <option value="level">Sort by Level</option>
+                                            <option value="pages">Sort by Pages</option>
+                                            <option value="newest">Newest First</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-secondary btn-sm"
+                                                onclick="clearPDFManagementFilters()">
+                                                <i class="fas fa-times me-1"></i>Clear
+                                            </button>
+                                            <button class="btn btn-outline-info btn-sm" onclick="safeCall('contentManagement', 'exportPDFMaterials')">
+                                                <i class="fas fa-download me-1"></i>Export
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- PDF Management Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th style="width: 60px;">No</th>
+                                                <th style="width: 80px;">Display</th>
+                                                <th style="width: 120px;">Order</th>
+                                                <th>Title</th>
+                                                <th>Category</th>
+                                                <th>Level</th>
+                                                <th>Pages</th>
+                                                <th>Size</th>
+                                                <th>Description</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pdfManagementTableBody">
+                                            <tr>
+                                                <td colspan="10" class="text-center py-4">
+                                                    <div class="d-flex flex-column align-items-center">
+                                                        <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                                                        <p class="text-muted mb-2">No PDF materials loaded yet</p>
+                                                        <button class="btn btn-primary" onclick="window.adminPanel.modules.get('content-management').instance.loadPDFManagement()">
+                                                            <i class="fas fa-sync-alt me-2"></i>Load PDF Management
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <nav id="pdfManagementPagination" class="mt-4" style="display: none;">
+                                    <ul class="pagination justify-content-center" id="pdfManagementPaginationControls">
+                                    </ul>
+                                </nav>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    <div class="text-muted small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Check the "Display" column to control which PDFs appear on the courses page.
+                                        Use the Actions column to manage individual PDF materials.
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-secondary" onclick="safeCall('contentManagement', 'selectAllPDFDisplay')">
+                                            <i class="fas fa-check-square me-1"></i>Select All for Display
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="safeCall('contentManagement', 'clearAllPDFDisplay')">
+                                            <i class="fas fa-square me-1"></i>Clear All Display
+                                        </button>
+                                        <button class="btn btn-success" onclick="safeCall('contentManagement', 'savePDFDisplaySelection')">
+                                            <i class="fas fa-save me-2"></i>Save Display Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- News Section -->
+                    <div id="news-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-newspaper"></i>
+                                    News Management
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('news', 'loadNews')">
+                                    <i class="fas fa-sync me-2"></i>Load News
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div id="news-content">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Click "Load News" to initialize news management.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plugins Section -->
+                    <div id="plugins-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-plug"></i>
+                                    Plugins Management
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('plugins', 'loadPlugins')">
+                                    <i class="fas fa-sync me-2"></i>Load Plugins
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div id="plugins-content">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-plug fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Click "Load Plugins" to initialize plugins management.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Library Section -->
+                    <div id="library-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-book"></i>
+                                    Library Management
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('library', 'loadLibrary')">
+                                    <i class="fas fa-sync me-2"></i>Load Library
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div id="library-content">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Click "Load Library" to initialize file management.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BIM Media Section -->
+                    <div id="bim-media-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-tags"></i>
+                                    BIM Media Tagging System
+                                </div>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="mb-0">Media Management Dashboard</h5>
+                                    <button class="btn btn-modern-primary" onclick="safeCall('contentManagement', 'loadBIMMedia')">
+                                        <i class="fas fa-sync me-2"></i>Load BIM Media
+                                    </button>
+                                </div>
+                                <div id="bim-media-content">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Click "Load BIM Media" to initialize media tagging.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Section -->
+                    <div id="change-password-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-key"></i>
+                                    Change Admin Password
+                                </div>
+                            </div>
+                            <div class="card-body-modern">
+                                <div class="row justify-content-center">
+                                    <div class="col-md-8">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Security Notice:</strong> You can only change the password if you know the current password.
+                                            This ensures account security.
+                                        </div>
+
+                                        <form id="changePasswordForm">
+                                            <div class="mb-4">
+                                                <label for="currentPassword" class="form-label fw-semibold">
+                                                    <i class="fas fa-lock me-2"></i>Current Password
+                                                </label>
+                                                <input type="password" class="form-control" id="currentPassword"
+                                                       placeholder="Enter your current password" required>
+                                                <div class="form-text">
+                                                    Enter your current admin password for verification
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <label for="newPassword" class="form-label fw-semibold">
+                                                    <i class="fas fa-key me-2"></i>New Password
+                                                </label>
+                                                <input type="password" class="form-control" id="newPassword"
+                                                       placeholder="Enter new password" required minlength="8">
+                                                <div class="form-text">
+                                                    Minimum 8 characters. Use a strong password with letters, numbers, and symbols.
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <label for="confirmPassword" class="form-label fw-semibold">
+                                                    <i class="fas fa-check-circle me-2"></i>Confirm New Password
+                                                </label>
+                                                <input type="password" class="form-control" id="confirmPassword"
+                                                       placeholder="Confirm new password" required minlength="8">
+                                                <div class="form-text">
+                                                    Re-enter the new password to confirm
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <div class="password-strength" id="passwordStrength">
+                                                    <div class="progress">
+                                                        <div class="progress-bar" id="passwordStrengthBar" role="progressbar"
+                                                             style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted" id="passwordStrengthText">Password strength: Weak</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex gap-3">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-save me-2"></i>Change Password
+                                                </button>
+                                                <button type="button" class="btn btn-secondary" onclick="resetChangePasswordForm()">
+                                                    <i class="fas fa-undo me-2"></i>Reset Form
+                                                </button>
+                                            </div>
+                                        </form>
+
+                                        <hr class="my-4">
+
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Important:</strong>
+                                            <ul class="mb-0 mt-2">
+                                                <li>After changing password, you will need to use the new password for future logins</li>
+                                                <li>Make sure to remember your new password</li>
+                                                <li>The change takes effect immediately</li>
+                                                <li>You will remain logged in with the current session</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Section -->
+                    <div id="system-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-server"></i>
+                                    System Information
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('system', 'loadSystem')">
+                                    <i class="fas fa-sync me-2"></i>Load System Info
+                                </button>
+                            </div>
+                            <div class="card-body-modern">
+                                <div id="system-content">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-server fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Click "Load System Info" to initialize system monitoring.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Preview Modal -->
+    <div class="modal fade" id="mediaPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-eye me-2"></i>Media Preview
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <div id="previewLoading" class="mb-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading preview...</p>
+                        </div>
+
+                        <!-- Video Preview -->
+                        <video id="previewVideo" controls class="w-100 d-none" style="max-height: 70vh;">
+                            Your browser does not support video playback.
+                        </video>
+
+                        <!-- Image Preview -->
+                        <img id="previewImage" class="img-fluid d-none" style="max-height: 70vh;" alt="Preview">
+
+                        <!-- Media Info -->
+                        <div id="previewInfo" class="mt-3 text-start d-none">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>File Information:</h6>
+                                    <p id="previewFileName" class="mb-1"><strong>Name:</strong> <span></span></p>
+                                    <p id="previewFileType" class="mb-1"><strong>Type:</strong> <span></span></p>
+                                    <p id="previewFileSize" class="mb-1"><strong>Size:</strong> <span></span></p>
+                                    <p id="previewFileSource" class="mb-0"><strong>Source:</strong> <span></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Tags & Status:</h6>
+                                    <p id="previewTags" class="mb-1"><strong>Tags:</strong> <span></span></p>
+                                    <p id="previewStatus" class="mb-0"><strong>Status:</strong> <span></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div id="previewActions">
+                        <!-- Actions will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer-container"></div>
+
+    <!-- Load Admin Panel JavaScript -->
+    <script src="adminbcl.js"></script>
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../lib/wow/wow.min.js"></script>
+    <script src="../../lib/easing/easing.min.js"></script>
+    <script src="../../lib/waypoints/waypoints.min.js"></script>
+    <script src="../../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../../js/main.js"></script>
+    <script src="../../js/user.js"></script>
+    <script src="../../js/loadComponents.js"></script>
+
+    <!-- Refactored Admin Panel JavaScript (Modular) -->
+    <script src="../../js/admin/admin-panel.js"></script>
+    <script src="../../js/admin/modules/auth.js"></script>
+    <script src="../../js/admin/modules/dashboard.js"></script>
+    <script src="../../js/admin/modules/users.js"></script>
+    <script src="../../js/admin/modules/questions.js"></script>
+    <script src="../../js/admin/modules/videos.js"></script>
+    <script src="../../js/admin/modules/video-display.js"></script>
+    <script src="../../js/admin/modules/content-management.js"></script>
+    <script src="../../js/admin/modules/news.js?v=20260303g"></script>
+    <script src="../../js/admin/modules/plugins.js"></script>
+    <script src="../../js/admin/modules/library.js"></script>
+    <script src="../../js/admin/modules/system.js"></script>
+
+    <!-- Safe wrapper functions for onclick handlers -->
+    <script>
+        /**
+         * Safe function call wrapper for admin panel modules
+         * Handles cases where modules haven't been initialized yet
+         */
+        function safeCall(moduleName, methodName, ...args) {
+            try {
+                if (!window.adminPanel) {
+                    console.warn(`⚠️ AdminPanel not available for ${moduleName}.${methodName}`);
+                    showAlert('Admin panel is still loading. Please wait a moment and try again.');
+                    return;
+                }
+
+                const module = window.adminPanel.modules.get(moduleName);
+                if (!module) {
+                    console.warn(`⚠️ Module '${moduleName}' not found`);
+                    showAlert(`Module '${moduleName}' is not available.`);
+                    return;
+                }
+
+                if (!module.instance) {
+                    console.warn(`⚠️ Module '${moduleName}' instance not initialized`);
+                    showAlert(`Module '${moduleName}' is still loading. Please wait a moment and try again.`);
+                    return;
+                }
+
+                if (typeof module.instance[methodName] !== 'function') {
+                    console.warn(`⚠️ Method '${methodName}' not found in module '${moduleName}'`);
+                    showAlert(`Function '${methodName}' is not available in module '${moduleName}'.`);
+                    return;
+                }
+
+                // Call the method with provided arguments
+                return module.instance[methodName](...args);
+
+            } catch (error) {
+                console.error(`❌ Error calling ${moduleName}.${methodName}:`, error);
+                showAlert(`Error executing ${moduleName}.${methodName}: ${error.message}`);
+            }
+        }
+
+        /**
+         * Check if admin panel is ready
+         */
+        function isAdminPanelReady() {
+            return window.adminPanel &&
+                   window.adminPanel.modules &&
+                   window.adminPanel.modules.get('users') &&
+                   window.adminPanel.modules.get('users').instance;
+        }
+
+        /**
+         * Show alert message to user
+         */
+        function showAlert(message, type = 'warning') {
+            // Create alert element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            // Add to body
+            document.body.appendChild(alertDiv);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        /**
+         * Load Change Password Section
+         */
+        function loadChangePasswordSection() {
+            console.log('🔐 Loading change password section...');
+
+            // Reset form when section is loaded
+            resetChangePasswordForm();
+
+            // Add form submit handler
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            if (changePasswordForm) {
+                changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
+            }
+
+            // Add password strength checker
+            const newPasswordInput = document.getElementById('newPassword');
+            if (newPasswordInput) {
+                newPasswordInput.addEventListener('input', checkPasswordStrength);
+            }
+
+            console.log('✅ Change password section loaded');
+        }
+
+        /**
+         * Handle Change Password Form Submit
+         */
+        async function handleChangePasswordSubmit(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Client-side validation
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showAlert('All password fields are required', 'warning');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showAlert('New password and confirmation do not match', 'warning');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showAlert('New password must be at least 8 characters long', 'warning');
+                return;
+            }
+
+            // Show loading state
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Changing Password...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/admin/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include', // Include session cookies
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword,
+                        confirmPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showAlert('Password changed successfully! You will need to use the new password for future logins.', 'success');
+
+                    // Reset form
+                    resetChangePasswordForm();
+
+                } else {
+                    showAlert(result.error || 'Failed to change password', 'danger');
+                }
+
+            } catch (error) {
+                console.error('❌ Change password error:', error);
+                showAlert('Network error occurred. Please try again.', 'danger');
+            } finally {
+                // Reset button state
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+            }
+        }
+
+        /**
+         * Check Password Strength
+         */
+        function checkPasswordStrength() {
+            const password = document.getElementById('newPassword').value;
+            const strengthBar = document.getElementById('passwordStrengthBar');
+            const strengthText = document.getElementById('passwordStrengthText');
+
+            if (!password) {
+                strengthBar.style.width = '0%';
+                strengthText.textContent = 'Password strength: Weak';
+                strengthBar.className = 'progress-bar';
+                return;
+            }
+
+            let strength = 0;
+            let feedback = [];
+
+            // Length check
+            if (password.length >= 8) {
+                strength += 25;
+            } else {
+                feedback.push('At least 8 characters');
+            }
+
+            // Lowercase check
+            if (/[a-z]/.test(password)) {
+                strength += 25;
+            } else {
+                feedback.push('Lowercase letter');
+            }
+
+            // Uppercase check
+            if (/[A-Z]/.test(password)) {
+                strength += 25;
+            } else {
+                feedback.push('Uppercase letter');
+            }
+
+            // Number or symbol check
+            if (/[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+                strength += 25;
+            } else {
+                feedback.push('Number or symbol');
+            }
+
+            // Update UI
+            strengthBar.style.width = strength + '%';
+
+            if (strength < 25) {
+                strengthBar.className = 'progress-bar bg-danger';
+                strengthText.textContent = 'Password strength: Very Weak';
+            } else if (strength < 50) {
+                strengthBar.className = 'progress-bar bg-warning';
+                strengthText.textContent = 'Password strength: Weak';
+            } else if (strength < 75) {
+                strengthBar.className = 'progress-bar bg-info';
+                strengthText.textContent = 'Password strength: Good';
+            } else {
+                strengthBar.className = 'progress-bar bg-success';
+                strengthText.textContent = 'Password strength: Strong';
+            }
+
+            // Show feedback for weak passwords
+            if (strength < 75 && feedback.length > 0) {
+                strengthText.textContent += ' - Missing: ' + feedback.join(', ');
+            }
+        }
+
+        /**
+         * Reset Change Password Form
+         */
+        function resetChangePasswordForm() {
+            const form = document.getElementById('changePasswordForm');
+            if (form) {
+                form.reset();
+            }
+
+            // Reset password strength indicator
+            const strengthBar = document.getElementById('passwordStrengthBar');
+            const strengthText = document.getElementById('passwordStrengthText');
+
+            if (strengthBar) {
+                strengthBar.style.width = '0%';
+                strengthBar.className = 'progress-bar';
+            }
+
+            if (strengthText) {
+                strengthText.textContent = 'Password strength: Weak';
+            }
+
+            console.log('🔄 Change password form reset');
+        }
+
+        /**
+         * Initialize safe onclick handlers when page loads
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Setting up safe onclick handlers...');
+
+            // Wait a bit for modules to initialize
+            setTimeout(() => {
+                if (isAdminPanelReady()) {
+                    console.log('✅ Admin panel modules ready');
+                } else {
+                    console.log('⏳ Admin panel modules still initializing...');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+
+</html>
+
+
+
+
+
+
+
+

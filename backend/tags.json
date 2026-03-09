@@ -1,0 +1,92 @@
+{
+  "description": "Tagline database untuk materi kursus - dikelola oleh AdminBCL",
+  "lastUpdated": "2025-12-02T03:30:06.447Z",
+  "updatedBy": "AdminBCL",
+  "tags": {
+    "video": {
+      "Pengenalan BIM.mp4": {
+        "tagline": "Dasar-dasar Building Information Modeling untuk pemula",
+        "category": "beginner",
+        "updatedAt": "2025-12-02T03:22:13.024Z",
+        "updatedBy": "AdminBCL",
+        "tags": [
+          "bim",
+          "definisi"
+        ]
+      },
+      "Learning Enscape 3.4 with Revit.mp4": {
+        "tagline": "Tutorial rendering real-time menggunakan Enscape dengan Revit",
+        "category": "modeling",
+        "updatedAt": "2025-12-02T03:29:51.476Z",
+        "updatedBy": "AdminBCL",
+        "tags": [
+          "enscape"
+        ]
+      },
+      "Tutorial Civil3D No-01.mp4": {
+        "tagline": "Pengantar lengkap AutoCAD Civil 3D untuk survey dan desain jalan",
+        "category": "beginner",
+        "updatedAt": "2025-09-17T09:40:00.000Z",
+        "updatedBy": "AdminBCL"
+      },
+      "Learning Enscape 3.5 Tutorial Discover the New Features.mp4": {
+        "tags": [
+          "enscape"
+        ],
+        "updatedAt": "2025-12-02T03:30:06.447Z"
+      }
+    },
+    "pdf": {},
+    "other": {}
+  },
+  "categories": {
+    "beginner": {
+      "name": "Pemula",
+      "description": "Materi untuk pemula dalam BIM",
+      "color": "#4CAF50",
+      "icon": "fas fa-seedling"
+    },
+    "intermediate": {
+      "name": "Menengah",
+      "description": "Materi tingkat menengah",
+      "color": "#FF9800",
+      "icon": "fas fa-cogs"
+    },
+    "advanced": {
+      "name": "Lanjutan",
+      "description": "Materi tingkat lanjutan",
+      "color": "#F44336",
+      "icon": "fas fa-rocket"
+    },
+    "modeling": {
+      "name": "Modeling",
+      "description": "Teknik modeling 3D",
+      "color": "#2196F3",
+      "icon": "fas fa-cube"
+    },
+    "coordination": {
+      "name": "Koordinasi",
+      "description": "Koordinasi proyek BIM",
+      "color": "#9C27B0",
+      "icon": "fas fa-users"
+    },
+    "analysis": {
+      "name": "Analisis",
+      "description": "Analisis dan simulasi",
+      "color": "#00BCD4",
+      "icon": "fas fa-chart-line"
+    },
+    "documentation": {
+      "name": "Dokumentasi",
+      "description": "Dokumentasi proyek",
+      "color": "#795548",
+      "icon": "fas fa-file-alt"
+    },
+    "workflow": {
+      "name": "Workflow",
+      "description": "Proses kerja BIM",
+      "color": "#607D8B",
+      "icon": "fas fa-route"
+    }
+  }
+}

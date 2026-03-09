@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencarian Lanjutan BIM NKE</title>
+    <meta name="description" content="Pencarian lanjutan untuk file BIM, dokumen, dan materi pembelajaran">
+    <meta name="keywords" content="BIM, search, file, documents, Revit, AutoCAD, ArchiCAD">
+
+    <!-- Favicon -->
+    <link href="../img/icons/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons removed due to CDN issues -->
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #fb873f;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --info-color: #17a2b8;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Heebo', sans-serif;
+        }
+
+        .search-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .search-header p {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .search-form {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-input-group .form-control,
+        .search-input-group .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input-group .form-control:focus,
+        .search-input-group .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(251, 135, 63, 0.25);
+        }
+
+        .search-btn {
+            background: linear-gradient(45deg, var(--primary-color), #ff6b35);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(251, 135, 63, 0.3);
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(251, 135, 63, 0.4);
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-container .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary-color);
+        }
+
+        .results-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .file-count {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .export-btn {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .results-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .results-table thead th {
+            background: var(--light-bg);
+            border: none;
+            color: var(--dark-bg);
+            font-weight: 600;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .results-table tbody td {
+            padding: 15px;
+            border: none;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .results-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .results-table tbody tr:hover {
+            background: rgba(251, 135, 63, 0.05);
+            transform: scale(1.01);
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--dark-bg);
+            text-align: left !important;
+        }
+
+        .file-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .file-type.pdf {
+            background: #dc3545;
+            color: white;
+        }
+
+        .file-type.video {
+            background: #28a745;
+            color: white;
+        }
+
+        .file-type.rvt {
+            background: #007bff;
+            color: white;
+        }
+
+        .file-type.dwg {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .file-type.other {
+            background: #6c757d;
+            color: white;
+        }
+
+        .file-size {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--info-color);
+        }
+
+        .action-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .action-btn.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #e8641a;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.warning {
+            background: var(--warning-color);
+            color: #212529;
+        }
+
+        .action-btn.warning:hover {
+            background: #e0a800;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary-color);
+        }
+
+        .no-results i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .search-tips {
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .search-tips h5 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .search-tips ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .search-tips li {
+            padding: 5px 0;
+            color: var(--dark-bg);
+        }
+
+        .search-tips li i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .search-input-group {
+                flex-direction: column;
+            }
+
+            .search-input-group .form-control,
+            .search-input-group .form-select {
+                width: 100%;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .results-table {
+                font-size: 0.9rem;
+            }
+
+            .results-table thead th,
+            .results-table tbody td {
+                padding: 10px 5px;
+            }
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Notification styles */
+        .notification {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .notification .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .notification .btn-close:hover {
+            opacity: 1;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+    <!-- Back Button -->
+    <button class="back-btn" onclick="goBack()" title="Kembali">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <div class="container-fluid">
+        <div class="search-container">
+            <div class="search-header">
+                <h1><i class="fas fa-search me-3"></i>Pencarian Lanjutan BIM NKE</h1>
+                <p>Temukan file BIM, dokumen, dan materi pembelajaran dengan mudah</p>
+            </div>
+
+            <div class="search-form">
+                <div class="search-input-group">
+                    <input type="text" id="searchInput" class="form-control flex-grow-1"
+                        placeholder="Masukkan kata kunci pencarian..." onkeypress="handleKeyPress(event)">
+                    <select id="filterType" class="form-select">
+                        <option value="all">📂 Semua Kategori</option>
+                        <option value="pdf">📄 PDF</option>
+                        <option value="video">🎥 Video</option>
+                        <option value="text">📝 Teks</option>
+                        <option value="rvt">🏗️ Revit (.rvt)</option>
+                        <option value="dwg">📐 CAD (.dwg)</option>
+                        <option value="rfa">🔧 Revit Family (.rfa)</option>
+                        <option value="pln">🏛️ ArchiCad (.pln)</option>
+                        <option value="skp">🏠 SketchUp (.skp)</option>
+                        <option value="tm">🎬 Twinmotion (.tm)</option>
+                    </select>
+                    <button id="searchButton" class="search-btn" onclick="startSearch()">
+                        <i class="fas fa-search me-2"></i>Cari
+                    </button>
+                </div>
+
+                <div id="loading" class="loading-container" style="display: none;">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Memproses pencarian...</p>
+                </div>
+            </div>
+
+            <div class="search-tips">
+                <h5><i class="fas fa-lightbulb me-2"></i>Tips Pencarian</h5>
+                <ul>
+                    <li><i class="fas fa-check"></i> Gunakan kata kunci spesifik seperti "struktur", "arsitek", atau
+                        "mekanikal"</li>
+                    <li><i class="fas fa-check"></i> Filter berdasarkan jenis file untuk hasil yang lebih tepat</li>
+                    <li><i class="fas fa-check"></i> Cari nama proyek atau kode untuk file BIM tertentu</li>
+                    <li><i class="fas fa-check"></i> File Revit (.rvt) dapat dibuka langsung di aplikasi Revit</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="resultsContainer" class="results-container" style="display: none;">
+            <div class="results-header">
+                <div id="fileCount" class="file-count">
+                    <i class="fas fa-file me-2"></i>Menampilkan 0 hasil
+                </div>
+                <button class="export-btn" onclick="exportResults()" title="Ekspor Hasil">
+                    <i class="fas fa-download me-1"></i>Ekspor
+                </button>
+            </div>
+
+            <div class="results-table-container">
+                <table id="resultTable" class="results-table table">
+                    <thead>
+                        <tr>
+                            <th width="5%">#</th>
+                            <th width="30%">Nama File</th>
+                            <th width="10%">Tipe</th>
+                            <th width="20%">Lokasi</th>
+                            <th width="10%">Ukuran</th>
+                            <th width="15%">Terakhir Update</th>
+                            <th width="10%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="searchResults">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="noResults" class="no-results" style="display: none;">
+                <i class="fas fa-search"></i>
+                <h4>Tidak Ada Hasil</h4>
+                <p>Coba gunakan kata kunci yang berbeda atau filter yang lebih luas</p>
+                <button class="btn btn-primary" onclick="clearSearch()">
+                    <i class="fas fa-redo me-2"></i>Coba Lagi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        sessionStorage.setItem("lastPage", window.location.href);
+    </script>
+
+    <!-- Fungsi Pencarian Advance-->
+    <script src="../js/advancesearch.js"></script>
+
+    <div id="file-list"></div>
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="//code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+
+    <!-- Tambahkan di bagian <head> atau sebelum </body> -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video-js.min.css" rel="stylesheet">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video.min.js"></script>
+
+
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/user.js" defer></script>
+
+
+</body>
+
+</html>

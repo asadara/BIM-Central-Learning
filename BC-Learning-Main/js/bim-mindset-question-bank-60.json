@@ -1,0 +1,1402 @@
+﻿[
+    {
+        "id":  "BM-001",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Dalam konteks BCL/NKE, definisi mindset BIM yang paling tepat adalahâ€¦",
+        "choices":  [
+                        "Cara menggambar 3D yang rapi dan detail",
+                        "Sistem untuk memastikan informasi proyek dipakai dengan benar (status, versi, otoritas)",
+                        "Software untuk koordinasi desain dan animasi",
+                        "Metode membuat gambar kerja lebih cepat"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Mindset BIM di NKE berangkat dari manajemen informasi: status/versi/otoritas menentukan boleh-tidaknya informasi dipakai."
+    },
+    {
+        "id":  "BM-002",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Dalam BIM, pertanyaan paling penting sebelum informasi dipakai untuk lapangan adalahâ€¦",
+        "choices":  [
+                        "Siapa yang membuat modelnya?",
+                        "Seberapa detail visualnya?",
+                        "Apakah status informasi ini sudah boleh dipakai (approved/published)?",
+                        "Software apa yang dipakai?"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Status informasi menentukan kelayakan penggunaan, bukan estetika atau siapa pembuatnya."
+    },
+    {
+        "id":  "BM-003",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Kalimat â€œBIM bukan 3Dâ€ maksudnyaâ€¦",
+        "choices":  [
+                        "Model 3D tidak diperlukan sama sekali",
+                        "BIM lebih fokus pada sistem pengelolaan informasi daripada bentuk visual",
+                        "BIM hanya untuk 2D",
+                        "3D selalu salah untuk konstruksi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "3D adalah salah satu wadah informasi; esensinya tetap pada sistem informasi (status, versi, otoritas, jejak)."
+    },
+    {
+        "id":  "BM-004",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Yang paling sering memicu rework di proyek adalahâ€¦",
+        "choices":  [
+                        "Kurang skill software",
+                        "Kurang render yang bagus",
+                        "Informasi salah/versi lama dipakai di waktu yang salah",
+                        "Terlalu banyak meeting"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Rework sering terjadi karena salah pakai informasi (status/versi/otoritas tidak jelas)."
+    },
+    {
+        "id":  "BM-005",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Di NKE, keputusan procurement/eksekusi seharusnya berbasis pada informasi yangâ€¦",
+        "choices":  [
+                        "Paling detail dan lengkap",
+                        "Sudah dibahas informal di lapangan",
+                        "Sudah approved/published dan jelas versinya",
+                        "Sudah dikirim via WA grup"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Keputusan harus bersandar pada informasi sah (approved/published) dengan versi/riwayat jelas."
+    },
+    {
+        "id":  "BM-006",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Pernyataan yang paling benar: BIM ituâ€¦",
+        "choices":  [
+                        "Menggantikan engineer senior",
+                        "Membuat proyek bebas masalah",
+                        "Melindungi engineer dan site dari risiko salah pakai informasi",
+                        "Hanya cocok untuk proyek mega"
+                    ],
+        "answer_index":  2,
+        "explanation":  "BIM bukan mengganti orang, tetapi mengunci sistem agar informasi digunakan dengan benar."
+    },
+    {
+        "id":  "BM-007",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Konvensional vs BIM: perbedaan paling mendasar adalahâ€¦",
+        "choices":  [
+                        "Konvensional 2D, BIM 3D",
+                        "Konvensional manual, BIM digital",
+                        "Konvensional banyak asumsi implisit; BIM membuat aturan eksplisit",
+                        "Konvensional selalu lebih cepat"
+                    ],
+        "answer_index":  2,
+        "explanation":  "BIM mengekspisitkan aturan/status/otoritas sehingga tidak bergantung pada asumsi dan ingatan."
+    },
+    {
+        "id":  "BM-008",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Makna â€œProyek jalan â‰  proyek terkendaliâ€ adalahâ€¦",
+        "choices":  [
+                        "Proyek harus dihentikan jika pakai BIM",
+                        "Proyek tanpa BIM pasti gagal",
+                        "Proyek bisa selesai tetapi biaya kesalahan informasi sering tidak tercatat sebagai kegagalan",
+                        "Kontrol proyek selalu membuat proyek lebih lambat"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Proyek bisa selesai namun â€˜bocorâ€™ biaya/waktu karena salah pakai informasi yang tidak terukur."
+    },
+    {
+        "id":  "BM-009",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Yang dimaksud â€˜status informasiâ€™ dalam BIM adalahâ€¦",
+        "choices":  [
+                        "Ukuran file dan performa komputer",
+                        "Level detail grafis",
+                        "Tingkat kesiapan informasi untuk dipakai (WIP/Review/Approved/Archived)",
+                        "Nama folder dan struktur drive"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Status memberi sinyal boleh-tidaknya informasi digunakan untuk pekerjaan/keputusan."
+    },
+    {
+        "id":  "BM-010",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "BIM dianggap â€˜baru mulaiâ€™ ketikaâ€¦",
+        "choices":  [
+                        "Sudah membuat model 3D",
+                        "Sudah pakai Revit/Tekla",
+                        "Sudah ada aturan status/versi/otoritas dan disiplin mengikuti gate penggunaan informasi",
+                        "Sudah ada template titleblock"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Kunci awal BIM adalah disiplin manajemen informasi, bukan sekadar alat."
+    },
+    {
+        "id":  "BM-011",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Di sistem BIM, yang paling berbahaya adalahâ€¦",
+        "choices":  [
+                        "Model belum detail",
+                        "Status informasi tidak jelas tetapi sudah dipakai untuk keputusan",
+                        "Jumlah file terlalu banyak",
+                        "Koordinasi dilakukan terlalu sering"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Risiko terbesar muncul saat informasi belum sah/versi tidak jelas, namun dipakai untuk keputusan/eksekusi."
+    },
+    {
+        "id":  "BM-012",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika desain sering berubah, respon mindset BIM yang benar adalahâ€¦",
+        "choices":  [
+                        "Menghindari update model sampai desain final",
+                        "Tetap update, tetapi kunci perubahan lewat issue/RFI, status, versi, dan komunikasi rilis",
+                        "Minta site menunggu tanpa rencana",
+                        "Menghapus versi lama agar tidak bingung"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Perubahan tidak berbahaya; yang berbahaya perubahan tanpa jejak, status, dan rilis yang jelas."
+    },
+    {
+        "id":  "BM-013",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Pada kondisi lapangan mendesak, yang paling sesuai governance NKE adalahâ€¦",
+        "choices":  [
+                        "Site boleh pakai info apa saja asal cepat",
+                        "Site hanya boleh pakai info WIP jika disetujui lisan",
+                        "Jika belum approved/published, lakukan hold/verify lalu rilis resmi atau keputusan risiko disahkan oleh otoritas",
+                        "Langsung eksekusi dan revisi belakangan"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Keputusan cepat tetap perlu kontrol: hold/verify, otoritas jelas, dan jejak keputusan."
+    },
+    {
+        "id":  "BM-014",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Yang dimaksud â€˜decision gateâ€™ di BIM adalahâ€¦",
+        "choices":  [
+                        "Gerbang masuk ke software",
+                        "Titik kontrol: informasi boleh dipakai atau belum berdasarkan status/approval",
+                        "Jadwal meeting koordinasi",
+                        "Format file standar"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Decision gate melindungi proyek dari keputusan prematur berbasis info belum sah."
+    },
+    {
+        "id":  "BM-015",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika terjadi konflik versi (site pakai revisi lama), tindakan paling tepat adalahâ€¦",
+        "choices":  [
+                        "Salahkan tim yang mengirim",
+                        "Segera freeze: cek versi yang berlaku, keluarkan rilis resmi + broadcast perubahan + catat dampaknya",
+                        "Hapus semua versi lama dari komputer site",
+                        "Abaikan karena pekerjaan sudah terlanjur"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Prioritas: hentikan kebingungan versi dengan rilis resmi, broadcast, dan pencatatan dampak."
+    },
+    {
+        "id":  "BM-016",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Dalam konteks NKE, BIM paling tepat dipandang sebagaiâ€¦",
+        "choices":  [
+                        "Dokumen gambar yang lebih rapi",
+                        "Sistem kerja untuk mengelola informasi lintas disiplin",
+                        "Aplikasi 3D untuk presentasi owner",
+                        "Metode mengganti rapat koordinasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "BIM adalah sistem kerja manajemen informasi lintas disiplin, bukan sekadar media presentasi."
+    },
+    {
+        "id":  "BM-017",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Informasi â€˜rapiâ€™ tetapi belum disahkan (approved) sebaiknyaâ€¦",
+        "choices":  [
+                        "Dipakai saja karena terlihat benar",
+                        "Dipakai untuk procurement agar cepat",
+                        "Dipakai hanya untuk internal WIP, bukan untuk keputusan/site",
+                        "Dihapus agar tidak membingungkan"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Informasi WIP boleh untuk internal produksi, tetapi tidak untuk keputusan/eksekusi."
+    },
+    {
+        "id":  "BM-018",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Apa yang paling membuat BIM relevan untuk kontraktor?",
+        "choices":  [
+                        "Render lebih bagus",
+                        "Kontrol risiko biaya/waktu/klaim dari salah pakai informasi",
+                        "Menambah jumlah report",
+                        "Membuat semua orang wajib pakai satu software"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Kontraktor sensitif pada dampak: biaya, waktu, mutu, klaimâ€”semuanya sangat dipengaruhi kualitas informasi."
+    },
+    {
+        "id":  "BM-019",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Salah satu tanda BIM â€˜hidupâ€™ di proyek adalahâ€¦",
+        "choices":  [
+                        "Ada model 3D di laptop BIM",
+                        "Ada rule: versi, status, siapa approve, dan semuanya patuh",
+                        "Ada folder bernama BIM",
+                        "Ada file IFC dikirim"
+                    ],
+        "answer_index":  1,
+        "explanation":  "BIM hidup ketika disiplin status/versi/otoritas berjalan, bukan ketika file 3D ada."
+    },
+    {
+        "id":  "BM-020",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Apa makna â€˜informasi punya penanggung jawabâ€™?",
+        "choices":  [
+                        "Semua orang bertanggung jawab sama",
+                        "Ada pihak yang jelas mengelola, merilis, dan mengumumkan perubahan",
+                        "Penanggung jawab hanya site",
+                        "Penanggung jawab hanya BIM modeller"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Penanggung jawab informasi memastikan rilis/versi/status jelas dan diketahui penerima."
+    },
+    {
+        "id":  "BM-021",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Kalimat â€œyang mahal bukan BIM, yang mahal itu salah informasiâ€ merujuk padaâ€¦",
+        "choices":  [
+                        "Biaya lisensi",
+                        "Biaya render",
+                        "Dampak rework/delay/waste/claim karena keputusan salah",
+                        "Biaya server"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Biaya terbesar biasanya konsekuensi salah pakai informasi: rework, delay, waste, claim."
+    },
+    {
+        "id":  "BM-022",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "BIM bukan pengganti engineer karenaâ€¦",
+        "choices":  [
+                        "BIM tidak bisa 3D",
+                        "BIM tidak bisa hitung struktur",
+                        "BIM membantu sistem keputusan, tetapi judgement teknis tetap manusia",
+                        "BIM hanya untuk arsitek"
+                    ],
+        "answer_index":  2,
+        "explanation":  "BIM mengunci proses informasi; judgement tetap pada engineer/otoritas teknis."
+    },
+    {
+        "id":  "BM-023",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Dalam cara pikir BIM, â€˜dokumenâ€™ yang benar adalah dokumen yangâ€¦",
+        "choices":  [
+                        "Paling lengkap",
+                        "Paling cepat dibuat",
+                        "Jelas status/versi/berlaku dan dapat ditelusuri",
+                        "Paling banyak halaman"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Dokumen yang bisa dipakai harus punya status/versi/validity jelas dan jejak siapa-kapan."
+    },
+    {
+        "id":  "BM-024",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Jika ada dua file berbeda dengan konten mirip, yang harus dipakai adalahâ€¦",
+        "choices":  [
+                        "Yang terbaru tanggal editnya",
+                        "Yang paling besar ukurannya",
+                        "Yang statusnya approved/published dan tercatat sebagai versi berlaku",
+                        "Yang dikirim terakhir di WA"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Kriteria utama adalah status/versi berlaku, bukan sekadar tanggal kirim atau ukuran file."
+    },
+    {
+        "id":  "BM-025",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Apa yang dimaksud â€˜jejak (trace)â€™ dalam BIM?",
+        "choices":  [
+                        "Riwayat chat",
+                        "Screenshot",
+                        "Catatan siapa mengubah apa, kapan, versi berapa, dan basis keputusan",
+                        "Nama folder"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Traceability = siapa/kapan/versi/keputusanâ€”penting untuk audit dan klaim."
+    },
+    {
+        "id":  "BM-026",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Perubahan desain â€˜amanâ€™ jikaâ€¦",
+        "choices":  [
+                        "Jarang terjadi",
+                        "Disepakati lisan",
+                        "Masuk sistem: issue/RFI, update model/dokumen, re-approve, broadcast",
+                        "Dibiarkan hingga akhir"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Perubahan aman bila terkendali: tercatat, diupdate, disahkan ulang, dan dikomunikasikan."
+    },
+    {
+        "id":  "BM-027",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "BIM Mindset yang benar akan membuat tim lebih sering bertanyaâ€¦",
+        "choices":  [
+                        "Software apa?",
+                        "Render pakai apa?",
+                        "Statusnya apa, versi berapa, siapa yang mengesahkan?",
+                        "Kenapa file besar?"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Mindset BIM menekankan status/versi/otoritas sebelum penggunaan."
+    },
+    {
+        "id":  "BM-028",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Jika informasi belum approved, tindakan paling tepat adalahâ€¦",
+        "choices":  [
+                        "Tetap pakai agar tidak terlambat",
+                        "Hold keputusan, verifikasi, dan minta rilis/approval resmi",
+                        "Ganti dengan asumsi sendiri",
+                        "Minta BIM bikin animasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Hold/verify mencegah keputusan prematur berbasis info belum sah."
+    },
+    {
+        "id":  "BM-029",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "BIM membantu tim site terutama karenaâ€¦",
+        "choices":  [
+                        "Membuat gambar lebih cantik",
+                        "Mengurangi kebingungan versi, status, dan rilis informasi",
+                        "Membuat site jadi modeller",
+                        "Menghapus semua revisi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Site butuh kepastian versi/status; BIM mengurangi ambiguity dan rework."
+    },
+    {
+        "id":  "BM-030",
+        "level":  "basic",
+        "type":  "single",
+        "prompt":  "Mana pernyataan paling tepat?",
+        "choices":  [
+                        "Jika model sudah 3D maka pasti benar",
+                        "Jika info sudah approved maka boleh jadi basis keputusan",
+                        "Jika file terbaru maka pasti berlaku",
+                        "Jika BIM team setuju maka cukup"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Approved/published adalah syarat minimal informasi dipakai untuk keputusan/eksekusi."
+    },
+    {
+        "id":  "BM-031",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Di proyek, baseline schedule berubah karena desain berubah. Mindset BIM yang tepat adalahâ€¦",
+        "choices":  [
+                        "Mengabaikan baseline, pakai progress saja",
+                        "Mengunci perubahan lewat change control dan re-baseline terkontrol",
+                        "Menunggu owner selesai 100% baru update",
+                        "Meminta site tetap mengikuti baseline lama"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Perubahan harus masuk change control: issue/RFI, dampak, persetujuan, re-baseline terkontrol."
+    },
+    {
+        "id":  "BM-032",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika dua disiplin (ARS/MEP) konflik, output koordinasi yang â€˜benarâ€™ adalahâ€¦",
+        "choices":  [
+                        "Rapat panjang",
+                        "Kesepakatan lisan",
+                        "Issue log yang jelas: owner, due date, solusi, bukti update, status close",
+                        "Menghapus elemen yang bentrok"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Koordinasi harus menghasilkan artefak: issue log dan bukti update/close."
+    },
+    {
+        "id":  "BM-033",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Mengapa â€˜versi berlakuâ€™ harus ditetapkan jelas?",
+        "choices":  [
+                        "Agar file cepat dibuka",
+                        "Agar BIM terlihat profesional",
+                        "Agar tidak terjadi penggunaan paralel yang memicu rework/claim",
+                        "Agar ukuran folder kecil"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Tanpa versi berlaku, tim bisa pakai informasi berbeda â†’ rework, delay, claim."
+    },
+    {
+        "id":  "BM-034",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam alur NKE, kapan 4D/5D paling aman dipakai untuk rapat direksi?",
+        "choices":  [
+                        "Saat model masih WIP",
+                        "Saat elemen sudah ada walau belum review",
+                        "Saat model sudah lewat gate (approved) dan mapping WBS/activity terdokumentasi",
+                        "Saat ada animasi"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Simulasi untuk manajemen harus berbasis info sah agar keputusan tidak salah arah."
+    },
+    {
+        "id":  "BM-035",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "â€˜Authorityâ€™ dalam BIM governance berartiâ€¦",
+        "choices":  [
+                        "Yang paling senior selalu benar",
+                        "Yang membuat model otomatis berwenang menyahkan",
+                        "Kewenangan pengesahan berbeda dari kewenangan produksi; harus jelas gate-nya",
+                        "Semua orang boleh menyahkan"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Production authority â‰  decision authority; gate melindungi proyek."
+    },
+    {
+        "id":  "BM-036",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika site meminta revisi cepat dan BIM belum update, respon yang paling benar adalahâ€¦",
+        "choices":  [
+                        "Berikan file terakhir apa adanya",
+                        "Buat â€˜temporary instructionâ€™ dengan status jelas + batas penggunaan + tindak lanjut rilis resmi",
+                        "Suruh site tunggu saja",
+                        "Minta site update sendiri"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Jika terpaksa, beri instruksi sementara dengan status/batas jelas, lalu rilis resmi secepatnya."
+    },
+    {
+        "id":  "BM-037",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam BIM governance, â€˜quality gateâ€™ sebaiknya menghasilkanâ€¦",
+        "choices":  [
+                        "Model baru",
+                        "File IFC",
+                        "Release note: daftar file, versi, tanggal berlaku, approval, perubahan utama",
+                        "Screenshot"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Quality gate harus menghasilkan artefak rilis: apa yang berlaku dan apa yang berubah."
+    },
+    {
+        "id":  "BM-038",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Mengapa change tanpa trace berbahaya bagi kontraktor?",
+        "choices":  [
+                        "Karena membuat file besar",
+                        "Karena membuat BIM team sibuk",
+                        "Karena sulit pembuktian saat dispute/claim (siapa memutuskan, berbasis versi apa)",
+                        "Karena owner marah"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Tanpa jejak, pembuktian keputusan dan basis informasinya lemah saat klaim/dispute."
+    },
+    {
+        "id":  "BM-039",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "â€˜Single source of truthâ€™ paling praktis adalahâ€¦",
+        "choices":  [
+                        "Satu laptop BIM",
+                        "Satu grup WA",
+                        "Satu lokasi rilis resmi dengan versi/status berlaku yang dipatuhi semua pihak",
+                        "Satu folder bebas aturan"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Single source of truth = rilis resmi yang menjadi rujukan bersama."
+    },
+    {
+        "id":  "BM-040",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam konteks koordinasi, â€˜close issueâ€™ yang valid berartiâ€¦",
+        "choices":  [
+                        "Issue tidak dibahas lagi",
+                        "Ada bukti model/dokumen sudah diupdate + recheck + status close tercatat",
+                        "Owner bilang selesai",
+                        "Gambar dihapus"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Close = ada bukti update, recheck, dan pencatatan status."
+    },
+    {
+        "id":  "BM-041",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika terjadi mismatch antara drawing dan model, langkah governance paling tepat adalahâ€¦",
+        "choices":  [
+                        "Pilih yang lebih baru tanpa cek",
+                        "Pilih drawing karena untuk site",
+                        "Lakukan verifikasi sumber: mana yang approved, versi berlaku, lalu rilis koreksi resmi",
+                        "Biarkan site menyesuaikan sendiri"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Sumber kebenaran ditentukan oleh status/versi berlaku dan rilis resmi koreksi."
+    },
+    {
+        "id":  "BM-042",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "BIM membantu manajemen terutama pada aspekâ€¦",
+        "choices":  [
+                        "Render presentasi",
+                        "Kontrol keputusan berbasis informasi sah: risiko biaya/waktu/mutu/klaim",
+                        "Membuat jadwal rapat",
+                        "Mengurangi kebutuhan QA"
+                    ],
+        "answer_index":  1,
+        "explanation":  "BIM governance membuat keputusan lebih aman karena basis informasinya jelas dan terlacak."
+    },
+    {
+        "id":  "BM-043",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Mengapa â€˜owner informasiâ€™ penting di proyek?",
+        "choices":  [
+                        "Agar ada yang disalahkan",
+                        "Agar semua file dikumpulkan",
+                        "Agar ada pihak yang memastikan rilis/komunikasi perubahan dan versi berlaku",
+                        "Agar BIM team terlihat sibuk"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Owner informasi menjamin rilis dan komunikasi perubahan berjalan konsisten."
+    },
+    {
+        "id":  "BM-044",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika tim engineering mengubah desain, maka minimal yang harus terjadi sebelum site pakai adalahâ€¦",
+        "choices":  [
+                        "Kirim PDF ke site",
+                        "Update model/dokumen, re-approve, broadcast perubahan, dan catat tanggal berlaku",
+                        "Brief lisan",
+                        "Cukup update model saja"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Sebelum dipakai, perubahan harus masuk sistem: update, approval, broadcast, effective date."
+    },
+    {
+        "id":  "BM-045",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam BIM, â€˜validasiâ€™ paling tepat dipahami sebagaiâ€¦",
+        "choices":  [
+                        "Cek estetika",
+                        "Cek ukuran file",
+                        "Proses memastikan informasi sesuai tujuan, konsisten, dan layak dipakai sesuai status",
+                        "Membuka file tanpa error"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Validasi = kelayakan penggunaan informasi, bukan sekadar lolos buka file."
+    },
+    {
+        "id":  "BM-046",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Kenapa â€œtanggal edit fileâ€ bukan penentu utama versi berlaku?",
+        "choices":  [
+                        "Karena tanggal bisa dimanipulasi",
+                        "Karena komputer beda timezone",
+                        "Karena versi berlaku ditetapkan lewat rilis/approval, bukan sekadar waktu edit",
+                        "Karena file besar"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Versi berlaku harus ditetapkan via rilis/approval dan komunikasi, bukan metadata file semata."
+    },
+    {
+        "id":  "BM-047",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam konflik lintas disiplin, keputusan yang sehat harus mengacu padaâ€¦",
+        "choices":  [
+                        "Opini paling keras",
+                        "Siapa yang paling senior",
+                        "Informasi sah + pertimbangan dampak (waktu/biaya/mutu/safety) dengan jejak keputusan",
+                        "Kecepatan saja"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Keputusan sehat = basis info sah + analisis dampak + jejak keputusan."
+    },
+    {
+        "id":  "BM-048",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika ada tekanan mengejar target, trade-off yang tidak boleh dilakukan adalahâ€¦",
+        "choices":  [
+                        "Mempercepat review",
+                        "Menambah resource",
+                        "Mengabaikan status/approval lalu memakai WIP untuk keputusan besar tanpa jejak",
+                        "Menetapkan prioritas deliverable"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Mengabaikan gate untuk keputusan besar meningkatkan risiko rework dan klaim."
+    },
+    {
+        "id":  "BM-049",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "â€˜Informasi yang benarâ€™ dalam BIM paling praktis berartiâ€¦",
+        "choices":  [
+                        "Paling lengkap",
+                        "Paling detail",
+                        "Sesuai tujuan penggunaan, statusnya sah, versinya berlaku, dan dapat ditelusuri",
+                        "Dibuat oleh konsultan"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Benar = fit-for-purpose + sah + versi berlaku + trace."
+    },
+    {
+        "id":  "BM-050",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam konteks NKE, indikator sederhana BIM governance berjalan adalahâ€¦",
+        "choices":  [
+                        "Semua pakai Revit",
+                        "Semua file IFC",
+                        "Setiap rilis punya: status, versi, approval, effective date, dan broadcast",
+                        "Ada banyak folder"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Artefak rilis yang konsisten adalah indikator governance berjalan."
+    },
+    {
+        "id":  "BM-051",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Mengapa â€˜broadcast perubahanâ€™ wajib?",
+        "choices":  [
+                        "Agar semua orang panik",
+                        "Agar email banyak",
+                        "Agar penerima tidak memakai versi lama; mengurangi rework dan miskomunikasi",
+                        "Agar BIM terlihat aktif"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Tanpa broadcast, pihak lain bisa tetap memakai versi lama meski revisi sudah ada."
+    },
+    {
+        "id":  "BM-052",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika owner meminta percepatan, cara BIM membantu paling tepat adalahâ€¦",
+        "choices":  [
+                        "Buat animasi lebih cepat",
+                        "Kurangi dokumentasi",
+                        "Perjelas gate keputusan + prioritas rilis + minimalkan kebingungan versi/status",
+                        "Tiadakan review"
+                    ],
+        "answer_index":  2,
+        "explanation":  "BIM mempercepat dengan mengurangi kebingungan informasi, bukan menghilangkan kontrol."
+    },
+    {
+        "id":  "BM-053",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika sebuah keputusan diambil, minimal jejak yang harus tercatat adalahâ€¦",
+        "choices":  [
+                        "Nama rapat saja",
+                        "Screenshot chat",
+                        "Keputusan apa, siapa yang mengesahkan, berbasis informasi versi/status apa, tanggal berlaku",
+                        "Nama folder"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Jejak keputusan melindungi proyek saat audit/claim."
+    },
+    {
+        "id":  "BM-054",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam sistem informasi, â€˜WIPâ€™ seharusnya dipakai untukâ€¦",
+        "choices":  [
+                        "Dasar procurement",
+                        "Dasar instruksi kerja permanen",
+                        "Produksi internal dan koordinasi internal sebelum rilis resmi",
+                        "Dasar perubahan kontrak"
+                    ],
+        "answer_index":  2,
+        "explanation":  "WIP adalah area kerja internal, bukan basis keputusan/eksekusi."
+    },
+    {
+        "id":  "BM-055",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika terjadi dispute, hal yang paling membantu pembuktian adalahâ€¦",
+        "choices":  [
+                        "Siapa yang paling senior",
+                        "Screenshot model",
+                        "Audit trail: rilis, versi, approval, effective date, issue log, keputusan",
+                        "Jumlah meeting"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Audit trail adalah bukti paling kuat tentang basis informasi dan keputusan."
+    },
+    {
+        "id":  "BM-056",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Dalam proyek kompleks, alasan BIM â€˜wajibâ€™ bukan karenaâ€¦",
+        "choices":  [
+                        "Banyak disiplin",
+                        "Banyak perubahan",
+                        "Kompleksitas melebihi kapasitas ingatan manusia; butuh sistem eksplisit",
+                        "Banyak dokumen"
+                    ],
+        "answer_index":  2,
+        "explanation":  "BIM hadir untuk mengelola kompleksitas informasi secara sistemik."
+    },
+    {
+        "id":  "BM-057",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika tim lapangan mengajukan RFI, alur yang paling benar adalahâ€¦",
+        "choices":  [
+                        "Jawab di WA dan selesai",
+                        "Catat RFI, tetapkan owner \u0026 due date, keluarkan respon resmi, update dokumen/model bila perlu, re-approve, broadcast",
+                        "Tunda sampai rapat mingguan",
+                        "Minta site cari sendiri"
+                    ],
+        "answer_index":  1,
+        "explanation":  "RFI harus masuk sistem: tercatat, ada owner, respon resmi, update artefak, dan komunikasi."
+    },
+    {
+        "id":  "BM-058",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "â€˜Fit for purposeâ€™ dalam konteks informasi berartiâ€¦",
+        "choices":  [
+                        "Harus selalu super detail",
+                        "Cukup untuk tujuan penggunaan tertentu dan statusnya mendukung penggunaan itu",
+                        "Harus selalu IFC",
+                        "Harus selalu 2D"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Kelayakan informasi bergantung tujuan penggunaan (untuk koordinasi, untuk konstruksi, untuk keputusan)."
+    },
+    {
+        "id":  "BM-059",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Jika manajemen meminta progress 4D biweekly, risiko terbesar tanpa governance adalahâ€¦",
+        "choices":  [
+                        "Animasi lambat",
+                        "Komputer lemot",
+                        "Progress terlihat valid padahal basis model/schedule belum sah â†’ keputusan salah",
+                        "File terlalu banyak"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Tanpa gate, progress report bisa menyesatkan dan memicu keputusan salah."
+    },
+    {
+        "id":  "BM-060",
+        "level":  "intermediate",
+        "type":  "single",
+        "prompt":  "Mindset BIM yang matang di NKE pada akhirnya bertujuan untukâ€¦",
+        "choices":  [
+                        "Membuat model paling keren",
+                        "Membuat semua orang jadi modeller",
+                        "Mengunci keputusan proyek pada informasi yang sah, terkini, dan terlacak",
+                        "Mengurangi komunikasi"
+                    ],
+        "answer_index":  2,
+        "explanation":  "Tujuan akhir: keputusan aman, minim rework, kontrol risiko biaya/waktu/mutu/klaim."
+    },
+    {
+        "id":  "BM-061",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan CDE (Common Data Environment)?",
+        "choices":  [
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+                    ],
+        "answer_index":  0,
+        "explanation":  "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola."
+    },
+    {
+        "id":  "BM-062",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama CDE (Common Data Environment) adalah...",
+        "choices":  [
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui.",
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat."
+    },
+    {
+        "id":  "BM-063",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan WIP (Work in Progress)?",
+        "choices":  [
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu.",
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only."
+                    ],
+        "answer_index":  1,
+        "explanation":  "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan."
+    },
+    {
+        "id":  "BM-064",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama WIP (Work in Progress) adalah...",
+        "choices":  [
+                        "koordinasi antar tim memakai informasi yang sudah disetujui.",
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance."
+                    ],
+        "answer_index":  2,
+        "explanation":  "mengembangkan informasi internal sebelum QA dan review."
+    },
+    {
+        "id":  "BM-065",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Shared state?",
+        "choices":  [
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu.",
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container."
+                    ],
+        "answer_index":  2,
+        "explanation":  "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only."
+    },
+    {
+        "id":  "BM-066",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Shared state adalah...",
+        "choices":  [
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui."
+                    ],
+        "answer_index":  3,
+        "explanation":  "koordinasi antar tim memakai informasi yang sudah disetujui."
+    },
+    {
+        "id":  "BM-067",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Published state?",
+        "choices":  [
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+                    ],
+        "answer_index":  3,
+        "explanation":  "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+    },
+    {
+        "id":  "BM-068",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Published state adalah...",
+        "choices":  [
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "mengendalikan versi resmi yang dipakai lintas tim."
+                    ],
+        "answer_index":  0,
+        "explanation":  "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+    },
+    {
+        "id":  "BM-069",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Archived state?",
+        "choices":  [
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only."
+    },
+    {
+        "id":  "BM-070",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Archived state adalah...",
+        "choices":  [
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mengendalikan versi resmi yang dipakai lintas tim.",
+                        "menjaga jejak perubahan internal dan memungkinkan rollback."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menyediakan audit trail dan referensi operasi atau maintenance."
+    },
+    {
+        "id":  "BM-071",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Status (suitability) code?",
+        "choices":  [
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan.",
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2)."
+                    ],
+        "answer_index":  1,
+        "explanation":  "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container."
+    },
+    {
+        "id":  "BM-072",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Status (suitability) code adalah...",
+        "choices":  [
+                        "mengendalikan versi resmi yang dipakai lintas tim.",
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "menyusun dan menemukan informasi secara konsisten."
+                    ],
+        "answer_index":  2,
+        "explanation":  "mencegah penggunaan informasi di luar tujuan yang diizinkan."
+    },
+    {
+        "id":  "BM-073",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Revision?",
+        "choices":  [
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan.",
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "set metadata minimum: state, status code, revision, dan classification."
+                    ],
+        "answer_index":  2,
+        "explanation":  "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published)."
+    },
+    {
+        "id":  "BM-074",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Revision adalah...",
+        "choices":  [
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "mengendalikan versi resmi yang dipakai lintas tim."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mengendalikan versi resmi yang dipakai lintas tim."
+    },
+    {
+        "id":  "BM-075",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Versioning (WIP version)?",
+        "choices":  [
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+                    ],
+        "answer_index":  3,
+        "explanation":  "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+    },
+    {
+        "id":  "BM-076",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Versioning (WIP version) adalah...",
+        "choices":  [
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "memastikan kepatuhan metadata sebelum review teknis."
+                    ],
+        "answer_index":  0,
+        "explanation":  "menjaga jejak perubahan internal dan memungkinkan rollback."
+    },
+    {
+        "id":  "BM-077",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Classification code?",
+        "choices":  [
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "review isi teknis sebelum informasi dibagikan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2)."
+    },
+    {
+        "id":  "BM-078",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Classification code adalah...",
+        "choices":  [
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "memastikan kepatuhan metadata sebelum review teknis.",
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menyusun dan menemukan informasi secara konsisten."
+    },
+    {
+        "id":  "BM-079",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Information container metadata?",
+        "choices":  [
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "review isi teknis sebelum informasi dibagikan.",
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol."
+                    ],
+        "answer_index":  1,
+        "explanation":  "set metadata minimum: state, status code, revision, dan classification."
+    },
+    {
+        "id":  "BM-080",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Information container metadata adalah...",
+        "choices":  [
+                        "memastikan kepatuhan metadata sebelum review teknis.",
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi."
+                    ],
+        "answer_index":  2,
+        "explanation":  "membuat informasi teridentifikasi dan terkelola seragam."
+    },
+    {
+        "id":  "BM-081",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan QA check?",
+        "choices":  [
+                        "review isi teknis sebelum informasi dibagikan.",
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP."
+                    ],
+        "answer_index":  2,
+        "explanation":  "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared."
+    },
+    {
+        "id":  "BM-082",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama QA check adalah...",
+        "choices":  [
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "memastikan kepatuhan metadata sebelum review teknis."
+                    ],
+        "answer_index":  3,
+        "explanation":  "memastikan kepatuhan metadata sebelum review teknis."
+    },
+    {
+        "id":  "BM-083",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Technical review?",
+        "choices":  [
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "review isi teknis sebelum informasi dibagikan."
+                    ],
+        "answer_index":  3,
+        "explanation":  "review isi teknis sebelum informasi dibagikan."
+    },
+    {
+        "id":  "BM-084",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Technical review adalah...",
+        "choices":  [
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi."
+                    ],
+        "answer_index":  0,
+        "explanation":  "memastikan kualitas dan kebenaran konten sebelum koordinasi."
+    },
+    {
+        "id":  "BM-085",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan BIM Execution Plan (BEP)?",
+        "choices":  [
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model."
+                    ],
+        "answer_index":  0,
+        "explanation":  "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol."
+    },
+    {
+        "id":  "BM-086",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama BIM Execution Plan (BEP) adalah...",
+        "choices":  [
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi.",
+                        "menandai lokasi isu dan melacak penyelesaiannya."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menjelaskan peran, proses, serta cara dan waktu produksi informasi."
+    },
+    {
+        "id":  "BM-087",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan EIR (Exchange/Employer Information Requirements)?",
+        "choices":  [
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model.",
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital."
+                    ],
+        "answer_index":  1,
+        "explanation":  "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP."
+    },
+    {
+        "id":  "BM-088",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama EIR (Exchange/Employer Information Requirements) adalah...",
+        "choices":  [
+                        "mendukung interoperabilitas openBIM lintas aplikasi.",
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "mempercepat pengisian sistem FM saat handover."
+                    ],
+        "answer_index":  2,
+        "explanation":  "menetapkan apa, kapan, dan format informasi yang harus diserahkan."
+    },
+    {
+        "id":  "BM-089",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan IFC (Industry Foundation Classes)?",
+        "choices":  [
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model.",
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "tingkat kelengkapan suatu elemen model."
+                    ],
+        "answer_index":  2,
+        "explanation":  "skema data terbuka untuk pertukaran informasi antar software BIM."
+    },
+    {
+        "id":  "BM-090",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama IFC (Industry Foundation Classes) adalah...",
+        "choices":  [
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mendukung interoperabilitas openBIM lintas aplikasi."
+    },
+    {
+        "id":  "BM-091",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan BCF (BIM Collaboration Format)?",
+        "choices":  [
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model."
+                    ],
+        "answer_index":  3,
+        "explanation":  "standar openBIM untuk komunikasi dan manajemen isu pada model."
+    },
+    {
+        "id":  "BM-092",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama BCF (BIM Collaboration Format) adalah...",
+        "choices":  [
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "koordinasi lintas disiplin dan deteksi konflik."
+                    ],
+        "answer_index":  0,
+        "explanation":  "menandai lokasi isu dan melacak penyelesaiannya."
+    },
+    {
+        "id":  "BM-093",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan COBie?",
+        "choices":  [
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+                    ],
+        "answer_index":  0,
+        "explanation":  "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital."
+    },
+    {
+        "id":  "BM-094",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama COBie adalah...",
+        "choices":  [
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "koordinasi lintas disiplin dan deteksi konflik.",
+                        "memberi informasi terkoordinasi untuk keputusan proyek."
+                    ],
+        "answer_index":  1,
+        "explanation":  "mempercepat pengisian sistem FM saat handover."
+    },
+    {
+        "id":  "BM-095",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Level of Development (LOD)?",
+        "choices":  [
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone.",
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola."
+                    ],
+        "answer_index":  1,
+        "explanation":  "tingkat kelengkapan suatu elemen model."
+    },
+    {
+        "id":  "BM-096",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Level of Development (LOD) adalah...",
+        "choices":  [
+                        "koordinasi lintas disiplin dan deteksi konflik.",
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat."
+                    ],
+        "answer_index":  2,
+        "explanation":  "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu."
+    },
+    {
+        "id":  "BM-097",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Model federation?",
+        "choices":  [
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone.",
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan."
+                    ],
+        "answer_index":  2,
+        "explanation":  "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi."
+    },
+    {
+        "id":  "BM-098",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Model federation adalah...",
+        "choices":  [
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "koordinasi lintas disiplin dan deteksi konflik."
+                    ],
+        "answer_index":  3,
+        "explanation":  "koordinasi lintas disiplin dan deteksi konflik."
+    },
+    {
+        "id":  "BM-099",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Apa yang dimaksud dengan Information model delivery (PIM)?",
+        "choices":  [
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+                    ],
+        "answer_index":  3,
+        "explanation":  "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+    },
+    {
+        "id":  "BM-100",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Mindset: Tujuan utama Information model delivery (PIM) adalah...",
+        "choices":  [
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui."
+                    ],
+        "answer_index":  0,
+        "explanation":  "memberi informasi terkoordinasi untuk keputusan proyek."
+    }
+]

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Knowledge Hub</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icons/logo-bcl.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        .hero-section {
+            background: linear-gradient(rgba(251, 135, 63, 0.9), rgba(251, 135, 63, 0.8)),
+                url('/img/carousel-2.jpg') center center no-repeat;
+            background-size: cover;
+            padding: 100px 0;
+            color: white;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .standards-section {
+            padding: 5px 0;
+        }
+
+        .standards-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            border: 2px solid transparent;
+        }
+
+        .standards-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: #fb873f;
+        }
+
+        .standards-icon {
+            font-size: 3rem;
+            color: #fb873f;
+            margin-bottom: 20px;
+        }
+
+        .standards-title {
+            color: #fb873f;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .standards-subsection {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .standards-subsection h4 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .standards-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .standards-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .standards-list li:last-child {
+            border-bottom: none;
+        }
+
+        .standards-list li i {
+            color: #28a745;
+            margin-right: 10px;
+            width: 16px;
+        }
+
+        .section-title {
+            color: #fb873f;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .standard-badge {
+            display: inline-block;
+            background: #fb873f;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .compliance-section {
+            background: #f8f9fa;
+            padding: 60px 0;
+        }
+
+        .compliance-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .standards-links-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #fb873f;
+        }
+
+        .standards-pdf-link {
+            display: inline-block;
+            color: #007bff;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .standards-pdf-link:hover {
+            color: #0056b3;
+            background: #e9ecef;
+            border-color: #007bff;
+            text-decoration: none;
+            transform: translateX(5px);
+        }
+
+        .standards-pdf-link i {
+            color: #fb873f;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <div class="container text-center my-3">
+        <h1 class="text-center" style="margin-top: -40px !important; margin-bottom: 20px !important;"><i
+                class="fas fa-shield-alt text-primary me-2"></i>BIM Standards</h1>
+        <p class="lead text-center">Panduan lengkap standar dan regulasi Building Information Modeling internasional dan
+            nasional</p>
+    </div>
+
+    <!-- Standards Section Start -->
+    <div class="container-xxl standards-section">
+        <div class="container">
+
+            <!-- International Standards Section -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h2 class="section-title">International BIM Standards</h2>
+                </div>
+                <div class="col-12 mb-4">
+                    <div class="standards-links-section">
+                        <h5 class="text-primary mb-3"><i class="fas fa-file-pdf me-2"></i>ISO Standards Documents</h5>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="/public/reader.html?file=/data/iso19650/bs-en-iso-19650-1-2018%20-%20Phase%201.pdf&return=/pages/standards.html" class="standards-pdf-link">
+                                <i class="fas fa-external-link-alt me-2"></i>
+                                <strong>ISO 19650-1:</strong> Concepts and principles (Phase 1)
+                            </a>
+                            <a href="/public/reader.html?file=/data/iso19650/bs-en-iso-10855-2-2018%20-%20Phase%202.pdf&return=/pages/standards.html" class="standards-pdf-link">
+                                <i class="fas fa-external-link-alt me-2"></i>
+                                <strong>ISO 19650-2:</strong> Concepts and principles (Phase 2)
+                            </a>
+                            <a href="/public/reader.html?file=/data/iso19650/S-PM-02_IQ211_Prosedur_Perencanaan_dan_Implementasi_BIM.pdf&return=/pages/standards.html" class="standards-pdf-link">
+                                <i class="fas fa-external-link-alt me-2"></i>
+                                <strong>IQ-211:</strong> Panduan Implementasi BIM NKE
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <div class="standard-badge">ISO 19650</div>
+                        <i class="fas fa-globe-americas standards-icon"></i>
+                        <h3 class="standards-title">ISO 19650 - Organization and Digitization of Information</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
+                            <p>Seri standar internasional untuk manajemen informasi konstruksi, yang mengatur framework
+                                untuk implementasi BIM secara efektif.</p>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-file-alt me-2"></i>Key Standards</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-1:</strong> Concepts and
+                                    principles - <a href="https://www.iso.org/standard/68093.html"
+                                        target="_blank">ISO</a></li>
+                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-2:</strong> Delivery phase of
+                                    assets - <a href="https://www.iso.org/standard/68094.html" target="_blank">ISO</a>
+                                </li>
+                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-3:</strong> Operational phase
+                                    of assets - <a href="https://www.iso.org/standard/81848.html"
+                                        target="_blank">ISO</a></li>
+                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-4:</strong> Information
+                                    containers - <a href="https://www.iso.org/standard/81849.html"
+                                        target="_blank">ISO</a></li>
+                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-5:</strong> Security-minded
+                                    approach - <a href="https://www.iso.org/standard/74528.html" target="_blank">ISO</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-cog me-2"></i>Requirements</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>Common Data Environment (CDE)</li>
+                                <li><i class="fas fa-check-circle"></i>Information management process</li>
+                                <li><i class="fas fa-check-circle"></i>Information delivery planning</li>
+                                <li><i class="fas fa-check-circle"></i>Master Information Delivery Plan (MIDP)</li>
+                                <li><i class="fas fa-check-circle"></i>Audit trails and version control</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <div class="standard-badge">BS 1192</div>
+                        <i class="fas fa-flag-usa standards-icon"></i>
+                        <h3 class="standards-title">BS 1192 - BIM Standards & PAS 1192</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
+                            <p>Seri standar BIM dari British Standards Institution yang menjadi dasar implementasi BIM
+                                di berbagai negara.</p>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-file-alt me-2"></i>Key Standards</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i><strong>BS 1192-4:</strong> Collaborative
+                                    production of info - <a
+                                        href="https://shop.bsigroup.com/products/collaborative-production-of-information-part-4-foundation-and-core-information-requirements-for-buildings-and-linear-infrastructure-project-delivery-using-building-information-modelling-bim-requirement"
+                                        target="_blank">BSI</a></li>
+                                <li><i class="fas fa-check-circle"></i><strong>PAS 1192-2:</strong> Construction info
+                                    management - <a
+                                        href="https://shop.bsigroup.com/products/specification-for-information-management-for-the-capital-delivery-phase-of-construction-projects"
+                                        target="_blank">BSI</a></li>
+                                <li><i class="fas fa-check-circle"></i><strong>PAS 1192-3:</strong> Operational info
+                                    management - <a
+                                        href="https://shop.bsigroup.com/products/specification-for-information-management-for-the-operational-phase-of-assets"
+                                        target="_blank">BSI</a></li>
+                                <li><i class="fas fa-check-circle"></i><strong>PAS 1192-5:</strong> Security-minded
+                                    approach - <a
+                                        href="https://shop.bsigroup.com/products/specification-for-security-minded-building-information-modelling-bim-information-management-and-delivery"
+                                        target="_blank">BSI</a></li>
+                                <li><i class="fas fa-check-circle"></i><strong>BS 8536:</strong> Briefing for design &
+                                    construction - <a
+                                        href="https://shop.bsigroup.com/products/facility-information-provision-standard"
+                                        target="_blank">BSI</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-users me-2"></i>Collaboration Framework</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>Level of detail (LOD) specifications</li>
+                                <li><i class="fas fa-check-circle"></i>Level of information (LOI) requirements</li>
+                                <li><i class="fas fa-check-circle"></i>Work-in-progress (WIP) processes</li>
+                                <li><i class="fas fa-check-circle"></i>Technical sanctions & reviews</li>
+                                <li><i class="fas fa-check-circle"></i>Project Information Model (PIM)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <div class="standard-badge">NBIMS-US</div>
+                        <i class="fas fa-landmark standards-icon"></i>
+                        <h3 class="standards-title">NBIMS-US - National BIM Standard</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
+                            <p>Standar BIM nasional Amerika Serikat yang dikembangkan oleh buildingSMART Alliance.</p>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-layer-group me-2"></i>LOB Standards</h4>
+                            <p>Berbasis Lines of Business (LOB) - <a href="https://www.nationalbimstandard.org/lob"
+                                    target="_blank">NBIMS-US</a></p>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i><strong>GUIDE:</strong> BIM Project Execution
+                                    Planning</li>
+                                <li><i class="fas fa-check-circle"></i><strong>BRIDGE:</strong> IFC Model View
+                                    Definition</li>
+                                <li><i class="fas fa-check-circle"></i><strong>FACILITIES MGMT:</strong> Facility
+                                    Handover</li>
+                                <li><i class="fas fa-check-circle"></i><strong>INFRASTRUCTURE:</strong> Linear
+                                    infrastructure</li>
+                                <li><i class="fas fa-check-circle"></i><strong>GEOTECHNICAL:</strong> Subsurface
+                                    modeling</li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-tasks me-2"></i>BIM Execution Planning</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>BIM Model Progression Specifications</li>
+                                <li><i class="fas fa-check-circle"></i>Digital Data Interoperability</li>
+                                <li><i class="fas fa-check-circle"></i>BIM Project Execution Planning Guide</li>
+                                <li><i class="fas fa-check-circle"></i>Model Element Authoring Guidelines</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <i class="fas fa-shield-alt standards-icon"></i>
+                        <h3 class="standards-title">IFC Standards - Industry Foundation Classes</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
+                            <p>Standar data terbuka untuk pertukaran informasi BIM antara aplikasi yang berbeda,
+                                dikelola oleh <a href="https://www.buildingsmart.org/standards/ifc/"
+                                    target="_blank">buildingSMART</a>.</p>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-file-code me-2"></i>IFC Versions</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i><strong>IFC 4.3:</strong> Latest GCC version
+                                    (2024)</li>
+                                <li><i class="fas fa-check-circle"></i><strong>IFC 4.2:</strong> Formal release (2017)
+                                </li>
+                                <li><i class="fas fa-check-circle"></i><strong>IFC 4.1:</strong> Extension release
+                                    (2014)</li>
+                                <li><i class="fas fa-check-circle"></i><strong>IFC 4:</strong> Major update (2013)</li>
+                                <li><i class="fas fa-check-circle"></i><strong>IFC 2x3:</strong> koordinasi release</li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-exchange-alt me-2"></i>Model View Definitions</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>Reference View (RV) - architectural</li>
+                                <li><i class="fas fa-check-circle"></i>Design Transfer View (DTV)</li>
+                                <li><i class="fas fa-check-circle"></i>Coordination View (CV)</li>
+                                <li><i class="fas fa-check-circle"></i>Presentation View (PV)</li>
+                                <li><i class="fas fa-check-circle"></i>Quantity Takeoff (QTO)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indonesian Standards Section -->
+            <div class="row mb-5">
+                <div class="col-12">
+                    <h2 class="section-title">Standar BIM Indonesia</h2>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <div class="standard-badge">Permen PU</div>
+                        <i class="fas fa-landmark standards-icon"></i>
+                        <h3 class="standards-title">Keputusan Menteri Pekerjaan Umum</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-gavel me-2"></i>Regulasi Utama</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i><strong>Peraturan Menteri PU No.
+                                        12/PRT/M/2010:</strong> Standar Konstruksi Bangunan</li>
+                                <li><i class="fas fa-check-circle"></i><strong>Peraturan Menteri PU No.
+                                        14/PRT/M/2010:</strong> Pedoman Penggunaan BIM</li>
+                                <li><i class="fas fa-check-circle"></i><strong>Peraturan Menteri PU No.
+                                        29/PRT/M/2018:</strong> Standardisasi BIM Infrastruktur</li>
+                                <li><i class="fas fa-check-circle"></i><strong>Keputusan Menteri PU No.
+                                        294/KPTS/M/2015:</strong> BIM Implementation Roadmap</li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-list-check me-2"></i>Mandatory Requirements</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>BIM mandatory untuk proyek ≥ 50 Milyar</li>
+                                <li><i class="fas fa-check-circle"></i>Standard LOD 100, 200, 300, 400, 500</li>
+                                <li><i class="fas fa-check-circle"></i>Common Data Environment (CDE) wajib</li>
+                                <li><i class="fas fa-check-circle"></i>Format file IFC untuk handover</li>
+                                <li><i class="fas fa-check-circle"></i>Level of Development (LOD) specifications</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <div class="standard-badge">SNI</div>
+                        <i class="fas fa-certificate standards-icon"></i>
+                        <h3 class="standards-title">Standar Nasional Indonesia (SNI)</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-info-circle me-2"></i>Relevant BIM Standards</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i><strong>SNI ISO 19650-1:</strong> BIM Concepts &
+                                    Principles</li>
+                                <li><i class="fas fa-check-circle"></i><strong>SNI ISO 19650-2:</strong> Asset Delivery
+                                    Phase</li>
+                                <li><i class="fas fa-check-circle"></i><strong>SNI 8433:2017:</strong> BIM
+                                    Classification Systems</li>
+                                <li><i class="fas fa-check-circle"></i><strong>SNI 8434:2017:</strong> BIM Model
+                                    Production</li>
+                                <li><i class="fas fa-check-circle"></i><strong>SNI 8435:2017:</strong> BIM Data
+                                    Management</li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-building me-2"></i>BSN BIM Standards</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>SNI 8436:2017 - Level of Detail (LOD)</li>
+                                <li><i class="fas fa-check-circle"></i>SNI 8437:2017 - Model Organization</li>
+                                <li><i class="fas fa-check-circle"></i>SNI 8438:2017 - Quality Assurance</li>
+                                <li><i class="fas fa-check-circle"></i>SNI 8439:2017 - Facility Management</li>
+                                <li><i class="fas fa-check-circle"></i>SNI 8440:2017 - Information Exchange</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <i class="fas fa-graduation-cap standards-icon"></i>
+                        <h3 class="standards-title">Pedoman Akademis & Sertifikasi</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-university me-2"></i>Universitas & Akademi</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>Permenristekdikti No. 55/2018 tentang BIM di
+                                    Pendidikan</li>
+                                <li><i class="fas fa-check-circle"></i>Kurikulum BIM untuk Arsitektur & Teknik Sipil
+                                </li>
+                                <li><i class="fas fa-check-circle"></i>Program Magister BIM Management</li>
+                                <li><i class="fas fa-check-circle"></i>Sertifikasi Kompetensi BIM</li>
+                                <li><i class="fas fa-check-circle"></i>KKNI Level 6 untuk BIM Specialist</li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-award me-2"></i>Sertifikasi Profesional</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>Sertifikasi BIM Manager BNSP</li>
+                                <li><i class="fas fa-check-circle"></i>BIM Coordinator Professional</li>
+                                <li><i class="fas fa-check-circle"></i>BIM Modeler Certification</li>
+                                <li><i class="fas fa-check-circle"></i>LPJK BIM Competency Standard</li>
+                                <li><i class="fas fa-check-circle"></i>IQ BIM Professional Accreditation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 col-md-6">
+                    <div class="standards-card">
+                        <i class="fas fa-city standards-icon"></i>
+                        <h3 class="standards-title">Standar Lainnya & Industri</h3>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-industry me-2"></i>Pemerintah Daerah</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>DKI Jakarta BIM Guideline (2022)</li>
+                                <li><i class="fas fa-check-circle"></i>Jawa Barat BIM Standard</li>
+                                <li><i class="fas fa-check-circle"></i>Bali BIM Implementation</li>
+                                <li><i class="fas fa-check-circle"></i>Smart City BIM Integration</li>
+                            </ul>
+                        </div>
+
+                        <div class="standards-subsection">
+                            <h4><i class="fas fa-users-cog me-2"></i>Asosiasi & Industri</h4>
+                            <ul class="standards-list">
+                                <li><i class="fas fa-check-circle"></i>IAI (Ikatan Arsitek Indonesia) BIM Standards</li>
+                                <li><i class="fas fa-check-circle"></i>HAKI (Himpunan Ahli Konstruksi Indonesia)</li>
+                                <li><i class="fas fa-check-circle"></i>GAPENSI BIM Guidelines</li>
+                                <li><i class="fas fa-check-circle"></i>Material Indonesia BIM Library</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Implementation Guidelines Section -->
+            <div class="compliance-section">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <h2 class="section-title text-dark">Framework Implementasi & Compliance</h2>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="compliance-card">
+                                <i class="fas fa-clipboard-check text-primary mb-3" style="font-size: 2rem;"></i>
+                                <h4 class="text-primary">BIM Protocol Indonesia</h4>
+                                <ul class="standards-list mt-3">
+                                    <li><i class="fas fa-check-circle"></i>Mandatory BIM untuk proyek strategis</li>
+                                    <li><i class="fas fa-check-circle"></i>Standardization of naming conventions</li>
+                                    <li><i class="fas fa-check-circle"></i>Template model dan sheet standards</li>
+                                    <li><i class="fas fa-check-circle"></i>Quality gates & approval processes</li>
+                                    <li><i class="fas fa-check-circle"></i>Audit trails & documentation</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4 col-md-6">
+                            <div class="compliance-card">
+                                <i class="fas fa-balance-scale text-primary mb-3" style="font-size: 2rem;"></i>
+                                <h4 class="text-primary">Legal Framework</h4>
+                                <ul class="standards-list mt-3">
+                                    <li><i class="fas fa-check-circle"></i>Contract terms for BIM deliverables</li>
+                                    <li><i class="fas fa-check-circle"></i>Liability for model accuracy</li>
+                                    <li><i class="fas fa-check-circle"></i>Intellectual property rights</li>
+                                    <li><i class="fas fa-check-circle"></i>Data security & confidentiality</li>
+                                    <li><i class="fas fa-check-circle"></i>Dispute resolution mechanisms</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4 col-md-12">
+                            <div class="compliance-card">
+                                <i class="fas fa-chart-line text-primary mb-3" style="font-size: 2rem;"></i>
+                                <h4 class="text-primary">Adoption Roadmap</h4>
+                                <ul class="standards-list mt-3">
+                                    <li><i class="fas fa-check-circle"></i>Phase 1: Pilot projects (2020-2022)</li>
+                                    <li><i class="fas fa-check-circle"></i>Phase 2: Mandatory implementation (2023-2025)
+                                    </li>
+                                    <li><i class="fas fa-check-circle"></i>Phase 3: Full digital transformation (2026+)
+                                    </li>
+                                    <li><i class="fas fa-check-circle"></i>Capacity building programs</li>
+                                    <li><i class="fas fa-check-circle"></i>Industry collaboration initiatives</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- Standards Section End -->
+
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/user.js" defer></script>
+
+
+</body>
+
+</html>

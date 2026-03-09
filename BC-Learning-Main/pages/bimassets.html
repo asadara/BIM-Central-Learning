@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : BIM Assests</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icons/logo-bcl.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        .hero-section {
+            background: linear-gradient(rgba(63, 94, 251, 0.8), rgba(252, 70, 107, 0.8)),
+                url('/img/carousel-1.jpg') center center no-repeat;
+            background-size: cover;
+            padding: 120px 0;
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-section .lead {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .premium-badge {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .assets-section {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+
+        .assets-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .assets-header h2 {
+            font-size: 2.8rem;
+            color: #3f5efb;
+            margin-bottom: 20px;
+        }
+
+        .assets-header .lead {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .asset-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .asset-category {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 3px solid transparent;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .asset-category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(63, 94, 251, 0.05), rgba(252, 70, 107, 0.05));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .asset-category:hover::before {
+            opacity: 1;
+        }
+
+        .asset-category:hover {
+            border-color: #3f5efb;
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(63, 94, 251, 0.2);
+        }
+
+        .asset-category-icon {
+            font-size: 4rem;
+            color: #3f5efb;
+            margin-bottom: 25px;
+            display: block;
+        }
+
+        .asset-category h3 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .asset-category p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .asset-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #3f5efb;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .view-assets-btn {
+            background: linear-gradient(135deg, #3f5efb, #fc466b);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(63, 94, 251, 0.3);
+        }
+
+        .view-assets-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(63, 94, 251, 0.4);
+            color: white;
+        }
+
+        .featured-assets {
+            background: white;
+            border-radius: 25px;
+            padding: 50px;
+            margin-bottom: 60px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        }
+
+        .featured-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .featured-header h3 {
+            font-size: 2.2rem;
+            color: #3f5efb;
+            margin-bottom: 15px;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .featured-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            border: 2px solid #e1e8ed;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .featured-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border-color: #3f5efb;
+        }
+
+        .featured-card-icon {
+            font-size: 3rem;
+            color: #3f5efb;
+            margin-bottom: 20px;
+        }
+
+        .featured-card h4 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .featured-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .asset-metrics {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .metric-item {
+            padding: 30px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .metric-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .access-section {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .access-card {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .access-card h3 {
+            color: #3f5efb;
+            margin-bottom: 20px;
+        }
+
+        .access-card p {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .access-btn {
+            background: linear-gradient(135deg, #3f5efb, #fc466b);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(63, 94, 251, 0.3);
+        }
+
+        .access-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(63, 94, 251, 0.4);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .asset-categories {
+                grid-template-columns: 1fr;
+            }
+
+            .featured-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <div class="container text-center my-3">
+        <h1 class="text-center" style="margin-top: -40px !important; margin-bottom: 20px !important;"><i
+                class="fas fa-lightbulb text-primary me-2"></i>BIM Intellectual Assets</h1>
+        <p class="lead text-center">Koleksi eksklusif karya intelektual BIM Indonesia - Template, model, dan solusi
+            inovatif
+            dari tim BIM profesional</p>
+    </div>
+
+    <!-- Assets Section -->
+    <div class="assets-section">
+        <div class="container">
+
+            <!-- Asset Categories -->
+            <div class="asset-categories">
+                <div class="asset-category">
+                    <i class="fas fa-building asset-category-icon"></i>
+                    <h3>Archicad Templates</h3>
+                    <p>Template Archicad premium dengan atribut BIM lengkap, ready-to-use untuk berbagai jenis project
+                        konstruksi.</p>
+                    <div class="asset-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">15</span>
+                            <span class="stat-label">Templates</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">4.8★</span>
+                            <span class="stat-label">Rating</span>
+                        </div>
+                    </div>
+                    <a href="#" class="view-assets-btn" onclick="showCategoryAssets('archicad')">
+                        <i class="fas fa-eye me-2"></i>Lihat Templates
+                    </a>
+                </div>
+
+                <div class="asset-category">
+                    <i class="fas fa-cubes asset-category-icon"></i>
+                    <h3>Revit Families</h3>
+                    <p>Koleksi family Revit custom yang telah teruji dan dioptimalkan untuk productivity project BIM.
+                    </p>
+                    <div class="asset-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">32</span>
+                            <span class="stat-label">Families</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">5.0★</span>
+                            <span class="stat-label">Rating</span>
+                        </div>
+                    </div>
+                    <a href="#" class="view-assets-btn" onclick="showCategoryAssets('revit')">
+                        <i class="fas fa-eye me-2"></i>Lihat Families
+                    </a>
+                </div>
+
+                <div class="asset-category">
+                    <i class="fas fa-drafting-compass asset-category-icon"></i>
+                    <h3>AutoCAD Standards</h3>
+                    <p>Standard drawing AutoCAD BIM-ready dengan template, blocks, dan atribut yang telah
+                        distandarisasi.</p>
+                    <div class="asset-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">28</span>
+                            <span class="stat-label">Standards</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">4.9★</span>
+                            <span class="stat-label">Rating</span>
+                        </div>
+                    </div>
+                    <a href="#" class="view-assets-btn" onclick="showCategoryAssets('autocad')">
+                        <i class="fas fa-eye me-2"></i>Lihat Standards
+                    </a>
+                </div>
+            </div>
+
+            <!-- Featured Assets -->
+            <div class="featured-assets">
+                <div class="featured-header">
+                    <h3>Featured Intellectual Assets</h3>
+                    <p>Highlight dari karya-karya BIM terbaik tim Indonesia</p>
+                </div>
+                <div class="featured-grid">
+                    <div class="featured-card">
+                        <i class="fas fa-landmark featured-card-icon"></i>
+                        <h4>Mall Master Template</h4>
+                        <p>Template Archicad komprehensif untuk development mall dengan sistem MEP lengkap dan atribut
+                            BIM terstruktur.</p>
+                    </div>
+                    <div class="featured-card">
+                        <i class="fas fa-hospital featured-card-icon"></i>
+                        <h4>Hospital BIM Standard</h4>
+                        <p>Standard BIM untuk project kesehatan dengan workflow teroptimasi dan compliance terhadap
+                            regulasi kesehatan.</p>
+                    </div>
+                    <div class="featured-card">
+                        <i class="fas fa-graduation-cap featured-card-icon"></i>
+                        <p>Library family custom yang mendukung workflow pendidikan tinggi dengan integrasi IFC dan
+                            COBie.</p>
+                        <h4>University Campus</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Assets Section End -->
+
+
+
+    <!-- Access Section Start -->
+    <div class="access-section">
+        <div class="container">
+            <div class="access-card">
+                <i class="fas fa-lock text-warning" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <h3>Premium Access Required</h3>
+                <p>Koleksi BIM Intellectual Assets ini merupakan hak intelektual tim BIM NKE yang dilindungi.
+                    Akses ke assets ini memerlukan otorisasi khusus melalui sistem membership atau konsultasi langsung
+                    dengan tim BIM NKE.</p>
+                <a href="#contact" class="access-btn">
+                    <i class="fas fa-envelope me-2"></i>Request Access
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Access Section End -->
+
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/script.js"></script>
+    <script src="../js/user.js" defer></script>
+
+    <script>
+        // BIM Assets Page JavaScript
+        let currentCategory = null;
+
+        // Sample asset data (in real implementation, this would come from API)
+        const assetData = {
+            archicad: [
+                { name: "Mall Master Template", type: "Template", rating: 4.8, description: "Template Archicad komprehensif untuk development mall", downloads: 125, size: "45.2 MB" },
+                { name: "Apartment Complex", type: "Template", rating: 4.9, description: "Template untuk complex apartemen multi-tower", downloads: 98, size: "32.8 MB" },
+                { name: "Hotel Standard", type: "Template", rating: 4.7, description: "Template hotel dengan sistem MEP terintegrasi", downloads: 87, size: "58.1 MB" }
+            ],
+            revit: [
+                { name: "Smart Furniture Family", type: "Family", rating: 5.0, description: "Family furniture dengan parameter lengkap", downloads: 234, size: "2.1 MB" },
+                { name: "MEP Systems Library", type: "Family", rating: 4.9, description: "Library komponen MEP yang terstandarisasi", downloads: 187, size: "15.3 MB" },
+                { name: "Structural Connections", type: "Family", rating: 4.8, description: "Connection families untuk struktur baja", downloads: 143, size: "8.7 MB" }
+            ],
+            autocad: [
+                { name: "Architectural Standards", type: "Template", rating: 4.9, description: "Template dan layer standar untuk arsitektur", downloads: 167, size: "12.4 MB" },
+                { name: "MEP Symbols Library", type: "Blocks", rating: 4.7, description: "Koleksi blocks MEP yang terstandarisasi", downloads: 132, size: "25.6 MB" },
+                { name: "Structural Details", type: "Standards", rating: 4.8, description: "Detail konstruksi standar dengan atribut BIM", downloads: 98, size: "18.9 MB" }
+            ]
+        };
+
+        function showCategoryAssets(category) {
+            currentCategory = category;
+            const assets = assetData[category] || [];
+
+            // Create modal content
+            let modalContent = `
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-${getCategoryIcon(category)} me-2"></i>
+                                ${getCategoryTitle(category)}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+            `;
+
+            if (assets.length > 0) {
+                modalContent += `<div class="row">`;
+                assets.forEach(asset => {
+                    modalContent += `
+                        <div class="col-md-4 mb-4">
+                            <div class="asset-modal-card">
+                                <div class="asset-modal-header">
+                                    <h6 class="asset-modal-name">${asset.name}</h6>
+                                    <span class="badge bg-${asset.rating >= 4.8 ? 'success' : asset.rating >= 4.5 ? 'warning' : 'secondary'}">
+                                        ${asset.rating}★
+                                    </span>
+                                </div>
+                                <div class="asset-modal-body">
+                                    <p class="asset-modal-description">${asset.description}</p>
+                                    <div class="asset-modal-stats">
+                                        <small class="text-muted">
+                                            <i class="fas fa-download me-1"></i>${asset.downloads} downloads
+                                        </small>
+                                        <small class="text-muted ms-2">
+                                            <i class="fas fa-file me-1"></i>${asset.size}
+                                        </small>
+                                        <small class="text-muted ms-2">
+                                            <i class="fas fa-tag me-1"></i>${asset.type}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="asset-modal-footer">
+                                    <button class="btn btn-primary btn-sm request-access-btn" onclick="requestAssetAccess('${asset.name}')">
+                                        <i class="fas fa-lock me-1"></i>Request Access
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                modalContent += `</div>`;
+            } else {
+                modalContent += `
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3 text-muted">No Assets Available</h5>
+                        <p class="text-muted">Assets in this category are currently being prepared.</p>
+                    </div>
+                `;
+            }
+
+            modalContent += `
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if present
+            const existingModal = document.querySelector('.asset-modal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Create and show modal
+            const modalWrapper = document.createElement('div');
+            modalWrapper.className = 'modal fade asset-modal';
+            modalWrapper.innerHTML = modalContent;
+            document.body.appendChild(modalWrapper);
+
+            const modal = new bootstrap.Modal(modalWrapper);
+            modal.show();
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                archicad: 'building',
+                revit: 'cubes',
+                autocad: 'drafting-compass'
+            };
+            return icons[category] || 'folder';
+        }
+
+        function getCategoryTitle(category) {
+            const titles = {
+                archicad: 'Archicad Templates',
+                revit: 'Revit Families',
+                autocad: 'AutoCAD Standards'
+            };
+            return titles[category] || 'BIM Assets';
+        }
+
+        function requestAssetAccess(assetName) {
+            // This would typically send a request to the server
+            alert(`Access request sent for: ${assetName}\n\nTim BIM Indonesia akan menghubungi Anda untuk proses verifikasi dan akses.`);
+
+            // Close current modal
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) {
+                    bsModal.hide();
+                }
+            });
+        }
+
+        // Add CSS for modal asset cards
+        const modalStyles = `
+            <style>
+                .asset-modal-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 20px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                    border: 1px solid #e9ecef;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    transition: all 0.3s ease;
+                }
+
+                .asset-modal-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                }
+
+                .asset-modal-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                    padding-bottom: 10px;
+                    border-bottom: 2px solid #f8f9fa;
+                }
+
+                .asset-modal-name {
+                    font-weight: 600;
+                    color: #3f5efb;
+                    margin: 0;
+                }
+
+                .asset-modal-body {
+                    flex-grow: 1;
+                    margin-bottom: 15px;
+                }
+
+                .asset-modal-description {
+                    color: #666;
+                    font-size: 0.9rem;
+                    line-height: 1.5;
+                    margin-bottom: 15px;
+                }
+
+                .asset-modal-stats {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+
+                .asset-modal-stats small {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .asset-modal-footer {
+                    text-align: center;
+                    padding-top: 15px;
+                    border-top: 1px solid #f0f0f0;
+                }
+
+                .request-access-btn {
+                    min-width: 120px;
+                }
+
+                .request-access-btn:hover {
+                    background-color: #3f5efb;
+                    border-color: #3f5efb;
+                }
+            </style>
+        `;
+
+        // Inject modal styles
+        document.head.insertAdjacentHTML('beforeend', modalStyles);
+    </script>
+
+
+</body>
+
+</html>

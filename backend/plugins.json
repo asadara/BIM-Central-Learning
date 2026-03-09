@@ -1,0 +1,86 @@
+[
+    {
+        "id": 1,
+        "name": "Revit Lookup",
+        "description": "Alat debugging untuk melihat properti internal elemen Revit.",
+        "download": "https://thebuildingcoder.typepad.com/blog/revitlookup/",
+        "logo": "/img/revit-lookup.png"
+    },
+    {
+        "id": 2,
+        "name": "Dynamo",
+        "description": "Plugin pemrograman visual untuk otomatisasi tugas di Revit.",
+        "download": "https://dynamobim.org/download/",
+        "logo": "/img/dynamo.png"
+    },
+    {
+        "id": 3,
+        "name": "Enscape",
+        "description": "Plugin rendering real-time untuk Revit, SketchUp, Rhino, dan ArchiCAD.",
+        "download": "https://enscape3d.com/download/",
+        "logo": "/img/enscape.png"
+    },
+    {
+        "id": 4,
+        "name": "BIM Vision",
+        "description": "Software IFC Viewer yang gratis namun powerfull karena menyediakan banyak sekali plugin.",
+        "download": "https://bimvision.eu/download/",
+        "logo": "/img/bimvision.png"
+    },
+    {
+        "id": 5,
+        "name": "pyRevit",
+        "description": "Plugin open-source yang menyediakan berbagai alat berguna untuk Revit.",
+        "download": "https://pyrevitlabs.notion.site/Install-pyRevit-98ca4359920a42c3af5c12a7c99a196d",
+        "logo": "/img/pyrevit.png"
+    },
+    {
+        "id": 6,
+        "name": "DiRoots One",
+        "description": "Kumpulan alat produktivitas untuk Revit, termasuk Family Reviser dan ParaManager.",
+        "download": "https://diroots.com/revit-plugins/dirootsone/",
+        "logo": "/img/diroot.png"
+    },
+    {
+        "id": 7,
+        "name": "Dynamo",
+        "description": "Plugin pemrograman visual untuk otomatisasi tugas di Revit.",
+        "download": "https://dynamobim.org/download/",
+        "logo": "/img/dynamo.png"
+    },
+    {
+        "id": 8,
+        "name": "EF_Tools",
+        "description": "Ekstensi pyRevit yang menambahkan alat tambahan, seperti Isolate Warnings.",
+        "download": "https://github.com/ErikFrits/EF-Tools/blob/main/README.md",
+        "logo": "/img/eftool.png"
+    },
+    {
+        "id": 9,
+        "name": "Guardian",
+        "description": "Plugin untuk mencegah pengguna melakukan tindakan yang tidak diinginkan dalam model Revit.",
+        "download": "https://www.getguardian.tech/resources/downloads",
+        "logo": "/img/guardian.png"
+    },
+    {
+        "id": 10,
+        "name": "DWG True View",
+        "description": "Software untuk melihat file dwg gratis dari Autodesk.",
+        "download": "https://www.autodesk.com/products/dwg-trueview/overview",
+        "logo": "/img/dwgtrue.png"
+    },
+    {
+        "id": 11,
+        "name": "Cad Tools",
+        "description": "Plugin powerfull untuk efisiensi Software utama seperti AutoCad, Revit, Civil3D dll.",
+        "download": "https://www.glamsen.se/CadTools.htm",
+        "logo": "/img/cadtools.png"
+    },
+    {
+        "id": 12,
+        "name": "Structural Analysis Toolkit",
+        "description": "Tool kit yang mampu mendukung proses BIM dan memungkinkan para engineer struktur untuk menganalisis struktur di dalam Autodesk Revit.",
+        "download": "https://apps.autodesk.com/RVT/en/Detail/Index?id=7354987843996725256&appLang=en&os=Win64",
+        "logo": "/img/toolkit.png"
+    }
+]

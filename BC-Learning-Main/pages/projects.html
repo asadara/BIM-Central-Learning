@@ -1,0 +1,174 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <title>Projects Explorer - BIM Central Learning</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="BIM Projects NKE, Project Gallery, Construction Projects" name="keywords">
+    <meta content="Galeri proyek-proyek BIM NKE dari berbagai tahun dengan dokumentasi visual yang lengkap" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icons/logo-bcl.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link href="../css/navbar-footer-fix.css" rel="stylesheet">
+    <link href="../css/bim-methode.css" rel="stylesheet">
+    <link href="../css/projects-explorer.css" rel="stylesheet">
+</head>
+
+<body class="page-projects-explorer">
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Projects Explorer Start -->
+    <div class="container-fluid py-2 project-explorer">
+        <div class="container-fluid">
+            <div class="row g-4">
+                <!-- Sidebar Explorer -->
+                <div class="col-lg-5 col-xl-4 col-xxl-3">
+                    <div class="bg-light rounded p-4 mb-4">
+                        <h5 class="mb-3">Tahun Proyek</h5>
+                        <div id="year-list" class="category-list">
+                            <div class="text-center">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <small class="text-muted d-block mt-2">Memuat tahun...</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-light rounded p-4">
+                        <h5 class="mb-3">Daftar Proyek</h5>
+                        <div id="project-list" class="category-list">
+                            <div class="text-muted small">Pilih tahun terlebih dahulu.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-lg-7 col-xl-8 col-xxl-9">
+                    <div class="bg-light rounded p-3 mb-4">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-lg-5 col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="search-input"
+                                        placeholder="Cari media...">
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-6">
+                                <select class="form-select" id="filter-type">
+                                    <option value="all">Semua Tipe</option>
+                                    <option value="image">Gambar</option>
+                                    <option value="video">Video</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-6">
+                                <select class="form-select" id="filter-size">
+                                    <option value="all">Semua Ukuran</option>
+                                    <option value="lt-10">&lt; 10 MB</option>
+                                    <option value="10-50">10 - 50 MB</option>
+                                    <option value="50-200">50 - 200 MB</option>
+                                    <option value="gt-200">&gt; 200 MB</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <select class="form-select" id="sort-by">
+                                    <option value="name-asc">Nama A-Z</option>
+                                    <option value="name-desc">Nama Z-A</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="media-grid" class="row g-4">
+                        <div class="col-12">
+                            <div class="media-empty">
+                                <i class="fas fa-layer-group"></i>
+                                <p>Pilih proyek di sidebar untuk melihat media.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pagination-container" class="d-flex justify-content-center mt-4" style="display: none;">
+                        <nav aria-label="Media pagination">
+                            <ul class="pagination" id="pagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Projects Explorer End -->
+
+    <!-- Media Viewer Modal -->
+    <div class="modal fade" id="mediaModal" tabindex="-1" aria-labelledby="mediaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mediaModalLabel">Preview Media</h5>
+                    <span class="small text-muted ms-3" id="mediaModalCounter"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="media-viewer"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="preview-prev-btn">
+                        <i class="fas fa-chevron-left me-2"></i>Prev
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="preview-next-btn">
+                        Next<i class="fas fa-chevron-right ms-2"></i>
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <a href="#" class="btn btn-primary" id="download-btn" download>
+                        <i class="fas fa-download me-2"></i>Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/projects-explorer.js"></script>
+    <script src="../js/track-last-page.js"></script>
+</body>
+
+</html>

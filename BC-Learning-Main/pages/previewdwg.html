@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <title>BCL- Preview DWG Cad Files</title>
+    <meta charset="utf-8">
+    <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link href="/img/icons/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amarante&display=swap" rel="stylesheet">
+
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://unpkg.com/@dwghub/dwg.js/dist/dwg.min.js"></script>
+
+    <script src="https://unpkg.com/@dwghub/dwg.js/dist/dwg.min.js"></script>
+
+
+
+    <style>
+        .content {
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .content:hover {
+            transform: scale(1.05);
+        }
+
+        .back-button {
+            display: none;
+            margin-bottom: 15px;
+        }
+
+        .content img {
+            max-width: 45px !important;
+            height: auto !important;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+
+    <style>
+        #pdfPreviewContainer {
+            display: none;
+            /* Secara default disembunyikan */
+            width: 100%;
+            height: 500px;
+            /* Default height */
+            min-height: 300px;
+            max-height: 90vh;
+            resize: vertical;
+            /* Bisa diubah ukuran ke atas/bawah */
+            overflow: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+
+    <style>
+        #videoPreviewContainer {
+            display: none;
+            /* Secara default disembunyikan */
+            margin: 20px auto;
+            /* Jarak dari tepi atas & bawah */
+            padding: 15px;
+            /* Padding di dalam container */
+            max-width: 800px;
+            /* Agar tidak terlalu besar */
+            border: 2px solid #ccc;
+            /* Batasan agar lebih jelas */
+            background: #f9f9f9;
+            /* Warna latar belakang agar lebih nyaman dilihat */
+            border-radius: 10px;
+            /* Sudut membulat */
+        }
+    </style>
+
+    <style>
+        /* Pastikan ikon folder dan file tampil dengan ukuran yang sesuai */
+        .content img {
+            max-width: 80px;
+            /* Ukuran maksimal ikon */
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            /* Posisikan di tengah */
+        }
+    </style>
+
+    <style>
+        body {
+            text-align: center;
+        }
+
+        #dwgViewer {
+            width: 90vw;
+            height: 90vh;
+            border: 1px solid #ccc;
+        }
+    </style>
+
+    <script src="https://unpkg.com/@dwg-viewer/dwg-viewer"></script>
+    <script src="https://unpkg.com/@dwghub/dwg.js/dist/dwg.min.js"></script>
+    <script src="https://developer.api.autodesk.com/viewingservice/v1/viewers/three.min.js"></script>
+    <script src="https://developer.api.autodesk.com/viewingservice/v1/viewers/viewer3D.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #viewer {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
+        <a href="index.html" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
+            <p class="m-0 fw-bold" style="font-size: 25px;"><img src="/img/icon.png" alt="" height="80px">N<span
+                    style="color: #fb873f;">KE</span></p>
+        </a>
+
+        <!-- Menu BCL Start -->
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="navbar-nav ms-auto p-4 p-lg-0">
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Home</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="index.html" class="dropdown-item">Index</a>
+                        <a href="dashboard.html" class="dropdown-item">Dashboard</a>
+                        <a href="projects.html" class="dropdown-item">BIM Projects</a>
+                        <a href="plugins.html" class="dropdown-item">BIM Plugins & Tools</a>
+                        <a href="updates.html" class="dropdown-item">BIM News & Updates</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">E-Learning</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="Knowledgehub.html" class="dropdown-item">Knowledge Hub</a>
+                        <a href="tutorial.html" class="dropdown-item">Video Tutorial</a>
+                        <a href="library.html" class="dropdown-item">BIM Library</a>
+                        <a href="bimassets.html" class="dropdown-item">Knowledge Assets</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Training</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="elearning.html" class="dropdown-item">Materi Belajar</a>
+                        <a href="latihan.html" class="dropdown-item">Latihan Soal</a>
+                        <a href="ujian.html" class="dropdown-item">Ujian</a>
+                        <a href="sertifikasi.html" class="dropdown-item">Sertifikasi</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Community</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="forum.html" class="dropdown-item">Forum Diskusi</a>
+                        <a href="ibimi.html" class="dropdown-item">IBIMI</a>
+                        <a href="team.html" class="dropdown-item">Tim BIM NKE</a>
+                        <a href="testimonial.html" class="dropdown-item">Testimonial</a>
+                        <a href="contact.html" class="dropdown-item">Contact Us</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-user"></i><span id="account-name">Account</span></a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="certificates.html" class="dropdown-item">Badges</a>
+                        <a href="learnprog.html" class="dropdown-item">My Progress</a>
+                        <a href="profiles.html" class="dropdown-item">My Profiles</a>
+                        <a href="login.html" class="dropdown-item" id="login-link"><i
+                                class="fa-solid fa-sign-in-alt"></i> Log in</a>
+                        <a href="#" class="dropdown-item" id="logout-link" style="display: none;"><i
+                                class="fa-solid fa-sign-out-alt"></i> Log out</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- Navbar End -->
+
+    <canvas id="dwg-container"></canvas>
+    <script>
+        async function loadDWG() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dwgFile = urlParams.get('file'); // Ambil nama file dari URL
+
+            if (!dwgFile) {
+                alert("File DWG tidak ditemukan!");
+                return;
+            }
+
+            const canvas = document.getElementById('dwg-container');
+            const viewer = new DWGJS.Viewer(canvas);
+
+            try {
+                const filePath = `/dwg/${dwgFile}`;  // Path ke file DWG di server
+                console.log("🔗 Memuat DWG dari:", filePath);
+
+                await viewer.load(filePath); // Load file DWG
+                console.log("✅ DWG berhasil dimuat!");
+            } catch (error) {
+                console.error("❌ Gagal memuat DWG:", error);
+            }
+        }
+
+        loadDWG();
+    </script>
+
+
+    <h2>Preview DWG (SVG Format)</h2>
+    <button onclick="window.history.back()">Kembali</button>
+    <br><br>
+    <iframe id="dwgViewer"></iframe>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dwgFile = urlParams.get("file");
+
+            if (!dwgFile) {
+                console.error("❌ Tidak ada file DWG yang dipilih.");
+                document.getElementById("dwgContainer").innerHTML = "<p>❌ Tidak ada file DWG yang dipilih.</p>";
+                return;
+            }
+
+            console.log("📂 Menampilkan DWG:", dwgFile);
+
+            // Cek apakah elemen DWG Viewer ada
+            let dwgViewer = document.getElementById("dwgContainer");
+            if (!dwgViewer) {
+                console.error("❌ Elemen <dwg-viewer> tidak ditemukan!");
+                return;
+            }
+
+            // Tampilkan file DWG di DWG Viewer
+            let dwgPath = `/converted/${dwgFile}`;
+            console.log("🔗 Path DWG yang dimuat:", dwgPath);
+
+            dwgViewer.setAttribute("src", dwgPath);
+        });
+    </script>
+
+    <div id="dwgContainer" class="text-center">
+        <p>⏳ Sedang memuat...</p>
+    </div>
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6">
+                    <h4 class="text-white mb-3">Quick Link</h4>
+                    <p><a class="text-light" href="about.html">About Us</a></p>
+                    <p><a class="text-light" href="contact.html">Contact Us</a></p>
+                    <p><a class="text-light" href="">Privacy Policy</a></p>
+                    <p><a class="text-light" href="">Terms & Condition</a></p>
+                    <p><a class="text-light" href="">FAQs & Help</a></p>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <h4 class="text-white mb-3">Contact</h4>
+                    <p class="mb-2 justify-text"><i class="fa fa-map-marker-alt me-3"></i>ITS Tower, Nifarro Park, Jl.
+                        KH. Guru Amin No.18 Lantai 20, Pejaten Timur, Ps. Minggu, Kota Jakarta Selatan, DKI Jakarta
+                        12510</p>
+                    <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>(021) 7221003</p>
+                    <p class="mb-2"><i class="fa fa-envelope me-3"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-2">
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <h4 class="text-white mb-3 justify-text">Update Berita.</h4>
+                    <p style:"justify-text">Bergabunglah dengan komunitas pembelajar BIM yang terus berkembang dan
+                        berkomitmen untuk pendidikan sepanjang hayat! </p>
+                    <div class="position-relative mx-auto" style="max-width: 400px;">
+                        <form action="#">
+                            <input class="form-control border-0 w-100 py-3 ps-4 pe-5" type="email"
+                                placeholder="Your email" required>
+                            <button type="submit" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2"
+                                type="button"
+                                onclick="window.location.href='mailto:nke-bim@nusakonstruksi.com'">Berlangganan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                        &copy; <a class="border-bottom" href="index.html">2025 BIM NKE</a>, Hak Cipta Dilindungi.
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video-js.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video.min.js"></script>
+
+
+</body>
+
+</html>

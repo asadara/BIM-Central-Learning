@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Dashboard</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icons/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
+    <link href="//fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="//cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            /* Pusatkan secara vertikal */
+            align-items: center;
+            /* Pusatkan secara horizontal */
+            text-align: center;
+            height: 70vh;
+            /* Sesuaikan dengan tinggi layar */
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+
+    <div class="container">
+        <!-- Unified Dashboard Content -->
+        <div class="row g-4">
+            <!-- BIM Projects Section -->
+            <div class="col-md-6">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-building me-2"></i>BIM Projects Hub
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Access BIM projects, models, and construction documentation.</p>
+                        <div class="d-grid gap-2">
+                            <a href="/pages/projects.html" class="btn btn-primary">
+                                <i class="fas fa-folder-open me-2"></i>Browse Projects
+                            </a>
+                            <a href="/pages/courses.html" class="btn btn-outline-primary">
+                                <i class="fas fa-graduation-cap me-2"></i>BIM Courses
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- E-Learning Section -->
+            <div class="col-md-6">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-graduation-cap me-2"></i>E-Learning Portal
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Continue your learning journey with interactive courses and assessments.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="/elearning-assets/dashboard.html" class="btn btn-success">
+                                <i class="fas fa-chart-line me-2"></i>My Learning Progress
+                            </a>
+                            <a href="/elearning-assets/courses.html" class="btn btn-outline-success">
+                                <i class="fas fa-book-open me-2"></i>All Courses
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Access Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt me-2"></i>Quick Access
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3 col-6">
+                                <a href="/pages/tutorial.html" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-video me-2"></i><br>Tutorial Videos
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a href="/elearning-assets/exams.html" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-clipboard-check me-2"></i><br>Take Exams
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a href="/elearning-assets/certification.html" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-certificate me-2"></i><br>Certifications
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a href="/elearning-assets/profile.html" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-user me-2"></i><br>My Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6">
+                    <h4 class="text-white mb-3">Quick Link</h4>
+                    <p><a class="text-light" href="about.html">About Us</a></p>
+                    <p><a class="text-light" href="contact.html">Contact Us</a></p>
+                    <p><a class="text-light" href="">Privacy Policy</a></p>
+                    <p><a class="text-light" href="">Terms & Condition</a></p>
+                    <p><a class="text-light" href="">FAQs & Help</a></p>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <h4 class="text-white mb-3">Contact</h4>
+                    <p class="mb-2 justify-text"><i class="fa fa-map-marker-alt me-3"></i>ITS Tower, Nifarro Park, Jl.
+                        KH. Guru Amin No.18 Lantai 20, Pejaten Timur, Ps. Minggu, Kota Jakarta Selatan, DKI Jakarta
+                        12510</p>
+                    <p class="mb-2"><i class="fa fa-phone-alt me-3"></i>(021) 7221003</p>
+                    <p class="mb-2"><i class="fa fa-envelope me-3"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-2">
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href=""><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <h4 class="text-white mb-3">Update Berita.</h4>
+                    <p class="justify-text">Bergabunglah dengan komunitas pembelajar BIM yang terus berkembang dan
+                        berkomitmen untuk pendidikan sepanjang hayat! </p>
+                    <div class="position-relative mx-auto" style="max-width: 400px;">
+                        <form action="#">
+                            <input class="form-control border-0 w-100 py-3 ps-4 pe-5" type="email"
+                                placeholder="Your email" required>
+                            <button type="submit" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2"
+                                type="button"
+                                onclick="window.location.href='mailto:nke-bim@nusakonstruksi.com'">Berlangganan</a></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                        &copy; <a class="border-bottom" href="../index.html">2025 BIM NKE</a>, Hak Cipta Dilindungi.
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="//code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/userindex.js"></script>
+    <script src="../js/user.js" defer></script>
+
+</body>
+
+</html>

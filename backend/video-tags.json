@@ -1,0 +1,253 @@
+{
+  "videoTags": {
+    "7__audio_visual_learning_1__aerial_survey_terra_drone_introduction_to_civil_3d_part_19___inserting_lidar_and_point_clouds_into_civil_3d_mp4": {
+      "videoId": "7__audio_visual_learning_1__aerial_survey_terra_drone_introduction_to_civil_3d_part_19___inserting_lidar_and_point_clouds_into_civil_3d_mp4",
+      "category": "survey",
+      "bimLevel": "intermediate",
+      "duration": 45,
+      "language": "id",
+      "description": "Tutorial lengkap mengenai integrasi data drone aerial survey dengan Civil 3D - bagian inserting LiDAR dan point clouds",
+      "tags": [
+        "drone",
+        "survey",
+        "aerial",
+        "lidar",
+        "civil3d",
+        "point-cloud",
+        "terra-drone"
+      ],
+      "updated_at": "2025-01-19T12:46:00.000Z"
+    },
+    "7__audio_visual_learning_1__aerial_survey_terra_drone_solusi_integrasi_lidar_dan_foto_udara_untuk_aerial_surveying__dji_matrice_300rtk_with_zenmuse_l1__mp4": {
+      "videoId": "7__audio_visual_learning_1__aerial_survey_terra_drone_solusi_integrasi_lidar_dan_foto_udara_untuk_aerial_surveying__dji_matrice_300rtk_with_zenmuse_l1__mp4",
+      "category": "survey",
+      "bimLevel": "advanced",
+      "duration": 60,
+      "language": "id",
+      "description": "Solusi lengkap integrasi LiDAR dan foto udara untuk aerial surveying menggunakan DJI Matrice 300RTK dengan Zenmuse L1",
+      "tags": [
+        "drone",
+        "survey",
+        "aerial",
+        "lidar",
+        "dji",
+        "matrice-300rtk",
+        "zenmuse-l1",
+        "fotogrametri"
+      ],
+      "updated_at": "2025-01-19T12:46:00.000Z"
+    },
+    "7__audio_visual_learning_1__aerial_survey_1__drone_pelatihan_drone_dan_sertifikasi_remote_pilot_batch_juni_2024___day_1__2024_06_03_09_03_gmt_7__mp4": {
+      "videoId": "7__audio_visual_learning_1__aerial_survey_1__drone_pelatihan_drone_dan_sertifikasi_remote_pilot_batch_juni_2024___day_1__2024_06_03_09_03_gmt_7__mp4",
+      "category": "survey",
+      "bimLevel": "beginner",
+      "duration": 120,
+      "language": "id",
+      "description": "Pelatihan drone dan sertifikasi remote pilot batch Juni 2024 - Hari ke-1: Pengenalan dasar operasi drone untuk survey",
+      "tags": [
+        "drone",
+        "survey",
+        "pelatihan",
+        "sertifikasi",
+        "remote-pilot",
+        "operasi-drone"
+      ],
+      "updated_at": "2025-01-19T12:46:00.000Z"
+    },
+    "Solusi_Integrasi_Lidar_dan_Foto_Udara_untuk_Aerial_Surveying__DJI_Matrice_300RTK_with_Zenmuse_L1__mp4": {
+      "videoId": "Solusi_Integrasi_Lidar_dan_Foto_Udara_untuk_Aerial_Surveying__DJI_Matrice_300RTK_with_Zenmuse_L1__mp4",
+      "category": "survey",
+      "bimLevel": "advanced",
+      "duration": 75,
+      "language": "id",
+      "description": "Panduan lengkap solusi integrasi LiDAR dan foto udara untuk aerial surveying menggunakan DJI Matrice 300RTK dengan Zenmuse L1",
+      "tags": [
+        "drone",
+        "survey",
+        "aerial",
+        "lidar",
+        "dji",
+        "matrice-300rtk",
+        "zenmuse-l1",
+        "integrasi"
+      ],
+      "updated_at": "2025-01-19T12:46:00.000Z"
+    },
+    "Tutorial_Civil3D_No-01.mp4": {
+      "videoId": "Tutorial_Civil3D_No-01.mp4",
+      "category": "civil3d",
+      "bimLevel": "beginner",
+      "duration": 90,
+      "language": "id",
+      "description": "Tutorial AutoCAD Civil 3D untuk survey dan desain jalan - pengenalan lengkap dan praktis",
+      "tags": [
+        "civil3d",
+        "survey",
+        "autocad",
+        "desain-jalan",
+        "tutorial"
+      ],
+      "updated_at": "2025-01-19T12:46:00.000Z"
+    },
+    "12__others_pengenalan_building_information_modeling_mp4": {
+      "videoId": "12__others_pengenalan_building_information_modeling_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "bim",
+        "definisi",
+        "tentang bim"
+      ],
+      "updated_at": "2026-03-02T04:57:16.710Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_plan___bim_execution_planning__bep____bim_management_software_by_plannerly_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_plan___bim_execution_planning__bep____bim_management_software_by_plannerly_mp4",
+      "category": "general",
+      "bimLevel": "intermediate",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "bep",
+        "plannerly",
+        "cde"
+      ],
+      "updated_at": "2026-03-02T04:58:21.171Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_plannerly___the_bim_management_platform___in_one_minute_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_plannerly___the_bim_management_platform___in_one_minute_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "bep",
+        "plannerly",
+        "cde"
+      ],
+      "updated_at": "2026-03-02T04:58:35.231Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_plannerly___the_bim_management_platform_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_plannerly___the_bim_management_platform_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "bep",
+        "bim",
+        "cde",
+        "plannerly"
+      ],
+      "updated_at": "2026-03-02T04:58:44.954Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_schedule___for_simple_bim_scheduling___bim_management_software_by_plannerly_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_schedule___for_simple_bim_scheduling___bim_management_software_by_plannerly_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "plannerly",
+        "cde",
+        "bep",
+        "bim"
+      ],
+      "updated_at": "2026-03-02T05:48:26.454Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_scope___iso_19650_bim_project_scoping___bim_management_software_by_plannerly_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_scope___iso_19650_bim_project_scoping___bim_management_software_by_plannerly_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "plannerly",
+        "bim",
+        "bep",
+        "cde"
+      ],
+      "updated_at": "2026-03-02T05:48:36.472Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_the_complete_bim_management_workflow___with_plannerly_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_the_complete_bim_management_workflow___with_plannerly_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "plannerly",
+        "cde",
+        "bim",
+        "bep"
+      ],
+      "updated_at": "2026-03-02T05:48:49.237Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_track___lean_bim_kanban_project_tracking___bim_management_software_by_plannerly_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_track___lean_bim_kanban_project_tracking___bim_management_software_by_plannerly_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "plannerly",
+        "bep",
+        "cde"
+      ],
+      "updated_at": "2026-03-02T05:49:04.784Z"
+    },
+    "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_verify___simplify_bim_compliance___bim_management_software_by_plannerly_mp4": {
+      "videoId": "7__audio_visual_learning_2__aplikasi_manajemen_1__plannerly_verify___simplify_bim_compliance___bim_management_software_by_plannerly_mp4",
+      "category": "general",
+      "bimLevel": "beginner",
+      "duration": null,
+      "language": "id",
+      "description": "",
+      "tags": [
+        "plannerly",
+        "cde",
+        "bep",
+        "iso19650"
+      ],
+      "updated_at": "2026-03-02T05:49:25.225Z"
+    }
+  },
+  "customCategories": [
+    {
+      "name": "Drone Survey",
+      "value": "drone-survey",
+      "created_at": "2025-01-19T12:46:00.000Z"
+    },
+    {
+      "name": "Aerial Survey",
+      "value": "aerial-survey",
+      "created_at": "2025-01-19T12:46:00.000Z"
+    },
+    {
+      "name": "LiDAR Integration",
+      "value": "lidar-integration",
+      "created_at": "2025-01-19T12:46:00.000Z"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-02T05:49:25.225Z",
+    "totalTaggedVideos": 14,
+    "totalCustomCategories": 3,
+    "lastMigratedToPostgres": "2026-01-19T05:48:00.353Z",
+    "postgresMigrationSummary": {
+      "videosMigrated": 5,
+      "categoriesMigrated": 3,
+      "migrationTimestamp": "2026-01-19T05:48:00.353Z"
+    }
+  }
+}

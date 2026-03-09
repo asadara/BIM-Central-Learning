@@ -1,0 +1,12 @@
+{
+    "id": "pc-bim02",
+    "name": "PC-BIM02 PROJECT BIM 2025",
+    "host": "pc-bim02",
+    "shareName": "PROJECT BIM 2025",
+    "remotePath": "\\\\pc-bim02\\PROJECT BIM 2025",
+    "localMountPoint": "X:",
+    "enabled": true,
+    "username": "user",
+    "password": "nke86",
+    "notes": "Network share dari PC-BIM02 untuk project 2025"
+}

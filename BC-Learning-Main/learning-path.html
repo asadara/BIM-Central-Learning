@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCL Learning Path</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .admin-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .admin-banner.show {
+            display: block;
+        }
+
+        .level-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .beginner {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            color: white;
+        }
+
+        .intermediate {
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+            color: white;
+        }
+
+        .advanced {
+            background: linear-gradient(45deg, #f44336, #ef5350);
+            color: white;
+        }
+
+        .tagline-indicator {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .admin-controls {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .learning-path-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .learning-path-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .learning-path-card.selected {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar Start -->
+    <nav class="navbar navbar-expand-lg navbar-light shadow sticky-top p-0"
+        style="position: fixed; top: 0; width: 100%; z-index: 1030; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+        <a href="index.html" class="navbar-brand d-flex align-items-center ms-0">
+            <p class="m-0 fw-bold" style="font-size: 25px;"><img src="./img/icons/logo-bcl.png" alt="BCL Logo"
+                    height="70px" style="margin-right: 10px; mix-blend-mode: multiply;">
+                N<span style="color: #fb873f;">KE</span></p>
+        </a>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="navbar-nav ms-auto p-4 p-lg-0">
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Home</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="index.html" class="dropdown-item">Index</a>
+                        <a href="./pages/bim.html" class="dropdown-item">Apa itu BIM?</a>
+                        <a href="./pages/sdb.html" class="dropdown-item">Sumber Daya BIM</a>
+                        <a href="./pages/standards.html" class="dropdown-item">BIM Standards</a>
+                        <a href="./pages/plugins.html" class="dropdown-item">BIM Plugins & Tools</a>
+                        <a href="./pages/updates.html" class="dropdown-item">BIM News & Updates</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">E-Learning</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="./pages/Knowledgehub.html" class="dropdown-item">BIM NKE</a>
+                        <a href="./pages/projects.html" class="dropdown-item">Projects</a>
+                        <a href="./pages/tutorial.html" class="dropdown-item">Video Tutorial</a>
+                        <a href="./pages/library.html" class="dropdown-item">BIM Library</a>
+                        <a href="./pages/bimassets.html" class="dropdown-item">Knowledge Assets</a>
+                        <a href="learning-path.html" class="dropdown-item">Learning Path</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Training</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="./pages/elearning.html" class="dropdown-item">General Learning</a>
+                        <a href="./pages/training.html" class="dropdown-item">Dashboard</a>
+                        <a href="./pages/sub/manager.html" class="dropdown-item">BIM Manager</a>
+                        <a href="./pages/sub/coordinator.html" class="dropdown-item">BIM Coordinator</a>
+                        <a href="./pages/sub/modeller.html" class="dropdown-item">BIM Modeller</a>
+                        <a href="./pages/sub/adminbcl.html" class="dropdown-item">Admin</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-user"></i> <span id="account-name">Account</span></a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="./pages/profiles.html" class="dropdown-item">My Profiles</a>
+                        <a href="./pages/learnprog.html" class="dropdown-item">My Progress</a>
+                        <a href="./pages/certificates.html" class="dropdown-item">My Badges</a>
+                        <a href="./pages/login.html" class="dropdown-item" id="login-link"><i
+                                class="fa-solid fa-sign-in-alt"></i> Log in</a>
+                        <a href="#" class="dropdown-item" id="logout-link" style="display: none;"><i
+                                class="fa-solid fa-sign-out-alt"></i> Log out</a>
+                    </div>
+                </div>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Community</a>
+                    <div class="dropdown-menu fade-down m-0">
+                        <a href="./pages/forum.html" class="dropdown-item">Forum Diskusi</a>
+                        <a href="https://www.instagram.com/institutbim/?hl=en" class="dropdown-item">IBIMI</a>
+                        <a href="./pages/team.html" class="dropdown-item">Tim BIM NKE</a>
+                        <a href="./pages/testimonial.html" class="dropdown-item">Testimonial</a>
+                        <a href="./pages/contact.html" class="dropdown-item">Contact Us</a>
+                    </div>
+                </div>
+                <div class="nav-item" id="admin-link" style="display: none;">
+                    <a href="admin.html" class="nav-link">
+                        <i class="fas fa-cog"></i> Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- Navbar End -->
+
+    <!-- Admin Banner -->
+    <div class="container" style="margin-top: 120px;">
+        <div class="admin-banner" id="admin-banner">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5><i class="fas fa-user-shield"></i> Welcome, AdminBCL!</h5>
+                    <p>You have administrative privileges to manage course materials and taglines.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="admin.html" class="btn btn-light">
+                        <i class="fas fa-cog"></i> Open Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Controls (shown only for AdminBCL) -->
+    <div class="container">
+        <div class="admin-controls" id="admin-controls" style="display: none;">
+            <h6><i class="fas fa-cog"></i> Admin Controls</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-success btn-sm" onclick="manageTaglines()">
+                        <i class="fas fa-tags"></i> Manage Taglines
+                    </button>
+                    <button class="btn btn-info btn-sm ms-2" onclick="viewTaglineStats()">
+                        <i class="fas fa-chart-bar"></i> Tagline Stats
+                    </button>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">Admin controls for learning path management</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Paths Header -->
+    <section class="learning-path-header"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 3rem 0;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h1><i class="fas fa-route"></i> BIM Learning Paths</h1>
+                    <p>Choose your learning journey based on your experience level</p>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="path-stats">
+                        <h3 id="total-paths">3</h3>
+                        <p>Learning Paths</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Learning Paths -->
+    <div class="container my-5">
+        <div class="row" id="learning-paths-container">
+            <!-- Beginner Path -->
+            <div class="col-lg-4 mb-4">
+                <div class="card learning-path-card h-100" data-level="beginner">
+                    <div class="level-badge beginner">BEGINNER</div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-seedling fa-3x mb-3" style="color: #4caf50;"></i>
+                        <h4 class="card-title">BIM Fundamentals</h4>
+                        <p class="card-text">Start your BIM journey with basic concepts, tools, and workflows. Perfect
+                            for newcomers to Building Information Modeling.</p>
+
+                        <div class="progress-tracker mt-3">
+                            <div class="progress-step completed">
+                                <span>Introduction to BIM</span>
+                            </div>
+                            <div class="progress-step completed">
+                                <span>Basic Revit Tools</span>
+                            </div>
+                            <div class="progress-step active">
+                                <span>Modeling Fundamentals</span>
+                            </div>
+                            <div class="progress-step">
+                                <span>Project Setup</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-success w-100 mt-3" onclick="selectLearningPath('beginner')">
+                            <i class="fas fa-play"></i> Start Beginner Path (<span id="beginner-count">0</span> courses)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Intermediate Path -->
+            <div class="col-lg-4 mb-4">
+                <div class="card learning-path-card h-100" data-level="intermediate">
+                    <div class="level-badge intermediate">INTERMEDIATE</div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-cogs fa-3x mb-3" style="color: #ff9800;"></i>
+                        <h4 class="card-title">BIM Professional</h4>
+                        <p class="card-text">Advance your skills with complex modeling, collaboration tools, and
+                            industry best practices.</p>
+
+                        <div class="progress-tracker mt-3">
+                            <div class="progress-step completed">
+                                <span>Advanced Modeling</span>
+                            </div>
+                            <div class="progress-step completed">
+                                <span>Family Creation</span>
+                            </div>
+                            <div class="progress-step active">
+                                <span>Collaboration Workflows</span>
+                            </div>
+                            <div class="progress-step">
+                                <span>Documentation</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-warning w-100 mt-3" onclick="selectLearningPath('intermediate')">
+                            <i class="fas fa-play"></i> Start Intermediate Path (<span id="intermediate-count">0</span>
+                            courses)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Path -->
+            <div class="col-lg-4 mb-4">
+                <div class="card learning-path-card h-100" data-level="advanced">
+                    <div class="level-badge advanced">ADVANCED</div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-rocket fa-3x mb-3" style="color: #f44336;"></i>
+                        <h4 class="card-title">BIM Expert</h4>
+                        <p class="card-text">Master advanced BIM techniques, API development, and complex project
+                            management.</p>
+
+                        <div class="progress-tracker mt-3">
+                            <div class="progress-step completed">
+                                <span>API Development</span>
+                            </div>
+                            <div class="progress-step completed">
+                                <span>Complex Projects</span>
+                            </div>
+                            <div class="progress-step active">
+                                <span>Automation & Scripting</span>
+                            </div>
+                            <div class="progress-step">
+                                <span>Project Leadership</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-danger w-100 mt-3" onclick="selectLearningPath('advanced')">
+                            <i class="fas fa-play"></i> Start Advanced Path (<span id="advanced-count">0</span> courses)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Path Details -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card" id="path-details" style="display: none;">
+                    <div class="card-header">
+                        <h5 id="path-details-title">Learning Path Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>Recommended Courses & Materials</h6>
+                                <div id="recommended-materials">
+                                    <!-- Materials will be loaded here -->
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Path Statistics</h6>
+                                <div class="stats-container">
+                                    <p><strong>Total Materials:</strong> <span id="total-materials">0</span></p>
+                                    <p><strong>Manual Tags:</strong> <span id="manual-tags-count">0</span></p>
+                                    <p><strong>Estimated Time:</strong> <span id="estimated-time">0 hours</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2025 BCL - BIM Central Learning</span>
+        </div>
+    </footer>
+
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+        let selectedPath = null;
+        let pathMaterials = {};
+
+        document.addEventListener('DOMContentLoaded', function () {
+            checkAdminAccess();
+            loadPathMaterials();
+        });
+
+        // Check if user is AdminBCL
+        function checkAdminAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isAdmin = urlParams.get('admin') === 'true' ||
+                localStorage.getItem('userRole') === 'admin' ||
+                localStorage.getItem('username') === 'AdminBCL';
+
+            if (isAdmin) {
+                document.getElementById('admin-banner').classList.add('show');
+                document.getElementById('admin-controls').style.display = 'block';
+                document.getElementById('admin-link').style.display = 'block';
+            }
+        }
+
+        // Load materials for each path
+        async function loadPathMaterials() {
+            try {
+                const response = await fetch('/api/tutorials/courses');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const courses = await response.json();
+
+                // Categorize materials by level
+                pathMaterials = {
+                    beginner: courses.filter(course => isBeginnerMaterial(course)),
+                    intermediate: courses.filter(course => isIntermediateMaterial(course)),
+                    advanced: courses.filter(course => isAdvancedMaterial(course))
+                };
+
+                updatePathStats();
+
+            } catch (error) {
+                console.error('Error loading path materials:', error);
+                // Fallback to original API if new API fails
+                loadOriginalModules();
+            }
+        }
+
+        // Load original modules as fallback
+        async function loadOriginalModules() {
+            try {
+                const response = await fetch('/api/elearning/modules');
+                const data = await response.json();
+
+                if (Array.isArray(data)) {
+                    // Convert old format to new format
+                    const courses = data.map(mod => ({
+                        id: mod.id || Math.random().toString(36).substr(2, 9),
+                        title: mod.title,
+                        description: mod.description,
+                        videos: mod.videos || [],
+                        videoCount: mod.videos ? mod.videos.length : 0,
+                        representativeVideo: { viewCount: 0 }
+                    }));
+
+                    pathMaterials = {
+                        beginner: courses.filter(course => isBeginnerMaterial(course)),
+                        intermediate: courses.filter(course => isIntermediateMaterial(course)),
+                        advanced: courses.filter(course => isAdvancedMaterial(course))
+                    };
+
+                    updatePathStats();
+                }
+            } catch (error) {
+                console.error('Error loading original modules:', error);
+            }
+        }
+
+        // Determine if material is for beginners
+        function isBeginnerMaterial(course) {
+            const title = course.title?.toLowerCase() || '';
+            const description = course.description?.toLowerCase() || '';
+
+            return title.includes('basic') || title.includes('fundamental') ||
+                title.includes('introduction') || title.includes('beginner') ||
+                description.includes('basic') || description.includes('fundamental') ||
+                course.level === 'beginner';
+        }
+
+        // Determine if material is for intermediate learners
+        function isIntermediateMaterial(course) {
+            const title = course.title?.toLowerCase() || '';
+            const description = course.description?.toLowerCase() || '';
+
+            return title.includes('intermediate') || title.includes('advanced') ||
+                title.includes('professional') || description.includes('intermediate') ||
+                course.level === 'intermediate';
+        }
+
+        // Determine if material is for advanced learners
+        function isAdvancedMaterial(course) {
+            const title = course.title?.toLowerCase() || '';
+            const description = course.description?.toLowerCase() || '';
+
+            return title.includes('expert') || title.includes('advanced') ||
+                title.includes('api') || title.includes('automation') ||
+                course.level === 'advanced';
+        }
+
+        // Update path statistics
+        function updatePathStats() {
+            // Update total paths count
+            document.getElementById('total-paths').textContent = '3';
+
+            // Update individual path cards with material counts
+            Object.keys(pathMaterials).forEach(level => {
+                const materials = pathMaterials[level];
+                const countElement = document.getElementById(`${level}-count`);
+                if (countElement) {
+                    countElement.textContent = materials.length;
+                }
+            });
+        }
+
+        // Select learning path
+        function selectLearningPath(level) {
+            selectedPath = level;
+
+            // Update UI
+            document.querySelectorAll('.learning-path-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            const selectedCard = document.querySelector(`[data-level="${level}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+
+            // Show path details
+            showPathDetails(level);
+        }
+
+        // Show path details
+        function showPathDetails(level) {
+            const detailsCard = document.getElementById('path-details');
+            const titleElement = document.getElementById('path-details-title');
+            const materialsContainer = document.getElementById('recommended-materials');
+
+            titleElement.textContent = `${level.charAt(0).toUpperCase() + level.slice(1)} Learning Path`;
+
+            const materials = pathMaterials[level] || [];
+            const manualTagsCount = materials.reduce((count, course) => {
+                return count + (course.videos?.filter(video => video.manualTag).length || 0);
+            }, 0);
+
+            // Update stats
+            document.getElementById('total-materials').textContent = materials.length;
+            document.getElementById('manual-tags-count').textContent = manualTagsCount;
+            document.getElementById('estimated-time').textContent = `${materials.length * 2} hours`;
+
+            // Display materials
+            materialsContainer.innerHTML = '';
+
+            if (materials.length === 0) {
+                materialsContainer.innerHTML = '<p class="text-muted">No materials available for this path yet.</p>';
+            } else {
+                materials.forEach(course => {
+                    const courseElement = createCourseElement(course);
+                    materialsContainer.appendChild(courseElement);
+                });
+            }
+
+            detailsCard.style.display = 'block';
+            detailsCard.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Create course element for path details
+        function createCourseElement(course) {
+            const div = document.createElement('div');
+            div.className = 'mb-3 p-3 border rounded';
+
+            const hasManualTags = course.videos?.some(video => video.manualTag);
+            const tagIndicator = hasManualTags ? '<span class="tagline-indicator">Manual Tags</span>' : '';
+
+            div.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${course.title}</h6>
+                        <p class="mb-2 text-muted small">${course.description || 'BIM course'}</p>
+                        <div class="d-flex align-items-center">
+                            <small class="text-muted me-3">
+                                <i class="fas fa-video"></i> ${course.videoCount || 0} videos
+                            </small>
+                            <small class="text-muted">
+                                <i class="fas fa-eye"></i> ${course.representativeVideo?.viewCount || 0} views
+                            </small>
+                            ${tagIndicator}
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="startCourse('${course.id}', '${course.title}')">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Start course
+        function startCourse(courseId, courseTitle) {
+            window.location.href = `course-detail.html?course=${courseId}&title=${encodeURIComponent(courseTitle)}`;
+        }
+
+        // Admin functions
+        function manageTaglines() {
+            window.location.href = 'admin.html';
+        }
+
+        function viewTaglineStats() {
+            alert('Tagline statistics would be shown here. (This is a demo - actual implementation would show detailed stats)');
+        }
+
+        // Demo functions for admin mode
+        window.enableAdminMode = function () {
+            localStorage.setItem('username', 'AdminBCL');
+            localStorage.setItem('userRole', 'admin');
+            location.reload();
+        };
+
+        window.disableAdminMode = function () {
+            localStorage.removeItem('username');
+            localStorage.removeItem('userRole');
+            location.reload();
+        };
+    </script>
+
+    <!-- Demo Admin Toggle (remove in production) -->
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+        <button class="btn btn-sm btn-outline-primary" onclick="enableAdminMode()" id="admin-toggle-btn">
+            <i class="fas fa-user-shield"></i> Enable Admin Mode
+        </button>
+    </div>
+</body>
+
+</html>

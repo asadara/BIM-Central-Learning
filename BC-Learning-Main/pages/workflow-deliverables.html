@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Dokumen Teknis (Deliverables)</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .manajemen-info-header {
+            text-align: center;
+            margin: -40px 0 0 0;
+            padding: 5px 10px 0px 10px;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .manajemen-info-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .manajemen-info-header p {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: none;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .info-diagram {
+            margin-bottom: 2rem;
+        }
+
+        .info-diagram h4 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .deliverable-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            margin: 0.5rem 0;
+        }
+
+        .tree-node {
+            background: #f8f9fa;
+            border: 2px solid #fb873f;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .tree-arrow {
+            font-size: 1.5rem;
+            color: #fb873f;
+            margin: 0.5rem 0;
+        }
+
+        .release-package {
+            background: #f8f9fa;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .release-package h5 {
+            color: #fb873f;
+            margin-bottom: 0.5rem;
+        }
+
+        .package-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .package-item:last-child {
+            border-bottom: none;
+        }
+
+        .aha-statement {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fb873f;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(251, 135, 63, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #fb873f;
+        }
+
+        .content-explanation,
+        .example,
+        .quick-checklist {
+            margin-bottom: 2rem;
+        }
+
+        .pijakan {
+            background: #f0f0f0;
+            border-left: 3px solid #fb873f;
+            padding: 5px 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .ringkas {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .ringkas h3 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Header Start -->
+    <div class="manajemen-info-header">
+        <h1><i class="fas fa-file-alt me-3"></i>Dokumen Teknis (Deliverables)</h1>
+        <p>Hasil akhir proses BIM berupa dokumen dan informasi teknis</p>
+    </div>
+    <!-- Header End -->
+
+    <!-- Content Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <section class="info-diagram">
+                        <h4>Skema Sederhana</h4>
+                        <div class="bg-light p-4 rounded text-center">
+                            <div class="deliverable-tree">
+                                <div class="tree-level">
+                                    <div class="tree-node">Model</div>
+                                </div>
+                                <div class="tree-arrow">↓</div>
+                                <div class="tree-level">
+                                    <div class="tree-node">Drawings/Sheets</div>
+                                    <div class="tree-node">Schedules</div>
+                                    <div class="tree-node">Reports</div>
+                                </div>
+                                <div class="tree-arrow">↓</div>
+                                <div class="tree-level">
+                                    <div class="tree-node">As-built Record</div>
+                                </div>
+                            </div>
+                            <p class="text-muted small mt-3">Hierarki deliverables BIM</p>
+                        </div>
+                    </section>
+
+                    <div class="release-package">
+                        <h5><i class="fas fa-box"></i> Release Package Card</h5>
+                        <div class="package-item">
+                            <strong>File:</strong> <span>Structural_Model_v03.ifc</span>
+                        </div>
+                        <div class="package-item">
+                            <strong>Version:</strong> <span>03</span>
+                        </div>
+                        <div class="package-item">
+                            <strong>Effective Date:</strong> <span>2025-12-15</span>
+                        </div>
+                        <div class="package-item">
+                            <strong>Approval:</strong> <span>Approved by BIM Coordinator</span>
+                        </div>
+                    </div>
+
+                    <p class="aha-statement">
+                        Deliverables bukan akhir proses—deliverables adalah awal penggunaan informasi untuk konstruksi
+                        dan operasi.
+                    </p>
+
+                    <section class="ringkas">
+                        <h3>Ringkas</h3>
+                        <ul>
+                            <li>Model BIM adalah fondasi semua deliverables</li>
+                            <li>Drawings dan sheets dihasilkan dari model</li>
+                            <li>Schedules terintegrasi dengan model untuk 4D</li>
+                            <li>Reports berisi analisis dan dokumentasi</li>
+                            <li>As-built record mendokumentasikan kondisi akhir</li>
+                        </ul>
+                    </section>
+
+                    <section class="content-explanation">
+                        <h2>Hierarki Deliverables</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650 (information deliverables & container management; cite
+                            generally); Indonesia: standar dokumen teknis proyek (SNI/kontrak/PUPR)
+                            <!-- TODO: Verify specific document standards -->
+                        </div>
+                        <p>Deliverables BIM tersusun dalam hierarki yang terstruktur dari model hingga dokumentasi
+                            akhir.</p>
+                        <ul>
+                            <li><strong>Model:</strong> Representasi digital 3D sebagai sumber utama informasi</li>
+                            <li><strong>Drawings/Sheets:</strong> Dokumentasi visual 2D dari model</li>
+                            <li><strong>Schedules:</strong> Timeline dan sequence konstruksi</li>
+                            <li><strong>Reports:</strong> Analisis, kalkulasi, dan dokumentasi teknis</li>
+                            <li><strong>As-built Record:</strong> Dokumentasi kondisi akhir konstruksi</li>
+                        </ul>
+
+                        <h2>Release Package Management</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650-2 (information delivery control); Indonesia: SNI
+                            8435:2017 (BIM Data Management) <!-- TODO: Verify release procedures -->
+                        </div>
+                        <p>Package release memastikan deliverables lengkap dan siap digunakan.</p>
+                        <ul>
+                            <li><strong>Version Control:</strong> Tracking perubahan dengan nomor versi</li>
+                            <li><strong>Metadata:</strong> Informasi pendukung (author, date, approval)</li>
+                            <li><strong>Quality Check:</strong> Verifikasi sebelum release</li>
+                            <li><strong>Distribution:</strong> Pengiriman ke stakeholder yang tepat</li>
+                        </ul>
+
+                        <h2>As-built Documentation</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650-2 (asset information delivery); Indonesia: praktik
+                            dokumentasi as-built (verifikasi internal) <!-- TODO: Verify as-built standards -->
+                        </div>
+                        <p>As-built record mendokumentasikan perbedaan antara desain dan konstruksi aktual.</p>
+                        <ul>
+                            <li><strong>Model Updates:</strong> Update model berdasarkan kondisi lapangan</li>
+                            <li><strong>Change Documentation:</strong> Catat semua perubahan dari baseline</li>
+                            <li><strong>Photo Records:</strong> Dokumentasi visual progres konstruksi</li>
+                            <li><strong>Commissioning Data:</strong> Data pengujian dan commissioning</li>
+                        </ul>
+                    </section>
+
+                    <section class="example">
+                        <h2>Contoh Kasus Proyek</h2>
+                        <p>Dalam proyek gedung apartemen, model MEP awal diupdate selama konstruksi ketika ditemukan
+                            utilitas bawah tanah yang tidak terdeteksi. Drawings direvisi, schedule diadjust, reports
+                            analisis clash didokumentasikan. As-built record mencatat semua perubahan untuk referensi
+                            maintenance dan warranty.</p>
+                    </section>
+
+                    <section class="quick-checklist">
+                        <h3>Checklist Cepat</h3>
+                        <ul>
+                            <li>Pastikan model akurat sebelum generate deliverables</li>
+                            <li>Sertakan metadata lengkap pada setiap file</li>
+                            <li>Verifikasi approval sebelum release package</li>
+                            <li>Distribusikan deliverables ke stakeholder tepat waktu</li>
+                            <li>Update as-built record secara berkala</li>
+                            <li>Simpan semua versi deliverables untuk audit trail</li>
+                            <li>Dokumentasikan perubahan dari baseline desain</li>
+                        </ul>
+                    </section>
+
+                    <section class="daftar-pijakan">
+                        <h3>Daftar Pijakan</h3>
+                        <ul>
+                            <li>ISO 19650-1 (Information Management)</li>
+                            <li>ISO 19650-2 (Information Delivery)</li>
+                            <li>SNI 8434:2017 (BIM Model Production)</li>
+                            <li>SNI 8435:2017 (BIM Data Management)</li>
+                            <li>Standar dokumen teknis proyek (SNI/kontrak/PUPR) <!-- TODO --></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6 footer-left text-start">
+                    <h5 class="text-white mb-2">Quick Link</h5>
+                    <div class="d-flex flex-column align-items-start">
+                        <a class="text-light mb-1" href="../pages/about.html" style="font-size: 14px;">About Us</a>
+                        <a class="text-light mb-1" href="../pages/contact.html" style="font-size: 14px;">Contact Us</a>
+                        <a class="text-light mb-1" href="#privacy" style="font-size: 14px;">Privacy Policy</a>
+                        <a class="text-light mb-1" href="#terms" style="font-size: 14px;">Terms & Condition</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-center text-start">
+                    <h5 class="text-white mb-2">Contact</h5>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-map-marker-alt me-2"></i>ITS Tower, Nifarro
+                        Park, Jakarta Selatan 12510</p>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-phone-alt me-2"></i>(021) 7221003</p>
+                    <p class="mb-2" style="font-size: 13px;"><i
+                            class="fa fa-envelope me-2"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-1 align-items-center">
+                        <a class="btn btn-outline-light btn-social me-1" href="https://twitter.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://facebook.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://youtube.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href="https://linkedin.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-right text-end">
+                    <h5 class="text-white mb-2">Newsletter</h5>
+                    <p style="font-size: 13px;">Bergabunglah dengan komunitas BIM NKE!</p>
+                    <div class="position-relative ms-auto" style="max-width: 300px;">
+                        <form action="mailto:nke-bim@nusakonstruksi.com" method="post" enctype="text/plain">
+                            <input class="form-control border-0 w-100 py-2 ps-3 pe-5" type="email"
+                                placeholder="Your email" required style="font-size: 13px;">
+                            <button class="btn btn-primary py-1 position-absolute top-0 end-0 mt-1 me-1" type="submit"
+                                style="font-size: 12px;">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-12 text-center py-2">
+                        <small>&copy; <a class="border-bottom" href="../index.html">2025 BIM NKE</a>, Hak Cipta
+                            Dilindungi.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+
+</body>
+
+</html>

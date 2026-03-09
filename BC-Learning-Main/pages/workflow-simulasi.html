@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Simulasi & Analisis</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .manajemen-info-header {
+            text-align: center;
+            margin: -40px 0 0 0;
+            padding: 5px 10px 0px 10px;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .manajemen-info-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .manajemen-info-header p {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: none;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .info-diagram {
+            margin-bottom: 2rem;
+        }
+
+        .info-diagram h4 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .flow-box {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            min-width: 100px;
+            min-height: 50px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-box.approved {
+            background: #55efc4;
+            color: #00b894;
+            border: 2px solid #00b894;
+        }
+
+        .flow-box.simulate {
+            background: #74b9ff;
+            color: #0984e3;
+            border: 2px solid #0984e3;
+        }
+
+        .flow-box.decision {
+            background: #a29bfe;
+            color: #6c5ce7;
+            border: 2px solid #6c5ce7;
+        }
+
+        .flow-box.hold {
+            background: #fd79a8;
+            color: #e84393;
+            border: 2px solid #e84393;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: #666;
+            margin: 0 8px;
+        }
+
+        .decision-gate {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1rem 0;
+        }
+
+        .decision-gate .flow-box {
+            margin: 0.5rem 0;
+        }
+
+        .mapping-chain {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .mapping-step {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            background: #f9f9f9;
+            min-width: 100px;
+            margin: 0.5rem;
+        }
+
+        .mapping-arrow {
+            font-size: 1.5rem;
+            color: #fb873f;
+            margin: 0 0.5rem;
+        }
+
+        .aha-statement {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fb873f;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(251, 135, 63, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #fb873f;
+        }
+
+        .content-explanation,
+        .example,
+        .quick-checklist {
+            margin-bottom: 2rem;
+        }
+
+        .pijakan {
+            background: #f0f0f0;
+            border-left: 3px solid #fb873f;
+            padding: 5px 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .ringkas {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .ringkas h3 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Header Start -->
+    <div class="manajemen-info-header">
+        <h1><i class="fas fa-chart-line me-3"></i>Simulasi & Analisis</h1>
+        <p>Proses simulasi dan analisis untuk mendukung pengambilan keputusan</p>
+    </div>
+    <!-- Header End -->
+
+    <!-- Content Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <section class="info-diagram">
+                        <h4>Skema Sederhana</h4>
+                        <div class="bg-light p-4 rounded text-center">
+                            <div class="decision-gate">
+                                <div class="flow-box approved">Approved Model?</div>
+                                <div class="arrow">↓</div>
+                                <div style="display: flex; align-items: center;">
+                                    <div style="text-align: right; margin-right: 1rem;">
+                                        <div class="flow-box simulate">YES: 4D/5D/Progress</div>
+                                        <div class="arrow" style="transform: rotate(-90deg);">→</div>
+                                        <div class="flow-box decision">Decision</div>
+                                    </div>
+                                    <div style="text-align: left; margin-left: 1rem;">
+                                        <div class="flow-box hold">NO: Hold/Verify/Update</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-muted small mt-3">Gate simulasi berdasarkan approval model</p>
+                        </div>
+                    </section>
+
+                    <div class="mapping-chain">
+                        <div class="mapping-step">
+                            <strong>Model Element</strong>
+                        </div>
+                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-step">
+                            <strong>WBS</strong>
+                        </div>
+                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-step">
+                            <strong>Activity</strong>
+                        </div>
+                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-step">
+                            <strong>Baseline</strong>
+                        </div>
+                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-step">
+                            <strong>Progress Update</strong>
+                        </div>
+                    </div>
+
+                    <p class="aha-statement">
+                        Simulasi bukan ramalan—simulasi adalah alat untuk menguji skenario dan mengurangi risiko.
+                    </p>
+
+                    <section class="ringkas">
+                        <h3>Ringkas</h3>
+                        <ul>
+                            <li>Simulasi hanya dilakukan pada model yang sudah approved</li>
+                            <li>4D simulasi menghubungkan model dengan schedule waktu</li>
+                            <li>5D simulasi menambahkan aspek biaya (cost)</li>
+                            <li>Progress tracking memantau kemajuan aktual vs baseline</li>
+                            <li>Hasil simulasi menjadi dasar pengambilan keputusan</li>
+                            <li>Model yang belum approved di-hold sampai verifikasi selesai</li>
+                        </ul>
+                    </section>
+
+                    <section class="content-explanation">
+                        <h2>Gate Approval Simulasi</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650-2 (information suitability before use; approval gates);
+                            Indonesia: praktik pelaporan kemajuan & baseline proyek (verifikasi internal)
+                            <!-- TODO: Verify internal progress reporting standards -->
+                        </div>
+                        <p>Simulasi hanya boleh dilakukan pada informasi yang sudah memenuhi standar kualitas.</p>
+                        <ul>
+                            <li><strong>Quality Gate:</strong> Model harus approved sebelum simulasi</li>
+                            <li><strong>Data Validation:</strong> Pastikan semua parameter akurat</li>
+                            <li><strong>Version Control:</strong> Gunakan versi model yang konsisten</li>
+                        </ul>
+
+                        <h2>4D dan 5D Simulation</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650 (information requirements for construction); Indonesia:
+                            SNI 8434:2017 (BIM Model Production) <!-- TODO: Verify simulation standards -->
+                        </div>
+                        <p>Simulasi dimensi waktu dan biaya meningkatkan akurasi perencanaan.</p>
+                        <ul>
+                            <li><strong>4D Simulation:</strong> Model + Time (schedule visualization)</li>
+                            <li><strong>5D Simulation:</strong> Model + Time + Cost (quantity takeoff)</li>
+                            <li><strong>Progress Analysis:</strong> Compare actual vs planned progress</li>
+                        </ul>
+
+                        <h2>Progress Tracking</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650-2 (progress information management); Indonesia: praktik
+                            baseline & progress reporting (verifikasi internal)
+                            <!-- TODO: Verify progress tracking procedures -->
+                        </div>
+                        <p>Tracking progress memastikan proyek sesuai dengan baseline.</p>
+                        <ul>
+                            <li><strong>WBS Mapping:</strong> Hubungkan elemen model dengan work breakdown</li>
+                            <li><strong>Activity Linking:</strong> Kaitkan dengan schedule activities</li>
+                            <li><strong>Progress Update:</strong> Update status berdasarkan actual progress</li>
+                            <li><strong>Variance Analysis:</strong> Analisis deviasi dari baseline</li>
+                        </ul>
+                    </section>
+
+                    <section class="example">
+                        <h2>Contoh Kasus Proyek</h2>
+                        <p>Dalam proyek infrastruktur jalan tol, model struktur jembatan sudah approved. Tim melakukan
+                            4D simulasi untuk mengoptimalkan sequence konstruksi pier dan girder. 5D analisis
+                            menunjukkan cost overrun pada foundation, memicu redesign alternatif. Progress tracking
+                            mingguan menunjukkan delay pada piling, sehingga schedule diadjust untuk mempercepat
+                            mobilisasi crane.</p>
+                    </section>
+
+                    <section class="quick-checklist">
+                        <h3>Checklist Cepat</h3>
+                        <ul>
+                            <li>Verifikasi approval model sebelum simulasi</li>
+                            <li>Gunakan baseline schedule yang akurat</li>
+                            <li>Map WBS elements ke model components</li>
+                            <li>Update progress data secara berkala</li>
+                            <li>Analisis variance antara actual vs planned</li>
+                            <li>Dokumentasikan hasil simulasi untuk decision making</li>
+                            <li>Review dan update baseline ketika ada perubahan</li>
+                        </ul>
+                    </section>
+
+                    <section class="daftar-pijakan">
+                        <h3>Daftar Pijakan</h3>
+                        <ul>
+                            <li>ISO 19650-1 (Information Requirements)</li>
+                            <li>ISO 19650-2 (Information Suitability & Progress)</li>
+                            <li>SNI 8434:2017 (BIM Model Production)</li>
+                            <li>Praktik pelaporan kemajuan & baseline proyek <!-- TODO --></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6 footer-left text-start">
+                    <h5 class="text-white mb-2">Quick Link</h5>
+                    <div class="d-flex flex-column align-items-start">
+                        <a class="text-light mb-1" href="../pages/about.html" style="font-size: 14px;">About Us</a>
+                        <a class="text-light mb-1" href="../pages/contact.html" style="font-size: 14px;">Contact Us</a>
+                        <a class="text-light mb-1" href="#privacy" style="font-size: 14px;">Privacy Policy</a>
+                        <a class="text-light mb-1" href="#terms" style="font-size: 14px;">Terms & Condition</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-center text-start">
+                    <h5 class="text-white mb-2">Contact</h5>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-map-marker-alt me-2"></i>ITS Tower, Nifarro
+                        Park, Jakarta Selatan 12510</p>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-phone-alt me-2"></i>(021) 7221003</p>
+                    <p class="mb-2" style="font-size: 13px;"><i
+                            class="fa fa-envelope me-2"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-1 align-items-center">
+                        <a class="btn btn-outline-light btn-social me-1" href="https://twitter.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://facebook.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://youtube.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href="https://linkedin.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-right text-end">
+                    <h5 class="text-white mb-2">Newsletter</h5>
+                    <p style="font-size: 13px;">Bergabunglah dengan komunitas BIM NKE!</p>
+                    <div class="position-relative ms-auto" style="max-width: 300px;">
+                        <form action="mailto:nke-bim@nusakonstruksi.com" method="post" enctype="text/plain">
+                            <input class="form-control border-0 w-100 py-2 ps-3 pe-5" type="email"
+                                placeholder="Your email" required style="font-size: 13px;">
+                            <button class="btn btn-primary py-1 position-absolute top-0 end-0 mt-1 me-1" type="submit"
+                                style="font-size: 12px;">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-12 text-center py-2">
+                        <small>&copy; <a class="border-bottom" href="../index.html">2025 BIM NKE</a>, Hak Cipta
+                            Dilindungi.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+
+</body>
+
+</html>

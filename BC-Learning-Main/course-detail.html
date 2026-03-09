@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Detail | BC Learning</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .video-player {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .video-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .video-item {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .video-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .video-item.active {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .tagline-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .manual-tag-badge {
+            background: #4caf50;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .admin-controls {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-graduation-cap"></i> BC Learning
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="navbar-brand" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="navbar-brand" href="courses.html">Courses</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="navbar-brand" href="learning-path.html">Learning Path</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="navbar-brand" href="phase3-dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item" id="admin-link" style="display: none;">
+                        <a class="navbar-brand" href="admin.html">
+                            <i class="fas fa-cog"></i> Admin Panel
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Course Header -->
+    <section class="course-header bg-primary text-white py-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 id="course-title">Loading Course...</h1>
+                    <p id="course-description">Loading course details...</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="course-stats">
+                        <h4 id="video-count">0</h4>
+                        <p>Videos in this course</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Controls (shown only for AdminBCL) -->
+    <div class="container mt-4">
+        <div class="admin-controls" id="admin-controls" style="display: none;">
+            <h6><i class="fas fa-cog"></i> Admin Controls</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-success btn-sm" onclick="addTaglineToCourse()">
+                        <i class="fas fa-plus"></i> Add Manual Tagline
+                    </button>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">Manage course categorization and taglines</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Content -->
+    <div class="container my-4">
+        <div class="row">
+            <!-- Video Player -->
+            <div class="col-lg-8">
+                <div class="video-player">
+                    <video id="video-player" controls style="width: 100%; height: 400px;">
+                        <source id="video-source" src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+
+                <!-- Video Info -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 id="current-video-title">Select a video to start learning</h5>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="fas fa-eye"></i> <span id="view-count">0</span> views
+                                </small>
+                                <span id="manual-tag-indicator" class="manual-tag-badge" style="display: none;">
+                                    <i class="fas fa-tag"></i> Manual Tag
+                                </span>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline-primary btn-sm" onclick="markAsWatched()">
+                                    <i class="fas fa-check"></i> Mark as Watched
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video List -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-list"></i> Course Videos</h6>
+                    </div>
+                    <div class="card-body video-list" id="video-list">
+                        <!-- Videos will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>BC Learning</h5>
+                    <p>Master BIM with comprehensive courses and tutorials.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p>&copy; 2025 Nusa Konstruksi Engineering. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentCourse = null;
+        let currentVideoIndex = -1;
+        let videos = [];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('course');
+            const courseTitle = urlParams.get('title');
+
+            if (!courseId) {
+                showError('No course specified');
+                return;
+            }
+
+            checkAdminAccess();
+            loadCourseDetails(courseId, courseTitle);
+        });
+
+        // Check if user is AdminBCL
+        function checkAdminAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isAdmin = urlParams.get('admin') === 'true' ||
+                localStorage.getItem('userRole') === 'admin' ||
+                localStorage.getItem('username') === 'AdminBCL';
+
+            if (isAdmin) {
+                document.getElementById('admin-controls').style.display = 'block';
+                document.getElementById('admin-link').style.display = 'block';
+            }
+        }
+
+        // Load course details
+        async function loadCourseDetails(courseId, courseTitle) {
+            try {
+                const response = await fetch(`/api/tutorials/course/${courseId}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const courseData = await response.json();
+                currentCourse = courseData;
+
+                displayCourseInfo(courseData, courseTitle);
+                displayVideos(courseData.videos || []);
+
+            } catch (error) {
+                console.error('Error loading course details:', error);
+                showError('Failed to load course details');
+            }
+        }
+
+        // Display course information
+        function displayCourseInfo(course, title) {
+            document.getElementById('course-title').textContent = title || course.title || 'Course Details';
+            document.getElementById('course-description').textContent =
+                course.description || 'Learn comprehensive BIM tutorials in this course';
+            document.getElementById('video-count').textContent = course.videos?.length || 0;
+        }
+
+        // Display videos
+        function displayVideos(videoList) {
+            videos = videoList;
+            const videoListElement = document.getElementById('video-list');
+
+            if (!videos || videos.length === 0) {
+                videoListElement.innerHTML = '<p class="text-muted">No videos available in this course.</p>';
+                return;
+            }
+
+            videoListElement.innerHTML = '';
+
+            videos.forEach((video, index) => {
+                const videoItem = createVideoItem(video, index);
+                videoListElement.appendChild(videoItem);
+            });
+
+            // Auto-select first video
+            if (videos.length > 0) {
+                selectVideo(0);
+            }
+        }
+
+        // Create video item
+        function createVideoItem(video, index) {
+            const div = document.createElement('div');
+            div.className = 'video-item p-3';
+            div.onclick = () => selectVideo(index);
+
+            const hasManualTag = video.manualTag || video.tagline;
+            const tagIndicator = hasManualTag ? '<span class="manual-tag-badge"><i class="fas fa-tag"></i></span>' : '';
+
+            div.innerHTML = `
+                <div class="d-flex align-items-start">
+                    <div class="flex-shrink-0 me-3">
+                        <div style="width: 60px; height: 40px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-play text-muted"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${video.title || `Video ${index + 1}`}</h6>
+                        <small class="text-muted">
+                            <i class="fas fa-eye"></i> ${video.viewCount || 0} views
+                            ${tagIndicator}
+                        </small>
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Select video
+        function selectVideo(index) {
+            if (index < 0 || index >= videos.length) return;
+
+            currentVideoIndex = index;
+            const video = videos[index];
+
+            // Update video player
+            const videoSource = document.getElementById('video-source');
+            const videoPlayer = document.getElementById('video-player');
+
+            videoSource.src = video.url || '';
+            videoPlayer.load();
+
+            // Update video info
+            document.getElementById('current-video-title').textContent = video.title || `Video ${index + 1}`;
+            document.getElementById('view-count').textContent = video.viewCount || 0;
+
+            // Show manual tag indicator
+            const tagIndicator = document.getElementById('manual-tag-indicator');
+            if (video.manualTag || video.tagline) {
+                tagIndicator.style.display = 'inline-block';
+            } else {
+                tagIndicator.style.display = 'none';
+            }
+
+            // Update active video item
+            document.querySelectorAll('.video-item').forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            // Track view
+            trackVideoView(video.id);
+        }
+
+        // Track video view
+        async function trackVideoView(videoId) {
+            try {
+                await fetch(`/api/tutorials/view/${videoId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } catch (error) {
+                console.error('Error tracking view:', error);
+            }
+        }
+
+        // Mark video as watched
+        function markAsWatched() {
+            if (currentVideoIndex < 0) return;
+
+            const video = videos[currentVideoIndex];
+            alert(`Marked "${video.title || `Video ${currentVideoIndex + 1}`}" as watched!`);
+
+            // In a real implementation, this would update the user's progress
+            // For now, just show a confirmation
+        }
+
+        // Add tagline to course (Admin only)
+        function addTaglineToCourse() {
+            if (!currentCourse) return;
+
+            const tagline = prompt('Enter a manual tagline for this course:');
+            if (!tagline) return;
+
+            // In a real implementation, this would call the admin API
+            alert(`Tagline "${tagline}" would be added to course "${currentCourse.title}". (This is a demo - actual implementation would require admin API call)`);
+        }
+
+        // Show error
+        function showError(message) {
+            document.getElementById('course-title').textContent = 'Error';
+            document.getElementById('course-description').textContent = message;
+
+            const videoListElement = document.getElementById('video-list');
+            videoListElement.innerHTML = '<p class="text-danger">' + message + '</p>';
+        }
+
+        // Demo functions for admin mode
+        window.enableAdminMode = function () {
+            localStorage.setItem('username', 'AdminBCL');
+            localStorage.setItem('userRole', 'admin');
+            location.reload();
+        };
+
+        window.disableAdminMode = function () {
+            localStorage.removeItem('username');
+            localStorage.removeItem('userRole');
+            location.reload();
+        };
+    </script>
+
+    <!-- Demo Admin Toggle (remove in production) -->
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+        <button class="btn btn-sm btn-outline-primary" onclick="enableAdminMode()" id="admin-toggle-btn">
+            <i class="fas fa-user-shield"></i> Enable Admin Mode
+        </button>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Knowledge Hub</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icons/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            /* Pusatkan secara vertikal */
+            align-items: center;
+            /* Pusatkan secara horizontal */
+            text-align: center;
+            height: 70vh;
+            /* Sesuaikan dengan tinggi layar */
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        header img {
+            height: 60px;
+        }
+
+        header h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        header p {
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: left;
+        }
+
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .actions {
+            margin-top: 30px;
+        }
+
+        .actions button {
+            margin-right: 10px;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+            margin-top: 60px;
+        }
+
+        /* CSS untuk tampilan layar */
+        .no-print {
+            display: block;
+        }
+
+        /* CSS untuk cetak */
+        @media print {
+            thead {
+                display: table-header-group;
+            }
+
+            tbody {
+                display: table-row-group;
+            }
+
+            /* Sembunyikan elemen yang tidak perlu */
+            #navbar-container,
+            #footer-container,
+            .back-to-top,
+            .actions {
+                display: none !important;
+            }
+
+            /* Reset margin & padding */
+            body {
+                margin: 10mm !important;
+                padding: 0 !important;
+                font-size: 11pt;
+                line-height: 1.5;
+            }
+
+            /* Format tabel */
+            table {
+                width: 100% !important;
+                table-layout: fixed !important;
+                border-collapse: collapse;
+                page-break-inside: avoid;
+            }
+
+            th,
+            td {
+                border: 1px solid #000;
+                padding: 5px;
+            }
+
+            thead {
+                display: table-header-group !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            th {
+                background-color: orange !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Format checkbox */
+            input[type="checkbox"] {
+                appearance: none;
+                width: 14px;
+                height: 14px;
+                border: 1px solid #000 !important;
+                display: inline-block;
+            }
+
+            input[type="checkbox"]:checked {
+                background-color: #000;
+            }
+
+            /* Hilangkan border input text */
+            input[type="text"] {
+                border: none;
+                border-bottom: 1px dotted #000 !important;
+                width: 100%;
+
+            }
+
+            .checkbox-center {
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            .checkbox-center input[type="checkbox"] {
+                margin: 0;
+                transform: scale(1.3);
+                /* Optional: Perbesar checkbox */
+            }
+
+            .checklist-table {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+
+            .checklist-table th,
+            .checklist-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+
+            .checklist-table th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+                text-align: center;
+            }
+
+            .checkbox-center {
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            .checkbox-center input[type="checkbox"] {
+                margin: 0;
+                transform: scale(1.2);
+            }
+
+            @page {
+                size: A4 landscape;
+                /* Sesuaikan orientasi */
+                margin: 1cm;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container" class="no-print"></div>
+    <!-- Navbar End -->
+
+    <!-- ISI CONTENTs MULAI-->
+
+    <div id="print-area">
+        <header>
+            <img src="/img/Logo_NKE_2022.png" alt="Logo NKE">
+            <div>
+                <h2>QA-QC SERAH TERIMA PRODUK BIM</h2>
+                <p>PT. Nusa Konstruksi Enjiniring, Tbk.</p>
+            </div>
+        </header>
+
+        <table class="info-proyek" style="border: none; border-collapse: collapse;">
+            <tr style="border: none;">
+                <td width="150" style="border: none; text-align: left; vertical-align: top; padding-right: 5px;">
+                    <strong>Proyek:</strong>
+                </td>
+                <td style="border: none; padding-left: 0;">
+                    <input type="text" name="proyek"
+                        style="width: 100%; border: none; border-bottom: 1px solid #000; padding: 5px;">
+                </td>
+            </tr>
+            <tr style="border: none;">
+                <td style="border: none; text-align: left; vertical-align: top; padding-right: 5px;">
+                    <strong>Nomor Proyek:</strong>
+                </td>
+                <td style="border: none; padding-left: 0;">
+                    <input type="text" name="no_proyek"
+                        style="width: 100%; border: none; border-bottom: 1px solid #000; padding: 5px;">
+                </td>
+            </tr>
+            <tr style="border: none;">
+                <td
+                    style="border: none; text-align: right; vertical-align: middle; padding-right: 5px; white-space: nowrap;">
+                    <strong>Tanggal Serah Terima:</strong>
+                </td>
+                <td style="border: none; padding-left: 0; vertical-align: middle;">
+                    <input type="date" name="tanggal_serah_terima"
+                        style="width: auto; border: none; border-bottom: 1px solid #000; padding: 5px; display: inline;">
+                </td>
+            </tr>
+            <tr style="border: none;">
+                <td style="border: none; text-align: left; vertical-align: top; padding-right: 5px;">
+                    <strong>Tim BIM:</strong>
+                </td>
+                <td style="border: none; padding-left: 0;">
+                    <input type="text" name="no_proyek"
+                        style="width: 100%; border: none; border-bottom: 1px solid #000; padding: 5px;">
+                </td>
+            </tr>
+            <tr style="border: none;">
+                <td style="border: none; text-align: left; vertical-align: top; padding-right: 5px;">
+                    <strong>Penerima (Divisi/Departemen):</strong>
+                </td>
+                <td style="border: none; padding-left: 0;">
+                    <input type="text" name="no_proyek"
+                        style="width: 100%; border: none; border-bottom: 1px solid #000; padding: 5px;">
+                </td>
+            </tr>
+        </table>
+
+        <table class="checklist-table" style="width: 100%; table-layout: fixed;">
+            <colgroup>
+                <col style="width: 5%"> <!-- NO -->
+                <col style="width: 35%"> <!-- ITEM -->
+                <col style="width: 5%"> <!-- ADA -->
+                <col style="width: 5%"> <!-- TIDAK ADA -->
+                <col style="width: 5%"> <!-- OPTIONAL -->
+                <col style="width: 10%"> <!-- VERSI -->
+                <col style="width: 35%"> <!-- KETERANGAN -->
+            </colgroup>
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width: 5%;">NO.</th>
+                    <th rowspan="2" style="width: 35%;">ITEM PRODUK BIM</th>
+                    <th colspan="3" style="width: 15%;">KELENGKAPAN</th>
+                    <th rowspan="2" style="width: 10%;">Versi</th>
+                    <th rowspan="2" style="width: 20%;">KETERANGAN</th>
+                </tr>
+                <tr>
+                    <th style="width: 5%;">ADA</th>
+                    <th style="width: 5%;">TIDAK ADA</th>
+                    <th style="width: 5%;">OPTIONAL</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Pre Construction BEP</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_1"></td>
+                    <td class="checkbox-center"><input type="text" name="versi_1"></td>
+                    <td class="checkbox-center"><input type="text" name="keterangan_1"></td>
+                </tr>
+
+                <tr>
+                    <td>2</td>
+                    <td>Portofolio BIM NKE</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_1"></td>
+                    <td><input type="text" name="versi_1"></td>
+                    <td><input type="text" name="keterangan_1"></td>
+                </tr>
+
+                <tr>
+                    <td>3</td>
+                    <td>BIM Methode Document</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_1"></td>
+                    <td><input type="text" name="versi_1"></td>
+                    <td><input type="text" name="keterangan_1"></td>
+                </tr>
+
+                <!-- Item 4 Utama -->
+                <tr>
+                    <td rowspan="8">4</td> <!-- rowspan sesuai jumlah sub-item + 1 -->
+                    <td><strong>Dimensi BIM</strong></td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4"></td>
+                    <td><input type="text" name="versi_4"></td>
+                    <td><input type="text" name="keterangan_4"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 30px;">- Permodelan dan QTO (3D)</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4_1"></td>
+                    <td><input type="text" name="versi_4_1"></td>
+                    <td><input type="text" name="keterangan_4_1"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 30px;">- Animasi Arsitektural (3D)</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4_2"></td>
+                    <td><input type="text" name="versi_4_2"></td>
+                    <td><input type="text" name="keterangan_4_2"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 30px;">- Video Animasi Timeliner (4D)</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4_2"></td>
+                    <td><input type="text" name="versi_4_2"></td>
+                    <td><input type="text" name="keterangan_4_2"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 30px;">- Cost Estimate (5D)</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4_2"></td>
+                    <td><input type="text" name="versi_4_2"></td>
+                    <td><input type="text" name="keterangan_4_2"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 30px;">- Solar Analysis (6D)</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4_2"></td>
+                    <td><input type="text" name="versi_4_2"></td>
+                    <td><input type="text" name="keterangan_4_2"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 30px;">- CDE & facility Management (7D)</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4_2"></td>
+                    <td><input type="text" name="versi_4_2"></td>
+                    <td><input type="text" name="keterangan_4_2"></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 30px;">- Sustainability (8D)</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_4_2"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_4_2"></td>
+                    <td><input type="text" name="versi_4_2"></td>
+                    <td><input type="text" name="keterangan_4_2"></td>
+                </tr>
+                <!-- Item 4 Utama -->
+                <tr>
+                    <td>5</td>
+                    <td>Usulan Rencana Biaya/BudgetTender untuk ImplementasiBIM di Proyek</td>
+                    <td class="checkbox-center"><input type="checkbox" name="ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="tidak_ada_1"></td>
+                    <td class="checkbox-center"><input type="checkbox" name="optional_1"></td>
+                    <td><input type="text" name="versi_1"></td>
+                    <td><input type="text" name="keterangan_1"></td>
+                </tr>
+
+            </tbody>
+        </table>
+
+        <!-- Bagian Tanda Tangan -->
+        <div class="signatures">
+            <div>
+                <p>Penerima</p><br><br><br>
+                <p>______________</p>
+                <p>KaDiv/KaDept/Ka.Tender Committee</p>
+            </div>
+            <div>
+                <p>Penanggung Jawab</p><br><br><br>
+                <p>______________</p>
+                <p>KaDiv BIM</p>
+            </div>
+            <div>
+                <p>Penyerah</p><br><br><br>
+                <p>______________</p>
+                <p>Tim Leader</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button onclick="previewForm()">Preview</button>
+        <button onclick="submitForm()">Simpan</button>
+        <button onclick="window.print()">Cetak</button>
+    </div>
+
+
+    <!-- Footer Start -->
+    <div id="footer-container" class="no-print"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <script>
+        function previewForm() {
+            window.print();
+        }
+
+        function submitForm() {
+            const data = {
+                proyek: document.querySelector('[name="proyek"]').value,
+                no_proyek: document.querySelector('[name="no_proyek"]').value,
+                items: []
+            };
+
+            // Loop untuk setiap baris checklist
+            document.querySelectorAll('.checklist tbody tr').forEach(row => {
+                data.items.push({
+                    item: row.cells[1].textContent.trim(),
+                    ada: row.querySelector('[name^="ada_"]').checked,
+                    tidak_ada: row.querySelector('[name^="tidak_ada_"]').checked,
+                    versi: row.querySelector('[name^="versi_"]').value,
+                    keterangan: row.querySelector('[name^="keterangan_"]').value
+                });
+            });
+
+            fetch("/api/save-bim-form", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+        }
+    </script>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/user.js" defer></script>
+
+
+</body>
+
+</html>

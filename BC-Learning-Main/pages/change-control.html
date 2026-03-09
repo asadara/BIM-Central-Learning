@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Issue, RFI, & Perubahan</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .manajemen-info-header {
+            text-align: center;
+            margin: -40px 0 0 0;
+            padding: 5px 10px 0px 10px;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .manajemen-info-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .manajemen-info-header p {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: none;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .info-diagram {
+            margin-bottom: 2rem;
+        }
+
+        .info-diagram h4 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .gate-box {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            min-width: 160px;
+            min-height: 60px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gate-box.issue {
+            background: #ffeaa7;
+            color: #d63031;
+            border: 2px solid #fdcb6e;
+        }
+
+        .gate-box.triage {
+            background: #74b9ff;
+            color: #0984e3;
+            border: 2px solid #0984e3;
+        }
+
+        .gate-box.update {
+            background: #55efc4;
+            color: #00b894;
+            border: 2px solid #00b894;
+        }
+
+        .gate-box.approve {
+            background: #ddd;
+            color: #666;
+            border: 2px solid #999;
+        }
+
+        .gate-box.broadcast {
+            background: #fd79a8;
+            color: #e84393;
+            border: 2px solid #e84393;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: #666;
+            margin: 0 10px;
+        }
+
+        .aha-statement {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fb873f;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(251, 135, 63, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #fb873f;
+        }
+
+        .content-explanation,
+        .example,
+        .quick-checklist {
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .gate-box {
+                min-width: 100px;
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .arrow {
+                font-size: 1.2rem;
+                margin: 0 5px;
+            }
+
+            .d-flex {
+                flex-direction: column;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Header Start -->
+    <div class="manajemen-info-header">
+        <h1><i class="fas fa-exchange-alt me-3"></i>Issue, RFI, & Perubahan</h1>
+        <p>Kontrol perubahan dalam proyek BIM</p>
+    </div>
+    <!-- Header End -->
+
+    <!-- Content Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <section class="info-diagram">
+                        <h4>Skema Sederhana</h4>
+                        <div class="bg-light p-4 rounded text-center">
+                            <div class="d-flex justify-content-center align-items-center flex-column">
+                                <div class="gate-box issue">Issue/RFI</div>
+                                <div class="arrow">↓</div>
+                                <div class="gate-box triage">Triage (owner + due date)</div>
+                                <div class="arrow">↓</div>
+                                <div class="gate-box update">Update (model/doc/schedule)</div>
+                                <div class="arrow">↓</div>
+                                <div class="gate-box approve">Re-approve (gate)</div>
+                                <div class="arrow">↓</div>
+                                <div class="gate-box broadcast">Broadcast change</div>
+                            </div>
+                            <p class="text-muted small mt-3" style="text-align: center;">Loop kontrol perubahan dengan
+                                traceability</p>
+                        </div>
+                    </section>
+
+                    <p class="aha-statement">
+                        Perubahan tidak berbahaya—yang berbahaya perubahan tanpa jejak.
+                    </p>
+
+                    <section class="content-explanation">
+                        <h2>Ringkas</h2>
+                        <ul>
+                            <li>Issue vs RFI vs perubahan revisi</li>
+                            <li>Harus ada owner, due date, status</li>
+                            <li>Perubahan harus kembali ke model/dokumen dan diumumkan</li>
+                        </ul>
+
+                        <h2>Definisi praktis Issue/RFI/Change</h2>
+                        <p>Issue: masalah yang ditemukan, RFI: request for information, Change: perubahan yang disetujui
+                        </p>
+                        <ul>
+                            <li>Issue: gap antara as-built vs design</li>
+                            <li>RFI: kebutuhan klarifikasi spesifikasi</li>
+                            <li>Change: revisi design yang disetujui</li>
+                            <li>Semua harus didokumentasikan dengan ID</li>
+                        </ul>
+
+                        <h2>Alur kontrol perubahan</h2>
+                        <p>Siapa, kapan, output</p>
+                        <ul>
+                            <li>Siapa: owner bertanggung jawab penyelesaian</li>
+                            <li>Kapan: due date untuk resolusi</li>
+                            <li>Output: update model, dokumen, schedule</li>
+                            <li>Re-approval melalui quality gate</li>
+                        </ul>
+
+                        <h2>Komunikasi perubahan</h2>
+                        <p>Siapa menerima, apa yang diganti</p>
+                        <ul>
+                            <li>Siapa: semua stakeholder yang terpengaruh</li>
+                            <li>Apa: detail perubahan dan dampaknya</li>
+                            <li>Cara: broadcast melalui sistem terstruktur</li>
+                            <li>Kapan: segera setelah approval</li>
+                        </ul>
+                    </section>
+
+                    <section class="example">
+                        <h2>Contoh Kasus Proyek</h2>
+                        <p>Perubahan lapangan tidak masuk model → progress report menyesatkan</p>
+                        <p>Dalam proyek gedung, perubahan layout MEP di lapangan tidak diupdate ke model BIM. Progress
+                            report menunjukkan 90% complete, namun actual progress hanya 70% karena perubahan tersebut
+                            tidak terakomodasi dalam baseline schedule.</p>
+                    </section>
+
+                    <section class="quick-checklist">
+                        <h3>Checklist Cepat</h3>
+                        <ul>
+                            <li>ID issue/RFI/change yang unik</li>
+                            <li>Tentukan owner dan deadline</li>
+                            <li>Dokumentasikan keputusan/resolusi</li>
+                            <li>Update file model dan dokumen</li>
+                            <li>Approval ulang melalui quality gate</li>
+                            <li>Broadcast perubahan ke stakeholder</li>
+                            <li>Monitor implementasi perubahan</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6 footer-left text-start">
+                    <h5 class="text-white mb-2">Quick Link</h5>
+                    <div class="d-flex flex-column align-items-start">
+                        <a class="text-light mb-1" href="../pages/about.html" style="font-size: 14px;">About Us</a>
+                        <a class="text-light mb-1" href="../pages/contact.html" style="font-size: 14px;">Contact Us</a>
+                        <a class="text-light mb-1" href="#privacy" style="font-size: 14px;">Privacy Policy</a>
+                        <a class="text-light mb-1" href="#terms" style="font-size: 14px;">Terms & Condition</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-center text-start">
+                    <h5 class="text-white mb-2">Contact</h5>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-map-marker-alt me-2"></i>ITS Tower, Nifarro
+                        Park, Jakarta Selatan 12510</p>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-phone-alt me-2"></i>(021) 7221003</p>
+                    <p class="mb-2" style="font-size: 13px;"><i
+                            class="fa fa-envelope me-2"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-1 align-items-center">
+                        <a class="btn btn-outline-light btn-social me-1" href="https://twitter.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://facebook.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://youtube.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href="https://linkedin.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-right text-end">
+                    <h5 class="text-white mb-2">Newsletter</h5>
+                    <p style="font-size: 13px;">Bergabunglah dengan komunitas BIM NKE!</p>
+                    <div class="position-relative ms-auto" style="max-width: 300px;">
+                        <form action="mailto:nke-bim@nusakonstruksi.com" method="post" enctype="text/plain">
+                            <input class="form-control border-0 w-100 py-2 ps-3 pe-5" type="email"
+                                placeholder="Your email" required style="font-size: 13px;">
+                            <button class="btn btn-primary py-1 position-absolute top-0 end-0 mt-1 me-1" type="submit"
+                                style="font-size: 12px;">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-12 text-center py-2">
+                        <small>&copy; <a class="border-bottom" href="../index.html">2025 BIM NKE</a>, Hak Cipta
+                            Dilindungi.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+
+</body>
+
+</html>

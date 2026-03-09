@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Knowledge Hub</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icons/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons removed - replaced with FontAwesome equivalents -->
+
+    <!-- Libraries Stylesheet - Minimal for BIM Showroom -->
+    <!-- animate.min.css kept for potential animations -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <!-- owl.carousel.min.css removed - not used in this page -->
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* BIM Showroom Styles */
+        .showroom-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .showroom-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('/img/carousel-1.jpg') center center no-repeat;
+            background-size: cover;
+            opacity: 0.1;
+            z-index: 1;
+        }
+
+        .showroom-hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .showroom-hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .showroom-hero .lead {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .showroom-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Modal Player - Above Footer, Right Aligned */
+        .showroom-modal {
+            position: relative;
+            margin: 50px auto 100px auto;
+            /* Space above and below, center horizontally in content area */
+            width: calc(100vw - 400px);
+            /* Fixed width accounting for sidebar */
+            height: 500px;
+            /* Fixed height */
+            background: #000;
+            display: flex !important;
+            z-index: 10;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            float: right;
+            /* Align to right */
+            margin-right: 50px;
+            /* Right margin from edge */
+        }
+
+        .modal-player {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 0;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .modal-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .media-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .project-video,
+        .project-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .media-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        /* Left Sidebar - Fixed Compact Size */
+        .showroom-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px !important;
+            /* FIXED: Never change width regardless of content or state */
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            color: white;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            padding-top: 80px;
+            /* Space for navbar */
+        }
+
+        .showroom-sidebar.show {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #34495e;
+            border-bottom: 1px solid #465c71;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .sidebar-content {
+            padding: 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-section-title {
+            padding: 15px 20px 15px 25px;
+            /* Added left padding */
+            background: #34495e;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #465c71;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-item {
+            padding: 12px 20px 12px 25px;
+            /* Added more left padding */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item:hover,
+        .sidebar-item.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .sidebar-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Group headers (main category titles) */
+        .sidebar-group-header {
+            padding: 12px 20px 12px 25px;
+            /* Same padding as sidebar-item */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-group-header:hover {
+            background: #34495e;
+        }
+
+        .sidebar-item-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+            /* Slightly larger font */
+            margin-bottom: 4px;
+            text-align: left;
+        }
+
+        .sidebar-item-meta {
+            font-size: 0.85rem;
+            /* Slightly larger font */
+            opacity: 0.7;
+            text-align: left;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #3498db;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1050;
+            /* Higher than navbar z-index */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: #2980b9;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .sidebar-toggle i {
+            font-size: 1.2rem;
+        }
+
+        /* Loading States */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 10;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Navigation Controls */
+        .media-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .media-nav:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .media-nav.prev {
+            left: 20px;
+        }
+
+        .media-nav.next {
+            right: 20px;
+        }
+
+        .media-nav i {
+            font-size: 1.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .showroom-sidebar {
+                width: 250px;
+            }
+
+            .modal-player {
+                width: 95vw;
+                height: 95vh;
+            }
+
+            .showroom-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .showroom-stats {
+                gap: 20px;
+            }
+
+            .sidebar-toggle {
+                left: 10px;
+            }
+        }
+
+        /* Simple Header - Hidden to not interfere with media controls */
+        .simple-header {
+            display: none !important;
+        }
+
+        .page-title {
+            display: none !important;
+        }
+
+        .page-subtitle {
+            display: none !important;
+        }
+
+        /* Modal hidden by default, full screen when shown */
+        .showroom-modal {
+            display: none;
+            /* Hidden by default */
+        }
+
+        .showroom-modal.show {
+            /* Full screen when shown */
+            display: flex !important;
+            background: rgba(0, 0, 0, 0.98);
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            margin: 0 !important;
+        }
+
+        .modal-player {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+        }
+
+        /* Enhanced Video Controls - Using native browser controls */
+        .project-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* Ensure controls are always visible */
+        }
+
+        .project-video::-webkit-media-controls-panel {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Modal Backdrop - Covers entire screen */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99999;
+            /* Very high z-index */
+        }
+
+        .modal-backdrop.show {
+            display: block;
+        }
+
+        /* Media Viewer Container - MAXIMUM height for video display */
+        .media-viewer-container {
+            position: relative;
+            width: 100%;
+            /* MAXIMUM height for media display: 85% of available viewport height */
+            height: calc(85vh - 80px);
+            /* Subtract minimal space for title footer */
+            min-height: 500px;
+            /* Higher minimum for better video display */
+            max-height: calc(100vh - 200px);
+            /* Don't exceed viewport minus navbar/footer */
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        /* Media Content - MAXIMUM size for video display */
+        .modal-media-content {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            /* NO padding - maximum media size */
+            box-sizing: border-box;
+        }
+
+        /* Title Footer - Small font below media */
+        .modal-title-footer {
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+            border-top: 1px solid #333;
+            max-height: 60px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .media-viewer-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Viewer Sidebar */
+        .viewer-sidebar {
+            width: 280px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #465c71;
+        }
+
+        .viewer-sidebar .sidebar-header {
+            padding: 20px;
+            background: #34495e;
+            border-bottom: 1px solid #465c71;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viewer-sidebar .sidebar-header h4 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .viewer-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .viewer-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .viewer-sidebar .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .viewer-sidebar .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .viewer-sidebar .sidebar-section-title {
+            padding: 12px 20px;
+            background: #34495e;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #465c71;
+            margin-bottom: 5px;
+        }
+
+        .viewer-sidebar .sidebar-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .viewer-sidebar .sidebar-item:hover,
+        .viewer-sidebar .sidebar-item.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .viewer-sidebar .sidebar-item:last-child {
+            border-bottom: none;
+        }
+
+        .viewer-sidebar .sidebar-item-name {
+            font-weight: 500;
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+
+        .viewer-sidebar .sidebar-item-meta {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        /* Viewer Main Area */
+        .viewer-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        .viewer-header {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .viewer-title {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .viewer-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .viewer-content {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .viewer-content .project-video,
+        .viewer-content .project-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Ensure video overlay covers entire content area */
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .viewer-content .media-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        /* Adjust sidebar for modal-first layout */
+        .showroom-sidebar {
+            padding-top: 160px;
+            /* Space for navbar + header */
+        }
+
+        @media (max-width: 768px) {
+            .media-viewer-container {
+                height: 60vh;
+                /* Smaller on mobile */
+            }
+
+            .viewer-sidebar {
+                width: 250px;
+            }
+
+            .viewer-header {
+                padding: 15px;
+            }
+
+            .viewer-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .media-viewer-container {
+                flex-direction: column;
+                height: auto;
+                min-height: 60vh;
+            }
+
+            .viewer-sidebar {
+                width: 100%;
+                height: 200px;
+                border-right: none;
+                border-bottom: 1px solid #465c71;
+            }
+
+            .viewer-main {
+                height: 400px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+
+
+    <!-- BIM NKE Hero Section -->
+    <div class="showroom-hero">
+        <div class="container">
+            <div class="showroom-hero-content">
+                <h1><i class="fas fa-building me-3"></i>BIM NKE Knowledge Hub</h1>
+                <p class="lead">Platform Pembelajaran BIM Terintegrasi dengan Teknologi Canggih</p>
+
+                <div class="showroom-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalProjects">150+</span>
+                        <div class="stat-label">Proyek BIM</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalMedia">500+</span>
+                        <div class="stat-label">Media Files</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalCategories">25+</span>
+                        <div class="stat-label">Kategori</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="activeUsers">2.5K+</span>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Section -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-4">
+                <!-- Welcome Section -->
+                <div class="col-12 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="text-center mb-5">
+                        <h6 class="section-title bg-white text-center px-3">BIM NKE</h6>
+                        <h1 class="mb-4" style="color: #fb873f;">Selamat Datang di Knowledge Hub BIM NKE</h1>
+                        <p class="mb-4 text-justify">Platform pembelajaran BIM terintegrasi yang menyediakan akses lengkap ke berbagai sumber daya BIM, mulai dari dokumentasi teknis, video tutorial, hingga studi kasus proyek-proyek BIM terkemuka di Indonesia.</p>
+                    </div>
+                </div>
+
+                <!-- Feature Cards -->
+                <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-project-diagram fa-3x mb-4" style="color: #fb873f;"></i>
+                            <h5 class="mb-3">Proyek BIM</h5>
+                            <p>Kumpulan proyek BIM terintegrasi dengan dokumentasi lengkap dan studi kasus praktis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-video fa-3x mb-4" style="color: #fb873f;"></i>
+                            <h5 class="mb-3">Video Tutorial</h5>
+                            <p>Tutorial video interaktif dari dasar hingga advance untuk semua aspek BIM.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-file-pdf fa-3x mb-4" style="color: #fb873f;"></i>
+                            <h5 class="mb-3">Dokumentasi</h5>
+                            <p>Dokumentasi teknis, standar BIM, dan panduan praktis lengkap.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.7s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-tools fa-3x mb-4" style="color: #fb873f;"></i>
+                            <h5 class="mb-3">BIM Tools</h5>
+                            <p>Eksplorasi berbagai tools dan software BIM terdepan di industri.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BIM Categories Grid -->
+                <div class="col-12 mt-5">
+                    <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+                        <h6 class="section-title bg-white text-center px-3">KATEGORI BIM</h6>
+                        <h1 class="mb-5" style="color: #fb873f;">Jelajahi Kategori BIM</h1>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                            <div class="course-item shadow">
+                                <div class="position-relative overflow-hidden">
+                                    <img class="img-fluid" src="../img/course-1.jpg" alt="Architecture BIM" style="width: 100%; height: 200px; object-fit: cover;">
+                                    <div class="course-overlay">
+                                        <h5 class="text-white">Architecture BIM</h5>
+                                        <p class="text-white-50">Desain arsitektur dengan BIM</p>
+                                        <a href="#architecture" class="btn btn-light btn-sm" onclick="filterByCategory('architecture')">Jelajahi</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+                            <div class="course-item shadow">
+                                <div class="position-relative overflow-hidden">
+                                    <img class="img-fluid" src="../img/course-2.jpg" alt="Structural BIM" style="width: 100%; height: 200px; object-fit: cover;">
+                                    <div class="course-overlay">
+                                        <h5 class="text-white">Structural BIM</h5>
+                                        <p class="text-white-50">Analisis struktur dengan BIM</p>
+                                        <a href="#structure" class="btn btn-light btn-sm" onclick="filterByCategory('structure')">Jelajahi</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
+                            <div class="course-item shadow">
+                                <div class="position-relative overflow-hidden">
+                                    <img class="img-fluid" src="../img/course-3.jpg" alt="MEP BIM" style="width: 100%; height: 200px; object-fit: cover;">
+                                    <div class="course-overlay">
+                                        <h5 class="text-white">MEP BIM</h5>
+                                        <p class="text-white-50">Sistem MEP dengan BIM</p>
+                                        <a href="#mep" class="btn btn-light btn-sm" onclick="filterByCategory('mep')">Jelajahi</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Access Section -->
+                <div class="col-12 mt-5">
+                    <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+                        <h6 class="section-title bg-white text-center px-3">AKSES CEPAT</h6>
+                        <h1 class="mb-5" style="color: #fb873f;">Fitur Unggulan BIM NKE</h1>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.1s">
+                            <div class="bg-light p-4 rounded shadow">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-search fa-2x me-3" style="color: #fb873f;"></i>
+                                    <h5 class="mb-0">Smart Search</h5>
+                                </div>
+                                <p class="mb-3">Temukan konten BIM dengan pencarian cerdas berdasarkan kategori, keyword, atau proyek.</p>
+                                <button class="btn btn-outline-primary" onclick="showSearchModal()">
+                                    <i class="fas fa-search me-2"></i>Coba Pencarian
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.3s">
+                            <div class="bg-light p-4 rounded shadow">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-tags fa-2x me-3" style="color: #fb873f;"></i>
+                                    <h5 class="mb-0">Media Tagging</h5>
+                                </div>
+                                <p class="mb-3">Semua media BIM ditandai dengan kategori dan metadata lengkap untuk navigasi mudah.</p>
+                                <button class="btn btn-outline-primary" onclick="showSidebar()">
+                                    <i class="fas fa-tags me-2"></i>Lihat Kategori
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s">
+                            <div class="bg-light p-4 rounded shadow">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-video fa-2x me-3" style="color: #fb873f;"></i>
+                                    <h5 class="mb-0">Video Showcase</h5>
+                                </div>
+                                <p class="mb-3">Tampilkan video BIM dalam format showcase interaktif dengan kontrol penuh.</p>
+                                <button class="btn btn-outline-primary" onclick="showVideoShowcase()">
+                                    <i class="fas fa-play me-2"></i>Tonton Video
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.7s">
+                            <div class="bg-light p-4 rounded shadow">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-download fa-2x me-3" style="color: #fb873f;"></i>
+                                    <h5 class="mb-0">Resource Download</h5>
+                                </div>
+                                <p class="mb-3">Unduh template BIM, dokumentasi, dan resource pendukung untuk proyek Anda.</p>
+                                <button class="btn btn-outline-primary" onclick="showResources()">
+                                    <i class="fas fa-download me-2"></i>Download Resources
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Left Sidebar -->
+    <div class="showroom-sidebar" id="showroomSidebar">
+        <div class="sidebar-header">
+            <h3><i class="fas fa-cube me-2"></i>BIM Showroom</h3>
+        </div>
+        <div class="sidebar-content" id="sidebarContent">
+            <!-- Sidebar content will be populated by JavaScript -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Kategori BIM</div>
+                <div class="sidebar-item" onclick="filterByCategory('architecture')">
+                    <div class="sidebar-item-name">🏗️ Architecture BIM</div>
+                    <div class="sidebar-item-meta">Desain & Perencanaan</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('structure')">
+                    <div class="sidebar-item-name">🏗️ Structural BIM</div>
+                    <div class="sidebar-item-meta">Analisis Struktur</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('mep')">
+                    <div class="sidebar-item-name">🔧 MEP BIM</div>
+                    <div class="sidebar-item-meta">Mechanical, Electrical, Plumbing</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('construction')">
+                    <div class="sidebar-item-name">🚧 Construction BIM</div>
+                    <div class="sidebar-item-meta">Manajemen Konstruksi</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByCategory('collaboration')">
+                    <div class="sidebar-item-name">🤝 BIM Collaboration</div>
+                    <div class="sidebar-item-meta">Koordinasi Tim</div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Tools & Software</div>
+                <div class="sidebar-item" onclick="filterByTool('revit')">
+                    <div class="sidebar-item-name">📐 Autodesk Revit</div>
+                    <div class="sidebar-item-meta">BIM Software Utama</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByTool('navisworks')">
+                    <div class="sidebar-item-name">🔍 Navisworks</div>
+                    <div class="sidebar-item-meta">Clash Detection</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByTool('dynamo')">
+                    <div class="sidebar-item-name">⚡ Dynamo</div>
+                    <div class="sidebar-item-meta">Visual Programming</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByTool('lumion')">
+                    <div class="sidebar-item-name">🎨 Lumion</div>
+                    <div class="sidebar-item-meta">Rendering & Visualization</div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Content Type</div>
+                <div class="sidebar-item" onclick="filterByType('video')">
+                    <div class="sidebar-item-name">🎬 Video Tutorial</div>
+                    <div class="sidebar-item-meta">Learning Videos</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByType('document')">
+                    <div class="sidebar-item-name">📄 Documentation</div>
+                    <div class="sidebar-item-meta">Technical Docs</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByType('case-study')">
+                    <div class="sidebar-item-name">📊 Case Studies</div>
+                    <div class="sidebar-item-meta">Real Projects</div>
+                </div>
+                <div class="sidebar-item" onclick="filterByType('template')">
+                    <div class="sidebar-item-name">📋 Templates</div>
+                    <div class="sidebar-item-meta">Reusable Assets</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Viewer Modal - Full Screen with Title Footer -->
+    <section class="media-viewer-container" id="mediaViewerContainer" style="display: none;">
+
+        <!-- Full Screen Media Content -->
+        <div class="modal-media-content">
+            <div class="media-loading" id="viewerMediaLoading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading media...</p>
+            </div>
+            <video class="project-video" id="viewerVideo" controls controlsList="nodownload"
+                style="display: none; height: 100%; width: auto; opacity: 1 !important; filter: none !important;">
+                Your browser does not support video playback.
+            </video>
+            <img class="project-image" id="viewerImage"
+                style="display: none; height: 100%; width: auto; max-width: none; opacity: 1 !important; filter: none !important;"
+                alt="Project Media">
+
+            <!-- Navigation Controls -->
+            <button class="media-nav prev" id="viewerPrevBtn" style="display: none;">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="media-nav next" id="viewerNextBtn" style="display: none;">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Title Footer - Small Font, Below Media -->
+        <div class="modal-title-footer" id="mediaTitleFooter" style="display: none;">
+            Media Viewer
+        </div>
+    </section>
+
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries - Minimal for BIM Showroom -->
+    <!-- jQuery plugins removed: easing, waypoints, owl.carousel (not used in this page) -->
+    <!-- wow.min.js removed - no wow animations used in this page -->
+    <!-- main.js removed - depends on jQuery and unused features (carousel, dropdown hover) -->
+
+    <!-- Template Javascript -->
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/showroom-player.js"></script>
+    <script src="../js/user.js" defer></script>
+
+    <!-- BIM NKE Knowledge Hub JavaScript -->
+    <script>
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 BIM NKE Knowledge Hub initialized');
+
+            // Initialize stats counters
+            initializeStats();
+
+            // Initialize sidebar toggle
+            initializeSidebar();
+
+            // Initialize category filters
+            initializeCategoryFilters();
+        });
+
+        // Initialize statistics counters with animation
+        function initializeStats() {
+            const counters = document.querySelectorAll('.stat-number');
+
+            counters.forEach(counter => {
+                const target = parseInt(counter.textContent.replace(/\D/g, ''));
+                let current = 0;
+                const increment = target / 100;
+
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        counter.textContent = target.toLocaleString() + (target > 100 ? '+' : '');
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current).toLocaleString() + (target > 100 ? '+' : '');
+                    }
+                }, 20);
+            });
+        }
+
+        // Initialize sidebar toggle functionality
+        function initializeSidebar() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const showroomSidebar = document.getElementById('showroomSidebar');
+
+            if (sidebarToggle && showroomSidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    showroomSidebar.classList.toggle('show');
+                });
+            }
+
+            // Close sidebar when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!showroomSidebar.contains(event.target) &&
+                    !sidebarToggle.contains(event.target) &&
+                    showroomSidebar.classList.contains('show')) {
+                    showroomSidebar.classList.remove('show');
+                }
+            });
+        }
+
+        // Global function for sidebar toggle (called from HTML)
+        function toggleSidebar() {
+            const showroomSidebar = document.getElementById('showroomSidebar');
+            if (showroomSidebar) {
+                showroomSidebar.classList.toggle('show');
+            }
+        }
+
+        // Initialize category filter functionality
+        function initializeCategoryFilters() {
+            // Add click handlers for category cards
+            const categoryCards = document.querySelectorAll('.course-item .btn');
+            categoryCards.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const category = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+                    filterByCategory(category);
+                });
+            });
+        }
+
+        // Category filtering functions
+        function filterByCategory(category) {
+            console.log('🏷️ Filtering by category:', category);
+
+            // Show sidebar if not visible
+            const showroomSidebar = document.getElementById('showroomSidebar');
+            if (showroomSidebar && !showroomSidebar.classList.contains('show')) {
+                showroomSidebar.classList.add('show');
+            }
+
+            // Highlight selected category in sidebar
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            sidebarItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(category)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // TODO: Implement actual filtering logic
+            showNotification(`Memfilter konten berdasarkan kategori: ${category}`, 'info');
+        }
+
+        function filterByTool(tool) {
+            console.log('🔧 Filtering by tool:', tool);
+            showNotification(`Memfilter konten berdasarkan tool: ${tool}`, 'info');
+        }
+
+        function filterByType(type) {
+            console.log('📄 Filtering by type:', type);
+            showNotification(`Memfilter konten berdasarkan tipe: ${type}`, 'info');
+        }
+
+        // Feature action functions
+        function showSearchModal() {
+            showNotification('🔍 Fitur pencarian cerdas akan segera hadir!', 'info');
+        }
+
+        function showSidebar() {
+            const showroomSidebar = document.getElementById('showroomSidebar');
+            if (showroomSidebar) {
+                showroomSidebar.classList.add('show');
+                showNotification('📂 Sidebar BIM Media telah dibuka', 'success');
+            }
+        }
+
+        function showVideoShowcase() {
+            showNotification('🎬 Fitur Video Showcase akan segera hadir!', 'info');
+        }
+
+        function showResources() {
+            showNotification('📥 Fitur Download Resources akan segera hadir!', 'info');
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.bim-notification');
+            existingNotifications.forEach(notification => notification.remove());
+
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${getAlertClass(type)} alert-dismissible fade show position-fixed bim-notification`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);';
+
+            notification.innerHTML = `
+                <i class="${getAlertIcon(type)} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            // Add to body
+            document.body.appendChild(notification);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        function getAlertClass(type) {
+            const classes = {
+                'success': 'success',
+                'error': 'danger',
+                'warning': 'warning',
+                'info': 'info'
+            };
+            return classes[type] || 'info';
+        }
+
+        function getAlertIcon(type) {
+            const icons = {
+                'success': 'fas fa-check-circle',
+                'error': 'fas fa-exclamation-triangle',
+                'warning': 'fas fa-exclamation-circle',
+                'info': 'fas fa-info-circle'
+            };
+            return icons[type] || 'fas fa-info-circle';
+        }
+
+        // Course overlay functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects for course items
+            const courseItems = document.querySelectorAll('.course-item');
+
+            courseItems.forEach(item => {
+                const overlay = item.querySelector('.course-overlay');
+
+                if (overlay) {
+                    item.addEventListener('mouseenter', function() {
+                        overlay.style.opacity = '1';
+                    });
+
+                    item.addEventListener('mouseleave', function() {
+                        overlay.style.opacity = '0';
+                    });
+                }
+            });
+        });
+
+        // Add course overlay styles dynamically
+        const courseOverlayStyles = `
+            <style>
+                .course-item {
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: 8px;
+                    transition: transform 0.3s ease;
+                }
+
+                .course-item:hover {
+                    transform: translateY(-5px);
+                }
+
+                .course-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(135deg, rgba(251, 135, 63, 0.9), rgba(251, 135, 63, 0.7));
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    color: white;
+                    text-align: center;
+                    padding: 20px;
+                }
+
+                .course-overlay h5 {
+                    margin-bottom: 10px;
+                    font-weight: bold;
+                    font-size: 1.2rem;
+                }
+
+                .course-overlay p {
+                    margin-bottom: 20px;
+                    font-size: 0.9rem;
+                    opacity: 0.9;
+                }
+
+                .course-overlay .btn {
+                    border-radius: 20px;
+                    padding: 8px 20px;
+                    font-weight: 500;
+                }
+            </style>
+        `;
+
+        document.head.insertAdjacentHTML('beforeend', courseOverlayStyles);
+
+        console.log('✅ BIM NKE Knowledge Hub JavaScript initialized');
+    </script>
+
+</body>
+
+</html>

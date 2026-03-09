@@ -1,0 +1,173 @@
+{
+  "media": {
+    "PC-BIM02/07. FT GEDUNG UNP/3D Animation FT-UNP.mp4": {
+      "fileName": "3D Animation FT-UNP.mp4",
+      "fileType": "video",
+      "year": "2025",
+      "location": "Sumatra",
+      "bimDimension": "3D",
+      "type": "Education",
+      "description": "3D Animation of FT UNP Building",
+      "taggedAt": "2025-12-23T07:30:00.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/07. FT GEDUNG UNP/RENDER GEDUNG FT-UNP.mp4": {
+      "fileName": "RENDER GEDUNG FT-UNP.mp4",
+      "fileType": "video",
+      "year": "2025",
+      "location": "Sumatra",
+      "bimDimension": "4D",
+      "type": "Education",
+      "description": "4D Render Animation of FT UNP",
+      "taggedAt": "2025-12-23T07:30:15.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/07. FT GEDUNG UNP/FT UNP GOOGLE EARTH.m4v": {
+      "fileName": "FT UNP GOOGLE EARTH.m4v",
+      "fileType": "video",
+      "year": "2025",
+      "location": "Sumatra",
+      "bimDimension": "3D",
+      "type": "Education",
+      "description": "Google Earth view of FT UNP location",
+      "taggedAt": "2025-12-23T07:30:30.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/11. CIPUTRA WORLD - MAKASSAR/LOGO WM NKE R1.png": {
+      "fileName": "LOGO WM NKE R1.png",
+      "fileType": "image",
+      "year": "2025",
+      "location": "Kalimantan",
+      "bimDimension": "3D",
+      "type": "Commercial",
+      "description": "Ciputraworld Makassar Logo Design",
+      "taggedAt": "2025-12-23T07:30:45.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/21. GAIA DATA CENTER/LOGO WM NKE R2.png": {
+      "fileName": "LOGO WM NKE R2.png",
+      "fileType": "image",
+      "year": "2024",
+      "location": "Jawa",
+      "bimDimension": "4D",
+      "type": "Commercial",
+      "description": "Gaia Data Center Architecture Render",
+      "taggedAt": "2025-12-23T07:31:00.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/03. RSJD SAMARINDA/LOGO WM NKE R3.png": {
+      "fileName": "LOGO WM NKE R3.png",
+      "fileType": "image",
+      "year": "2023",
+      "location": "Kalimantan",
+      "bimDimension": "3D",
+      "type": "Healthcare",
+      "description": "RSJD Samarinda Hospital Complex",
+      "taggedAt": "2025-12-23T07:31:15.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/13. RENOVASI BANK INDONESIA - BALI/LOGO NKE BC PUTIH.mp4": {
+      "fileName": "LOGO NKE BC PUTIH.mp4",
+      "fileType": "video",
+      "year": "2024",
+      "location": "Nusa Tenggara",
+      "bimDimension": "4D",
+      "type": "Infrastructure",
+      "description": "Bank Indonesia Bali Renovation Timeline",
+      "taggedAt": "2025-12-23T07:31:30.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/05. VENETIAN MAKASSAR/BACKGROUND PUTIH NKE+BIM.mp4": {
+      "fileName": "BACKGROUND PUTIH NKE+BIM.mp4",
+      "fileType": "video",
+      "year": "2023",
+      "location": "Kalimantan",
+      "bimDimension": "3D",
+      "type": "Commercial",
+      "description": "Venetian Makassar Mall Overview",
+      "taggedAt": "2025-12-23T07:31:45.000Z",
+      "taggedBy": "AdminBCL2025"
+    },
+    "PC-BIM02/07. FT GEDUNG UNP/NAMA GEDUNG.mp4": {
+      "fileName": "NAMA GEDUNG.mp4",
+      "fileType": "video",
+      "year": "2023",
+      "location": "Kalimantan",
+      "bimDimension": "4D",
+      "type": "Hospitality",
+      "description": "Hotel Radisson Banjarmasin 4D Animation",
+      "taggedAt": "2025-12-23T07:32:00.000Z",
+      "taggedBy": "AdminBCL2025"
+    }
+  },
+  "collections": {
+    "2023": [
+      "PC-BIM02/03. RSJD SAMARINDA/LOGO WM NKE R3.png",
+      "PC-BIM02/05. VENETIAN MAKASSAR/BACKGROUND PUTIH NKE+BIM.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/NAMA GEDUNG.mp4"
+    ],
+    "2024": [
+      "PC-BIM02/21. GAIA DATA CENTER/LOGO WM NKE R2.png",
+      "PC-BIM02/13. RENOVASI BANK INDONESIA - BALI/LOGO NKE BC PUTIH.mp4"
+    ],
+    "2025": [
+      "PC-BIM02/07. FT GEDUNG UNP/3D Animation FT-UNP.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/RENDER GEDUNG FT-UNP.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/FT UNP GOOGLE EARTH.m4v",
+      "PC-BIM02/11. CIPUTRA WORLD - MAKASSAR/LOGO WM NKE R1.png"
+    ],
+    "Commercial": [
+      "PC-BIM02/11. CIPUTRA WORLD - MAKASSAR/LOGO WM NKE R1.png",
+      "PC-BIM02/21. GAIA DATA CENTER/LOGO WM NKE R2.png",
+      "PC-BIM02/05. VENETIAN MAKASSAR/BACKGROUND PUTIH NKE+BIM.mp4"
+    ],
+    "Healthcare": [
+      "PC-BIM02/03. RSJD SAMARINDA/LOGO WM NKE R3.png"
+    ],
+    "Education": [
+      "PC-BIM02/07. FT GEDUNG UNP/3D Animation FT-UNP.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/RENDER GEDUNG FT-UNP.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/FT UNP GOOGLE EARTH.m4v"
+    ],
+    "Infrastructure": [
+      "PC-BIM02/13. RENOVASI BANK INDONESIA - BALI/LOGO NKE BC PUTIH.mp4"
+    ],
+    "Hospitality": [
+      "PC-BIM02/07. FT GEDUNG UNP/NAMA GEDUNG.mp4"
+    ],
+    "3D": [
+      "PC-BIM02/07. FT GEDUNG UNP/3D Animation FT-UNP.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/FT UNP GOOGLE EARTH.m4v",
+      "PC-BIM02/11. CIPUTRA WORLD - MAKASSAR/LOGO WM NKE R1.png",
+      "PC-BIM02/03. RSJD SAMARINDA/LOGO WM NKE R3.png",
+      "PC-BIM02/05. VENETIAN MAKASSAR/BACKGROUND PUTIH NKE+BIM.mp4"
+    ],
+    "4D": [
+      "PC-BIM02/07. FT GEDUNG UNP/RENDER GEDUNG FT-UNP.mp4",
+      "PC-BIM02/21. GAIA DATA CENTER/LOGO WM NKE R2.png",
+      "PC-BIM02/13. RENOVASI BANK INDONESIA - BALI/LOGO NKE BC PUTIH.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/NAMA GEDUNG.mp4"
+    ],
+    "5D": [],
+    "6D": [],
+    "7D": [],
+    "Jawa": [
+      "PC-BIM02/21. GAIA DATA CENTER/LOGO WM NKE R2.png"
+    ],
+    "Sumatra": [
+      "PC-BIM02/07. FT GEDUNG UNP/3D Animation FT-UNP.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/RENDER GEDUNG FT-UNP.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/FT UNP GOOGLE EARTH.m4v"
+    ],
+    "Kalimantan": [
+      "PC-BIM02/11. CIPUTRA WORLD - MAKASSAR/LOGO WM NKE R1.png",
+      "PC-BIM02/03. RSJD SAMARINDA/LOGO WM NKE R3.png",
+      "PC-BIM02/05. VENETIAN MAKASSAR/BACKGROUND PUTIH NKE+BIM.mp4",
+      "PC-BIM02/07. FT GEDUNG UNP/NAMA GEDUNG.mp4"
+    ],
+    "Nusa Tenggara": [
+      "PC-BIM02/13. RENOVASI BANK INDONESIA - BALI/LOGO NKE BC PUTIH.mp4"
+    ]
+  },
+  "lastUpdated": "2025-12-19T10:02:24.843Z"
+}

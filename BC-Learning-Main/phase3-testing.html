@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 3 Testing Suite - BC Learning</title>
+
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/gamification.css" rel="stylesheet">
+
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .test-controls {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-results {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        .test-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-value.passed {
+            color: #28a745;
+        }
+
+        .summary-value.failed {
+            color: #dc3545;
+        }
+
+        .summary-value.rate {
+            color: #17a2b8;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .test-log {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+
+        .test-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border-left: 4px solid transparent;
+        }
+
+        .test-item.passed {
+            background: rgba(40, 167, 69, 0.1);
+            border-left-color: #28a745;
+        }
+
+        .test-item.failed {
+            background: rgba(220, 53, 69, 0.1);
+            border-left-color: #dc3545;
+        }
+
+        .test-item.running {
+            background: rgba(255, 193, 7, 0.1);
+            border-left-color: #ffc107;
+        }
+
+        .test-status {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            text-align: center;
+            line-height: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .test-status.passed {
+            background: #28a745;
+            color: white;
+        }
+
+        .test-status.failed {
+            background: #dc3545;
+            color: white;
+        }
+
+        .test-status.running {
+            background: #ffc107;
+            color: #333;
+            animation: pulse 1s infinite;
+        }
+
+        .component-section {
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .component-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            font-weight: bold;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .component-header:hover {
+            background: #e9ecef;
+        }
+
+        .component-body {
+            padding: 20px;
+            display: none;
+        }
+
+        .component-body.active {
+            display: block;
+        }
+
+        .progress-bar-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+
+        .btn-test {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn-test:hover {
+            background: #218838;
+        }
+
+        .btn-test:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d1edff;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark"
+        style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-graduation-cap me-2"></i>BC Learning
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Home</a>
+                <a class="nav-link" href="phase3-dashboard.html">Dashboard</a>
+                <a class="nav-link active" href="#">Testing Suite</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="test-container">
+        <!-- Test Header -->
+        <div class="test-header">
+            <h1><i class="fas fa-vial me-3"></i>Phase 3 Testing Suite</h1>
+            <p class="mb-0">Comprehensive testing for all Phase 3 components and integrations</p>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Test Controls -->
+        <div class="test-controls">
+            <h4><i class="fas fa-play-circle me-2"></i>Test Controls</h4>
+            <div class="d-flex align-items-center gap-3 mt-3">
+                <button id="runAllTestsBtn" class="btn-test">
+                    <i class="fas fa-play me-2"></i>Run All Tests
+                </button>
+                <button id="runSelectedTestsBtn" class="btn-test btn-secondary">
+                    <i class="fas fa-check-circle me-2"></i>Run Selected
+                </button>
+                <button id="clearResultsBtn" class="btn-test btn-secondary">
+                    <i class="fas fa-trash me-2"></i>Clear Results
+                </button>
+                <button id="exportResultsBtn" class="btn-test btn-secondary">
+                    <i class="fas fa-download me-2"></i>Export Results
+                </button>
+            </div>
+
+            <div class="progress-bar-container">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Test Progress</span>
+                    <span id="progressText">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Summary -->
+        <div class="test-results">
+            <h4><i class="fas fa-chart-pie me-2"></i>Test Summary</h4>
+
+            <div class="test-summary" id="testSummary">
+                <div class="summary-card">
+                    <div class="summary-value passed" id="passedCount">0</div>
+                    <div class="summary-label">Passed</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value failed" id="failedCount">0</div>
+                    <div class="summary-label">Failed</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" id="totalCount">0</div>
+                    <div class="summary-label">Total Tests</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value rate" id="successRate">0%</div>
+                    <div class="summary-label">Success Rate</div>
+                </div>
+            </div>
+
+            <!-- Component Tests -->
+            <div id="componentTests">
+                <h5>Component Test Results</h5>
+                <div id="componentTestsContainer">
+                    <p class="text-muted">No tests run yet. Click "Run All Tests" to begin.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Log -->
+        <div class="test-results">
+            <h4><i class="fas fa-terminal me-2"></i>Test Log</h4>
+            <div id="testLog" class="test-log">
+                Waiting for tests to run...\n
+                Click "Run All Tests" to begin comprehensive testing.
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Phase 3 Components -->
+    <script src="elearning-assets/js/advanced-analytics.js"></script>
+    <script src="elearning-assets/js/personalized-recommendations.js"></script>
+    <script src="elearning-assets/js/enhanced-progress-tracking.js"></script>
+    <script src="elearning-assets/js/adaptive-assessment-engine.js"></script>
+    <script src="elearning-assets/js/administrative-reporting.js"></script>
+    <script src="elearning-assets/js/gamification-system.js"></script>
+    <script src="elearning-assets/js/phase3-integration.js"></script>
+    <script src="elearning-assets/js/phase3-test-suite.js"></script>
+
+    <script>
+        // Test page management
+        class TestPageManager {
+            constructor() {
+                this.testSuite = null;
+                this.isRunning = false;
+                this.currentTest = 0;
+                this.totalTests = 0;
+                this.results = [];
+
+                this.initializeEventListeners();
+                this.initializeTestComponents();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('runAllTestsBtn').addEventListener('click', () => {
+                    this.runAllTests();
+                });
+
+                document.getElementById('clearResultsBtn').addEventListener('click', () => {
+                    this.clearResults();
+                });
+
+                document.getElementById('exportResultsBtn').addEventListener('click', () => {
+                    this.exportResults();
+                });
+            }
+
+            async initializeTestComponents() {
+                this.log('Initializing test environment...');
+
+                // Wait for all components to load
+                await this.waitForComponents();
+
+                this.log('✅ Test environment ready');
+                this.showAlert('Test environment initialized successfully', 'success');
+            }
+
+            async waitForComponents() {
+                const requiredComponents = [
+                    'Phase3Integration',
+                    'AdvancedAnalytics',
+                    'PersonalizedRecommendations',
+                    'EnhancedProgressTracking',
+                    'AdaptiveAssessmentEngine',
+                    'AdministrativeReporting',
+                    'GamificationSystem',
+                    'Phase3TestSuite'
+                ];
+
+                for (const component of requiredComponents) {
+                    await this.waitForComponent(component);
+                }
+            }
+
+            waitForComponent(componentName) {
+                return new Promise((resolve) => {
+                    const check = () => {
+                        if (window[componentName]) {
+                            this.log(`✅ ${componentName} loaded`);
+                            resolve();
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    };
+                    check();
+                });
+            }
+
+            async runAllTests() {
+                if (this.isRunning) {
+                    this.showAlert('Tests are already running', 'warning');
+                    return;
+                }
+
+                this.isRunning = true;
+                this.clearResults();
+                this.updateControls();
+
+                try {
+                    this.log('🚀 Starting comprehensive Phase 3 testing...');
+                    this.log('═'.repeat(50));
+
+                    // Create test suite instance
+                    this.testSuite = new Phase3TestSuite();
+
+                    // Override test recording to capture for UI
+                    const originalRecordTest = this.testSuite.recordTest.bind(this.testSuite);
+                    this.testSuite.recordTest = (name, passed, details) => {
+                        originalRecordTest(name, passed, details);
+                        this.handleTestResult(name, passed, details);
+                    };
+
+                    // Run tests
+                    await this.testSuite.runAllTests();
+
+                    this.log('🏁 All tests completed!');
+                    this.showAlert('Testing completed successfully', 'success');
+
+                } catch (error) {
+                    this.log(`❌ Error during testing: ${error.message}`);
+                    this.showAlert(`Testing error: ${error.message}`, 'danger');
+                } finally {
+                    this.isRunning = false;
+                    this.updateControls();
+                    this.updateProgress(100);
+                }
+            }
+
+            handleTestResult(name, passed, details) {
+                this.results.push({ name, passed, details, timestamp: Date.now() });
+                this.updateSummary();
+                this.updateComponentTests();
+                this.updateProgress();
+                this.log(`${passed ? '✅' : '❌'} ${name}: ${details}`);
+            }
+
+            updateSummary() {
+                const passed = this.results.filter(r => r.passed).length;
+                const failed = this.results.filter(r => !r.passed).length;
+                const total = this.results.length;
+                const rate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
+
+                document.getElementById('passedCount').textContent = passed;
+                document.getElementById('failedCount').textContent = failed;
+                document.getElementById('totalCount').textContent = total;
+                document.getElementById('successRate').textContent = rate + '%';
+            }
+
+            updateComponentTests() {
+                const container = document.getElementById('componentTestsContainer');
+                const components = this.groupResultsByComponent();
+
+                container.innerHTML = '';
+
+                Object.keys(components).forEach(componentName => {
+                    const tests = components[componentName];
+                    const passed = tests.filter(t => t.passed).length;
+                    const total = tests.length;
+                    const rate = ((passed / total) * 100).toFixed(1);
+
+                    const componentSection = document.createElement('div');
+                    componentSection.className = 'component-section';
+                    componentSection.innerHTML = `
+                        <div class="component-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                            <span>
+                                <i class="fas fa-${passed === total ? 'check' : 'exclamation-triangle'} me-2"></i>
+                                ${componentName}
+                            </span>
+                            <span class="badge ${passed === total ? 'bg-success' : 'bg-warning'}">${passed}/${total} (${rate}%)</span>
+                        </div>
+                        <div class="component-body">
+                            ${tests.map(test => `
+                                <div class="test-item ${test.passed ? 'passed' : 'failed'}">
+                                    <span class="test-status ${test.passed ? 'passed' : 'failed'}">
+                                        ${test.passed ? '✓' : '✗'}
+                                    </span>
+                                    <strong>${test.name}</strong><br>
+                                    <small class="text-muted">${test.details}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    container.appendChild(componentSection);
+                });
+            }
+
+            groupResultsByComponent() {
+                const groups = {};
+                this.results.forEach(result => {
+                    const component = this.getComponentFromTestName(result.name);
+                    if (!groups[component]) {
+                        groups[component] = [];
+                    }
+                    groups[component].push(result);
+                });
+                return groups;
+            }
+
+            getComponentFromTestName(testName) {
+                if (testName.includes('Analytics')) return 'Advanced Analytics';
+                if (testName.includes('Recommendations')) return 'Personalized Recommendations';
+                if (testName.includes('Progress')) return 'Enhanced Progress Tracking';
+                if (testName.includes('Assessment')) return 'Adaptive Assessment';
+                if (testName.includes('Reporting')) return 'Administrative Reporting';
+                if (testName.includes('Gamification')) return 'Gamification System';
+                if (testName.includes('Integration')) return 'Integration System';
+                if (testName.includes('Performance')) return 'Performance Tests';
+                if (testName.includes('Communication')) return 'Inter-Component Communication';
+                if (testName.includes('Persistence')) return 'Data Persistence';
+                return 'General';
+            }
+
+            updateProgress() {
+                if (!this.testSuite) return;
+
+                const total = this.testSuite.passed + this.testSuite.failed;
+                const estimated = 50; // Estimated total tests
+                const progress = Math.min((total / estimated) * 100, 100);
+
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').textContent = Math.round(progress) + '%';
+            }
+
+            updateControls() {
+                const runBtn = document.getElementById('runAllTestsBtn');
+                if (this.isRunning) {
+                    runBtn.disabled = true;
+                    runBtn.innerHTML = '<span class="loading-spinner me-2"></span>Running Tests...';
+                } else {
+                    runBtn.disabled = false;
+                    runBtn.innerHTML = '<i class="fas fa-play me-2"></i>Run All Tests';
+                }
+            }
+
+            clearResults() {
+                this.results = [];
+                this.updateSummary();
+                document.getElementById('componentTestsContainer').innerHTML =
+                    '<p class="text-muted">No tests run yet. Click "Run All Tests" to begin.</p>';
+                document.getElementById('testLog').textContent =
+                    'Test log cleared.\nClick "Run All Tests" to begin testing.';
+                document.getElementById('progressFill').style.width = '0%';
+                document.getElementById('progressText').textContent = '0%';
+            }
+
+            exportResults() {
+                if (this.results.length === 0) {
+                    this.showAlert('No test results to export', 'warning');
+                    return;
+                }
+
+                const exportData = {
+                    summary: {
+                        passed: this.results.filter(r => r.passed).length,
+                        failed: this.results.filter(r => !r.passed).length,
+                        total: this.results.length,
+                        successRate: ((this.results.filter(r => r.passed).length / this.results.length) * 100).toFixed(1)
+                    },
+                    results: this.results,
+                    timestamp: new Date().toISOString(),
+                    version: 'Phase 3.0'
+                };
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `phase3-test-results-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showAlert('Test results exported successfully', 'success');
+            }
+
+            log(message) {
+                const logElement = document.getElementById('testLog');
+                const timestamp = new Date().toLocaleTimeString();
+                logElement.textContent += `[${timestamp}] ${message}\n`;
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+
+            showAlert(message, type) {
+                const alertContainer = document.getElementById('alertContainer');
+                const alert = document.createElement('div');
+                alert.className = `alert alert-${type}`;
+                alert.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'} me-2"></i>
+                    ${message}
+                `;
+                alertContainer.appendChild(alert);
+
+                setTimeout(() => {
+                    alert.remove();
+                }, 5000);
+            }
+        }
+
+        // Initialize test page
+        document.addEventListener('DOMContentLoaded', function () {
+            window.testPageManager = new TestPageManager();
+        });
+    </script>
+</body>
+
+</html>

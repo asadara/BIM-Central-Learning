@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 3 Learning Analytics Dashboard - BC Learning</title>
+
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/gamification.css" rel="stylesheet">
+
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!DOCTYPE html>
+    <html lang="id">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Phase 3 Learning Analytics Dashboard - BC Learning</title>
+
+        <!-- CSS Dependencies -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+        <link href="css/style.css" rel="stylesheet">
+        <link href="css/gamification.css" rel="stylesheet">
+
+        <!-- Chart.js for visualizations -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <style>
+            .admin-banner {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 1rem;
+                margin-bottom: 2rem;
+                border-radius: 8px;
+                display: none;
+            }
+
+            .admin-banner.show {
+                display: block;
+            }
+
+            .tagline-indicator {
+                background: rgba(76, 175, 80, 0.1);
+                border: 1px solid #4caf50;
+                color: #2e7d32;
+                padding: 0.25rem 0.5rem;
+                border-radius: 4px;
+                font-size: 0.75rem;
+                margin-left: 0.5rem;
+            }
+
+            .admin-controls {
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .dashboard-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            .dashboard-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                margin-bottom: 30px;
+                text-align: center;
+            }
+
+            .component-section {
+                background: white;
+                border-radius: 15px;
+                padding: 25px;
+                margin-bottom: 30px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                border-left: 4px solid #667eea;
+            }
+
+            .component-title {
+                font-size: 1.5rem;
+                font-weight: bold;
+                margin-bottom: 20px;
+                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .status-indicator {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #4CAF50;
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% {
+                    opacity: 1;
+                }
+
+                50% {
+                    opacity: 0.5;
+                }
+
+                100% {
+                    opacity: 1;
+                }
+            }
+
+            .status-indicator.error {
+                background: #f44336;
+            }
+
+            .metrics-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin: 20px 0;
+            }
+
+            .metric-card {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                border: 1px solid #e9ecef;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #667eea;
+                margin-bottom: 5px;
+            }
+
+            .metric-label {
+                font-size: 0.9rem;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .chart-container {
+                position: relative;
+                height: 300px;
+                margin: 20px 0;
+            }
+
+            .loading-spinner {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 3px solid rgba(0, 0, 0, 0.1);
+                border-radius: 50%;
+                border-top-color: #667eea;
+                animation: spin 1s ease-in-out infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .integration-status {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 15px;
+                margin: 20px 0;
+            }
+
+            .component-status {
+                background: #e8f5e8;
+                color: #2e7d32;
+                padding: 8px 12px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .component-status.error {
+                background: #ffebee;
+                color: #c62828;
+            }
+
+            .refresh-btn {
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: background 0.3s ease;
+            }
+
+            .refresh-btn:hover {
+                background: #5a6fd8;
+            }
+
+            .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .data-table th {
+                background: #f8f9fa;
+                font-weight: bold;
+            }
+
+            .error-message {
+                background: #ffebee;
+                color: #c62828;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 10px 0;
+                display: none;
+            }
+
+            .success-message {
+                background: #e8f5e8;
+                color: #2e7d32;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 10px 0;
+                display: none;
+            }
+        </style>
+    </head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-graduation-cap me-2"></i>BC Learning
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Home</a>
+                <a class="nav-link" href="courses.html">Courses</a>
+                <a class="nav-link" href="learning-path.html">Learning Path</a>
+                <a class="nav-link active" href="#">Phase 3 Dashboard</a>
+                <a class="nav-link" href="admin.html" id="admin-link" style="display: none;">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Admin Banner -->
+    <div class="container mt-4">
+        <div class="admin-banner" id="admin-banner">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5><i class="fas fa-user-shield"></i> Welcome, AdminBCL!</h5>
+                    <p>You have administrative privileges to manage course materials and taglines.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="admin.html" class="btn btn-light">
+                        <i class="fas fa-cog"></i> Open Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Controls (shown only for AdminBCL) -->
+    <div class="container">
+        <div class="admin-controls" id="admin-controls" style="display: none;">
+            <h6><i class="fas fa-cog"></i> Admin Controls</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <button class="btn btn-success btn-sm" onclick="manageTaglines()">
+                        <i class="fas fa-tags"></i> Manage Taglines
+                    </button>
+                    <button class="btn btn-info btn-sm ms-2" onclick="viewTaglineStats()">
+                        <i class="fas fa-chart-bar"></i> Tagline Stats
+                    </button>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">Admin controls for dashboard management</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1><i class="fas fa-chart-line me-3"></i>Phase 3 Learning Analytics Dashboard</h1>
+            <p class="mb-0">Advanced Analytics, Personalized Recommendations, Progress Tracking, Adaptive Assessment,
+                Reporting & Gamification</p>
+            <div class="mt-3">
+                <button class="refresh-btn" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <!-- Integration Status -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-cogs"></i>
+                Integration Status
+                <div class="status-indicator" id="integrationStatus"></div>
+            </div>
+            <div class="integration-status" id="integrationStatusContainer">
+                <div class="loading-spinner"></div>
+                <span>Loading integration status...</span>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-chart-bar"></i>
+                Advanced Learning Analytics
+                <div class="status-indicator" id="analyticsStatus"></div>
+            </div>
+            <div class="metrics-grid" id="analyticsMetrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalSessions">-</div>
+                    <div class="metric-label">Total Sessions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="averageScore">-</div>
+                    <div class="metric-label">Average Score</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="timeSpent">-</div>
+                    <div class="metric-label">Time Spent</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="completionRate">-</div>
+                    <div class="metric-label">Completion Rate</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Personalized Recommendations -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-lightbulb"></i>
+                Personalized Recommendations
+                <div class="status-indicator" id="recommendationsStatus"></div>
+            </div>
+            <div id="recommendationsContainer">
+                <div class="loading-spinner"></div>
+                <span>Loading recommendations...</span>
+            </div>
+        </div>
+
+        <!-- Enhanced Progress Tracking -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-chart-line"></i>
+                Enhanced Progress Tracking
+                <div class="status-indicator" id="progressStatus"></div>
+            </div>
+            <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+            <div id="milestonesContainer">
+                <div class="loading-spinner"></div>
+                <span>Loading progress data...</span>
+            </div>
+        </div>
+
+        <!-- Adaptive Assessment Engine -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-brain"></i>
+                Adaptive Assessment Engine
+                <div class="status-indicator" id="assessmentStatus"></div>
+            </div>
+            <div class="metrics-grid" id="assessmentMetrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="adaptiveDifficulty">-</div>
+                    <div class="metric-label">Current Difficulty</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="assessmentAccuracy">-</div>
+                    <div class="metric-label">Accuracy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="assessmentSpeed">-</div>
+                    <div class="metric-label">Speed (q/min)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="adaptationRate">-</div>
+                    <div class="metric-label">Adaptation Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Administrative Reporting -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-file-alt"></i>
+                Administrative Reporting
+                <div class="status-indicator" id="reportingStatus"></div>
+            </div>
+            <div id="reportingContainer">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Available Reports</h5>
+                        <div id="availableReports">
+                            <div class="loading-spinner"></div>
+                            <span>Loading reports...</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Report Schedule</h5>
+                        <div id="reportSchedule">
+                            <div class="loading-spinner"></div>
+                            <span>Loading schedule...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gamification System -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-trophy"></i>
+                Gamification System
+                <div class="status-indicator" id="gamificationStatus"></div>
+            </div>
+            <div id="gamificationDashboard">
+                <div class="loading-spinner"></div>
+                <span>Loading gamification data...</span>
+            </div>
+        </div>
+
+        <!-- Real-time Data Feed -->
+        <div class="component-section">
+            <div class="component-title">
+                <i class="fas fa-stream"></i>
+                Real-time Data Feed
+            </div>
+            <div id="realTimeData">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Component</th>
+                            <th>Event</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="realTimeDataBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center;">
+                                <div class="loading-spinner"></div>
+                                <span>Waiting for real-time data...</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Phase 3 Components -->
+    <script src="elearning-assets/js/advanced-analytics.js"></script>
+    <script src="elearning-assets/js/personalized-recommendations.js"></script>
+    <script src="elearning-assets/js/enhanced-progress-tracking.js"></script>
+    <script src="elearning-assets/js/adaptive-assessment-engine.js"></script>
+    <script src="elearning-assets/js/administrative-reporting.js"></script>
+    <script src="elearning-assets/js/gamification-system.js"></script>
+    <script src="elearning-assets/js/phase3-integration.js"></script>
+
+    <script>
+        // Dashboard initialization and management
+        class Phase3Dashboard {
+            constructor() {
+                this.charts = {};
+                this.refreshInterval = null;
+                this.realTimeEvents = [];
+                this.maxRealTimeEvents = 50;
+
+                this.initializeDashboard();
+            }
+
+            async initializeDashboard() {
+                try {
+                    // Wait for integration system to be ready
+                    await this.waitForIntegration();
+
+                    // Load initial data
+                    await this.loadDashboardData();
+
+                    // Setup real-time updates
+                    this.setupRealTimeUpdates();
+
+                    // Setup auto-refresh
+                    this.setupAutoRefresh();
+
+                    this.showSuccessMessage('Dashboard initialized successfully');
+
+                } catch (error) {
+                    console.error('Error initializing dashboard:', error);
+                    this.showErrorMessage('Failed to initialize dashboard: ' + error.message);
+                }
+            }
+
+            async waitForIntegration() {
+                return new Promise((resolve, reject) => {
+                    const checkIntegration = () => {
+                        if (window.phase3Integration && window.phase3Integration.initialized) {
+                            resolve();
+                        } else {
+                            setTimeout(checkIntegration, 100);
+                        }
+                    };
+
+                    checkIntegration();
+
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        reject(new Error('Integration system timeout'));
+                    }, 10000);
+                });
+            }
+
+            async loadDashboardData() {
+                // Load integration status
+                this.loadIntegrationStatus();
+
+                // Load component data
+                await this.loadAnalyticsData();
+                await this.loadRecommendationsData();
+                await this.loadProgressData();
+                await this.loadAssessmentData();
+                await this.loadReportingData();
+                await this.loadGamificationData();
+            }
+
+            loadIntegrationStatus() {
+                try {
+                    const status = window.phase3Integration.getComponentStatus();
+                    const container = document.getElementById('integrationStatusContainer');
+
+                    container.innerHTML = '';
+
+                    Object.keys(status).forEach(componentName => {
+                        const componentStatus = status[componentName];
+                        const statusElement = document.createElement('div');
+                        statusElement.className = `component-status ${componentStatus.initialized ? '' : 'error'}`;
+                        statusElement.innerHTML = `
+                            <i class="fas fa-${componentStatus.initialized ? 'check' : 'times'}"></i>
+                            ${componentName}: ${componentStatus.initialized ? 'Active' : 'Error'}
+                        `;
+                        container.appendChild(statusElement);
+                    });
+
+                    const integrationIndicator = document.getElementById('integrationStatus');
+                    integrationIndicator.className = 'status-indicator';
+
+                } catch (error) {
+                    console.error('Error loading integration status:', error);
+                    document.getElementById('integrationStatusContainer').innerHTML =
+                        '<div class="component-status error"><i class="fas fa-times"></i>Integration Error</div>';
+                }
+            }
+
+            async loadAnalyticsData() {
+                try {
+                    if (window.advancedAnalytics) {
+                        const metrics = window.advancedAnalytics.getPerformanceMetrics();
+
+                        document.getElementById('totalSessions').textContent = metrics.totalSessions || '0';
+                        document.getElementById('averageScore').textContent = (metrics.averageScore || 0).toFixed(1) + '%';
+                        document.getElementById('timeSpent').textContent = this.formatTime(metrics.totalTimeSpent || 0);
+                        document.getElementById('completionRate').textContent = (metrics.completionRate || 0).toFixed(1) + '%';
+
+                        // Create performance chart
+                        this.createPerformanceChart(metrics);
+
+                        document.getElementById('analyticsStatus').className = 'status-indicator';
+                    } else {
+                        document.getElementById('analyticsStatus').className = 'status-indicator error';
+                    }
+                } catch (error) {
+                    console.error('Error loading analytics data:', error);
+                    document.getElementById('analyticsStatus').className = 'status-indicator error';
+                }
+            }
+
+            async loadRecommendationsData() {
+                try {
+                    const container = document.getElementById('recommendationsContainer');
+
+                    if (window.personalizedRecommendations) {
+                        const recommendations = window.personalizedRecommendations.getPersonalizedRecommendations();
+
+                        container.innerHTML = '';
+
+                        if (recommendations.length > 0) {
+                            recommendations.slice(0, 5).forEach(rec => {
+                                const recElement = document.createElement('div');
+                                recElement.className = 'recommendation-item';
+                                recElement.innerHTML = `
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong>${rec.title}</strong>
+                                        <span class="badge bg-primary">${rec.score.toFixed(2)}</span>
+                                    </div>
+                                    <p class="text-muted mb-1">${rec.description}</p>
+                                    <small class="text-info">Reason: ${rec.reason}</small>
+                                `;
+                                container.appendChild(recElement);
+                            });
+                        } else {
+                            container.innerHTML = '<p class="text-muted">No recommendations available yet.</p>';
+                        }
+
+                        document.getElementById('recommendationsStatus').className = 'status-indicator';
+                    } else {
+                        container.innerHTML = '<p class="text-danger">Recommendations system not available</p>';
+                        document.getElementById('recommendationsStatus').className = 'status-indicator error';
+                    }
+                } catch (error) {
+                    console.error('Error loading recommendations data:', error);
+                    document.getElementById('recommendationsStatus').className = 'status-indicator error';
+                }
+            }
+
+            async loadProgressData() {
+                try {
+                    if (window.enhancedProgressTracking) {
+                        const progressData = window.enhancedProgressTracking.getProgressData();
+
+                        // Create progress chart
+                        this.createProgressChart(progressData);
+
+                        // Load milestones
+                        this.loadMilestones(progressData.milestones);
+
+                        document.getElementById('progressStatus').className = 'status-indicator';
+                    } else {
+                        document.getElementById('progressStatus').className = 'status-indicator error';
+                    }
+                } catch (error) {
+                    console.error('Error loading progress data:', error);
+                    document.getElementById('progressStatus').className = 'status-indicator error';
+                }
+            }
+
+            async loadAssessmentData() {
+                try {
+                    if (window.adaptiveAssessmentEngine) {
+                        const assessmentData = window.adaptiveAssessmentEngine.getAssessmentData();
+
+                        document.getElementById('adaptiveDifficulty').textContent = (assessmentData.currentDifficulty || 0.5).toFixed(2);
+                        document.getElementById('assessmentAccuracy').textContent = (assessmentData.accuracy || 0).toFixed(1) + '%';
+                        document.getElementById('assessmentSpeed').textContent = (assessmentData.speed || 0).toFixed(1);
+                        document.getElementById('adaptationRate').textContent = (assessmentData.adaptationRate || 0).toFixed(2);
+
+                        document.getElementById('assessmentStatus').className = 'status-indicator';
+                    } else {
+                        document.getElementById('assessmentStatus').className = 'status-indicator error';
+                    }
+                } catch (error) {
+                    console.error('Error loading assessment data:', error);
+                    document.getElementById('assessmentStatus').className = 'status-indicator error';
+                }
+            }
+
+            async loadReportingData() {
+                try {
+                    if (window.administrativeReporting) {
+                        const reports = window.administrativeReporting.getAvailableReports();
+
+                        this.loadAvailableReports(reports);
+                        this.loadReportSchedule();
+
+                        document.getElementById('reportingStatus').className = 'status-indicator';
+                    } else {
+                        document.getElementById('reportingStatus').className = 'status-indicator error';
+                    }
+                } catch (error) {
+                    console.error('Error loading reporting data:', error);
+                    document.getElementById('reportingStatus').className = 'status-indicator error';
+                }
+            }
+
+            async loadGamificationData() {
+                try {
+                    const container = document.getElementById('gamificationDashboard');
+
+                    if (window.gamificationSystem) {
+                        const dashboard = window.gamificationSystem.getUserDashboard();
+
+                        container.innerHTML = `
+                            <div class="gamification-dashboard">
+                                <div class="gamification-stats">
+                                    <div class="stat-card">
+                                        <div class="stat-value">${dashboard.profile.level}</div>
+                                        <div class="stat-label">Level</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">${dashboard.profile.points}</div>
+                                        <div class="stat-label">Points</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">${dashboard.streaks.current}</div>
+                                        <div class="stat-label">Streak</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">${dashboard.achievements.earned}</div>
+                                        <div class="stat-label">Achievements</div>
+                                    </div>
+                                </div>
+                                <div class="level-progress">
+                                    <div class="level-info">
+                                        <span class="level-badge">Level ${dashboard.profile.level}</span>
+                                        <span class="level-points">${dashboard.profile.points}/${dashboard.profile.nextLevelPoints} points</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${dashboard.profile.progressToNextLevel}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        document.getElementById('gamificationStatus').className = 'status-indicator';
+                    } else {
+                        container.innerHTML = '<p class="text-danger">Gamification system not available</p>';
+                        document.getElementById('gamificationStatus').className = 'status-indicator error';
+                    }
+                } catch (error) {
+                    console.error('Error loading gamification data:', error);
+                    document.getElementById('gamificationStatus').className = 'status-indicator error';
+                }
+            }
+
+            // Chart creation methods
+            createPerformanceChart(metrics) {
+                const ctx = document.getElementById('performanceChart').getContext('2d');
+
+                if (this.charts.performance) {
+                    this.charts.performance.destroy();
+                }
+
+                this.charts.performance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Performance Score',
+                            data: metrics.weeklyPerformance || [70, 75, 80, 78, 85, 82, 88],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+
+            createProgressChart(progressData) {
+                const ctx = document.getElementById('progressChart').getContext('2d');
+
+                if (this.charts.progress) {
+                    this.charts.progress.destroy();
+                }
+
+                this.charts.progress = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Completed', 'In Progress', 'Not Started'],
+                        datasets: [{
+                            data: [
+                                progressData.completedCourses || 5,
+                                progressData.inProgressCourses || 2,
+                                progressData.notStartedCourses || 3
+                            ],
+                            backgroundColor: ['#4CAF50', '#FF9800', '#E0E0E0']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Utility methods
+            formatTime(minutes) {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return `${hours}h ${mins}m`;
+            }
+
+            loadMilestones(milestones) {
+                const container = document.getElementById('milestonesContainer');
+                container.innerHTML = '<h5>Recent Milestones</h5>';
+
+                if (milestones && milestones.length > 0) {
+                    milestones.slice(0, 3).forEach(milestone => {
+                        const milestoneElement = document.createElement('div');
+                        milestoneElement.className = 'milestone-item';
+                        milestoneElement.innerHTML = `
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-trophy text-warning me-2"></i>
+                                <strong>${milestone.title}</strong>
+                            </div>
+                            <p class="text-muted mb-0">${milestone.description}</p>
+                        `;
+                        container.appendChild(milestoneElement);
+                    });
+                } else {
+                    container.innerHTML += '<p class="text-muted">No milestones achieved yet.</p>';
+                }
+            }
+
+            loadAvailableReports(reports) {
+                const container = document.getElementById('availableReports');
+                container.innerHTML = '';
+
+                if (reports && reports.length > 0) {
+                    reports.forEach(report => {
+                        const reportElement = document.createElement('div');
+                        reportElement.className = 'report-item mb-2';
+                        reportElement.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>${report.name}</span>
+                                <button class="btn btn-sm btn-outline-primary" onclick="downloadReport('${report.id}')">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        `;
+                        container.appendChild(reportElement);
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-muted">No reports available.</p>';
+                }
+            }
+
+            loadReportSchedule() {
+                const container = document.getElementById('reportSchedule');
+                container.innerHTML = `
+                    <div class="schedule-item mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Weekly Progress Report</span>
+                            <span class="text-muted">Every Monday</span>
+                        </div>
+                    </div>
+                    <div class="schedule-item mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Monthly Analytics</span>
+                            <span class="text-muted">1st of month</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            setupRealTimeUpdates() {
+                // Add real-time event listener
+                if (window.phase3Integration) {
+                    window.phase3Integration.eventBus.addEventListener('*', (event) => {
+                        this.addRealTimeEvent(event);
+                    });
+                }
+            }
+
+            addRealTimeEvent(event) {
+                const eventData = {
+                    timestamp: new Date().toLocaleTimeString(),
+                    component: event.type.split('_')[0] || 'System',
+                    event: event.type,
+                    details: JSON.stringify(event.detail || {}).substring(0, 100) + '...'
+                };
+
+                this.realTimeEvents.unshift(eventData);
+
+                if (this.realTimeEvents.length > this.maxRealTimeEvents) {
+                    this.realTimeEvents = this.realTimeEvents.slice(0, this.maxRealTimeEvents);
+                }
+
+                this.updateRealTimeDisplay();
+            }
+
+            updateRealTimeDisplay() {
+                const tbody = document.getElementById('realTimeDataBody');
+                tbody.innerHTML = '';
+
+                this.realTimeEvents.forEach(event => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${event.timestamp}</td>
+                        <td><span class="badge bg-secondary">${event.component}</span></td>
+                        <td>${event.event}</td>
+                        <td>${event.details}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            setupAutoRefresh() {
+                this.refreshInterval = setInterval(() => {
+                    this.loadDashboardData();
+                }, 30000); // Refresh every 30 seconds
+            }
+
+            showErrorMessage(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            showSuccessMessage(message) {
+                const successDiv = document.getElementById('successMessage');
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Global functions
+        function refreshDashboard() {
+            if (window.phase3Dashboard) {
+                window.phase3Dashboard.loadDashboardData();
+                window.phase3Dashboard.showSuccessMessage('Dashboard refreshed successfully');
+            }
+        }
+
+        function downloadReport(reportId) {
+            if (window.administrativeReporting) {
+                window.administrativeReporting.downloadReport(reportId);
+            }
+        }
+
+        // Admin functions
+        function manageTaglines() {
+            window.location.href = 'admin.html';
+        }
+
+        function viewTaglineStats() {
+            alert('Tagline statistics would be shown here. (This is a demo - actual implementation would show detailed stats)');
+        }
+
+        // Check if user is AdminBCL
+        function checkAdminAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isAdmin = urlParams.get('admin') === 'true' ||
+                localStorage.getItem('userRole') === 'admin' ||
+                localStorage.getItem('username') === 'AdminBCL';
+
+            if (isAdmin) {
+                document.getElementById('admin-banner').classList.add('show');
+                document.getElementById('admin-controls').style.display = 'block';
+                document.getElementById('admin-link').style.display = 'block';
+            }
+        }
+
+        // Demo functions for admin mode
+        window.enableAdminMode = function () {
+            localStorage.setItem('username', 'AdminBCL');
+            localStorage.setItem('userRole', 'admin');
+            location.reload();
+        };
+
+        window.disableAdminMode = function () {
+            localStorage.removeItem('username');
+            localStorage.removeItem('userRole');
+            location.reload();
+        };
+
+        // Initialize dashboard when DOM is ready
+        document.addEventListener('DOMContentLoaded', function () {
+            checkAdminAccess();
+            window.phase3Dashboard = new Phase3Dashboard();
+        });
+    </script>
+
+    <!-- Demo Admin Toggle (remove in production) -->
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+        <button class="btn btn-sm btn-outline-primary" onclick="enableAdminMode()" id="admin-toggle-btn">
+            <i class="fas fa-user-shield"></i> Enable Admin Mode
+        </button>
+    </div>
+</body>
+
+</html>

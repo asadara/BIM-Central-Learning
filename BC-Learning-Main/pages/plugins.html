@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Plugins</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icons/logo-bcl.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amarante&display=swap" rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        .hero-section {
+            background: linear-gradient(rgba(251, 135, 63, 0.9), rgba(251, 135, 63, 0.8)),
+                url('/img/carousel-1.jpg') center center no-repeat;
+            background-size: cover;
+            padding: 100px 0;
+            color: white;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .plugins-section {
+            padding: 80px 0;
+        }
+
+        .plugin-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            border: 2px solid transparent;
+        }
+
+        .plugin-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: #fb873f;
+        }
+
+        .plugin-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+
+        .plugin-title {
+            color: #fb873f;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .plugin-rating {
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+
+        .plugin-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .plugin-description {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .plugin-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+        }
+
+        .plugin-features li {
+            font-size: 0.9rem;
+            padding: 3px 0;
+            color: #333;
+        }
+
+        .plugin-features li i {
+            color: #28a745;
+            margin-right: 8px;
+            width: 12px;
+        }
+
+        .plugin-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .plugin-btn {
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .plugin-btn-download {
+            background: #28a745;
+            color: white;
+        }
+
+        .plugin-btn-download:hover {
+            background: #218838;
+            color: white;
+        }
+
+        .plugin-btn-demo {
+            background: #007bff;
+            color: white;
+        }
+
+        .plugin-btn-demo:hover {
+            background: #0056b3;
+            color: white;
+        }
+
+        .plugin-btn-info {
+            background: #6c757d;
+            color: white;
+        }
+
+        .plugin-btn-info:hover {
+            background: #545b62;
+            color: white;
+        }
+
+        .section-title {
+            color: #fb873f;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .category-badge {
+            display: inline-block;
+            background: #fb873f;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .compatibility-badge {
+            display: inline-block;
+            background: #e9ecef;
+            color: #495057;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .master-library {
+            background: #f8f9fa;
+            padding: 60px 0;
+        }
+
+        .library-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: 100%;
+        }
+
+        .development-section {
+            background: #f8f9fa;
+            padding: 60px 0;
+        }
+
+        .dev-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            height: 100%;
+        }
+
+        .resource-section {
+            padding: 80px 0;
+        }
+
+        .quick-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .quick-stats .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e9ecef;
+            background: white;
+            color: #495057;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #fb873f;
+            border-color: #fb873f;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <div class="container text-center my-3">
+        <h1 class="text-center" style="margin-top: -40px !important; margin-bottom: 20px !important;"><i
+                class="fas fa-plug text-primary me-2"></i>BIM Plugins & Tools</h1>
+        <p class="lead text-center">Koleksi lengkap plugin BIM untuk meningkatkan produktivitas dan mengotomatisasi alur
+            kerja
+        </p>
+    </div>
+
+    <!-- Quick Stats Section -->
+    <div class="container my-4">
+        <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap">
+            <div class="text-center"
+                style="background: #f8f9fa; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #6c757d;">120+</div>
+                <div style="font-size: 0.9rem; color: #6c757d;">Plugin BIM</div>
+            </div>
+            <div class="text-center"
+                style="background: #f8f9fa; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #6c757d;">8</div>
+                <div style="font-size: 0.9rem; color: #6c757d;">Platform</div>
+            </div>
+            <div class="text-center"
+                style="background: #f8f9fa; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #6c757d;">95%</div>
+                <div style="font-size: 0.9rem; color: #6c757d;">Rated Excellent</div>
+            </div>
+            <div class="text-center"
+                style="background: #f8f9fa; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #6c757d;">50K+</div>
+                <div style="font-size: 0.9rem; color: #6c757d;">Happy Users</div>
+            </div>
+        </div>
+    </div>
+    <!-- Quick Stats End -->
+
+    <!-- Master Plugin Library Section -->
+    <div class="master-library">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title text-dark">Master Plugin Library</h2>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="library-card">
+                        <i class="fas fa-cubes text-primary mb-3" style="font-size: 2.5rem;"></i>
+                        <h4 class="text-primary">Plugin Database</h4>
+                        <p class="text-muted mb-3">Database komprehensif semua plugin BIM dengan spesifikasi teknis,
+                            kompatibilitas, dan review terverifikasi.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Version tracking</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Dependency mapping</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Compatibility matrix</li>
+                            <li><i class="fas fa-check text-success me-2"></i>User ratings & reviews</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="library-card">
+                        <i class="fas fa-search text-primary mb-3" style="font-size: 2.5rem;"></i>
+                        <h4 class="text-primary">Smart Search Engine</h4>
+                        <p class="text-muted mb-3">Pencarian cerdas berdasarkan fungsi, platform, industri, dan
+                            kebutuhan spesifik project BIM.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Functional search</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Industry filtering</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Performance ranking</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Cost-benefit analysis</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-12">
+                    <div class="library-card">
+                        <i class="fas fa-cloud-download-alt text-primary mb-3" style="font-size: 2.5rem;"></i>
+                        <h4 class="text-primary">One-Click Install</h4>
+                        <p class="text-muted mb-3">Unduhan dan instalasi otomatis dengan dependency management dan
+                            conflict resolution.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Auto-dependency resolution</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Version compatibility check</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Rollback capability</li>
+                            <li><i class="fas fa-check text-success me-2"></i>License management</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Master Library End -->
+
+    <!-- Filter and Dynamic Plugins Section -->
+    <div class="container-xxl plugins-section">
+        <div class="container">
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h4 class="text-center mb-4"><i class="fas fa-filter me-2"></i>Filter & Discover Plugins</h4>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All Plugins</button>
+                    <button class="filter-btn" data-filter="modeling">Modeling</button>
+                    <button class="filter-btn" data-filter="analysis">Analysis</button>
+                    <button class="filter-btn" data-filter="collaboration">Collaboration</button>
+                    <button class="filter-btn" data-filter="automation">Automation</button>
+                    <button class="filter-btn" data-filter="visualization">Visualization</button>
+                    <button class="filter-btn" data-filter="free">Free</button>
+                    <button class="filter-btn" data-filter="premium">Premium</button>
+                </div>
+            </div>
+
+            <div class="row g-4" id="plugin-container">
+                <!-- Dynamic plugin cards will be loaded here via JavaScript -->
+            </div>
+        </div>
+    </div>
+    <!-- Dynamic Plugins End -->
+
+    <!-- Plugin Categories Section -->
+    <div class="resource-section">
+        <div class="container">
+            <h2 class="section-title">Kategori Plugin BIM</h2>
+            <div class="row g-4">
+
+                <!-- Modeling Plugins -->
+                <div class="col-lg-4 col-md-6" id="modeling-plugins">
+                    <div class="plugin-card">
+                        <i class="fas fa-drafting-compass standards-icon"></i>
+                        <h3 class="plugin-title">Modeling & Design</h3>
+                        <p class="plugin-description">Plugin untuk desain, modeling geometri kompleks, dan manajemen
+                            element BIM.</p>
+
+                        <div class="plugin-features">
+                            <div class="category-badge">Modeling</div>
+                            <h5 class="mt-3">Popular Tools:</h5>
+                            <li><i class="fas fa-check-circle"></i>Autodesk Dynamo - Visual programming</li>
+                            <li><i class="fas fa-check-circle"></i>Archistar - Parametric modeling</li>
+                            <li><i class="fas fa-check-circle"></i>Ideate BIMLink - Data management</li>
+                            <li><i class="fas fa-check-circle"></i>DiRoots One - IFC tools</li>
+                            <li><i class="fas fa-check-circle"></i>OpenPipe - HVAC modeling</li>
+                        </div>
+
+                        <div class="plugin-actions">
+                            <a href="#modeling-plugins" class="plugin-btn plugin-btn-info">
+                                <i class="fas fa-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Plugins -->
+                <div class="col-lg-4 col-md-6" id="analysis-plugins">
+                    <div class="plugin-card">
+                        <i class="fas fa-chart-bar standards-icon"></i>
+                        <h3 class="plugin-title">Analysis & Simulation</h3>
+                        <p class="plugin-description">Tools untuk analisis struktur, energi, biaya, dan performa
+                            bangunan.</p>
+
+                        <div class="plugin-features">
+                            <div class="category-badge">Analysis</div>
+                            <h5 class="mt-3">Popular Tools:</h5>
+                            <li><i class="fas fa-check-circle"></i>IES VE - Energy analysis</li>
+                            <li><i class="fas fa-check-circle"></i>SkyCalc - Daylighting analysis</li>
+                            <li><i class="fas fa-check-circle"></i>Autodesk FormIt - Conceptual design</li>
+                            <li><i class="fas fa-check-circle"></i>Sefaira - Sustainability analysis</li>
+                            <li><i class="fas fa-check-circle"></i>ClimateStudio - CFD & daylighting</li>
+                        </div>
+
+                        <div class="plugin-actions">
+                            <a href="#analysis-plugins" class="plugin-btn plugin-btn-info">
+                                <i class="fas fa-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collaboration Plugins -->
+                <div class="col-lg-4 col-md-12" id="collaboration-plugins">
+                    <div class="plugin-card">
+                        <i class="fas fa-users standards-icon"></i>
+                        <h3 class="plugin-title">Collaboration & Management</h3>
+                        <p class="plugin-description">Solusi untuk koordinasi team, manajemen dokumen, dan integrasi
+                            workflow.</p>
+
+                        <div class="plugin-features">
+                            <div class="category-badge">Collaboration</div>
+                            <h5 class="mt-3">Popular Tools:</h5>
+                            <li><i class="fas fa-check-circle"></i>BIMcollab - Clash detection</li>
+                            <li><i class="fas fa-check-circle"></i>Navisworks - Coordination</li>
+                            <li><i class="fas fa-check-circle"></i>Asite - Document management</li>
+                            <li><i class="fas fa-check-circle"></i>Procore - Construction management</li>
+                            <li><i class="fas fa-check-circle"></i>Fieldwire - Field management</li>
+                        </div>
+
+                        <div class="plugin-actions">
+                            <a href="#collaboration-plugins" class="plugin-btn plugin-btn-info">
+                                <i class="fas fa-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automation Plugins -->
+                <div class="col-lg-4 col-md-6" id="automation-plugins">
+                    <div class="plugin-card">
+                        <i class="fas fa-cogs standards-icon"></i>
+                        <h3 class="plugin-title">Automation & Scripting</h3>
+                        <p class="plugin-description">Tools untuk mengotomatisasi tugas repetitive dan scripting custom
+                            workflow.</p>
+
+                        <div class="plugin-features">
+                            <div class="category-badge">Automation</div>
+                            <h5 class="mt-3">Popular Tools:</h5>
+                            <li><i class="fas fa-check-circle"></i>Dynamo BIM - Visual scripting</li>
+                            <li><i class="fas fa-check-circle"></i>PyRevit - Python scripting</li>
+                            <li><i class="fas fa-check-circle"></i>Magnet - Batch processing</li>
+                            <li><i class="fas fa-check-circle"></i>BB - Quick selection & modification</li>
+                            <li><i class="fas fa-check-circle"></i>Roombook - Room scheduling automation</li>
+                        </div>
+
+                        <div class="plugin-actions">
+                            <a href="#automation-plugins" class="plugin-btn plugin-btn-info">
+                                <i class="fas fa-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Plugins -->
+                <div class="col-lg-4 col-md-6" id="visualization-plugins">
+                    <div class="plugin-card">
+                        <i class="fas fa-image standards-icon"></i>
+                        <h3 class="plugin-title">Visualization & VR</h3>
+                        <p class="plugin-description">Tools untuk visualisasi 3D, rendering real-time, dan pengalaman
+                            virtual reality.</p>
+
+                        <div class="plugin-features">
+                            <div class="category-badge">Visualization</div>
+                            <h5 class="mt-3">Popular Tools:</h5>
+                            <li><i class="fas fa-check-circle"></i>Enscape - Real-time rendering</li>
+                            <li><i class="fas fa-check-circle"></i>Twinmotion - Architectural visualization</li>
+                            <li><i class="fas fa-check-circle"></i>VRcollab - Virtual walkthrough</li>
+                            <li><i class="fas fa-check-circle"></i>Autodesk Showcase - Presentation</li>
+                            <li><i class="fas fa-check-circle"></i>Lumion - 3D visualization</li>
+                        </div>
+
+                        <div class="plugin-actions">
+                            <a href="#visualization-plugins" class="plugin-btn plugin-btn-info">
+                                <i class="fas fa-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integration Tools -->
+                <div class="col-lg-4 col-md-12">
+                    <div class="plugin-card">
+                        <i class="fas fa-plug standards-icon"></i>
+                        <h3 class="plugin-title">Integration & APIs</h3>
+                        <p class="plugin-description">Tools untuk integrasi system dan API connections antar platform
+                            BIM.</p>
+
+                        <div class="plugin-features">
+                            <div class="category-badge">Integration</div>
+                            <h5 class="mt-3">Popular Tools:</h5>
+                            <li><i class="fas fa-check-circle"></i>IFC Connector - Data exchange</li>
+                            <li><i class="fas fa-check-circle"></i>Microsoft Power BI - BIM dashboards</li>
+                            <li><i class="fas fa-check-circle"></i>Zapier - Workflow automation</li>
+                            <li><i class="fas fa-check-circle"></i>Deltek - Cost integration</li>
+                            <li><i class="fas fa-check-circle"></i>Forge API - Custom integrations</li>
+                        </div>
+
+                        <div class="plugin-actions">
+                            <a href="#integration-tools" class="plugin-btn plugin-btn-info">
+                                <i class="fas fa-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Plugin Categories End -->
+
+    <!-- Integration Guidelines Section -->
+    <div class="development-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title text-dark">Panduan Integrasi Plugin</h2>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="dev-card">
+                        <i class="fas fa-shield-alt text-info mb-3" style="font-size: 2rem;"></i>
+                        <h4 class="text-info">Plugin Safety & Compatibility</h4>
+                        <ul class="list-unstyled mt-3">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Version compatibility
+                                checking</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Security code review</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Performance impact assessment
+                            </li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Backup & recovery procedures
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="dev-card">
+                        <i class="fas fa-code-branch text-info mb-3" style="font-size: 2rem;"></i>
+                        <h4 class="text-info">Best Practices Implementation</h4>
+                        <ul class="list-unstyled mt-3">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Workspace organization</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Plugin update management</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Team training integration
+                            </li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Support & documentation</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-12">
+                    <div class="dev-card">
+                        <i class="fas fa-tools text-info mb-3" style="font-size: 2rem;"></i>
+                        <h4 class="text-info">Development Support</h4>
+                        <ul class="list-unstyled mt-3">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>API documentation</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>SDK development kits</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Plugin submission guidelines
+                            </li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Quality assurance process
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Integration Guidelines End -->
+
+    <!-- Plugin Developer Section -->
+    <div class="resource-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title">Plugin Development Hub</h2>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="library-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <i class="fas fa-code text-warning" style="font-size: 3rem;"></i>
+                            </div>
+                            <div class="col-md-9">
+                                <h4 class="text-warning mb-2">Create Custom Plugin</h4>
+                                <p class="text-muted mb-3">Bangun plugin BIM custom untuk otomasi workflow spesifik
+                                    project Anda.</p>
+                                <a href="#" class="plugin-btn plugin-btn-demo">
+                                    <i class="fas fa-plus"></i> Start Building
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="library-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <i class="fas fa-share text-success" style="font-size: 3rem;"></i>
+                            </div>
+                            <div class="col-md-9">
+                                <h4 class="text-success mb-2">Publish Your Plugin</h4>
+                                <p class="text-muted mb-3">Submit plugin Anda ke library master dan dapatkan exposure
+                                    global.</p>
+                                <a href="#" class="plugin-btn plugin-btn-download">
+                                    <i class="fas fa-upload"></i> Submit Plugin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Plugin Developer Section End -->
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="../js/plugins.js"></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/user.js" defer></script>
+</body>
+
+</html>
+
+
+
+
+
+

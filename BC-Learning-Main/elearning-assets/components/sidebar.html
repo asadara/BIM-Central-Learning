@@ -1,0 +1,225 @@
+<div class="side-bar">
+    <div id="close-btn">
+        <i class="fas fa-times"></i>
+    </div>
+    <div class="profile" id="sidebar-user-profile-box">
+        <!-- Profile Image Container - Always Centered -->
+        <div class="profile-image-container">
+            <img id="sidebar-user-img" src="/elearning-assets/images/pic-1.jpg" class="image" alt="Profile Picture">
+        </div>
+
+        <!-- User Info Section -->
+        <div class="user-info">
+            <h3 class="name" id="sidebar-user-name">Guest User</h3>
+            <p class="role-level" id="sidebar-user-role-level">Please login to access courses</p>
+        </div>
+
+        <!-- Profile Action Button -->
+        <div class="profile-actions">
+            <a id="sidebar-user-profile" href="/pages/login.html" class="btn profile-btn">Login to Start Learning</a>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div class="nav-section">
+        <h4 class="nav-section-title">Dashboard</h4>
+        <nav class="navbar">
+            <a href="/elearning-assets/dashboard.html"><span>My Progress</span></a>
+        </nav>
+    </div>
+
+    <!-- Learning Path Section -->
+    <div class="nav-section">
+        <h4 class="nav-section-title">Learning Path</h4>
+        <nav class="navbar">
+            <a href="/elearning-assets/courses.html"><span>Courses</span></a>
+            <a href="/elearning-assets/practice.html"><span>Practice</span></a>
+            <a href="/elearning-assets/exams.html"><span>Exams</span></a>
+            <a href="/elearning-assets/dashboard.html"><span>Quiz Record</span></a>
+            <a href="/elearning-assets/certification.html"><span>Certifications</span></a>
+        </nav>
+    </div>
+
+    <!-- Profile & Settings Section -->
+    <div class="nav-section">
+        <h4 class="nav-section-title">Account</h4>
+        <nav class="navbar">
+            <a href="/elearning-assets/profile.html"><span>My Profile</span></a>
+            <a href="/elearning-assets/badges.html"><span>My Badges</span></a>
+            <a href="/elearning-assets/level-request.html"><span>Request Level Change</span></a>
+        </nav>
+    </div>
+
+    <!-- Content Management Section (Admin Only) -->
+    <div class="nav-section admin-content-section" style="display: none;">
+        <h4 class="nav-section-title">Content Management</h4>
+        <nav class="navbar">
+            <a href="javascript:void(0)"
+                onclick="console.log('Learning Materials clicked'); window.openContentManager ? window.openContentManager() : alert('Function not found')"><span>Learning Materials</span></a>
+            <a href="javascript:void(0)"
+                onclick="console.log('Exam Materials clicked'); window.openExamManager ? window.openExamManager() : alert('Function not found')"><span>Exam Materials</span></a>
+        </nav>
+        <div style="font-size: 1.4rem; text-align: center; margin-top: 10px; opacity: 0.8;">
+            Admin Only Access
+        </div>
+    </div>
+
+    <!-- BIM Projects Section removed (covered by navbar) -->
+    <!-- General Section removed (covered by navbar) -->
+</div>
+
+<script>
+    // Define functions immediately when sidebar loads
+    console.log('Sidebar component loaded - defining content management functions');
+
+    // Fallback handler untuk tombol main page jika component-loader tidak tersedia
+    function handleMainPageClick(event) {
+        event.preventDefault();
+
+        // Coba gunakan handler dari component-loader dulu
+        if (window.componentLoader && typeof window.componentLoader.handleMainPageNavigation === 'function') {
+            window.componentLoader.handleMainPageNavigation();
+            return;
+        }
+
+        // Fallback navigation
+        const currentPath = window.location.pathname;
+        let targetPath;
+
+        if (currentPath.includes('/elearning-assets/')) {
+            targetPath = '../index.html';
+        } else if (currentPath.includes('/pages/')) {
+            targetPath = '../index.html';
+        } else {
+            targetPath = '/index.html';
+        }
+
+        console.log('Main page fallback navigation from:', currentPath, 'to:', targetPath);
+        window.location.href = targetPath;
+    }
+
+    // Test function to verify sidebar functions are working
+    window.testSidebarFunction = function () {
+        console.log('Sidebar function called successfully!');
+        alert('Sidebar function works!');
+    };
+
+    // Define content management functions in sidebar for immediate availability
+    window.openContentManager = function () {
+        console.log('openContentManager called from sidebar');
+        alert('Content Manager opened from sidebar!');
+
+        // Create modal if it doesn't exist
+        if (!document.getElementById('admin-modal')) {
+            const modalHTML = `
+                <div id="admin-modal" class="modal fade" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modal-title">Learning Materials Manager</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="modal-body">
+                                <div class="content-manager">
+                                    <h4><i class="fas fa-book"></i> Learning Materials Manager</h4>
+                                    <p>Content manager loaded from sidebar!</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="save-btn">Upload Material</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            console.log('Modal created from sidebar');
+        }
+
+        // Load Bootstrap if not loaded
+        if (typeof bootstrap === 'undefined') {
+            console.log('Loading Bootstrap from sidebar...');
+            const bootstrapCSS = document.createElement('link');
+            bootstrapCSS.rel = 'stylesheet';
+            bootstrapCSS.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
+            document.head.appendChild(bootstrapCSS);
+
+            const bootstrapJS = document.createElement('script');
+            bootstrapJS.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js';
+            document.head.appendChild(bootstrapJS);
+        }
+
+        setTimeout(() => {
+            if (typeof bootstrap !== 'undefined') {
+                const modal = new bootstrap.Modal(document.getElementById('admin-modal'));
+                modal.show();
+                console.log('Modal shown from sidebar');
+            } else {
+                alert('Bootstrap not loaded yet, please try again');
+            }
+        }, 500);
+    };
+
+    window.openExamManager = function () {
+        console.log('openExamManager called from sidebar');
+        alert('Exam Manager opened from sidebar!');
+
+        // Create modal if it doesn't exist
+        if (!document.getElementById('admin-modal')) {
+            const modalHTML = `
+                <div id="admin-modal" class="modal fade" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="modal-title">Exam Materials Manager</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="modal-body">
+                                <div class="exam-manager">
+                                    <h4><i class="fas fa-clipboard-check"></i> Exam Materials Manager</h4>
+                                    <p>Exam manager loaded from sidebar!</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="save-btn">Upload Exam</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            console.log('Exam modal created from sidebar');
+        }
+
+        // Load Bootstrap if not loaded
+        if (typeof bootstrap === 'undefined') {
+            console.log('Loading Bootstrap for exam from sidebar...');
+            const bootstrapCSS = document.createElement('link');
+            bootstrapCSS.rel = 'stylesheet';
+            bootstrapCSS.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
+            document.head.appendChild(bootstrapCSS);
+
+            const bootstrapJS = document.createElement('script');
+            bootstrapJS.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js';
+            document.head.appendChild(bootstrapJS);
+        }
+
+        setTimeout(() => {
+            if (typeof bootstrap !== 'undefined') {
+                const modal = new bootstrap.Modal(document.getElementById('admin-modal'));
+                modal.show();
+                console.log('Exam modal shown from sidebar');
+            } else {
+                alert('Bootstrap not loaded yet, please try again');
+            }
+        }, 500);
+    };
+
+    console.log('Sidebar content management functions defined');
+    console.log('openContentManager available:', typeof window.openContentManager);
+    console.log('openExamManager available:', typeof window.openExamManager);
+</script>
+</div>
+

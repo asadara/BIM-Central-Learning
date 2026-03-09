@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Koordinasi & Integrasi</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .manajemen-info-header {
+            text-align: center;
+            margin: -40px 0 0 0;
+            padding: 5px 10px 0px 10px;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .manajemen-info-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .manajemen-info-header p {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: none;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .info-diagram {
+            margin-bottom: 2rem;
+        }
+
+        .info-diagram h4 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .flow-box {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            min-width: 100px;
+            min-height: 50px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flow-box.found {
+            background: #ffeaa7;
+            color: #d63031;
+            border: 2px solid #fdcb6e;
+        }
+
+        .flow-box.assign {
+            background: #74b9ff;
+            color: #0984e3;
+            border: 2px solid #0984e3;
+        }
+
+        .flow-box.proposed {
+            background: #a29bfe;
+            color: #6c5ce7;
+            border: 2px solid #6c5ce7;
+        }
+
+        .flow-box.agree {
+            background: #55efc4;
+            color: #00b894;
+            border: 2px solid #00b894;
+        }
+
+        .flow-box.update {
+            background: #fd79a8;
+            color: #e84393;
+            border: 2px solid #e84393;
+        }
+
+        .flow-box.recheck {
+            background: #fdcb6e;
+            color: #d63031;
+            border: 2px solid #fdcb6e;
+        }
+
+        .flow-box.close {
+            background: #ddd;
+            color: #666;
+            border: 2px solid #999;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: #666;
+            margin: 0 8px;
+        }
+
+        .issue-card {
+            background: #f8f9fa;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .issue-card h5 {
+            color: #fb873f;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-field {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-field strong {
+            min-width: 80px;
+        }
+
+        .aha-statement {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fb873f;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(251, 135, 63, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #fb873f;
+        }
+
+        .content-explanation,
+        .example,
+        .quick-checklist {
+            margin-bottom: 2rem;
+        }
+
+        .pijakan {
+            background: #f0f0f0;
+            border-left: 3px solid #fb873f;
+            padding: 5px 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .ringkas {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .ringkas h3 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Header Start -->
+    <div class="manajemen-info-header">
+        <h1><i class="fas fa-users-cog me-3"></i>Koordinasi & Integrasi</h1>
+        <p>Proses koordinasi antar disiplin dan integrasi model BIM</p>
+    </div>
+    <!-- Header End -->
+
+    <!-- Content Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <section class="info-diagram">
+                        <h4>Skema Sederhana</h4>
+                        <div class="bg-light p-4 rounded text-center">
+                            <div class="d-flex justify-content-center align-items-center flex-wrap mb-3">
+                                <div class="flow-box found">Issue Found</div>
+                                <div class="arrow">→</div>
+                                <div class="flow-box assign">Assign Owner</div>
+                                <div class="arrow">→</div>
+                                <div class="flow-box proposed">Proposed Fix</div>
+                                <div class="arrow">→</div>
+                                <div class="flow-box agree">Agree</div>
+                            </div>
+                            <div class="d-flex justify-content-center align-items-center flex-wrap">
+                                <div class="flow-box update">Update</div>
+                                <div class="arrow">→</div>
+                                <div class="flow-box recheck">Recheck</div>
+                                <div class="arrow">→</div>
+                                <div class="flow-box close">Close</div>
+                            </div>
+                            <p class="text-muted small mt-3">Proses koordinasi issue BIM</p>
+                        </div>
+                    </section>
+
+                    <div class="issue-card">
+                        <h5><i class="fas fa-clipboard-list"></i> Issue Card Template</h5>
+                        <div class="issue-field">
+                            <strong>ID:</strong> <span>ISS-2025-001</span>
+                        </div>
+                        <div class="issue-field">
+                            <strong>Discipline:</strong> <span>MEP</span>
+                        </div>
+                        <div class="issue-field">
+                            <strong>Owner:</strong> <span>Ahmad Rahman</span>
+                        </div>
+                        <div class="issue-field">
+                            <strong>Due Date:</strong> <span>2025-12-31</span>
+                        </div>
+                        <div class="issue-field">
+                            <strong>Status:</strong> <span>Open</span>
+                        </div>
+                    </div>
+
+                    <p class="aha-statement">
+                        Koordinasi bukan kompetisi—koordinasi adalah kolaborasi untuk mencapai hasil terbaik bersama.
+                    </p>
+
+                    <section class="ringkas">
+                        <h3>Ringkas</h3>
+                        <ul>
+                            <li>Issue ditemukan melalui clash detection atau review manual</li>
+                            <li>Owner ditugaskan berdasarkan disiplin dan tanggung jawab</li>
+                            <li>Solusi diusulkan dan didiskusikan antar stakeholder</li>
+                            <li>Agreement dicapai sebelum implementasi perubahan</li>
+                            <li>Model diupdate dan direcheck untuk memastikan resolusi</li>
+                            <li>Issue ditutup dengan dokumentasi lengkap</li>
+                        </ul>
+                    </section>
+
+                    <section class="content-explanation">
+                        <h2>Proses Manajemen Issue</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650-2 (collaboration/coordination workflow; info
+                            exchange/approval concept); Indonesia: prosedur RFI/koordinasi proyek (PUPR/kontrak)
+                            <!-- TODO: Verify specific RFI procedures -->
+                        </div>
+                        <p>Manajemen issue terstruktur memastikan koordinasi efektif antar disiplin.</p>
+                        <ul>
+                            <li><strong>Detection:</strong> Issue ditemukan melalui automated tools atau manual review
+                            </li>
+                            <li><strong>Assignment:</strong> Owner ditentukan berdasarkan kompetensi dan workload</li>
+                            <li><strong>Resolution:</strong> Solusi dikembangkan dengan konsultasi lintas disiplin</li>
+                            <li><strong>Implementation:</strong> Perubahan diterapkan dengan kontrol versi</li>
+                        </ul>
+
+                        <h2>Tools Kolaborasi</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650-2 (information exchange mechanisms); Indonesia: SNI
+                            8440:2017 (Information Exchange) <!-- TODO: Verify collaboration tool standards -->
+                        </div>
+                        <p>Tools modern memfasilitasi koordinasi real-time antar tim.</p>
+                        <ul>
+                            <li><strong>CDE Platforms:</strong> Centralized document management</li>
+                            <li><strong>Clash Detection:</strong> Automated interference checking</li>
+                            <li><strong>Meeting Tools:</strong> Virtual coordination meetings</li>
+                            <li><strong>Issue Trackers:</strong> Digital issue management systems</li>
+                        </ul>
+
+                        <h2>Metode Integrasi Model</h2>
+                        <div class="pijakan">
+                            <strong>Pijakan:</strong> ISO 19650 (information container integration); Indonesia: SNI
+                            8434:2017 (BIM Model Production) <!-- TODO: Verify integration standards -->
+                        </div>
+                        <p>Integrasi model memastikan konsistensi dan akurasi informasi.</p>
+                        <ul>
+                            <li><strong>Federated Model:</strong> Model terpisah dengan koordinasi referensi</li>
+                            <li><strong>Integrated Model:</strong> Single model dengan worksets/sharing</li>
+                            <li><strong>Linked Models:</strong> Model induk dengan sub-model terkait</li>
+                            <li><strong>IFC Exchange:</strong> Standard format untuk interoperability</li>
+                        </ul>
+                    </section>
+
+                    <section class="example">
+                        <h2>Contoh Kasus Proyek</h2>
+                        <p>Dalam proyek mall, clash detection menemukan pipa HVAC menembus kolom struktur. Issue
+                            diassign ke MEP lead, yang mengusulkan rerouting pipa. Setelah diskusi dengan structural
+                            engineer dan mendapat approval dari BIM coordinator, model diupdate. Recheck memastikan
+                            tidak ada clash baru, dan issue ditutup dengan dokumentasi foto instalasi.</p>
+                    </section>
+
+                    <section class="quick-checklist">
+                        <h3>Checklist Cepat</h3>
+                        <ul>
+                            <li>Jalankan clash detection mingguan</li>
+                            <li>Assign issue owner dalam 24 jam</li>
+                            <li>Dokumentasikan semua diskusi koordinasi</li>
+                            <li>Peroleh approval sebelum implementasi perubahan</li>
+                            <li>Update model dengan kontrol versi</li>
+                            <li>Lakukan recheck setelah resolusi</li>
+                            <li>Simpan semua dokumentasi issue</li>
+                        </ul>
+                    </section>
+
+                    <section class="daftar-pijakan">
+                        <h3>Daftar Pijakan</h3>
+                        <ul>
+                            <li>ISO 19650-1 (Information Management)</li>
+                            <li>ISO 19650-2 (Collaboration & Coordination)</li>
+                            <li>SNI 8434:2017 (BIM Model Production)</li>
+                            <li>SNI 8440:2017 (Information Exchange)</li>
+                            <li>Prosedur RFI/koordinasi proyek (PUPR/kontrak) <!-- TODO --></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6 footer-left text-start">
+                    <h5 class="text-white mb-2">Quick Link</h5>
+                    <div class="d-flex flex-column align-items-start">
+                        <a class="text-light mb-1" href="../pages/about.html" style="font-size: 14px;">About Us</a>
+                        <a class="text-light mb-1" href="../pages/contact.html" style="font-size: 14px;">Contact Us</a>
+                        <a class="text-light mb-1" href="#privacy" style="font-size: 14px;">Privacy Policy</a>
+                        <a class="text-light mb-1" href="#terms" style="font-size: 14px;">Terms & Condition</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-center text-start">
+                    <h5 class="text-white mb-2">Contact</h5>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-map-marker-alt me-2"></i>ITS Tower, Nifarro
+                        Park, Jakarta Selatan 12510</p>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-phone-alt me-2"></i>(021) 7221003</p>
+                    <p class="mb-2" style="font-size: 13px;"><i
+                            class="fa fa-envelope me-2"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-1 align-items-center">
+                        <a class="btn btn-outline-light btn-social me-1" href="https://twitter.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://facebook.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://youtube.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href="https://linkedin.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-right text-end">
+                    <h5 class="text-white mb-2">Newsletter</h5>
+                    <p style="font-size: 13px;">Bergabunglah dengan komunitas BIM NKE!</p>
+                    <div class="position-relative ms-auto" style="max-width: 300px;">
+                        <form action="mailto:nke-bim@nusakonstruksi.com" method="post" enctype="text/plain">
+                            <input class="form-control border-0 w-100 py-2 ps-3 pe-5" type="email"
+                                placeholder="Your email" required style="font-size: 13px;">
+                            <button class="btn btn-primary py-1 position-absolute top-0 end-0 mt-1 me-1" type="submit"
+                                style="font-size: 12px;">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-12 text-center py-2">
+                        <small>&copy; <a class="border-bottom" href="../index.html">2025 BIM NKE</a>, Hak Cipta
+                            Dilindungi.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+
+</body>
+
+</html>

@@ -1,0 +1,73 @@
+{
+  "selectedVideos": [
+    "office_nke_lt_20_h264",
+    "pengenalan_bim",
+    "data_center"
+  ],
+  "settings": {
+    "autoRotate": false,
+    "rotationInterval": 30,
+    "maxVideos": 10,
+    "showNews": true,
+    "newsUpdateInterval": 300
+  },
+  "lastUpdated": "2026-03-03T04:00:47.649Z",
+  "playlist": [
+    {
+      "id": "yt-1769678433441",
+      "name": "Pengenalan BIM",
+      "path": "https://www.youtube.com/watch?v=ZAuyriVooqU",
+      "type": "youtube",
+      "date": "2026-01-29T09:20:33.441Z"
+    },
+    {
+      "id": "yt-1772510435748",
+      "name": "About BIM NKE 2025",
+      "path": "https://youtu.be/f7U50Gx-gP4",
+      "type": "youtube",
+      "date": "2026-03-03T04:00:35.748Z"
+    },
+    {
+      "id": "yt-1772501901495",
+      "name": "BIM PRESENTATION | TENDER",
+      "path": "https://youtu.be/A0YssWCCACE",
+      "type": "youtube",
+      "date": "2026-03-03T01:38:21.495Z"
+    },
+    {
+      "id": "yt-1772504437895",
+      "name": "BIM NKE Presentation [TENDER] PROJECT GED. KPwBI | Jambi",
+      "path": "https://youtu.be/jq734ClR_z4",
+      "type": "youtube",
+      "date": "2026-03-03T02:20:37.895Z"
+    },
+    {
+      "id": "yt-1772502675635",
+      "name": "BIM PRESENTATIO | TENDER CWM MAKASSAR",
+      "path": "https://youtu.be/mi9RTXeeUCA",
+      "type": "youtube",
+      "date": "2026-03-03T01:51:15.635Z"
+    },
+    {
+      "id": "yt-1772503759542",
+      "name": "ANIMASI 3D GEDUNG FT UNP | BIM PRESENTATION | PADANG",
+      "path": "https://youtu.be/iK7YIBwrtog",
+      "type": "youtube",
+      "date": "2026-03-03T02:09:19.542Z"
+    },
+    {
+      "id": "yt-1769680035444",
+      "name": "3D Rendering & Workflow Optimization",
+      "path": "https://www.youtube.com/watch?v=s-aZeI0paB0",
+      "type": "youtube",
+      "date": "2026-01-29T09:47:15.444Z"
+    },
+    {
+      "id": "yt-1769678698936",
+      "name": "4D Construction Sequence",
+      "path": "https://www.youtube.com/watch?v=eIu-dbrGFoI",
+      "type": "youtube",
+      "date": "2026-01-29T09:24:58.936Z"
+    }
+  ]
+}

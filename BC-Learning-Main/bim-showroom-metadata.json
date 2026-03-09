@@ -1,0 +1,188 @@
+{
+    "projects": {
+        "mall-grand-indonesia-2024": {
+            "id": "mall-grand-indonesia-2024",
+            "name": "Mall Grand Indonesia",
+            "city": "Jakarta",
+            "year": "2024",
+            "bimDimension": "4D",
+            "description": "Modern shopping mall with advanced BIM implementation",
+            "category": "Commercial",
+            "featured": true
+        },
+        "ciputra-world-makassar-2025": {
+            "id": "ciputra-world-makassar-2025",
+            "name": "Ciputraworld Makassar",
+            "city": "Makassar",
+            "year": "2025",
+            "bimDimension": "4D",
+            "description": "Integrated residential and commercial development",
+            "category": "Commercial",
+            "featured": true
+        },
+        "vinci-data-center-jakarta-2024": {
+            "id": "vinci-data-center-jakarta-2024",
+            "name": "Vinci Data Center Jakarta",
+            "city": "Jakarta",
+            "year": "2024",
+            "bimDimension": "4D",
+            "description": "State-of-the-art data center facility",
+            "category": "Commercial",
+            "featured": true
+        },
+        "gedung-kuliah-ft-unp-2025": {
+            "id": "gedung-kuliah-ft-unp-2025",
+            "name": "Gedung Kuliah FT UNP",
+            "city": "Padang",
+            "year": "2025",
+            "bimDimension": "4D",
+            "description": "Faculty of Engineering building at Universitas Negeri Padang",
+            "category": "Education",
+            "featured": true
+        },
+        "rsu-aisyiyah-ponorogo-2020": {
+            "id": "rsu-aisyiyah-ponorogo-2020",
+            "name": "RSU Aisyiyah Ponorogo",
+            "city": "Ponorogo",
+            "year": "2023",
+            "bimDimension": "3D",
+            "description": "Hospital facility with BIM construction management",
+            "category": "Healthcare",
+            "featured": false
+        },
+        "bandara-amman-nt-2022": {
+            "id": "bandara-amman-nt-2022",
+            "name": "Bandara Amman NT",
+            "city": "Amman",
+            "year": "2023",
+            "bimDimension": "3D",
+            "description": "Airport development project",
+            "category": "Infrastructure",
+            "featured": false
+        },
+        "university-project-2025": {
+            "id": "university-project-2025",
+            "name": "University Campus Project",
+            "city": "Jakarta",
+            "year": "2025",
+            "bimDimension": "3D",
+            "description": "Modern university campus development",
+            "category": "Commercial",
+            "featured": false
+        },
+        "bridge-project-2024": {
+            "id": "bridge-project-2024",
+            "name": "Infrastructure Bridge Project",
+            "city": "Palembang",
+            "year": "2024",
+            "bimDimension": "4D",
+            "description": "Major bridge infrastructure project",
+            "category": "Healthcare",
+            "featured": false
+        },
+        "mall-project-2023": {
+            "id": "mall-project-2023",
+            "name": "Shopping Mall Project",
+            "city": "Denpasar",
+            "year": "2023",
+            "bimDimension": "3D",
+            "description": "Modern shopping mall development",
+            "category": "Infrastructure",
+            "featured": false
+        },
+        "hospital-project-2025": {
+            "id": "hospital-project-2025",
+            "name": "Medical Center Project",
+            "city": "Balikpapan",
+            "year": "2025",
+            "bimDimension": "4D",
+            "description": "Advanced medical facility construction",
+            "category": "Residential",
+            "featured": false
+        }
+    },
+    "featured": [
+        "mall-grand-indonesia-2024",
+        "ciputra-world-makassar-2025",
+        "vinci-data-center-jakarta-2024",
+        "gedung-kuliah-ft-unp-2025"
+    ],
+    "categories": {
+        "byType": {
+            "Commercial": [
+                "mall-grand-indonesia-2024",
+                "ciputra-world-makassar-2025",
+                "vinci-data-center-jakarta-2024",
+                "university-project-2025"
+            ],
+            "Healthcare": [
+                "rsu-aisyiyah-ponorogo-2020",
+                "bridge-project-2024"
+            ],
+            "Education": [
+                "gedung-kuliah-ft-unp-2025"
+            ],
+            "Infrastructure": [
+                "bandara-amman-nt-2022",
+                "mall-project-2023"
+            ],
+            "Residential": [
+                "hospital-project-2025"
+            ]
+        },
+        "byYear": {
+            "2023": [
+                "rsu-aisyiyah-ponorogo-2020",
+                "bandara-amman-nt-2022",
+                "mall-project-2023"
+            ],
+            "2024": [
+                "mall-grand-indonesia-2024",
+                "vinci-data-center-jakarta-2024",
+                "bridge-project-2024"
+            ],
+            "2025": [
+                "ciputra-world-makassar-2025",
+                "gedung-kuliah-ft-unp-2025",
+                "university-project-2025",
+                "hospital-project-2025"
+            ]
+        },
+        "byBimDimension": {
+            "3D": [
+                "rsu-aisyiyah-ponorogo-2020",
+                "bandara-amman-nt-2022",
+                "mall-project-2023",
+                "university-project-2025"
+            ],
+            "4D": [
+                "mall-grand-indonesia-2024",
+                "ciputra-world-makassar-2025",
+                "vinci-data-center-jakarta-2024",
+                "gedung-kuliah-ft-unp-2025",
+                "bridge-project-2024",
+                "hospital-project-2025"
+            ]
+        },
+        "byLocation": {
+            "Jawa": [
+                "mall-grand-indonesia-2024",
+                "vinci-data-center-jakarta-2024",
+                "rsu-aisyiyah-ponorogo-2020",
+                "university-project-2025"
+            ],
+            "Sumatra": [
+                "gedung-kuliah-ft-unp-2025",
+                "bridge-project-2024"
+            ],
+            "Kalimantan": [
+                "ciputra-world-makassar-2025",
+                "hospital-project-2025"
+            ],
+            "Nusa Tenggara": [
+                "bandara-amman-nt-2022",
+                "mall-project-2023"
+            ]
+        }
+    }
+}

@@ -1,0 +1,1402 @@
+﻿[
+    {
+        "id":  "BG-001",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Tujuan utama BIM Governance adalahâ€¦",
+        "choices":  [
+                        "Mengatur software",
+                        "Menjamin keputusan berbasis informasi sah dan terlacak",
+                        "Memperbanyak dokumen",
+                        "Menggantikan PM"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Governance melindungi keputusan proyek dari risiko informasi."
+    },
+    {
+        "id":  "BG-002",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Perbedaan responsibility dan authority adalahâ€¦",
+        "choices":  [
+                        "Tidak ada",
+                        "Responsibility mengerjakan, authority mengesahkan",
+                        "Authority selalu BIM",
+                        "Responsibility selalu site"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Produksi dan pengesahan harus dipisah jelas."
+    },
+    {
+        "id":  "BG-003",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Decision gate berfungsi untukâ€¦",
+        "choices":  [
+                        "Memperlambat proyek",
+                        "Menentukan kapan informasi boleh dipakai",
+                        "Mengatur format",
+                        "Mengunci akses"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Gate mencegah keputusan prematur."
+    },
+    {
+        "id":  "BG-004",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Quality gate memastikanâ€¦",
+        "choices":  [
+                        "Visual bagus",
+                        "Informasi layak pakai sesuai tujuan",
+                        "File kecil",
+                        "Koordinasi cepat"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Quality gate = kelayakan informasi."
+    },
+    {
+        "id":  "BG-005",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Risiko terbesar tanpa governance adalahâ€¦",
+        "choices":  [
+                        "File berantakan",
+                        "Keputusan salah tanpa jejak",
+                        "Banyak rapat",
+                        "Model berat"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Tanpa governance, risiko biaya/waktu/klaim meningkat."
+    },
+    {
+        "id":  "BG-006",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Dalam proyek kompleks, fungsi BIM Governance adalahâ€¦",
+        "choices":  [
+                        "Menambah detail",
+                        "Menjamin kejelasan otoritas, status, dan jejak keputusan",
+                        "Mengurangi komunikasi",
+                        "Menyatukan software"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Governance bekerja pada sistem keputusan."
+    },
+    {
+        "id":  "BG-007",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Governance mencakupâ€¦",
+        "choices":  [
+                        "Hanya software",
+                        "Manajemen informasi, pengambilan keputusan, kontrol risiko",
+                        "Desain saja",
+                        "Konstruksi saja"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Governance mencakup tiga aspek utama."
+    },
+    {
+        "id":  "BG-008",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Authority dalam BIM berartiâ€¦",
+        "choices":  [
+                        "Tugas harian",
+                        "Kekuasaan untuk menyetujui atau mengotorisasi tindakan",
+                        "Membuat model",
+                        "Mengkoordinasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Authority adalah kemampuan untuk menyetujui."
+    },
+    {
+        "id":  "BG-009",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Responsibility dalam BIM berartiâ€¦",
+        "choices":  [
+                        "Menyetujui segalanya",
+                        "Tugas untuk melakukan pekerjaan",
+                        "Mengawasi orang lain",
+                        "Membuat keputusan akhir"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Responsibility adalah tugas untuk menjalankan."
+    },
+    {
+        "id":  "BG-010",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Tanpa decision gate, proyek rentanâ€¦",
+        "choices":  [
+                        "File besar",
+                        "Keputusan prematur",
+                        "Koordinasi buruk",
+                        "Model sederhana"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Gate mencegah keputusan terlalu dini."
+    },
+    {
+        "id":  "BG-011",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Quality gate berbeda dari visual check karenaâ€¦",
+        "choices":  [
+                        "Lebih cepat",
+                        "Memeriksa kesesuaian untuk tujuan spesifik",
+                        "Lebih murah",
+                        "Tidak perlu ahli"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Quality gate fokus pada \u0027fit-for-purpose\u0027."
+    },
+    {
+        "id":  "BG-012",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Governance framework membantuâ€¦",
+        "choices":  [
+                        "Mengganti software",
+                        "Standardisasi proses",
+                        "Meningkatkan detail model",
+                        "Mengurangi pekerjaan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Framework menyediakan struktur standar."
+    },
+    {
+        "id":  "BG-013",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Manager biasanya memilikiâ€¦",
+        "choices":  [
+                        "Otoritas penuh atas proyek",
+                        "Otoritas atas proses BIM",
+                        "Tanggung jawab konstruksi",
+                        "Keputusan keuangan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "BIM Manager mengelola proses BIM."
+    },
+    {
+        "id":  "BG-014",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information producer bertanggung jawab atasâ€¦",
+        "choices":  [
+                        "Menyetujui model",
+                        "Membuat informasi akurat",
+                        "Menggunakan informasi",
+                        "Membuat keputusan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Producer membuat informasi yang benar."
+    },
+    {
+        "id":  "BG-015",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information consumer menggunakan informasi untukâ€¦",
+        "choices":  [
+                        "Membuat model",
+                        "Membuat keputusan",
+                        "Mengkoordinasi",
+                        "Menyetujui"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Consumer menggunakan informasi untuk memutuskan."
+    },
+    {
+        "id":  "BG-016",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Execution Plan (BEP) adalahâ€¦",
+        "choices":  [
+                        "Jadwal konstruksi",
+                        "Dokumen yang menguraikan proses BIM",
+                        "Model 3D",
+                        "Laporan keuangan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "BEP adalah panduan proses BIM."
+    },
+    {
+        "id":  "BG-017",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "C-Level approval diperlukan untukâ€¦",
+        "choices":  [
+                        "Perubahan kecil",
+                        "Keputusan besar",
+                        "Detail model",
+                        "Koordinasi harian"
+                    ],
+        "answer_index":  1,
+        "explanation":  "C-Level menyetujui keputusan strategis."
+    },
+    {
+        "id":  "BG-018",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Risk register dalam BIM mencatatâ€¦",
+        "choices":  [
+                        "Semua file",
+                        "Risiko potensial dan mitigasi",
+                        "Jadwal rapat",
+                        "Detail desain"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Register melacak risiko dan solusi."
+    },
+    {
+        "id":  "BG-019",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Audit trail memungkinkanâ€¦",
+        "choices":  [
+                        "Membuat model baru",
+                        "Pelacakan perubahan dan keputusan",
+                        "Mengkoordinasi tim",
+                        "Menyetujui desain"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Trail mencatat sejarah perubahan."
+    },
+    {
+        "id":  "BG-020",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Governance maturity levelâ€¦",
+        "choices":  [
+                        "Diukur oleh ukuran model",
+                        "Diukur oleh adopsi proses",
+                        "Diukur oleh biaya",
+                        "Diukur oleh waktu"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Maturity berdasarkan implementasi proses."
+    },
+    {
+        "id":  "BG-021",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Dalam BIM, \u0027fit-for-purpose\u0027 berartiâ€¦",
+        "choices":  [
+                        "Model cantik",
+                        "Informasi sesuai dengan kebutuhan spesifik",
+                        "File kecil",
+                        "Mudah dibuat"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Fit-for-purpose = sesuai tujuan."
+    },
+    {
+        "id":  "BG-022",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Governance mencegahâ€¦",
+        "choices":  [
+                        "Komunikasi",
+                        "Konflik kepentingan dan kesalahan",
+                        "Inovasi",
+                        "Perubahan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Governance mengurangi risiko."
+    },
+    {
+        "id":  "BG-023",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Protocol adalahâ€¦",
+        "choices":  [
+                        "Software baru",
+                        "Perjanjian tentang penggunaan informasi BIM",
+                        "Jadwal proyek",
+                        "Model referensi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Protocol mendefinisikan aturan penggunaan."
+    },
+    {
+        "id":  "BG-024",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information status dalam BIM menunjukkanâ€¦",
+        "choices":  [
+                        "Siapa yang membuat",
+                        "Kesiapan informasi untuk digunakan",
+                        "Ukuran file",
+                        "Warna model"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Status menunjukkan tingkat kesiapan."
+    },
+    {
+        "id":  "BG-025",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Governance committee terdiri dariâ€¦",
+        "choices":  [
+                        "Hanya BIM Manager",
+                        "Stakeholder kunci",
+                        "Semua pekerja",
+                        "Client saja"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Committee melibatkan stakeholder penting."
+    },
+    {
+        "id":  "BG-026",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Change management dalam BIM melibatkanâ€¦",
+        "choices":  [
+                        "Mengubah software",
+                        "Proses untuk mengubah informasi",
+                        "Mengganti tim",
+                        "Meningkatkan biaya"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Change management mengatur perubahan."
+    },
+    {
+        "id":  "BG-027",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Standards membantuâ€¦",
+        "choices":  [
+                        "Memperlambat proyek",
+                        "Memastikan konsistensi",
+                        "Mengurangi kualitas",
+                        "Meningkatkan biaya"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Standards memastikan keseragaman."
+    },
+    {
+        "id":  "BG-028",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information ownership dalam BIMâ€¦",
+        "choices":  [
+                        "Selalu BIM Manager",
+                        "Menentukan siapa yang bertanggung jawab",
+                        "Tidak penting",
+                        "Otomatis"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Ownership menentukan tanggung jawab."
+    },
+    {
+        "id":  "BG-029",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Governance policy mencakupâ€¦",
+        "choices":  [
+                        "Hanya software",
+                        "Prosedur dan pedoman",
+                        "Desain detail",
+                        "Konstruksi metode"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Policy mendefinisikan aturan."
+    },
+    {
+        "id":  "BG-030",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Risk assessment dalam BIMâ€¦",
+        "choices":  [
+                        "Meningkatkan risiko",
+                        "Mengidentifikasi dan menilai risiko",
+                        "Mengabaikan risiko",
+                        "Membuat risiko baru"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Assessment mengelola risiko."
+    },
+    {
+        "id":  "BG-031",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Manager role meliputiâ€¦",
+        "choices":  [
+                        "Membuat semua model",
+                        "Koordinasi dan pengawasan",
+                        "Menyetujui semua",
+                        "Mengelola keuangan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "BIM Manager mengkoordinasi proses."
+    },
+    {
+        "id":  "BG-032",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information validation adalahâ€¦",
+        "choices":  [
+                        "Membuat informasi baru",
+                        "Proses memverifikasi akurasi",
+                        "Mengubah informasi",
+                        "Menyimpan informasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Validation memastikan kebenaran."
+    },
+    {
+        "id":  "BG-033",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Governance auditâ€¦",
+        "choices":  [
+                        "Membuat audit keuangan",
+                        "Memeriksa kepatuhan",
+                        "Mengubah proses",
+                        "Meningkatkan model"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Audit memverifikasi kepatuhan."
+    },
+    {
+        "id":  "BG-034",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Decision authority matrixâ€¦",
+        "choices":  [
+                        "Matriks koordinasi",
+                        "Menentukan siapa yang bisa memutuskan apa",
+                        "Matriks risiko",
+                        "Matriks biaya"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Matrix mendefinisikan otoritas."
+    },
+    {
+        "id":  "BG-035",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Information Delivery Plan (IDP)â€¦",
+        "choices":  [
+                        "Jadwal pengiriman material",
+                        "Rencana pengiriman informasi",
+                        "Model konstruksi",
+                        "Laporan progres"
+                    ],
+        "answer_index":  1,
+        "explanation":  "IDP merencanakan pengiriman informasi."
+    },
+    {
+        "id":  "BG-036",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Quality assurance dalam BIMâ€¦",
+        "choices":  [
+                        "Membuat model cepat",
+                        "Proses untuk memastikan kualitas",
+                        "Mengurangi kontrol",
+                        "Meningkatkan biaya"
+                    ],
+        "answer_index":  1,
+        "explanation":  "QA memastikan standar kualitas."
+    },
+    {
+        "id":  "BG-037",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Governance trainingâ€¦",
+        "choices":  [
+                        "Mengajari software saja",
+                        "Meningkatkan pemahaman",
+                        "Mengganti tim",
+                        "Membuat model"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Training meningkatkan kompetensi."
+    },
+    {
+        "id":  "BG-038",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information security dalam BIMâ€¦",
+        "choices":  [
+                        "Membuat informasi publik",
+                        "Melindungi data sensitif",
+                        "Mengurangi akses",
+                        "Meningkatkan risiko"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Security melindungi informasi."
+    },
+    {
+        "id":  "BG-039",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Governance metricsâ€¦",
+        "choices":  [
+                        "Mengukur ukuran file",
+                        "Mengukur efektivitas",
+                        "Mengukur waktu istirahat",
+                        "Mengukur biaya makan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Metrics mengukur performa governance."
+    },
+    {
+        "id":  "BG-040",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Continuous improvement dalam BIM Governanceâ€¦",
+        "choices":  [
+                        "Berhenti setelah implementasi",
+                        "Meningkatkan proses secara berkala",
+                        "Mengulang kesalahan",
+                        "Mengurangi efisiensi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Improvement terus meningkatkan proses."
+    },
+    {
+        "id":  "BG-041",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan CDE (Common Data Environment)?",
+        "choices":  [
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+                    ],
+        "answer_index":  0,
+        "explanation":  "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola."
+    },
+    {
+        "id":  "BG-042",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama CDE (Common Data Environment) adalah...",
+        "choices":  [
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui.",
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat."
+    },
+    {
+        "id":  "BG-043",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan WIP (Work in Progress)?",
+        "choices":  [
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu.",
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only."
+                    ],
+        "answer_index":  1,
+        "explanation":  "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan."
+    },
+    {
+        "id":  "BG-044",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama WIP (Work in Progress) adalah...",
+        "choices":  [
+                        "koordinasi antar tim memakai informasi yang sudah disetujui.",
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance."
+                    ],
+        "answer_index":  2,
+        "explanation":  "mengembangkan informasi internal sebelum QA dan review."
+    },
+    {
+        "id":  "BG-045",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Shared state?",
+        "choices":  [
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu.",
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container."
+                    ],
+        "answer_index":  2,
+        "explanation":  "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only."
+    },
+    {
+        "id":  "BG-046",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Shared state adalah...",
+        "choices":  [
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui."
+                    ],
+        "answer_index":  3,
+        "explanation":  "koordinasi antar tim memakai informasi yang sudah disetujui."
+    },
+    {
+        "id":  "BG-047",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Published state?",
+        "choices":  [
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+                    ],
+        "answer_index":  3,
+        "explanation":  "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+    },
+    {
+        "id":  "BG-048",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Published state adalah...",
+        "choices":  [
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "mengendalikan versi resmi yang dipakai lintas tim."
+                    ],
+        "answer_index":  0,
+        "explanation":  "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+    },
+    {
+        "id":  "BG-049",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Archived state?",
+        "choices":  [
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only."
+    },
+    {
+        "id":  "BG-050",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Archived state adalah...",
+        "choices":  [
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mengendalikan versi resmi yang dipakai lintas tim.",
+                        "menjaga jejak perubahan internal dan memungkinkan rollback."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menyediakan audit trail dan referensi operasi atau maintenance."
+    },
+    {
+        "id":  "BG-051",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Status (suitability) code?",
+        "choices":  [
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan.",
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2)."
+                    ],
+        "answer_index":  1,
+        "explanation":  "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container."
+    },
+    {
+        "id":  "BG-052",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Status (suitability) code adalah...",
+        "choices":  [
+                        "mengendalikan versi resmi yang dipakai lintas tim.",
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "menyusun dan menemukan informasi secara konsisten."
+                    ],
+        "answer_index":  2,
+        "explanation":  "mencegah penggunaan informasi di luar tujuan yang diizinkan."
+    },
+    {
+        "id":  "BG-053",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Revision?",
+        "choices":  [
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan.",
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "set metadata minimum: state, status code, revision, dan classification."
+                    ],
+        "answer_index":  2,
+        "explanation":  "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published)."
+    },
+    {
+        "id":  "BG-054",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Revision adalah...",
+        "choices":  [
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "mengendalikan versi resmi yang dipakai lintas tim."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mengendalikan versi resmi yang dipakai lintas tim."
+    },
+    {
+        "id":  "BG-055",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Versioning (WIP version)?",
+        "choices":  [
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+                    ],
+        "answer_index":  3,
+        "explanation":  "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+    },
+    {
+        "id":  "BG-056",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Versioning (WIP version) adalah...",
+        "choices":  [
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "memastikan kepatuhan metadata sebelum review teknis."
+                    ],
+        "answer_index":  0,
+        "explanation":  "menjaga jejak perubahan internal dan memungkinkan rollback."
+    },
+    {
+        "id":  "BG-057",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Classification code?",
+        "choices":  [
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "review isi teknis sebelum informasi dibagikan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2)."
+    },
+    {
+        "id":  "BG-058",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Classification code adalah...",
+        "choices":  [
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "memastikan kepatuhan metadata sebelum review teknis.",
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menyusun dan menemukan informasi secara konsisten."
+    },
+    {
+        "id":  "BG-059",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Information container metadata?",
+        "choices":  [
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "review isi teknis sebelum informasi dibagikan.",
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol."
+                    ],
+        "answer_index":  1,
+        "explanation":  "set metadata minimum: state, status code, revision, dan classification."
+    },
+    {
+        "id":  "BG-060",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Information container metadata adalah...",
+        "choices":  [
+                        "memastikan kepatuhan metadata sebelum review teknis.",
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi."
+                    ],
+        "answer_index":  2,
+        "explanation":  "membuat informasi teridentifikasi dan terkelola seragam."
+    },
+    {
+        "id":  "BG-061",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan QA check?",
+        "choices":  [
+                        "review isi teknis sebelum informasi dibagikan.",
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP."
+                    ],
+        "answer_index":  2,
+        "explanation":  "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared."
+    },
+    {
+        "id":  "BG-062",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama QA check adalah...",
+        "choices":  [
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "memastikan kepatuhan metadata sebelum review teknis."
+                    ],
+        "answer_index":  3,
+        "explanation":  "memastikan kepatuhan metadata sebelum review teknis."
+    },
+    {
+        "id":  "BG-063",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Technical review?",
+        "choices":  [
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "review isi teknis sebelum informasi dibagikan."
+                    ],
+        "answer_index":  3,
+        "explanation":  "review isi teknis sebelum informasi dibagikan."
+    },
+    {
+        "id":  "BG-064",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Technical review adalah...",
+        "choices":  [
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi."
+                    ],
+        "answer_index":  0,
+        "explanation":  "memastikan kualitas dan kebenaran konten sebelum koordinasi."
+    },
+    {
+        "id":  "BG-065",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan BIM Execution Plan (BEP)?",
+        "choices":  [
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model."
+                    ],
+        "answer_index":  0,
+        "explanation":  "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol."
+    },
+    {
+        "id":  "BG-066",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama BIM Execution Plan (BEP) adalah...",
+        "choices":  [
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi.",
+                        "menandai lokasi isu dan melacak penyelesaiannya."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menjelaskan peran, proses, serta cara dan waktu produksi informasi."
+    },
+    {
+        "id":  "BG-067",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan EIR (Exchange/Employer Information Requirements)?",
+        "choices":  [
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model.",
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital."
+                    ],
+        "answer_index":  1,
+        "explanation":  "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP."
+    },
+    {
+        "id":  "BG-068",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama EIR (Exchange/Employer Information Requirements) adalah...",
+        "choices":  [
+                        "mendukung interoperabilitas openBIM lintas aplikasi.",
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "mempercepat pengisian sistem FM saat handover."
+                    ],
+        "answer_index":  2,
+        "explanation":  "menetapkan apa, kapan, dan format informasi yang harus diserahkan."
+    },
+    {
+        "id":  "BG-069",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan IFC (Industry Foundation Classes)?",
+        "choices":  [
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model.",
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "tingkat kelengkapan suatu elemen model."
+                    ],
+        "answer_index":  2,
+        "explanation":  "skema data terbuka untuk pertukaran informasi antar software BIM."
+    },
+    {
+        "id":  "BG-070",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama IFC (Industry Foundation Classes) adalah...",
+        "choices":  [
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mendukung interoperabilitas openBIM lintas aplikasi."
+    },
+    {
+        "id":  "BG-071",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan BCF (BIM Collaboration Format)?",
+        "choices":  [
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model."
+                    ],
+        "answer_index":  3,
+        "explanation":  "standar openBIM untuk komunikasi dan manajemen isu pada model."
+    },
+    {
+        "id":  "BG-072",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama BCF (BIM Collaboration Format) adalah...",
+        "choices":  [
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "koordinasi lintas disiplin dan deteksi konflik."
+                    ],
+        "answer_index":  0,
+        "explanation":  "menandai lokasi isu dan melacak penyelesaiannya."
+    },
+    {
+        "id":  "BG-073",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan COBie?",
+        "choices":  [
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+                    ],
+        "answer_index":  0,
+        "explanation":  "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital."
+    },
+    {
+        "id":  "BG-074",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama COBie adalah...",
+        "choices":  [
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "koordinasi lintas disiplin dan deteksi konflik.",
+                        "memberi informasi terkoordinasi untuk keputusan proyek."
+                    ],
+        "answer_index":  1,
+        "explanation":  "mempercepat pengisian sistem FM saat handover."
+    },
+    {
+        "id":  "BG-075",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Level of Development (LOD)?",
+        "choices":  [
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone.",
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset."
+                    ],
+        "answer_index":  1,
+        "explanation":  "tingkat kelengkapan suatu elemen model."
+    },
+    {
+        "id":  "BG-076",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Level of Development (LOD) adalah...",
+        "choices":  [
+                        "koordinasi lintas disiplin dan deteksi konflik.",
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mendukung fase operasi setelah proyek selesai."
+                    ],
+        "answer_index":  2,
+        "explanation":  "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu."
+    },
+    {
+        "id":  "BG-077",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Model federation?",
+        "choices":  [
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone.",
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah."
+                    ],
+        "answer_index":  2,
+        "explanation":  "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi."
+    },
+    {
+        "id":  "BG-078",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Model federation adalah...",
+        "choices":  [
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "mendukung fase operasi setelah proyek selesai.",
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "koordinasi lintas disiplin dan deteksi konflik."
+                    ],
+        "answer_index":  3,
+        "explanation":  "koordinasi lintas disiplin dan deteksi konflik."
+    },
+    {
+        "id":  "BG-079",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Information model delivery (PIM)?",
+        "choices":  [
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah.",
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+                    ],
+        "answer_index":  3,
+        "explanation":  "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+    },
+    {
+        "id":  "BG-080",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Information model delivery (PIM) adalah...",
+        "choices":  [
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "mendukung fase operasi setelah proyek selesai.",
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "memastikan hanya pihak berwenang mengakses informasi."
+                    ],
+        "answer_index":  0,
+        "explanation":  "memberi informasi terkoordinasi untuk keputusan proyek."
+    },
+    {
+        "id":  "BG-081",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Asset Information Model (AIM)?",
+        "choices":  [
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah.",
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "satu sumber informasi resmi yang dipakai seluruh tim."
+                    ],
+        "answer_index":  0,
+        "explanation":  "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset."
+    },
+    {
+        "id":  "BG-082",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Asset Information Model (AIM) adalah...",
+        "choices":  [
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "mendukung fase operasi setelah proyek selesai.",
+                        "memastikan hanya pihak berwenang mengakses informasi.",
+                        "mengurangi duplikasi dan kesalahan informasi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "mendukung fase operasi setelah proyek selesai."
+    },
+    {
+        "id":  "BG-083",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Audit trail?",
+        "choices":  [
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah.",
+                        "satu sumber informasi resmi yang dipakai seluruh tim.",
+                        "status isu yang dilacak dari open atau in progress hingga closed."
+                    ],
+        "answer_index":  1,
+        "explanation":  "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah."
+    },
+    {
+        "id":  "BG-084",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Audit trail adalah...",
+        "choices":  [
+                        "memastikan hanya pihak berwenang mengakses informasi.",
+                        "mengurangi duplikasi dan kesalahan informasi.",
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "memantau progres penyelesaian masalah."
+                    ],
+        "answer_index":  2,
+        "explanation":  "akuntabilitas dan bukti saat audit atau klaim."
+    },
+    {
+        "id":  "BG-085",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Access control?",
+        "choices":  [
+                        "satu sumber informasi resmi yang dipakai seluruh tim.",
+                        "status isu yang dilacak dari open atau in progress hingga closed.",
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "deliverable data pada milestone sementara sebelum handover penuh."
+                    ],
+        "answer_index":  2,
+        "explanation":  "pengaturan hak akses berdasarkan state atau role di CDE."
+    },
+    {
+        "id":  "BG-086",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Access control adalah...",
+        "choices":  [
+                        "mengurangi duplikasi dan kesalahan informasi.",
+                        "memantau progres penyelesaian masalah.",
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "memastikan hanya pihak berwenang mengakses informasi."
+                    ],
+        "answer_index":  3,
+        "explanation":  "memastikan hanya pihak berwenang mengakses informasi."
+    },
+    {
+        "id":  "BG-087",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Single source of truth?",
+        "choices":  [
+                        "status isu yang dilacak dari open atau in progress hingga closed.",
+                        "deliverable data pada milestone sementara sebelum handover penuh.",
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "satu sumber informasi resmi yang dipakai seluruh tim."
+                    ],
+        "answer_index":  3,
+        "explanation":  "satu sumber informasi resmi yang dipakai seluruh tim."
+    },
+    {
+        "id":  "BG-088",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Single source of truth adalah...",
+        "choices":  [
+                        "mengurangi duplikasi dan kesalahan informasi.",
+                        "memantau progres penyelesaian masalah.",
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "mencegah penggunaan di luar tujuan resmi."
+                    ],
+        "answer_index":  0,
+        "explanation":  "mengurangi duplikasi dan kesalahan informasi."
+    },
+    {
+        "id":  "BG-089",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Issue lifecycle?",
+        "choices":  [
+                        "status isu yang dilacak dari open atau in progress hingga closed.",
+                        "deliverable data pada milestone sementara sebelum handover penuh.",
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only."
+                    ],
+        "answer_index":  0,
+        "explanation":  "status isu yang dilacak dari open atau in progress hingga closed."
+    },
+    {
+        "id":  "BG-090",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Issue lifecycle adalah...",
+        "choices":  [
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "memantau progres penyelesaian masalah.",
+                        "mencegah penggunaan di luar tujuan resmi.",
+                        "koordinasi tanpa mengubah sumber asli."
+                    ],
+        "answer_index":  1,
+        "explanation":  "memantau progres penyelesaian masalah."
+    },
+    {
+        "id":  "BG-091",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Interim deliverables (data drops)?",
+        "choices":  [
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "deliverable data pada milestone sementara sebelum handover penuh.",
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only.",
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "deliverable data pada milestone sementara sebelum handover penuh."
+    },
+    {
+        "id":  "BG-092",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Interim deliverables (data drops) adalah...",
+        "choices":  [
+                        "mencegah penggunaan di luar tujuan resmi.",
+                        "koordinasi tanpa mengubah sumber asli.",
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "mencegah pemakaian informasi prematur."
+                    ],
+        "answer_index":  2,
+        "explanation":  "membangun data bertahap agar handover akhir lancar."
+    },
+    {
+        "id":  "BG-093",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Published information usage?",
+        "choices":  [
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only.",
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi.",
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native."
+                    ],
+        "answer_index":  2,
+        "explanation":  "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi)."
+    },
+    {
+        "id":  "BG-094",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Published information usage adalah...",
+        "choices":  [
+                        "koordinasi tanpa mengubah sumber asli.",
+                        "mencegah pemakaian informasi prematur.",
+                        "kolaborasi multi-perangkat lunak.",
+                        "mencegah penggunaan di luar tujuan resmi."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mencegah penggunaan di luar tujuan resmi."
+    },
+    {
+        "id":  "BG-095",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Shared information usage?",
+        "choices":  [
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi.",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native.",
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only."
+                    ],
+        "answer_index":  3,
+        "explanation":  "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only."
+    },
+    {
+        "id":  "BG-096",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Shared information usage adalah...",
+        "choices":  [
+                        "koordinasi tanpa mengubah sumber asli.",
+                        "mencegah pemakaian informasi prematur.",
+                        "kolaborasi multi-perangkat lunak.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat."
+                    ],
+        "answer_index":  0,
+        "explanation":  "koordinasi tanpa mengubah sumber asli."
+    },
+    {
+        "id":  "BG-097",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan WIP information usage?",
+        "choices":  [
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi.",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native.",
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi."
+    },
+    {
+        "id":  "BG-098",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama WIP information usage adalah...",
+        "choices":  [
+                        "kolaborasi multi-perangkat lunak.",
+                        "mencegah pemakaian informasi prematur.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "mengembangkan informasi internal sebelum QA dan review."
+                    ],
+        "answer_index":  1,
+        "explanation":  "mencegah pemakaian informasi prematur."
+    },
+    {
+        "id":  "BG-099",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Information exchange via IFC?",
+        "choices":  [
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only."
+                    ],
+        "answer_index":  1,
+        "explanation":  "pertukaran data lintas software melalui IFC, bukan hanya file native."
+    },
+    {
+        "id":  "BG-100",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Governance: Tujuan utama Information exchange via IFC adalah...",
+        "choices":  [
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "kolaborasi multi-perangkat lunak.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui."
+                    ],
+        "answer_index":  2,
+        "explanation":  "kolaborasi multi-perangkat lunak."
+    }
+]

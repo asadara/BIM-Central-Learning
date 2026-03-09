@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : PDF Viewer</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link href="/img/icons/logo-bcl.png" rel="icon">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .redirect-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .redirect-card {
+            max-width: 560px;
+            width: 100%;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            padding: 24px;
+            text-align: center;
+        }
+        .redirect-card h1 {
+            font-size: 18px;
+            margin: 0 0 12px 0;
+        }
+        .redirect-card p {
+            margin: 0 0 16px 0;
+            color: #666;
+        }
+        .redirect-card a {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 6px;
+            background: #007bff;
+            color: #fff;
+            text-decoration: none;
+        }
+        .redirect-card a:hover {
+            background: #0056b3;
+        }
+        .error {
+            color: #b00020;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="redirect-wrap">
+        <div class="redirect-card">
+            <h1>Opening PDF reader...</h1>
+            <p id="status-text">Redirecting to the new PDF reader with minimap sidebar.</p>
+            <a id="manual-link" href="#" style="display:none;">Open PDF reader</a>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var fileParam = params.get('file');
+            var materialParam = params.get('material');
+            var returnParam = params.get('return');
+            var statusText = document.getElementById('status-text');
+            var manualLink = document.getElementById('manual-link');
+
+            if (!fileParam && !materialParam) {
+                statusText.textContent = 'Missing PDF file parameter.';
+                statusText.className = 'error';
+                return;
+            }
+
+            var targetParams = new URLSearchParams();
+            if (materialParam) {
+                targetParams.set('material', materialParam);
+            }
+            if (returnParam) {
+                targetParams.set('return', returnParam);
+            } else if (document.referrer) {
+                targetParams.set('return', document.referrer);
+            }
+
+            if (fileParam) {
+                var normalized = fileParam.trim();
+                if (!/^https?:\/\//i.test(normalized)) {
+                    try {
+                        var resolved = new URL(normalized, window.location.origin + '/');
+                        normalized = resolved.pathname + resolved.search;
+                    } catch (e) {
+                        // keep original if URL parsing fails
+                    }
+                }
+                targetParams.set('file', normalized);
+            }
+
+            var targetUrl = '/public/reader.html?' + targetParams.toString();
+            manualLink.href = targetUrl;
+            manualLink.style.display = 'inline-block';
+
+            window.location.replace(targetUrl);
+        })();
+    </script>
+</body>
+</html>

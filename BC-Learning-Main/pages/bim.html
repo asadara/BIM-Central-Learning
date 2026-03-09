@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <title>BCL-BIM Central Learning</title>
+    <meta charset="utf-8">
+    <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link href="../img/icons/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amarante&display=swap" rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amarante&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../lib/animate/animate.min.css">
+    <link rel="stylesheet" href="../lib/owlcarousel/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../img/icon.png">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .question-card {
+            background: #f9f9f9;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #007bff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .question-header {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .question-header small {
+            color: #888;
+        }
+
+        .jawaban-form {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .jawaban-form input[type="text"] {
+            flex-grow: 1;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .jawaban-form button {
+            background-color: #198754;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .jawaban-form button:hover {
+            background-color: #157347;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+            margin-left: 8px;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        p {
+            margin-bottom: 8px;
+        }
+
+        p b {
+            color: #333;
+        }
+
+        p[style*="color: blue"] {
+            color: #0056b3 !important;
+        }
+
+        p[style*="color: darkred"] {
+            color: #b30000 !important;
+        }
+    </style>
+
+    </style>
+
+</head>
+
+<body>
+
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <div class="container text-center my-3">
+        <h1 class="text-center" style="margin-top: -40px !important; margin-bottom: 20px !important;"><i
+                class="fas fa-building text-primary me-2"></i>Apa itu BIM ?</h1>
+        <h3 class="text-center my-2">Kita Simak penjelasannya dalam video berikut :</h3>
+    </div>
+
+
+    <div class="container">
+        <!-- Video section -->
+        <video controls autoplay id="bim-video" style="width: 100%; min-height: 300px; background: #f0f0f0;">
+            <source id="video-source" type="video/mp4">
+            <div class="alert alert-warning">
+                Browser Anda tidak mendukung pemutaran video HTML5.
+                Silakan gunakan browser modern seperti Chrome, Firefox, atau Safari.
+            </div>
+        </video>
+
+        <script>
+            // Path video dari API streaming endpoint (fixed for subfolder support)
+            const videoPath = "12. Others/Pengenalan BIM.mp4";
+
+            // Get video elements
+            const video = document.getElementById('bim-video');
+            const videoSource = document.getElementById("video-source");
+
+            // Set source menggunakan API streaming endpoint
+            videoSource.src = `${window.location.origin}/api/video-stream/${encodeURIComponent(videoPath)}`;
+
+            // Error handling
+            video.addEventListener('error', function (e) {
+                console.error('Error loading video:', e);
+                video.innerHTML = `
+                    <div class="alert alert-warning">
+                        <p>Maaf, video tidak dapat diputar.</p>
+                        <p>Kemungkinan penyebab:</p>
+                        <ul>
+                            <li>File video tidak ditemukan</li>
+                            <li>Format video tidak didukung browser</li>
+                            <li>Koneksi internet bermasalah</li>
+                        </ul>
+                    </div>`;
+            });
+
+            // Loading state
+            video.addEventListener('loadstart', function () {
+                video.style.background = '#f0f0f0 url("../img/undercon.gif") center center no-repeat';
+            });
+
+            video.addEventListener('canplay', function () {
+                video.style.background = 'none';
+            });
+        </script>
+    </div>
+
+    <div class="container my-4">
+        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h2>Sekilas Tentang BIM, Pilih Pertanyaan Anda</h2>
+        </div>
+        <div class="row g-2">
+            <div class="col-12">
+                <div class="accordion" id="accordionExample">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne"><b>BIM
+                                    Adalah Proses, Maksudnya ?</b></button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <img src="../../img/bim01.png" alt="Deskripsi Gambar"
+                                    style="width: 250%; max-width: 1200px; display: block; margin: auto;">
+                                <p>BIM adalah proses untuk membuat dan mengelola informasi tentang proyek konstruksi di
+                                    seluruh siklus hidupnya. Sebagai bagian dari proses ini, deskripsi digital
+                                    terkoordinasi dari setiap aspek aset yang dibangun dikembangkan, menggunakan
+                                    seperangkat teknologi tepat guna.</p>
+                                <p>Kemungkinan deskripsi digital ini mencakup kombinasi model 3D yang kaya informasi dan
+                                    data terstruktur terkait seperti informasi produk, eksekusi, dan serah terima.
+                                    Secara internasional, proses BIM dan struktur data terkait paling baik didefinisikan
+                                    dalam seri standar ISO 1965 dan 12006.</p>
+                                <p>Di NBS telah menciptakan platform terintegrasi untuk semua orang yang terlibat dalam
+                                    desain, pasokan, dan konstruksi lingkungan binaan. Video berikut menunjukkan
+                                    desainer berkolaborasi secara online, dan bekerja dengan produsen konstruksi untuk
+                                    menghasilkan informasi yang dibutuhkan oleh mereka yang bekerja di konstruksi dan
+                                    operasi.</p>
+                                <img src="../../img/bim02.png" alt="Deskripsi Gambar"
+                                    style="width: 250%; max-width: 1200px; display: block; margin: auto;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseTwo" aria-expanded="false"
+                                aria-controls="collapseTwo"><b>Bagaimana BIM dapat membantu Anda ?</b></button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <img src="../../img/bim04.png" alt="Deskripsi Gambar"
+                                    style="width: 150%; max-width: 800px; display: block; margin: auto;">
+                                <p>Pada tahap awal proyek BIM, tim kolaboratif dibentuk. Ini menyetujui proses dan
+                                    struktur informasi untuk memastikan bahwa informasi desain yang dikembangkan
+                                    dikoordinasikan, dan akan memberikan manfaat maksimal bagi mereka yang terlibat
+                                    dalam tahap konstruksi dan operasi. Keterlibatan mereka yang akan terlibat pada
+                                    tahap proyek selanjutnya (seperti pabrikan atau tim FM klien) dapat sangat membantu
+                                    dalam inisiasi ini.</p>
+                                <p>Saat proyek memasuki tahap konstruksi, informasi yang dikembangkan dapat digunakan
+                                    untuk merencanakan dan membangun dengan lebih efisien. Dimana revisi desain
+                                    diperlukan, setiap perubahan dapat mengikuti proses yang disepakati secara
+                                    transparan dan tercatat.</p>
+                                <p>Akhirnya, ketika proyek konstruksi selesai dan tahap penggunaan dimulai, informasi
+                                    yang telah dimodelkan dapat digunakan untuk mengoperasikan aset yang dibangun.
+                                    Informasi real-time tentang kinerja aset dimodelkan sehingga aspek tertentu dari
+                                    aset yang dibangun memiliki 'kembaran digital' yang setara.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseThree" aria-expanded="false"
+                                aria-controls="collapseThree"><b>Apa saja Standard BIM ?</b></button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <img src="../../img/bim05.png" alt="Deskripsi Gambar"
+                                    style="width: 150%; max-width: 800px; display: block; margin: auto;">
+                                <p>Ada sejumlah standar yang mendefinisikan struktur dan proses informasi BIM secara
+                                    internasional.</p>
+                                <p>Struktur informasi :</p>
+                                <ul>
+                                    <li>ISO 16739-1:2018 – 'Industry Foundation Classes (IFC) untuk berbagi data dalam
+                                        industri manajemen konstruksi dan fasilitas</li>
+                                    <li>ISO 12006-2:2015 – 'Konstruksi bangunan - Organisasi informasi tentang pekerjaan
+                                        konstruksi Bagian 2: Kerangka klasifikasi'. Kata Pengantar Nasional Inggris dari
+                                        standar ini mencantumkan Uniclass 2015 sebagai sistem klasifikasi untuk BIM
+                                        Inggris.</li>
+                                    <li>ISO 23386:2020 – 'Membangun pemodelan informasi dan proses digital lainnya yang
+                                        digunakan dalam konstruksi Metodologi untuk mendeskripsikan, menulis, dan
+                                        memelihara properti dalam kamus data yang saling berhubungan'. Di NBS, kami
+                                        mengikuti kerangka kerja ini saat membuat model struktur informasi dengan
+                                        produsen di platform Sumber NBS.</li>
+                                </ul>
+                                <p>Proses :</p>
+                                <ul>
+                                    <li>Kerangka BIM Inggris – seri standar ISO 19650 mendefinisikan proses BIM secara
+                                        internasional. Ini memiliki dasar dalam seri standar PAS 1192 Inggris. Situs web
+                                        UK BIM Framework memiliki informasi lebih lanjut tentang standar-standar ini,
+                                        dan sumber panduan luas yang dapat digunakan secara gratis.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour"><b>Apa
+                                    itu Object BIM ?</b></button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <p>Ini adalah informasi rinci yang mendefinisikan produk, dan geometri yang mewakili
+                                    karakteristik fisik produk. Data visualisasi yang memberikan objek tampilan dan data
+                                    perilaku yang dapat dikenali, seperti zona deteksi, memungkinkan objek diposisikan
+                                    atau berperilaku dengan cara yang persis sama dengan produk itu sendiri. Ada dua
+                                    jenis objek utama: komponen dan berlapis. Objek komponen adalah produk bangunan yang
+                                    memiliki bentuk geometris tetap (seperti jendela, pintu, boiler, dll.). Benda
+                                    berlapis adalah produk bangunan yang tidak memiliki bentuk atau ukuran yang tetap
+                                    (seperti karpet, atap, dinding dan langit-langit).</p>
+                                <p>Di NBS, kami menyediakan serangkaian sumber daya yang luas untuk membantu industri
+                                    membuat objek digital standar. Standar Objek BIM NBS memberikan panduan tentang
+                                    pembuatan objek, berapa banyak informasi yang harus dimasukkan ke dalam objek dan
+                                    informasi apa yang harus ditautkan di cloud. Sejumlah template khusus vendor, set
+                                    parameter standar, dan alat plug-in</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseFive" aria-expanded="false"
+                                aria-controls="collapseFive"><b>Bagaimana spesifikasi sesuai dengan proses BIM
+                                    ?</b></button>
+                        </h2>
+                        <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <p>Spesifikasi adalah bagian besar dari proses BIM. Setiap disiplin yang terlibat dalam
+                                    merancang aset yang dibangun perlu menentukan persyaratannya. Sepanjang garis waktu
+                                    proyek, informasi spesifikasi ini harus berkembang dari deskripsi hasil kinerja yang
+                                    diperlukan hingga solusi sistem dan produk yang memenuhi kinerja ini. Akhirnya,
+                                    spesifikasi ini harus diperbarui sepanjang fase konstruksi sehingga klien dapat
+                                    menerima serangkaian spesifikasi catatan saat serah terima.</p>
+                                <p>Informasi ini harus ditulis ke struktur standar dan dikoordinasikan dengan informasi
+                                    dalam model 3D apa pun, dan dalam basis data terkait.</p>
+                                <p>Di NBS, platform Chorus kami membantu organisasi untuk membuat spesifikasi untuk
+                                    struktur data Uniclass 2015, dan untuk mempublikasikan informasi ini mengikuti
+                                    proses yang ditentukan dalam rangkaian standar ISO 1965.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseSix" aria-expanded="false"
+                                aria-controls="collapseSix"><b>Bagaimana masa depan BIM ?</b></button>
+                        </h2>
+                        <div id="collapseSix" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <p>Ujung tombak industri akan terus berinovasi. Survei digital NBS tahunan kami
+                                    menunjukkan bahwa komputasi awan, Internet of Things, Blockchain, kecerdasan buatan,
+                                    dan metode konstruksi modern semuanya meningkat.</p>
+                                <p>Namun, untuk sebagian besar industri, masa depan adalah tentang membuat struktur dan
+                                    proses informasi yang ada 'bisnis seperti biasa'. Ini terutama tantangan pelatihan,
+                                    pendidikan dan budaya. Tapi teknologi juga bisa membantu. Saat platform matang,
+                                    tugas manual untuk menyusun data, mengklasifikasikan data, dan menamai file akan
+                                    otomatis. Ini akan menegakkan struktur dan proses, dan membantu mempercepat BIM.</p>
+                                <p>Ke depan, akan ada benang emas informasi yang dikembangkan secara kolaboratif secara
+                                    paralel dengan desain dan konstruksi aset binaan. Ini akan menjadi catatan tentang
+                                    apa yang telah dibangun, mengembangkan catatan tentang kinerja aset. Di seluruh
+                                    wilayah klien – atau bahkan nasional –, ini pada waktunya akan menjadi 'data besar'
+                                    yang membantu pengambil keputusan terus meningkatkan untuk membangun lingkungan
+                                    binaan yang lebih aman dan lebih berkelanjutan.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseSeven" aria-expanded="false"
+                                aria-controls="collapseSeven"><b>Bagaimana Informasi BIM Dibagi ?</b></button>
+                        </h2>
+                        <div id="collapseSeven" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <p>Informasi dalam model BIM ini dibagikan melalui ruang online yang dapat diakses
+                                    bersama yang dikenal sebagai lingkungan data umum (CDE) , dan data yang dikumpulkan
+                                    disebut sebagai 'model informasi'. Model informasi dapat digunakan di semua tahap
+                                    kehidupan bangunan; dari awal hingga operasi dan bahkan renovasi dan pembaruan.
+                                    Sekarang setelah kita membahas apa itu BIM dan bagaimana cara menggunakannya, mari
+                                    beralih ke level BIM.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseEight" aria-expanded="false"
+                                aria-controls="collapseEight"><b>Apa itu Level BIM ?</b></button>
+                        </h2>
+                        <div id="collapseEight" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <p>Tingkat BIM yang berbeda dapat dicapai untuk berbagai jenis proyek. Setiap tingkat
+                                    mewakili serangkaian kriteria berbeda yang menunjukkan tingkat 'kematangan'
+                                    tertentu. Level BIM dimulai dengan 0 dan beralih ke 4D, 5D, dan bahkan 6D BIM .
+                                    Tujuan dari level ini adalah untuk mengukur seberapa efektif, atau seberapa banyak
+                                    informasi yang dibagikan dan dikelola di seluruh proses.</p>
+                                <p>Jadi, apa yang tercakup dalam setiap level, dan bagaimana Anda bisa mengidentifikasi
+                                    di level mana Anda bekerja? Di bawah ini adalah deskripsi singkat dari tiga tingkat
+                                    pertama dan penjelasan tentang kriteria apa yang terlibat pada setiap tahap.</p>
+                                <ul>
+                                    <li>Jadi, apa yang tercakup dalam setiap level, dan bagaimana Anda bisa
+                                        mengidentifikasi di level mana Anda bekerja? Di bawah ini adalah deskripsi
+                                        singkat dari tiga tingkat pertama dan penjelasan tentang kriteria apa yang
+                                        terlibat pada setiap tahap.
+                                        <p><b>Level 0 BIM</b> mengacu pada tidak beroperasi secara kolaboratif sama
+                                            sekali. Jika Anda menggunakan CAD 2D dan bekerja dengan gambar dan/atau
+                                            cetakan digital, Anda dapat dengan aman mengatakan bahwa Anda berada di
+                                            level 0. Saat ini, sebagian besar industri bekerja di atas level ini,
+                                            meskipun tidak setiap profesional di industri memiliki BIM yang memadai.
+                                            pelatihan dan beberapa proyek tidak memasukkan penggunaan BIM dalam
+                                            spesifikasi kontrak.</p>
+                                    </li>
+                                    <li><b>Level 1 BIM</b> : Gambar konstruksi 2D + beberapa pemodelan 3D
+                                        <p>Menggunakan CAD 3D untuk pekerjaan konsep, tetapi 2D untuk menyusun informasi
+                                            produksi dan dokumentasi lainnya, mungkin berarti Anda sedang mengerjakan
+                                            Level 1 BIM . Pada tingkat ini, standar CAD dikelola dengan standar BS
+                                            1192:2007 , dan berbagi data elektronik yang dilakukan dari lingkungan data
+                                            umum (CDE) biasanya dikelola oleh kontraktor. Banyak perusahaan berada di
+                                            Level 1 BIM, yang tidak melibatkan banyak kolaborasi, dan setiap pemangku
+                                            kepentingan menerbitkan dan mengelola data mereka sendiri.</p>
+                                    </li>
+                                    <li><b>Level 2 BIM</b> : Tim bekerja dalam model 3D mereka sendiri
+                                        <p>Level 2 BIM mulai ditambahkan dalam lingkungan kolaboratif. BIM Level 2
+                                            sebenarnya dibuat sebagai persyaratan wajib pada bulan April 2016 pada semua
+                                            proyek yang ditenderkan secara publik di Inggris. Prancis segera menyusul
+                                            dengan mandat mereka sendiri pada tahun 2017. Pada level 2, semua anggota
+                                            tim menggunakan model CAD 3D tetapi terkadang tidak dalam model yang sama.
+                                            Namun, cara pemangku kepentingan bertukar informasi membedakannya dari
+                                            tingkat lain. Informasi tentang desain lingkungan binaan dibagikan melalui
+                                            format file umum.</p>
+                                        <p>Ketika perusahaan menggabungkan ini dengan data mereka sendiri, mereka
+                                            menghemat waktu, mengurangi biaya, dan menghilangkan kebutuhan untuk
+                                            pengerjaan ulang. Karena data dibagikan dengan cara ini, perangkat lunak CAD
+                                            harus mampu mengekspor ke format file umum, seperti IFC (Industry Foundation
+                                            Class) atau COBie (Construction Operations Building Information Exchange).
+                                        </p>
+                                    </li>
+                                    <li><b>Level 3 BIM</b> : Tim bekerja dengan model 3D bersama
+                                        <p><b>BIM level 3</b> bahkan lebih kolaboratif. Alih-alih setiap anggota tim
+                                            bekerja dalam model 3D mereka sendiri, Level 3 berarti bahwa setiap orang
+                                            menggunakan satu model proyek bersama. Model ada di lingkungan 'pusat' dan
+                                            dapat diakses dan dimodifikasi oleh semua orang. Ini disebut Open BIM , yang
+                                            berarti bahwa lapisan perlindungan lain ditambahkan terhadap bentrokan,
+                                            menambah nilai proyek di setiap tahap.</p>
+                                        <p>Manfaat BIM Level 3 adalah :</p>
+                                        <ul>
+                                            <li>Visualisasi 3D yang lebih baik dari keseluruhan proyek</li>
+                                            <li>Kolaborasi mudah antara banyak tim dan perdagangan</li>
+                                            <li>Komunikasi yang disederhanakan dan pemahaman tentang niat desain</li>
+                                            <li>Pengurangan pengerjaan ulang dan revisi di setiap tahap proyek.</li>
+                                        </ul>
+                                    </li>
+                                    <li>Level 4, 5, dan 6 BIM : Menambahkan informasi penjadwalan, biaya, &
+                                        keberlanjutan
+                                        <p><b>BIM level 4</b> membawa elemen baru ke dalam model informasi: waktu.
+                                            Informasi ini mencakup data penjadwalan yang membantu menguraikan berapa
+                                            banyak waktu yang dibutuhkan setiap fase proyek atau urutan berbagai
+                                            komponen.</p>
+                                        <p><b>BIM Level 5</b> menambahkan estimasi biaya, analisis anggaran, dan
+                                            pelacakan anggaran ke model informasi. Saat bekerja pada level BIM ini,
+                                            pemilik proyek dapat melacak dan menentukan biaya apa yang akan dikeluarkan
+                                            selama proyek berlangsung.</p>
+                                        <p>Informasi <b>BIM Level 6</b> berguna untuk menghitung konsumsi energi suatu
+                                            bangunan sebelum dibangun. Ini memastikan bahwa desainer memperhitungkan
+                                            lebih dari sekadar biaya aset di muka. Level 6 BIM memastikan prediksi
+                                            kebutuhan konsumsi energi yang akurat dan memberdayakan pemangku kepentingan
+                                            untuk membangun struktur yang hemat energi dan berkelanjutan.</p>
+                                        <p>Manfaat Level 4, 5, dan 6 BIM :</p>
+                                        <ul>
+                                            <li>Perencanaan dan penjadwalan lokasi yang lebih efisien</li>
+                                            <li>Serah terima yang lebih efisien antara langkah-langkahnya dalam tahap
+                                                konstruksi</li>
+                                            <li>Visualisasi biaya waktu nyata</li>
+                                            <li>Analisis biaya yang disederhanakan</li>
+                                            <li>Mengurangi konsumsi energi dalam jangka panjang</li>
+                                            <li>Manajemen operasional gedung atau struktur yang lebih baik setelah serah
+                                                terima</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                <img src="../../img/bim03.png" alt="Deskripsi Gambar"
+                                    style="width: 200%; max-width: 800px; display: block; margin: auto;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseNine" aria-expanded="false" aria-controls="collapseNine"><b>BIM
+                                    Glosarium (Istilah-Istilah dalam BIM)</b></button>
+                        </h2>
+                        <div id="collapseNine" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body justify-text">
+                                <p><b>Appointing Party</b> merupakan pihak Pengguna Jasa Konstruksi, Owner, Client atau
+                                    Pihak yang ditunjuk atas nama Pemilik.</p>
+                                <p><b>Lead Appointed Party</b> merupakan pihak Pemberi Jasa Utama Konstruksi (Kontraktor
+                                    Utama) yang ditunjuk atau dipilih oleh Pihak Pengguna Jasa Konstruksi</p>
+                                <p><b>Appointed Party</b> merupakan pihak Pemberi Jasa Konstruksi (Sub Kontraktor, atau
+                                    Spesialis Kontraktor) yang ditunjuk atau dipilih oleh Pihak Pemberi Jasa Konstruksi
+                                    (Subkon) atau juga secara langsung dipilih dan ditunjuk oleh Pengguna Jasa (NSC).
+                                </p>
+                                <p><b>Project Team</b> merupakan gugus tugas utama dalam sebuah proyek yang dibentuk dan
+                                    disepakati melalui mekanisme resmi kontrak kerja proyek, keseluruhan tim yang
+                                    bekerja dalam sebuah proyek.</p>
+                                <p><b>Delivery Team</b> merupakan satuan tugas dari Lead Appointed Party dalam
+                                    memproduksi, menyerahkan, membagi, dan menyimpan aset informasi.</p>
+                                <p><b>Task Team</b> merupakan satuan tugas dari Appointed Party dalam memproduksi,
+                                    menyerahkan, membagi aset informasi.</p>
+                                <p><b>OIR</b> singkatan dari Organisational Information Requirement merupakan
+                                    persyaratan tingkat tinggi yang ditentukan oleh Pengguna Jasa mengenai aset, operasi
+                                    bisnis, dan departemen/organisasinya.</p>
+                                <p><b>AIR</b> singkatan dari Asset Information Requirement, dibentuk dari OIR. Pihak
+                                    Pengguna Jasa bertanggung jawab untuk menentukan persyaratan terperinci untuk
+                                    konten, bentuk, dan format informasi agar sesuai dengan aset spesifik yang sedang
+                                    dirancang dan dibangun.</p>
+                                <p><b>PIR</b> singkatan dari Project Information Requirement, adalah seperangkat
+                                    persyaratan informasi tingkat tinggi, sebagian dibuat dari OIR (OIR memberikan input
+                                    ke PIR, namun begitu OIR bukan satu-satunya sumber PIR). PIR lebih fokus pada
+                                    informasi yang diperlukan oleh pihak Pengguna Jasa pada titik-titik keputusan
+                                    penting selama pelaksanaan proyek desain dan konstruksi.</p>
+                                <p><b>EIR</b> singkatan dari Exchange Information Requirement, adalah seperangkat
+                                    persyaratan detail informasi yang akan disampaikan oleh berbagai Tim Tugas selama
+                                    pertukaran informasi (kejadian pemenuhan persyaratan informasi melalui penyampaian
+                                    informasi).</p>
+                                <p><b>AIM</b> singkatan dari Asset Infromation Model merupakan permodelan pada tahap
+                                    operasional yang menggambarkan tentang manajemen informasi pada tahap itu, yang
+                                    terdiri dari data-data dan informasi yang dibutuhkan untuk mendukung pengelolaan
+                                    aset.</p>
+                                <p><b>PIM</b> singkatan dari Project Information Model merupakan model informasi yang
+                                    dibuat selama fase desain, konstruksi, perawatan/maintenance sebuah proyek. Yang
+                                    terdiri dari informasi grafis dan non-grafis.</p>
+                                <p><b>Attribute</b> merupakan unit data yang menggambarkan karakteristik tertentu dari
+                                    suatu entitas.</p>
+                                <p><b>BCF</b> atau <b>BIM Collaboration Format</b> adalah tipe file dengan format
+                                    terbuka berbasis XML yang memungkinkan beberapa pihak untuk menambahkan komentar
+                                    pada sebuah model IFC. Hal ini sangat memudahkan dan sederhana serta sangat membantu
+                                    semua pihak yang terlibat dalam sebuah proyek karena bisa berinteraksi dan
+                                    berkomunikasi (bertukar informasi dan data)</p>
+                                <p><b>BEP</b> atau <b>BIM Execution Plan</b> merupakan Rencana Kerja BIM yang merupakan
+                                    salah satu alat referensi fungsional untuk pengelolaan BIM yang benar guna
+                                    mensinkronisasikan alur kerja, mulai dari perencanaan proyek hingga manajemen
+                                    konstruksi. BEP adalah dokumen fundamental untuk keberhasilan BIM. Dokumen ini
+                                    merupakan tanggapan langsung (response) dari EIR. Dokumen ini disiapkan oleh
+                                    kontraktor, verdors dan suplier yang menguraikan tentang pelaksanaan atau eksekusi
+                                    BIM pra-kontrak dan juga rencana pelaksanaan atau eksekusi pasca-kontrak. </p>
+                                <ul>
+                                    <li>Pre-BEP merupakan dokumen BEP awal yang dibuat oleh Appointing Party ditujukan
+                                        kepada Prospective Appointed Party yang mendefinisikan persyaratan informasi dan
+                                        aset yang dibutuhkan.</li>
+                                    <li>Post-BEP merupakan respon langsung dari Appointed Party berupa penegasan,
+                                        pengesahan, pembenaran tentang kemampuannya melaksanakan Information Delivery,
+                                        serta rencana awal kerja</li>
+                                </ul>
+                                <p><b>BIM Maturity Level</b> adalah tingkatan yang menggambarkan kompleksitas atau
+                                    kerumitan kolaborasi yang dilakukan dalam membuat permodelan informasi. Karena
+                                    cakupan BIM sangat luas, penggunaan tingkatan ini sangat membantu untuk memberikan
+                                    penggambaran bagaimana bentuk permodelan seharusnya dilakukan pada proyek tersebut
+                                    sesuai dengan persyaratan. Sebagai contoh, Level 0 BIM akan mengacu pada gambar CAD
+                                    dan 2D yang tidak terkelola dan tanpa memiliki standard prosedur umum, sedangkan
+                                    Level 3 BIM mengacu kepada model proyek kolaboratif yang lebih kompleks dengan
+                                    detail informasi</p>
+                                <p><b>BIM Protocol</b> adalah aturan perjanjian kesepakatan yang terstandarisasi, dimana
+                                    dapat digabungkan ke dalam perjanjian layanan profesional dan kontrak konstruksi
+                                    dengan amandemen sederhana</p>
+                                <p><b>COBIe</b> adalah standar terbuka yang menyediakan cara atau jalan untuk berbagi
+                                    dan bertukar informasi non-grafis tentang sebuah proyek. Data dan komunikasi yang
+                                    berkaitan dengan operasi, konstruksi, desain, pembongkaran dan semua data relevan
+                                    lainnya, biasanya juga ikut dimasukkan ke dalamnya selama proyek tersebut
+                                    berlangsung</p>
+                                <p><b>Federated BIM Model</b> merupakan kumpulan dari model unik yang digunakan dalam
+                                    mengembangkan BIM secara lengkap dari sebuah aset</p>
+                                <p><b>IFC</b> atau <b>Industry Foundation Class</b> adalah platform netral dan terbuka
+                                    yang digunakan untuk memudahkan transfer informasi model dan meningkatkan koordinasi
+                                    diantara semua pihak yang terlibat dalam semua proses</p>
+                                <p><b>LoD</b> atau <b>Level of Development</b> adalah tingkatan yang menentukan rincian
+                                    proporsi pada elemen model, tingkat pengembangannya sekaligus sejauh mana setiap tim
+                                    dalam sebuah proyek dapat bergantung pada informasi saat menggunakan model tersebut
+                                </p>
+                                <p><b>LOD</b> atau <b>Level Of Detail</b> adalah tingkatan yang menggambarkan
+                                    kerumitan/detail yang dimasukkan kedalam elemen model, atau menggambarkan keakuratan
+                                    dari representasi bentuk virtual jika dibandingkan dengan katakter fisik dan
+                                    fungsional dari obyek sebenarnya</p>
+                                <p><b>LOI</b> atau <b>Level Of Information</b> mengindikasikan konten dari model
+                                    non-grafis dalam BIM pada setiap tahapan yang diantisipasi perkembangannya</p>
+                                <p><b>LOIN</b> atau <b>Level Of Information Need</b> merupakan pengembangan dari LOD,
+                                    untuk menghindari informasi berlebih dan tidak diperlukan. Fokusnya tidak lagi pada
+                                    karakteristik objek tetapi pada kebutuhan akan informasi yang harus dimiliki objek
+                                    untuk memenuhi persyaratan profesional pada saat yang tepat. Baik dalam bentuk
+                                    geometris, alfanumerik atau dokumentasi lain.</p>
+                                <p><b>MIDP</b> atau <b>Master Information Delivery Plan</b> adalah rencana utama
+                                    mengenai informasi yang bekaitan dengan proyek, kapan dan siapa yang
+                                    bertanggungjawab, bagaimana prosedur dan protokolnya dalam pelaksanaan</p>
+                                <p><b>TIDP</b> atau <b>Task Information Delivery Plan</b> adalah penjabaran lebih rinci
+                                    dari MIDP dimana gugus tugas dan tim serta waktu pelaksanaan permodelan dan
+                                    informasi dikerjakan</p>
+                                <p><b>CDE</b> atau <b>Common Data Environment</b> adalah suatu modul lokasi spesifik
+                                    dalam penyimpanan semua informasi yang berkaitan dengan proyek. Ini sangat membantu
+                                    dalam menerapkan dan menentukan syarat-syarat bagi semua tim, memantau progress
+                                    pekerjaan, melakukan validasi data yang masuk dan mencatat semua aktivitas yang
+                                    dilakukan.</p>
+                                <p>Bagan Pertukaran Informasi (Information Exchange) pada CDE :</p>
+
+                                <img src="../../img/cde.png" alt="Deskripsi Gambar"
+                                    style="width: 150%; max-width: 600px;">
+
+                                <p><b>Mobilization</b> merupakan proses persiapan dan penyiapan sumber daya BIM termasuk
+                                    di dalamnya Delivery Team, Hardware, Software maupun kemampuan menjalankan BIM.
+                                    Istilah lain untuk proses ini adalah Deployment.</p>
+                                <p><b>Collaborative Production of Information</b> merupakan rangkaian kerja sama tim
+                                    dalam memproduksi informasi, setiap status dokumen (WIP, Shared, Published dan
+                                    Archived) dibutuhkan untuk pengambilan keputusan tentang dokumen itu sendiri.</p>
+                                <p><b>Information Model Delivery</b> mencakup pemeriksaan Informasi untuk keperluan
+                                    Publishing pada setiap Milestone.</p>
+                                <p><b>Project Close-Out</b> merupakan tahap akhir dari fase kontruksi, namun bukan
+                                    merupakan akhir siklus BIM. Di dalamya terjadi serah terima dokumen BIM dari
+                                    Appointed Party kepada Appointing Party dalam suatu container informasi terkait
+                                    project yang telah selesai dikerjakan. Informasi baik grafis maupun non-grafis
+                                    berupa model, serta Asset fisik dan informasi di dalamnya. Termasuk juga Persiapan
+                                    Prosedur Perawatan Aset, jadwal maintenance, serta informasi suplier aset itu
+                                    sendiri.</p>
+                                <p><b>Project Delivery Phase</b> adalah nama lain untuk Fase Kontruksi</p>
+                                <p><b>AEC</b> singkatan dari <b>Architect, Engineering, Construction</b> yang merupakan
+                                    kegiatan di bidang arsitektur, enjineering, dan konstruksi.</p>
+                                <p><b>Building Lifecycle</b> adalah daur hidup bangunan - dengan kata lain, melihatnya
+                                    bukan hanya sebagai bangunan operasional, tetapi juga dengan mempertimbangkan
+                                    desain, konstruksi, operasi, pembongkaran dan pengolahan limbah.</p>
+                                <p><b>Clash</b> adalah bentrok atau benturan yang terjadi apabila elemen-elemen dari
+                                    model-model berbeda mendiami sebuah ruang yang sama, yang berbentuk geometrik
+                                    (misalnya pipa yang melewati/menjebol dinding), penjadwalan (misalnya pentahapan
+                                    yang direncanakan akan dilakukan secara sekuensial ternyata dilaksanakan bersamaan),
+                                    atau adanya perubahan/update yang tidak tergambarkan.</p>
+                                <p><b>Clash Detection</b> adalah kegiatan pengecekan pekerjaan, baik yang sudah selesai
+                                    atau sedang berlangsung untuk meminimalisir risiko terjadinya human error yang
+                                    diperkirakan akan terjadi dalam tahap konstruksi. Pekerjaan ini perlu dilakukan
+                                    melalui proses integrasi berbagai model yang berasal dari berbagai disiplin
+                                    (arsitektur, struktur, dan MEP).</p>
+                                <p><b>Pre-clash detection</b> adalah proses deteksi bentrok yang dilakukan pada tahap
+                                    awal, atau dalam hal ini adalah pada tahap desain skematik (LOD 200) sehingga
+                                    meminimalisasi konflik sebelum tahap konstruksi.</p>
+                                <p><b>Clash Matrix</b> adalah perencanaan dan penjadwalan preclash detection maupun
+                                    clash detection berupa tabel yang berisi kombinasi dari berbagai disiplin dan
+                                    prioritas penanganan berdasarkan penjadwalan konstruksi.</p>
+                                <p><b>Shopdrawing</b> adalah gambar kerja dari pendetilan gambar rencana dalam proyek
+                                    konstruksi.</p>
+                                <p><b>As-built drawing</b> adalah gambar akhir nyata dari suatu pembangunan proyek
+                                    konstruksi untuk keperluan pengarsipan.</p>
+                                <p><b>Workflow</b> adalah aliran kerja, yang merupakan suatu proses kerja/bisnis secara
+                                    sistematis dimana dokumen atau informasi yang telah dibuat, dialirkan dari satu
+                                    pihak ke pihak yang lain untuk tindakan lanjutan menurut suatu aturan atau prosedur
+                                    tertentu yang telah disepakati bersama dalam sebuah organisasi/perusahaan. </p>
+                                <p><b>Detailed Quantity Cost Estimate</b> adalah proses memperkirakan biaya kuantitas
+                                    secara detil pada proyek konstruksi. </p>
+                                <p><b>Bill of Quantities</b> adalah dokumen yang digunakan dalam tender di industri
+                                    konstruksi / persediaan di mana bahan, suku cadang, dan tenaga kerja (dan biaya
+                                    mereka) diperinci.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="chat-container mt-4">
+            <!-- Tombol Ajukan Pertanyaan -->
+            <button class="open-form-btn" onclick="openForm()">Ajukan Pertanyaan</button>
+        </div>
+
+        <div id="containertanya" style="width: 100%; max-width: 100%; margin: 0 auto;">
+            <h2>Daftar Pertanyaan</h2>
+            <div id="qa-list"></div> <!-- Tempat daftar pertanyaan -->
+        </div>
+    </div>
+
+    <!-- Popup Form Jawaban -->
+    <div id="answerPopup" class="popup-form" style="display: none;">
+        <span class="close-btn" onclick="closeAnswerPopup()">&times;</span>
+        <h2>Jawab Pertanyaan</h2>
+        <input type="hidden" id="answerQuestionId">
+        <textarea id="answerText" placeholder="Tulis jawaban..."></textarea>
+        <button onclick="submitAnswer()">Kirim Jawaban</button>
+    </div>
+
+
+
+    <!-- Form Pertanyaan (Popup) -->
+    <div class="popup-form" id="popupForm">
+        <div class="drag-bar" id="dragBar">⋮⋮ Geser Form di sini</div><!-- Bagian drag -->
+        <div class="form-content">
+            <span class="close-btn" onclick="closeForm()">&times;</span>
+            <h2>Ajukan Pertanyaan</h2>
+            <input type="text" id="nama" placeholder="Nama" required>
+            <input type="text" id="bagian" placeholder="Bagian" required>
+            <input type="text" id="proyek" placeholder="Proyek">
+            <input type="email" id="email" placeholder="Email" required>
+            <textarea id="pertanyaan" placeholder="Tulis pertanyaan di sini..." required></textarea>
+            <button type="submit" id="submitQuestion">Kirim Pertanyaan</button>
+        </div>
+    </div>
+
+    </div>
+
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+
+    <!-- JavaScript Libraries -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video-js.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video.min.js"></script>
+
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="../js/script.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+
+
+    <script src="../js/bim-question.js"></script>
+
+
+
+</body>
+
+</html>

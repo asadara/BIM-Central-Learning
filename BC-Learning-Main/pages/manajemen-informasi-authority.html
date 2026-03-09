@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Otoritas & Validasi Data</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .manajemen-info-header {
+            text-align: center;
+            margin: -40px 0 0 0;
+            padding: 5px 10px 0px 10px;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .manajemen-info-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .manajemen-info-header p {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: none;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .info-diagram {
+            margin-bottom: 2rem;
+        }
+
+        .info-diagram h4 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .role-box {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            min-width: 140px;
+            margin: 5px;
+        }
+
+        .role-box.author {
+            background: #ffeaa7;
+            color: #d63031;
+            border: 2px solid #fdcb6e;
+        }
+
+        .role-box.reviewer {
+            background: #74b9ff;
+            color: #0984e3;
+            border: 2px solid #0984e3;
+        }
+
+        .role-box.approver {
+            background: #55efc4;
+            color: #00b894;
+            border: 2px solid #00b894;
+        }
+
+        .role-box.user {
+            background: #ddd;
+            color: #666;
+            border: 2px solid #999;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .aha-statement {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fb873f;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(251, 135, 63, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #fb873f;
+        }
+
+        .content-explanation,
+        .example,
+        .quick-checklist {
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .role-box {
+                min-width: 120px;
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .d-flex {
+                flex-direction: column;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Header Start -->
+    <div class="manajemen-info-header">
+        <h1><i class="fas fa-user-shield me-3"></i>Otoritas & Validasi Data</h1>
+        <p>Mengenali siapa yang berhak memvalidasi informasi dalam proyek BIM</p>
+    </div>
+    <!-- Header End -->
+
+    <!-- Content Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <section class="info-diagram">
+                        <h4>Skema Sederhana</h4>
+                        <div class="bg-light p-4 rounded text-center">
+                            <div class="d-flex justify-content-center align-items-center flex-column">
+                                <div class="role-box author">Author/Pembuat</div>
+                                <div class="arrow">↓</div>
+                                <div class="role-box reviewer">Reviewer/Pemeriksa</div>
+                                <div class="arrow">↓</div>
+                                <div class="role-box approver">Approver/Penyetuju</div>
+                                <div class="arrow">↓</div>
+                                <div class="role-box user">User/Konsumen</div>
+                            </div>
+                            <p class="text-muted small mt-3" style="text-align: center;">Hierarki peran dalam proses
+                                validasi informasi</p>
+                        </div>
+                    </section>
+
+                    <p class="aha-statement">
+                        Otoritas validasi bukan tentang posisi, melainkan tentang kompetensi dan tanggung jawab.
+                    </p>
+
+                    <section class="content-explanation">
+                        <h2>Konsep Otoritas dalam Validasi</h2>
+                        <p>Otoritas dalam manajemen informasi BIM mengacu pada hak dan tanggung jawab untuk
+                            mendeklarasikan
+                            bahwa suatu informasi dapat dianggap valid dan dapat digunakan. Sistem otoritas yang jelas
+                            mencegah penggunaan informasi yang tidak sah dan memastikan akuntabilitas.</p>
+                        <ul>
+                            <li>Otoritas bukan hanya tentang posisi, tetapi juga tentang kompetensi teknis</li>
+                            <li>Batasan otoritas harus didokumentasikan dalam BIM Execution Plan</li>
+                            <li>Delegasi otoritas dapat dilakukan dengan persetujuan tertulis</li>
+                            <li>Pelanggaran batasan otoritas dapat berdampak hukum pada proyek</li>
+                        </ul>
+
+                        <h2>Peran dalam Sistem Validasi</h2>
+                        <p>Setiap informasi dalam proyek BIM melewati beberapa peran yang memiliki tanggung jawab
+                            berbeda
+                            dalam proses validasi. Memahami peran ini penting untuk menjaga integritas informasi.</p>
+                        <ul>
+                            <li><strong>Author/Pembuat:</strong> Orang yang membuat informasi awal, bertanggung jawab
+                                atas
+                                akurasi dasar</li>
+                            <li><strong>Reviewer/Pemeriksa:</strong> Spesialis teknis yang memverifikasi informasi
+                                sesuai
+                                standar</li>
+                            <li><strong>Approver/Penyetuju:</strong> Pihak berwenang yang memberikan persetujuan final
+                            </li>
+                            <li><strong>User/Konsumen:</strong> Pihak yang menggunakan informasi untuk aktivitas mereka
+                            </li>
+                        </ul>
+
+                        <h2>Traceability dan Dokumentasi</h2>
+                        <p>Traceability adalah kemampuan untuk melacak seluruh riwayat validasi informasi. Setiap
+                            tindakan
+                            validasi harus tercatat dengan lengkap untuk audit dan akuntabilitas.</p>
+                        <ul>
+                            <li>Siapa yang menyetujui informasi dan pada tanggal berapa</li>
+                            <li>Untuk tujuan apa informasi tersebut disetujui</li>
+                            <li>Versi mana yang disetujui dan apa perbedaannya dengan versi sebelumnya</li>
+                            <li>Kondisi atau asumsi yang mendasari persetujuan tersebut</li>
+                        </ul>
+
+                        <h2>Layer Validasi Berdasarkan Kompleksitas</h2>
+                        <p>Tingkat validasi yang diperlukan tergantung pada dampak informasi terhadap proyek. Informasi
+                            kritis memerlukan validasi lebih ketat dibandingkan informasi pendukung.</p>
+                        <ul>
+                            <li><strong>Informasi Dasar:</strong> Validasi oleh author dan satu reviewer</li>
+                            <li><strong>Informasi Teknis:</strong> Validasi oleh spesialis teknis dan lead engineer</li>
+                            <li><strong>Informasi Kritis:</strong> Validasi multi-layer dengan approval owner</li>
+                            <li><strong>Informasi Kontrak:</strong> Validasi oleh legal dan procurement team</li>
+                        </ul>
+                    </section>
+
+                    <section class="example">
+                        <h2>Contoh dalam Proyek Konstruksi</h2>
+                        <p>Dalam proyek jembatan, model struktur 3D dibuat oleh engineer junior (author), direview oleh
+                            senior engineer (reviewer), dan mendapat approval dari principal engineer (approver). Shop
+                            drawing detail koneksi dibuat oleh detailer, direview oleh fabricator engineer, dan
+                            diapprove
+                            oleh independent checker. Method statement untuk erection di-review oleh safety officer dan
+                            di-approve oleh project manager. Setiap dokumen memiliki traceability lengkap siapa yang
+                            bertanggung jawab atas validitasnya.</p>
+                    </section>
+
+                    <section class="quick-checklist">
+                        <h3>Checklist Cepat</h3>
+                        <ul>
+                            <li>Definisikan batasan otoritas setiap peran dalam BIM Execution Plan</li>
+                            <li>Dokumentasikan setiap tindakan validasi dengan nama, tanggal, dan tujuan</li>
+                            <li>Pastikan approver memiliki kompetensi yang sesuai dengan kompleksitas informasi</li>
+                            <li>Jaga traceability lengkap untuk audit dan pelaporan</li>
+                            <li>Latih tim tentang pentingnya batasan otoritas dalam validasi</li>
+                            <li>Gunakan sistem elektronik untuk mencatat proses validasi</li>
+                            <li>Review berkala sistem otoritas untuk memastikan efektivitasnya</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6 footer-left text-start">
+                    <h5 class="text-white mb-2">Quick Link</h5>
+                    <div class="d-flex flex-column align-items-start">
+                        <a class="text-light mb-1" href="../pages/about.html" style="font-size: 14px;">About Us</a>
+                        <a class="text-light mb-1" href="../pages/contact.html" style="font-size: 14px;">Contact Us</a>
+                        <a class="text-light mb-1" href="#privacy" style="font-size: 14px;">Privacy Policy</a>
+                        <a class="text-light mb-1" href="#terms" style="font-size: 14px;">Terms & Condition</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-center text-start">
+                    <h5 class="text-white mb-2">Contact</h5>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-map-marker-alt me-2"></i>ITS Tower, Nifarro
+                        Park, Jakarta Selatan 12510</p>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-phone-alt me-2"></i>(021) 7221003</p>
+                    <p class="mb-2" style="font-size: 13px;"><i
+                            class="fa fa-envelope me-2"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-1 align-items-center">
+                        <a class="btn btn-outline-light btn-social me-1" href="https://twitter.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://facebook.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://youtube.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href="https://linkedin.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-right text-end">
+                    <h5 class="text-white mb-2">Newsletter</h5>
+                    <p style="font-size: 13px;">Bergabunglah dengan komunitas BIM NKE!</p>
+                    <div class="position-relative ms-auto" style="max-width: 300px;">
+                        <form action="mailto:nke-bim@nusakonstruksi.com" method="post" enctype="text/plain">
+                            <input class="form-control border-0 w-100 py-2 ps-3 pe-5" type="email"
+                                placeholder="Your email" required style="font-size: 13px;">
+                            <button class="btn btn-primary py-1 position-absolute top-0 end-0 mt-1 me-1" type="submit"
+                                style="font-size: 12px;">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-12 text-center py-2">
+                        <small>&copy; <a class="border-bottom" href="../index.html">2025 BIM NKE</a>, Hak Cipta
+                            Dilindungi.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+
+</body>
+
+</html>

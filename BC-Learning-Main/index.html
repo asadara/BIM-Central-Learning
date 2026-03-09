@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c">
+    <title>BCL-BIM Central Learning</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amarante&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="./lib/animate/animate.min.css">
+    <link rel="stylesheet" href="./lib/owlcarousel/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="icon" href="/img/icon.png">
+
+
+
+    <style>
+        /* Video Information Display System Styles */
+
+        /* Main Layout */
+        .video-info-display-container {
+            position: relative;
+            width: 100%;
+            min-height: 70vh;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .video-info-layout {
+            position: relative;
+            min-height: 70vh;
+            width: 100%;
+        }
+
+        /* Video Section (Full Width) */
+        .video-section {
+            position: relative;
+            width: 100%;
+            background: #000;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            min-height: 400px;
+            max-height: 600px;
+            overflow: hidden;
+        }
+
+        .display-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 2;
+            display: none;
+            /* Hide overlay for autoplay */
+        }
+
+        .video-wrapper:hover .video-overlay {
+            opacity: 1;
+        }
+
+        .play-pause-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .play-pause-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        .play-pause-btn i {
+            color: #333;
+            font-size: 24px;
+        }
+
+        .video-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            z-index: 3;
+        }
+
+        /* Video Controls */
+        .video-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 4;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .control-info {
+            flex: 1;
+            text-align: center;
+            margin: 0 20px;
+        }
+
+        .video-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #fb873f;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* News Overlays */
+        .news-overlays {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 25%;
+            /* Account for sidebar */
+            bottom: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .news-bar {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .news-bar.top-news {
+            top: 10px;
+        }
+
+        .news-bar.bottom-news {
+            bottom: 120px;
+            /* Above video controls */
+        }
+
+        .news-scroll {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+        }
+
+        .news-items {
+            display: flex;
+            gap: 40px;
+            animation: scrollNews 33.3s linear infinite;
+            white-space: nowrap;
+        }
+
+        .news-bar.top-news .news-items {
+            animation-duration: 33.3s;
+        }
+
+        .news-bar.bottom-news .news-items {
+            animation-duration: 24s;
+        }
+
+        .news-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            min-width: max-content;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .news-item:hover {
+            opacity: 0.8;
+        }
+
+        .news-title {
+            font-weight: 600;
+        }
+
+        .news-source {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        @keyframes scrollNews {
+            0% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Sidebar (Overlay on Video - 15-25%) */
+        .sidebar-section {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 25%;
+            height: calc(100% - 140px);
+            /* Leave space for video controls */
+            max-height: calc(100% - 140px);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(15px);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            overflow-y: auto;
+            z-index: 6;
+            box-shadow: -3px 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #6c757d;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+
+        /* Fallback carousel (if JS fails) */
+        .fallback-carousel {
+            display: none;
+            /* Hidden by default, shown if JS fails */
+        }
+
+        .fallback-carousel.show-fallback {
+            display: block;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .sidebar-section {
+                width: 30%;
+            }
+
+            .news-overlays {
+                right: 30%;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar-section {
+                display: none;
+                /* Hide sidebar on tablets/mobile */
+            }
+
+            .news-overlays {
+                right: 0;
+            }
+
+            .video-section {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .video-wrapper {
+                height: 40vh;
+                min-height: 250px;
+                max-height: 350px;
+            }
+
+            .video-section {
+                height: 40vh;
+                min-height: 250px;
+                max-height: 350px;
+            }
+
+            .sidebar-section {
+                padding: 15px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .news-item {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .video-controls {
+                padding: 15px;
+            }
+
+            .video-title {
+                font-size: 14px;
+            }
+        }
+
+        /* Loading and Error States */
+        .video-info-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            z-index: 10;
+        }
+
+        .video-info-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            z-index: 10;
+        }
+
+        /* Animation Classes */
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Carousel fix - batasi tinggi dan responsive (for fallback) */
+        .header-carousel {
+            max-height: 70vh;
+            overflow: hidden;
+        }
+
+        .header-carousel .owl-carousel-item {
+            height: 70vh;
+            max-height: 600px;
+            min-height: 400px;
+        }
+
+        .header-carousel .owl-carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        /* Responsive carousel */
+        @media (max-width: 768px) {
+            .header-carousel .owl-carousel-item {
+                height: 50vh;
+                min-height: 300px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header-carousel .owl-carousel-item {
+                height: 40vh;
+                min-height: 250px;
+            }
+        }
+    </style>
+
+
+</head>
+
+<body>
+
+    <!-- Spinner Start -->
+    <div id="spinner"
+        class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <!-- Spinner Ends -->
+
+    <!-- Navbar Universal -->
+    <div id="navbar-container"></div>
+
+    <!-- HTTPS Certificate Notice -->
+    <div id="https-cert-banner" class="container py-2">
+        <div class="alert alert-warning shadow-sm position-relative d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-2" aria-label="Close"
+                id="cert-banner-close"></button>
+            <div>
+                <strong>HTTPS Warning?</strong>
+                <div class="small">Jika ada peringatan HTTPS, unduh dan jalankan installer sertifikat BCL (Run as Administrator).</div>
+            </div>
+            <div class="text-md-end d-flex gap-2 flex-wrap justify-content-md-end">
+                <a class="btn btn-warning btn-sm" href="./bcl-install-cert.bat" download="bcl-install-cert.bat" id="cert-download">
+                    <i class="fa fa-shield-alt me-1"></i>Install Sertifikat
+                </a>
+                <button class="btn btn-outline-secondary btn-sm" type="button" id="cert-banner-installed">
+                    Saya sudah install
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Information Display System Start -->
+    <div class="container-fluid p-0 mb-4">
+        <div id="video-info-display" class="video-info-display-container" data-video-info-display>
+            <!-- Video Information Display will be loaded here by JavaScript -->
+            <div class="fallback-carousel">
+                <!-- Fallback to original carousel if JS fails -->
+                <div class="owl-carousel header-carousel position-relative">
+                    <div class="owl-carousel-item position-relative">
+                        <img class="img-fluid" src="./img/carousel-1.jpg" alt="">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center"
+                            style="background: rgba(24, 29, 56, .7);">
+                            <div class="container">
+                                <div class="row justify-content-start">
+                                    <div class="col-sm-10 col-lg-8">
+                                        <h5 class=" text-uppercase mb-3 animated slideInDown" style="color: #fb873f;">
+                                            BCL
+                                            - BIM Central Learning</h5>
+                                        <h1 class="display-4 text-white animated slideInDown" style="text-align: left;">
+                                            Platform
+                                            pelatihan interaktif pengembangkan keterampilan BIM yang efektif.</h1>
+                                        <p class="text-white mb-4 pb-2 justify-text">BIM Central Learning adalah
+                                            platform
+                                            pembelajaran dan pelatihan BIM interaktif yang dirancang untuk membantu
+                                            profesional
+                                            membangun keterampilan dan pengetahuan dalam teknologi BIM secara efektif
+                                            dan
+                                            menyeluruh !</p>
+                                        <a href="./pages/about.html"
+                                            class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">Cari
+                                            Tahu..</a>
+                                        <a href="./pages/signup.html"
+                                            class="btn btn-light py-md-3 px-md-5 animated slideInRight">Mulai Gabung</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="owl-carousel-item position-relative">
+                        <img class="img-fluid" src="./img/carousel-2.jpg" alt="">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center"
+                            style="background: rgba(24, 29, 56, .7);">
+                            <div class="container">
+                                <div class="row justify-content-start">
+                                    <div class="col-sm-10 col-lg-8">
+                                        <h5 class=" text-uppercase mb-3 animated slideInDown" style="color: #fb873f;">
+                                            Selamat
+                                            Datang di
+                                            BIM Central Learning</h5>
+                                        <h1 class="display-3 text-white animated slideInDown">Pengalaman Belajar
+                                            Interaktif
+                                        </h1>
+                                        <p class=" text-white mb-4 pb-2">Ikuti pembelajaran yang interaktif dengan
+                                            lesson, kuis,
+                                            dan proyek BIM. Dapatkan pengalaman praktik langsung yang membuat Anda tetap
+                                            termotivasi dan terinspirasi!</p>
+                                        <a href="./pages/about.html"
+                                            class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">Lebih
+                                            Jauh..</a>
+                                        <a href="./pages/signup.html"
+                                            class="btn btn-light py-md-3 px-md-5 animated slideInRight">Gabung
+                                            Sekarang.</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="owl-carousel-item position-relative">
+                        <img class="img-fluid" src="./img/carousel-2.jpg" alt="">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center"
+                            style="background: rgba(24, 29, 56, .7);">
+                            <div class="container">
+                                <div class="row justify-content-start">
+                                    <div class="col-sm-10 col-lg-8">
+                                        <h5 class=" text-uppercase mb-3 animated slideInDown" style="color: #fb873f;">
+                                            BIM Tools
+                                            &
+                                            Software</h5>
+                                        <h1 class="display-3 text-white animated slideInDown">Master BIM Software Modern
+                                        </h1>
+                                        <p class=" text-white mb-4 pb-2">Pelajari Autodesk Revit, Navisworks, Dynamo,
+                                            dan tools
+                                            BIM terdepan lainnya untuk proyek konstruksi masa depan!</p>
+                                        <a href="./pages/plugins.html"
+                                            class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft">Pelajari
+                                            Tools</a>
+                                        <a href="./pages/tutorial.html"
+                                            class="btn btn-light py-md-3 px-md-5 animated slideInRight">Tutorial
+                                            Video</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Video Information Display System End -->
+
+    <!-- BCL Ecosystem Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-2 text-center">
+                <div class="col-12 wow fadeInUp" data-wow-delay="0.3s">
+                    <h1 style="color: #fb873f;">Ekosistem Pembelajaran BIM Terlengkap</h1>
+                    <h1 style="color: #000000; font-family: 'Amarante', sans-serif; font-size: 120px">Bim Central
+                        Learning</h1>
+                    <p class="mb-5">Platform komprehensif untuk menguasai Building Information Modeling dari konsep
+                        dasar hingga implementasi profesional</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-brain fa-3x text-primary mb-4"></i>
+                            <h5 class="mb-3">BIM Mindset</h5>
+                            <p>Bangun pola pikir BIM yang tepat dengan konsep-konsep fundamental dan filosofi BIM untuk
+                                transformasi digital konstruksi</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.3s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-cogs fa-3x text-warning mb-4"></i>
+                            <h5 class="mb-3">BIM Governance</h5>
+                            <p>Kuasai manajemen informasi, peran & tanggung jawab, serta quality assurance dalam
+                                ekosistem BIM profesional</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.5s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-project-diagram fa-3x text-info mb-4"></i>
+                            <h5 class="mb-3">BIM Delivery Workflow</h5>
+                            <p>Pelajari alur kerja BIM end-to-end dari perencanaan hingga delivery deliverables teknis
+                                yang sesuai standar</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.7s">
+                    <div class="service-item text-center pt-3 shadow">
+                        <div class="p-4">
+                            <i class="fas fa-graduation-cap fa-3x text-success mb-4"></i>
+                            <h5 class="mb-3">E-Learning Interaktif</h5>
+                            <p>Akses pembelajaran interaktif dengan BIM NKE, video tutorial, knowledge assets, dan
+                                learning path terstruktur</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- BCL Ecosystem End -->
+
+    <!-- About Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-6 order-lg-1 wow fadeInLeft" data-wow-delay="0.1s">
+                    <div class="position-relative h-100" style="min-height: 400px;">
+                        <img class="img-fluid w-100 h-100" src="./img/about.jpg" alt=""
+                            style="object-fit: cover; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    </div>
+                </div>
+                <div class="col-lg-6 order-lg-2 wow fadeInRight" data-wow-delay="0.3s">
+                    <h6 class="section-title bg-white text-start pe-3">Sekilas BCL</h6>
+                    <h1 class="mb-4" style="color: #fb873f;">Selamat Datang di BCL</h1>
+                    <p class="mb-4 text-justify">Selamat datang di BIM Central Learning (BCL), pusat pembelajaran
+                        inovatif untuk mendalami Building Information Modeling (BIM)!</p>
+                    <p class="mb-4 text-justify">Di sini, Anda akan menemukan berbagai wawasan, strategi, dan praktik
+                        terbaik yang dirancang untuk memperkaya pemahaman serta keterampilan Anda dalam dunia BIM.</p>
+                    <p class="mb-4 text-justify"> Dengan mengeksplorasi laman ini, kami berharap Anda dapat memperoleh
+                        perspektif baru, meningkatkan efisiensi kerja, dan menerapkan BIM secara lebih optimal dalam
+                        proyek Anda. Mari jelajahi, belajar, dan berkembang bersama!</p>
+                    <p class="mb-4"> Di sini Anda akan mendapatkan ...</p>
+                    <div class="row gy-2 gx-4 mb-4">
+                        <div class="col-sm-6">
+                            <p class="mb-0"><i class="fa fa-arrow-right text-primary me-2"></i>Instruktur Ahli BIM</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="mb-0"><i class="fa fa-arrow-right text-primary me-2"></i>Sesi Interaksi secara
+                                Live</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="mb-0"><i class="fa fa-arrow-right text-primary me-2"></i>Katalog Pelatihan yg
+                                Komprehensif</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="mb-0"><i class="fa fa-arrow-right text-primary me-2"></i>Modul Belajar</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="mb-0"><i class="fa fa-arrow-right text-primary me-2"></i>Panduan Alur Belajar BIM
+                            </p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="mb-0"><i class="fa fa-arrow-right text-primary me-2"></i>Sertifikat dan
+                                Penghargaan</p>
+                        </div>
+                    </div>
+                    <a class="btn btn-primary py-3 px-5 mt-2" href="./pages/about.html">Pelajari Lebih Lanjut...</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- About End -->
+
+    <!-- Banner-1 Start -->
+    <div class="container-xxl py-5 pt-5 bg-light">
+        <div class="container">
+            <div class="row g-5 ">
+                <div class="col-lg-6 p-5 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <h1 class="mb-4" style="color: #fb873f;">Jelajahi Berbagai Ragam Pelatihan</h1>
+                    <p class="mb-4 justify-text">Temukan beragam pelatihan BIM yang dirancang untuk berbagai tingkat
+                        keahlian, mulai dari dasar hingga tingkat lanjut. Dengan modul yang komprehensif dan instruktur
+                        berpengalaman, Anda dapat mengasah keterampilan teknis, memahami standar industri, serta
+                        menguasai alat dan teknologi terbaru dalam dunia BIM. Pilih pelatihan yang sesuai dengan
+                        kebutuhan Anda dan tingkatkan kompetensi untuk menghadapi tantangan di industri konstruksi
+                        digital!</p>
+
+                    <a class="btn text-light py-3 px-5 mt-2" href="./pages/signup.html">Mulai Pelatihan-Gratis!</a>
+                </div>
+                <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.1s" style="min-height: 400px;">
+                    <div class="position-relative h-100">
+                        <img class="img-fluid position-absolute w-100 h-100" src="./img/banner-1.jpg" alt=""
+                            style="object-fit: cover;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Banner-1 End -->
+
+    <!-- Categories Start -->
+    <div class="container-xxl py-5 category">
+        <div class="container">
+            <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+                <h6 class="section-title bg-white text-center px-3">Halaman Utama</h6>
+                <h1 class="mb-5" style="color: #fb873f;">Akses Cepat ke Fitur BCL</h1>
+            </div>
+            <div class="row g-2 m-2">
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="0.3s">
+                        <img src="./img/cat1.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/elearning-assets/home.html" class="text-center">Learning Path</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="0.4s">
+                        <img src="./img/cat2.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/pages/Knowledgehub.html" class="text-center">BIM NKE</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="0.5s">
+                        <img src="./img/cat3.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/pages/projects.html" class="text-center">Projects</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="0.6s">
+                        <img src="./img/cat4.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/pages/tutorial.html" class="text-center">Video Tutorial</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="0.7s">
+                        <img src="./img/cat5.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/pages/library.html" class="text-center">BIM Library</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="0.8s">
+                        <img src="./img/cat6.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/pages/bimassets.html" class="text-center">Knowledge Assets</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="0.9s">
+                        <img src="./img/cat7.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/pages/standards.html" class="text-center">BIM Standards</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6  text-center">
+                    <div class="content shadow p-3 mb-2 wow fadeInUp" data-wow-delay="1.0s">
+                        <img src="./img/cat8.png" class="img-fluid" alt="categories">
+                        <h5 class="my-2">
+                            <a href="/pages/plugins.html" class="text-center">BIM Tools & Plugins</a>
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Categories End -->
+
+    <!-- Courses Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+                <h6 class="section-title bg-white text-center px-3">Pelatihan Unggulan</h6>
+                <h1 class="mb-5" style="color: #fb873f;">Program Pelatihan BIM Terpopuler</h1>
+            </div>
+            <div class="row g-4 py-2" id="courses-container">
+                <!-- Courses will be loaded dynamically from API -->
+                <div class="col-12 text-center" id="courses-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading courses...</span>
+                    </div>
+                    <p class="mt-2">Memuat kursus...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container text-center">
+        <a class="btn text-light py-3 px-5 mt-2 mb-5" href="./pages/elearning.html">Lihat Semua Kategori</a>
+    </div>
+    <!-- Courses End -->
+
+    <!-- Banner-2 Start -->
+    <section class="pb-5"
+        style="background: url('./img/banner-3.jpg') center center no-repeat; background-size: cover;">
+        <div class="container-xxl mt-5">
+            <div class="container">
+                <div class="row g-5 align-items-center min-vh-50">
+
+                    <div class="col-lg-6 order-lg-2 wow fadeInRight" data-wow-delay="0.1s">
+                        <div class="position-relative h-100" style="min-height: 350px;">
+                            <img class="img-fluid w-100 h-100 rounded-3 shadow" src="./img/banner-2.png" alt="Trainer"
+                                style="object-fit: cover;">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 order-lg-1 wow fadeInLeft" data-wow-delay="0.3s">
+                        <div class="bg-white bg-opacity-90 p-4 rounded-3 shadow">
+                            <h1 class="mb-4" style="color: #fb873f;">Anda tertarik jadi Trainer ?</h1>
+                            <p class="mb-4 text-dark text-justify">Belajar dari para ahli BIM global yang siap
+                                membagikan
+                                keterampilan dan wawasan terbaik untuk mendukung perkembangan profesional Anda!</p>
+
+                            <a class="btn btn-primary py-3 px-4" href="./pages/instructor.html">Mulai jadi Pelatih</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Banner-2 End -->
+
+    <!-- FAQ Start  -->
+    <div class="container-xxl py-5 category">
+        <div class="container">
+            <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+                <h1 class="mb-5">Punya Pertanyaan? Temukan Jawabannya di Sini!</h1>
+            </div>
+            <div class="row g-2">
+                <div class="col-12">
+                    <div class="accordion" id="accordionExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">Apa
+                                    itu BIM Central Learning ?
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body justify-text">
+                                    BIM Central Learning adalah platform pembelajaran daring yang dirancang untuk
+                                    membantu profesional dan pemula dalam menguasai Building Information Modeling (BIM).
+                                    Di sini, Anda bisa menemukan berbagai kursus, pelatihan, dan sumber belajar
+                                    interaktif yang akan meningkatkan keterampilan BIM Anda, mulai dari dasar hingga
+                                    tingkat lanjut. Dengan instruktur berpengalaman dan metode belajar fleksibel, BIM
+                                    Central Learning siap mendukung perkembangan karier Anda di industri konstruksi
+                                    digital!
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    Mengapa Memilih BIM Central Learning untuk Kursus Gratis Bersertifikat?
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body justify-text">
+                                    BIM Central Learning adalah pilihan terbaik untuk kursus BIM gratis dengan
+                                    sertifikat karena menyajikan konten pembelajaran berkualitas tinggi. Setiap kursus
+                                    dirancang dengan baik, menawarkan pengalaman belajar yang interaktif dan menarik,
+                                    serta membantu Anda mengembangkan keterampilan yang sesuai dengan tujuan karier di
+                                    industri konstruksi digital.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    Berapa Banyak Kursus Gratis yang Bisa Saya Ikuti Sekaligus?
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body justify-text">
+                                    Di BIM Central Learning, Anda bisa mendaftar di beberapa kursus gratis sekaligus dan
+                                    belajar sesuai dengan ritme yang paling nyaman untuk Anda!
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    Bagaimana Cara Mendaftar di Kursus Online Gratis Ini?
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body justify-text">
+                                    Anda bisa klik tombol “Daftar” di pojok kanan atas halaman dan mendaftar dengan
+                                    alamat email Anda, atau langsung masuk menggunakan akun Google untuk kemudahan
+                                    akses!
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                    Apa Saja Kursus Gratis Paling Populer di BIM Central Learning?
+                                </button>
+                            </h2>
+                            <div id="collapseFive" class="accordion-collapse collapse"
+                                data-bs-parent="#accordionExample">
+                                <div class="accordion-body justify-text">
+                                    BIM Central Learning berfokus pada keterampilan yang paling dibutuhkan di industri
+                                    konstruksi digital, membantu para pembelajar di seluruh dunia mencapai tujuan
+                                    profesional mereka.
+
+                                    <p>Beberapa kursus gratis yang paling diminati saat ini meliputi:</p>
+                                    <ul>
+                                        <li>Kursus Dasar BIM Gratis</li>
+                                        <li>Kursus Revit untuk Pemula</li>
+                                        <li>Kursus Dynamo & Automasi BIM</li>
+                                        <li>Kursus Manajemen Proyek Berbasis BIM</li>
+                                        <li>Kursus Kolaborasi dan Koordinasi BIM</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-xxl py-1 category">
+        <div class="container">
+            <div class="col-lg-6 col-md-12 wow fadeInUp" data-wow-delay="0.5s">
+                <form>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="name" required placeholder="Your Name">
+                                <label for="name">Nama</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="email" class="form-control" id="email" required placeholder="Your Email">
+                                <label for="email">E-mail</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="subject" required placeholder="Subject">
+                                <label for="subject">Judul/Topik</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <textarea class="form-control" required placeholder="Leave a message here" id="message"
+                                    style="height: 150px"></textarea>
+                                <label for="message">Pesan, Pertanyaan dsb.</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary w-100 py-3" type="button" id="sendEmail">Kirim Pesan</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- FAQ End  -->
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/lib/wow/wow.min.js"></script>
+    <script src="/lib/easing/easing.min.js"></script>
+    <script src="/lib/waypoints/waypoints.min.js"></script>
+    <script src="/lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/user.js"></script>
+    <script src="/js/loadComponents.js"></script>
+    <script src="/js/pesan.js"></script>
+
+    <!-- Video Information Display System -->
+    <script src="/js/video-info-display.js?v=20260305a"></script>
+
+    <script>
+        // Enhanced initialization with fallback for video display system
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🎬 Initializing Video Display System...');
+
+            // Wait a bit for all scripts to load
+            setTimeout(() => {
+                const container = document.getElementById('video-info-display');
+
+                if (!container) {
+                    console.error('❌ Video display container not found');
+                    return;
+                }
+
+                // Check if VideoInfoDisplay class is available
+                if (typeof VideoInfoDisplay === 'undefined') {
+                    console.error('❌ VideoInfoDisplay class not loaded, showing fallback');
+                    showFallbackCarousel();
+                    return;
+                }
+
+                console.log('✅ VideoInfoDisplay class found, initializing...');
+
+                try {
+                    const display = new VideoInfoDisplay({
+                        containerId: 'video-info-display'
+                    });
+
+                    display.init().then(() => {
+                        console.log('✅ Video display system initialized successfully');
+                    }).catch((error) => {
+                        console.error('❌ Video display initialization failed:', error);
+                        showFallbackCarousel();
+                    });
+
+                    // Make globally available for debugging
+                    window.videoInfoDisplay = display;
+
+                } catch (error) {
+                    console.error('❌ Video display creation failed:', error);
+                    showFallbackCarousel();
+                }
+
+            }, 1000); // Wait 1 second for scripts to load
+        });
+
+        function showFallbackCarousel() {
+            console.log('🔄 Showing fallback carousel');
+
+            const container = document.getElementById('video-info-display');
+            if (!container) return;
+
+            // Hide the video display container and show fallback
+            container.style.display = 'none';
+
+            const fallback = container.querySelector('.fallback-carousel');
+            if (fallback) {
+                fallback.classList.add('show-fallback');
+                fallback.style.display = 'block';
+
+                // Initialize Owl Carousel for fallback
+                if (typeof $ !== 'undefined' && typeof $.fn.owlCarousel !== 'undefined') {
+                    $('.header-carousel').owlCarousel({
+                        animateOut: 'fadeOut',
+                        animateIn: 'fadeIn',
+                        items: 1,
+                        autoplay: true,
+                        autoplayTimeout: 5000,
+                        autoplayHoverPause: false,
+                        dots: false,
+                        loop: true,
+                        nav: false,
+                        responsive: {
+                            0: { items: 1 },
+                            768: { items: 1 },
+                            1000: { items: 1 }
+                        }
+                    });
+                    console.log('✅ Fallback carousel initialized');
+                } else {
+                    console.warn('⚠️ Owl Carousel not available for fallback');
+                }
+            }
+        }
+    </script>
+
+    <script>
+        function toggleMenu() {
+            let menu = document.getElementById("menu");
+            if (menu.style.display === "block") {
+                menu.style.display = "none";
+            } else {
+                menu.style.display = "block";
+            }
+        }
+    </script>
+
+    <script>
+        // Jika user pindah ke dashboard, simpan halaman ini
+        sessionStorage.setItem("lastPageFromPages", window.location.pathname);
+    </script>
+    <script>
+        (function () {
+            const banner = document.getElementById('https-cert-banner');
+            if (!banner) {
+                return;
+            }
+
+            const hiddenKey = 'bcl_https_cert_banner_hidden';
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('cert') === 'installed') {
+                localStorage.setItem(hiddenKey, '1');
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+            if (localStorage.getItem(hiddenKey) === '1') {
+                banner.style.display = 'none';
+                return;
+            }
+
+            const closeBtn = document.getElementById('cert-banner-close');
+            const installedBtn = document.getElementById('cert-banner-installed');
+
+            const hideBanner = () => {
+                banner.style.display = 'none';
+                localStorage.setItem(hiddenKey, '1');
+            };
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', hideBanner);
+            }
+            if (installedBtn) {
+                installedBtn.addEventListener('click', hideBanner);
+            }
+        })();
+    </script>
+    <script>
+        (function () {
+            const link = document.getElementById('cert-download');
+            if (!link) {
+                return;
+            }
+
+            const fallbackContent = [
+                "@echo off",
+                "setlocal EnableExtensions EnableDelayedExpansion",
+                "",
+                "set \"DOMAIN=bcl.nke.net\"",
+                "set \"SERVER_IP=10.0.0.90\"",
+                "set \"CA_FILE=bcl-lan-root-ca.crt\"",
+                "set \"CA_PATH=%~dp0%CA_FILE%\"",
+                "set \"CA_URL=http://%SERVER_IP%/certs/%CA_FILE%\"",
+                "",
+                "echo Downloading LAN Root CA from %CA_URL% ...",
+                "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%CA_URL%' -OutFile '%CA_PATH%'\" >nul 2>&1",
+                "if not exist \"%CA_PATH%\" (",
+                "  where curl.exe >nul 2>&1",
+                "  if !errorlevel! equ 0 curl.exe -L -o \"%CA_PATH%\" \"%CA_URL%\" >nul 2>&1",
+                ")",
+                "if not exist \"%CA_PATH%\" (",
+                "  echo ERROR: gagal download %CA_FILE%",
+                "  pause",
+                "  exit /b 1",
+                ")",
+                "",
+                "net session >nul 2>&1",
+                "if %errorlevel% equ 0 (",
+                "  certutil -addstore -f Root \"%CA_PATH%\" >nul",
+                "  findstr /I /V /C:\"bcl.nke.net\" \"%SystemRoot%\\System32\\drivers\\etc\\hosts\" > \"%TEMP%\\bcl-hosts.tmp\"",
+                "  echo %SERVER_IP% %DOMAIN%>> \"%TEMP%\\bcl-hosts.tmp\"",
+                "  copy /Y \"%TEMP%\\bcl-hosts.tmp\" \"%SystemRoot%\\System32\\drivers\\etc\\hosts\" >nul",
+                "  del /q \"%TEMP%\\bcl-hosts.tmp\" >nul 2>&1",
+                "  ipconfig /flushdns >nul 2>&1",
+                ") else (",
+                "  echo NOTE: jalankan ulang sebagai Administrator untuk update hosts file.",
+                "  certutil -user -addstore -f Root \"%CA_PATH%\" >nul",
+                "  echo Tambahkan manual: %SERVER_IP% %DOMAIN%",
+                ")",
+                "",
+                "echo Selesai. Silakan tutup dan buka ulang browser.",
+                "start \"\" \"https://%DOMAIN%/?cert=installed\"",
+                "pause",
+                "endlocal"
+            ].join("\r\n");
+
+            const downloadText = (content, filename) => {
+                const blob = new Blob([content], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.download = filename;
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                URL.revokeObjectURL(url);
+            };
+
+            link.addEventListener('click', async (event) => {
+                event.preventDefault();
+
+                const filename = link.getAttribute('download') || 'bcl-install-cert.bat';
+                if (window.location.protocol === 'file:') {
+                    downloadText(fallbackContent, filename);
+                    return;
+                }
+
+                try {
+                    const response = await fetch(link.getAttribute('href'), { cache: 'no-store' });
+                    if (!response.ok) {
+                        throw new Error('download-failed');
+                    }
+
+                    const contentType = response.headers.get('content-type') || '';
+                    const text = await response.text();
+                    const looksLikeHtml = /<!doctype html|<html/i.test(text);
+                    if (contentType.includes('text/html') || looksLikeHtml) {
+                        throw new Error('html-response');
+                    }
+
+                    downloadText(text, filename);
+                } catch (error) {
+                    downloadText(fallbackContent, filename);
+                }
+            });
+        })();
+    </script>
+
+    <!-- Dynamic Course Loader -->
+    <script>
+        // Course loading functionality
+        class CourseLoader {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.loadingElement = document.getElementById('courses-loading');
+            }
+
+            async loadCourses() {
+                try {
+                    console.log('📚 Loading courses from API...');
+
+                    // Show loading
+                    if (this.loadingElement) {
+                        this.loadingElement.style.display = 'block';
+                    }
+
+                    // Fetch courses from API
+                    const response = await fetch('/api/courses');
+
+                    if (!response.ok) {
+                        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('✅ Courses loaded:', data);
+
+                    // Process and display courses
+                    this.displayCourses(data.courses || data || []);
+
+                } catch (error) {
+                    console.error('❌ Failed to load courses from API, using fallback:', error);
+                    this.loadFallbackCourses();
+                } finally {
+                    // Hide loading
+                    if (this.loadingElement) {
+                        this.loadingElement.style.display = 'none';
+                    }
+                }
+            }
+
+            // Fallback course data when API fails
+            loadFallbackCourses() {
+                console.log('🔄 Using fallback course data...');
+
+                const fallbackCourses = [
+                    {
+                        id: "bim-fundamentals-101",
+                        title: "Dasar-Dasar BIM",
+                        description: "Pelajari konsep dasar Building Information Modeling (BIM) dan pentingnya implementasi BIM dalam industri konstruksi modern.",
+                        category: "Fundamentals",
+                        duration: "2.5 jam",
+                        level: "Beginner",
+                        price: "Gratis",
+                        thumbnail: "./img/course-1.jpg"
+                    },
+                    {
+                        id: "autocad-bim-201",
+                        title: "AutoCAD untuk BIM",
+                        description: "Panduan lengkap penggunaan AutoCAD sebagai tool utama dalam workflow BIM untuk drafting dan dokumentasi teknis.",
+                        category: "Software Tools",
+                        duration: "4 jam",
+                        level: "Beginner to Intermediate",
+                        price: "Gratis",
+                        thumbnail: "./img/course-2.jpg"
+                    },
+                    {
+                        id: "revit-modeling-301",
+                        title: "3D Modeling dengan Revit",
+                        description: "Kursus intensif untuk menguasai teknik 3D modeling menggunakan Autodesk Revit dalam project BIM.",
+                        category: "3D Modeling",
+                        duration: "6 jam",
+                        level: "Intermediate",
+                        price: "Premium",
+                        thumbnail: "./img/course-3.jpg"
+                    },
+                    {
+                        id: "bim-collaboration-401",
+                        title: "Kolaborasi Proyek BIM",
+                        description: "Pelajari teknik koordinasi dan kolaborasi multi-disiplin dalam project BIM menggunakan platform collaboration tools.",
+                        category: "Collaboration",
+                        duration: "5 jam",
+                        level: "Advanced",
+                        price: "Premium",
+                        thumbnail: "./img/course-4.jpg"
+                    },
+                    {
+                        id: "bim-standards-501",
+                        title: "Standar & Sertifikasi BIM",
+                        description: "Persiapan sertifikasi BIM Manager dan implementasi standar BIM nasional serta internasional.",
+                        category: "Certification",
+                        duration: "3.5 jam",
+                        level: "Advanced",
+                        price: "Premium",
+                        thumbnail: "./img/course-5.jpg"
+                    },
+                    {
+                        id: "dynamo-automation-601",
+                        title: "Automation dengan Dynamo",
+                        description: "Penggunaan visual programming dengan Dynamo untuk mengotomatisasi workflow BIM dan meningkatkan produktivitas.",
+                        category: "Automation",
+                        duration: "5.5 jam",
+                        level: "Intermediate to Advanced",
+                        price: "Premium",
+                        thumbnail: "./img/course-6.jpg"
+                    }
+                ];
+
+                console.log('✅ Loaded fallback courses:', fallbackCourses.length);
+                this.displayCourses(fallbackCourses);
+            }
+
+            displayCourses(courses) {
+                if (!this.container) return;
+
+                // Clear existing content except loading
+                const loading = this.loadingElement;
+                this.container.innerHTML = '';
+                if (loading) this.container.appendChild(loading);
+
+                if (!courses || courses.length === 0) {
+                    this.showError('Tidak ada kursus tersedia saat ini.');
+                    return;
+                }
+
+                // Limit to 6 courses for homepage
+                const displayCourses = courses.slice(0, 6);
+
+                displayCourses.forEach((course, index) => {
+                    const courseElement = this.createCourseElement(course, index);
+                    this.container.appendChild(courseElement);
+                });
+
+                console.log(`✅ Displayed ${displayCourses.length} courses`);
+            }
+
+            createCourseElement(course, index) {
+                const colDiv = document.createElement('div');
+                colDiv.className = 'col-lg-2 col-md-4 col-sm-6 wow fadeInUp';
+                colDiv.setAttribute('data-wow-delay', `${0.1 + (index * 0.1)}s`);
+
+                // Determine badge color and text
+                let badgeColor = '#fb873f';
+                let badgeText = course.price === 'Gratis' ? 'GRATIS' : 'PREMIUM';
+                if (course.price !== 'Gratis') {
+                    badgeColor = '#0ed44c';
+                }
+
+                // Create thumbnail URL (fallback if not available)
+                const thumbnailUrl = course.thumbnail || './img/course-default.jpg';
+
+                // Create completion rate display
+                const completionRate = course.completionRate || 0;
+                const rating = (4.0 + Math.random() * 1).toFixed(1); // Mock rating
+                const students = Math.floor(Math.random() * 10000) + 1000; // Mock students
+
+                colDiv.innerHTML = `
+                    <div class="course-item shadow">
+                        <div class="position-relative overflow-hidden text-light image">
+                            <img class="img-fluid" src="${thumbnailUrl}" alt="${course.title}"
+                                style="object-fit: cover; height: 150px;" onerror="this.src='./img/course-default.jpg'">
+                            ${badgeText !== 'GRATIS' ? `<div class="course-badge position-absolute" style="top: 10px; left: 10px; background-color: ${badgeColor}; color: white; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">${badgeText}</div>` : ''}
+                        </div>
+
+                        <div class="p-2 pb-0">
+                            <h6 class="mb-1" style="font-size: 14px;">
+                                <a href="${this.getCourseLink(course)}" class="text-dark">${course.title}</a>
+                            </h6>
+                        </div>
+                        <div class="d-flex flex-wrap">
+                            <small class="flex-fill text-center py-1 px-1">
+                                <i class="fa fa-star text-warning me-1"></i>${rating}
+                            </small>
+                            <small class="flex-fill text-center py-1 px-1">
+                                <i class="fa fa-user-graduate me-1"></i>${students}+
+                            </small>
+                        </div>
+                        <div class="d-flex">
+                            <small class="text-muted px-2" style="font-size: 12px;">
+                                <i class="fa fa-clock me-1"></i>${course.duration || course.videoCount || 'N/A'}
+                            </small>
+                            <small class="text-primary fw-bold ms-auto px-2" style="cursor:pointer;">
+                                <a href="${this.getCourseLink(course)}">Mulai</a>
+                            </small>
+                        </div>
+                    </div>
+                `;
+
+                return colDiv;
+            }
+
+            getCourseLink(course) {
+                // Always return elearning.html as requested
+                return '/pages/elearning.html';
+            }
+
+            showError(message) {
+                if (!this.container) return;
+
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'col-12 text-center';
+                errorDiv.innerHTML = `
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${message}
+                    </div>
+                `;
+
+                this.container.innerHTML = '';
+                this.container.appendChild(errorDiv);
+            }
+        }
+
+        // Initialize course loader when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const courseLoader = new CourseLoader('courses-container');
+            courseLoader.loadCourses();
+        });
+    </script>
+
+    <!-- Page tracker untuk last page functionality -->
+    <script src="./js/page-tracker.js"></script>
+
+</body>
+
+</html>
+
+</html>
+</body>
+function toggleMenu() {

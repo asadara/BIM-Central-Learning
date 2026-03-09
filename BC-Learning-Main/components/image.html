@@ -1,0 +1,36 @@
+<div class="container">
+    <div class="content">
+        <h1>Berita Terkini</h1>
+        <p>Update terbaru tentang dunia BIM.</p>
+    </div>
+    <img src="https://picsum.photos/400/250" alt="Random Placeholder Image" class="floating-image">
+</div>
+
+<style>
+    .container {
+        position: relative;
+        width: 80%;
+        margin: auto;
+        overflow: hidden;
+        /* Potong bagian yang keluar */
+        background: #f0f0f0;
+        padding: 20px;
+    }
+
+    .content {
+        position: relative;
+        z-index: 2;
+        /* Pastikan teks di atas gambar */
+    }
+
+    .floating-image {
+        position: absolute;
+        top: -50px;
+        /* Atur posisi keluar dari container */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120%;
+        /* Bisa diperbesar untuk efek dramatis */
+        z-index: 1;
+    }
+</style>

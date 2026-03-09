@@ -1,0 +1,1402 @@
+﻿[
+    {
+        "id":  "BDW-001",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Delivery Workflow menjelaskanâ€¦",
+        "choices":  [
+                        "Urutan software",
+                        "Alur informasi dari kebutuhan hingga dipakai",
+                        "Struktur folder",
+                        "Jadwal rapat"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Workflow adalah alur informasi end-to-end."
+    },
+    {
+        "id":  "BDW-002",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Tahap pertama workflow adalahâ€¦",
+        "choices":  [
+                        "Modeling",
+                        "Menentukan kebutuhan informasi",
+                        "Koordinasi",
+                        "Simulasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Tanpa kebutuhan, produksi salah arah."
+    },
+    {
+        "id":  "BDW-003",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Koordinasi dilakukan setelahâ€¦",
+        "choices":  [
+                        "Model acak",
+                        "Informasi diproduksi sesuai kebutuhan",
+                        "Cetak gambar",
+                        "Rapat direksi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Koordinasi butuh input terarah."
+    },
+    {
+        "id":  "BDW-004",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Validasi berartiâ€¦",
+        "choices":  [
+                        "Cek visual",
+                        "Cek kelayakan untuk tujuan tertentu",
+                        "Cek ukuran",
+                        "Cek warna"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Validasi = fit-for-purpose."
+    },
+    {
+        "id":  "BDW-005",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Rilis dilakukan ketikaâ€¦",
+        "choices":  [
+                        "Model selesai",
+                        "Informasi sudah disahkan",
+                        "Deadline",
+                        "Semua sepakat lisan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Rilis menandai informasi boleh dipakai."
+    },
+    {
+        "id":  "BDW-006",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Jika workflow dilompati, risiko utamanya adalahâ€¦",
+        "choices":  [
+                        "Proyek cepat",
+                        "Keputusan salah karena alur tidak utuh",
+                        "File kecil",
+                        "Dokumen sedikit"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Workflow mencegah lompatan keputusan."
+    },
+    {
+        "id":  "BDW-007",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Workflow mencakup tahapâ€¦",
+        "choices":  [
+                        "Hanya modeling",
+                        "Requirements, Production, Coordination, Validation, Release",
+                        "Software installation",
+                        "Team building"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Workflow memiliki 5 tahap utama."
+    },
+    {
+        "id":  "BDW-008",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information requirements ditentukan olehâ€¦",
+        "choices":  [
+                        "BIM Manager saja",
+                        "Stakeholders dan tujuan proyek",
+                        "Software vendor",
+                        "Random"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Requirements berdasarkan kebutuhan stakeholder."
+    },
+    {
+        "id":  "BDW-009",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Production phase melibatkanâ€¦",
+        "choices":  [
+                        "Membuat model tanpa rencana",
+                        "Membuat model dan dokumen sesuai requirements",
+                        "Hanya koordinasi",
+                        "Hanya validasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Production membuat informasi sesuai kebutuhan."
+    },
+    {
+        "id":  "BDW-010",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Coordination phase memastikanâ€¦",
+        "choices":  [
+                        "Tidak ada konflik antar disiplin",
+                        "Model selesai cepat",
+                        "Biaya rendah",
+                        "Waktu singkat"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Koordinasi menyelesaikan konflik."
+    },
+    {
+        "id":  "BDW-011",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Validation phase memeriksaâ€¦",
+        "choices":  [
+                        "Hanya visual",
+                        "Kesesuaian dengan requirements",
+                        "Ukuran file",
+                        "Kecepatan loading"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Validasi memeriksa kesesuaian."
+    },
+    {
+        "id":  "BDW-012",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Release phase menandaiâ€¦",
+        "choices":  [
+                        "Akhir proyek",
+                        "Informasi siap digunakan",
+                        "Model final",
+                        "Pembayaran"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Release menandai kesiapan penggunaan."
+    },
+    {
+        "id":  "BDW-013",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Workflow mencegahâ€¦",
+        "choices":  [
+                        "Komunikasi",
+                        "Produksi informasi yang tidak diperlukan",
+                        "Inovasi",
+                        "Kolaborasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Workflow memastikan efisiensi."
+    },
+    {
+        "id":  "BDW-014",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Execution Plan (BEP) mendefinisikanâ€¦",
+        "choices":  [
+                        "Jadwal konstruksi",
+                        "Workflow dan deliverables",
+                        "Biaya proyek",
+                        "Team structure"
+                    ],
+        "answer_index":  1,
+        "explanation":  "BEP mendefinisikan proses BIM."
+    },
+    {
+        "id":  "BDW-015",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information Delivery Milestone (IDM)â€¦",
+        "choices":  [
+                        "Titik kontrol dalam workflow",
+                        "Jadwal pengiriman material",
+                        "Meeting point",
+                        "File storage"
+                    ],
+        "answer_index":  0,
+        "explanation":  "IDM adalah checkpoint pengiriman."
+    },
+    {
+        "id":  "BDW-016",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Model Progression Specification (MPS)â€¦",
+        "choices":  [
+                        "Standar untuk model maturity",
+                        "Spesifikasi hardware",
+                        "Jadwal progres",
+                        "Budget plan"
+                    ],
+        "answer_index":  0,
+        "explanation":  "MPS mendefinisikan tingkat detail model."
+    },
+    {
+        "id":  "BDW-017",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Employer Information Requirements (EIR)â€¦",
+        "choices":  [
+                        "Kebutuhan informasi dari owner",
+                        "Requirements dari kontraktor",
+                        "Requirements dari software",
+                        "Requirements acak"
+                    ],
+        "answer_index":  0,
+        "explanation":  "EIR mendefinisikan kebutuhan owner."
+    },
+    {
+        "id":  "BDW-018",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM Protocol menentukanâ€¦",
+        "choices":  [
+                        "Software yang digunakan",
+                        "Tanggung jawab dan proses",
+                        "Warna model",
+                        "Ukuran file"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Protocol mendefinisikan aturan kerja."
+    },
+    {
+        "id":  "BDW-019",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Task Information Delivery Plan (TIDP)â€¦",
+        "choices":  [
+                        "Rencana pengiriman untuk tugas spesifik",
+                        "Plan keseluruhan",
+                        "Plan keuangan",
+                        "Plan risiko"
+                    ],
+        "answer_index":  0,
+        "explanation":  "TIDP fokus pada tugas tertentu."
+    },
+    {
+        "id":  "BDW-020",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Asset Information Model (AIM)â€¦",
+        "choices":  [
+                        "Model untuk konstruksi",
+                        "Model untuk operasi dan maintenance",
+                        "Model sementara",
+                        "Model percobaan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "AIM digunakan untuk operasional."
+    },
+    {
+        "id":  "BDW-021",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Project Information Model (PIM)â€¦",
+        "choices":  [
+                        "Model untuk operasi",
+                        "Model untuk konstruksi",
+                        "Model final",
+                        "Model awal"
+                    ],
+        "answer_index":  1,
+        "explanation":  "PIM digunakan selama konstruksi."
+    },
+    {
+        "id":  "BDW-022",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Master Information Delivery Plan (MIDP)â€¦",
+        "choices":  [
+                        "Rencana tugas kecil",
+                        "Rencana keseluruhan pengiriman",
+                        "Plan harian",
+                        "Plan mingguan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "MIDP adalah rencana master."
+    },
+    {
+        "id":  "BDW-023",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Coordination Register mencatatâ€¦",
+        "choices":  [
+                        "Semua file",
+                        "Isu koordinasi dan resolusi",
+                        "Jadwal rapat",
+                        "Daftar hadir"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Register melacak isu koordinasi."
+    },
+    {
+        "id":  "BDW-024",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Clash detection dilakukan padaâ€¦",
+        "choices":  [
+                        "Tahap requirements",
+                        "Tahap koordinasi",
+                        "Tahap validasi",
+                        "Tahap release"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Clash detection bagian dari koordinasi."
+    },
+    {
+        "id":  "BDW-025",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Quality assurance dalam workflowâ€¦",
+        "choices":  [
+                        "Membuat model cepat",
+                        "Memastikan standar terpenuhi",
+                        "Mengurangi kontrol",
+                        "Meningkatkan biaya"
+                    ],
+        "answer_index":  1,
+        "explanation":  "QA memastikan kualitas."
+    },
+    {
+        "id":  "BDW-026",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information exchange dilakukan melaluiâ€¦",
+        "choices":  [
+                        "Email saja",
+                        "Format dan platform yang disepakati",
+                        "USB drive",
+                        "Random"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Exchange menggunakan metode standar."
+    },
+    {
+        "id":  "BDW-027",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM deliverables termasukâ€¦",
+        "choices":  [
+                        "Hanya model 3D",
+                        "Model, dokumen, data",
+                        "Software license",
+                        "Coffee cups"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Deliverables adalah output informasi."
+    },
+    {
+        "id":  "BDW-028",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Workflow iteration memungkinkanâ€¦",
+        "choices":  [
+                        "Pengulangan tanpa tujuan",
+                        "Perbaikan berdasarkan feedback",
+                        "Penundaan proyek",
+                        "Peningkatan biaya"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Iteration meningkatkan kualitas."
+    },
+    {
+        "id":  "BDW-029",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Gate reviews memastikanâ€¦",
+        "choices":  [
+                        "Kesiapan untuk tahap berikutnya",
+                        "Proyek selesai",
+                        "Pembayaran lunas",
+                        "Team happy"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Gate reviews adalah kontrol kualitas."
+    },
+    {
+        "id":  "BDW-030",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "BIM maturity level mempengaruhiâ€¦",
+        "choices":  [
+                        "Kompleksitas workflow",
+                        "Warna model",
+                        "Ukuran file",
+                        "Kecepatan internet"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Maturity menentukan kompleksitas proses."
+    },
+    {
+        "id":  "BDW-031",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Collaboration dalam workflow melibatkanâ€¦",
+        "choices":  [
+                        "Hanya satu disiplin",
+                        "Semua disiplin dan stakeholder",
+                        "BIM Manager saja",
+                        "Client saja"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Collaboration melibatkan semua pihak."
+    },
+    {
+        "id":  "BDW-032",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Information management systemâ€¦",
+        "choices":  [
+                        "Platform untuk mengelola informasi",
+                        "Sistem operasi komputer",
+                        "Software modeling",
+                        "Database karyawan"
+                    ],
+        "answer_index":  0,
+        "explanation":  "IMS mengelola informasi proyek."
+    },
+    {
+        "id":  "BDW-033",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Version control dalam BIMâ€¦",
+        "choices":  [
+                        "Mengubah versi software",
+                        "Melacak perubahan model",
+                        "Update OS",
+                        "Backup file"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Version control melacak revisi."
+    },
+    {
+        "id":  "BDW-034",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Approval process dalam workflowâ€¦",
+        "choices":  [
+                        "Menyetujui deliverables",
+                        "Menyetujui liburan",
+                        "Menyetujui budget",
+                        "Menyetujui team"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Approval memvalidasi deliverables."
+    },
+    {
+        "id":  "BDW-035",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Handover information untukâ€¦",
+        "choices":  [
+                        "Konstruksi",
+                        "Operasi dan maintenance",
+                        "Desain ulang",
+                        "Penjualan"
+                    ],
+        "answer_index":  1,
+        "explanation":  "Handover untuk operasional."
+    },
+    {
+        "id":  "BDW-036",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "As-built information mencatatâ€¦",
+        "choices":  [
+                        "Desain awal",
+                        "Kondisi akhir konstruksi",
+                        "Perencanaan",
+                        "Estimasi"
+                    ],
+        "answer_index":  1,
+        "explanation":  "As-built mencatat kondisi aktual."
+    },
+    {
+        "id":  "BDW-037",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Workflow documentationâ€¦",
+        "choices":  [
+                        "Mencatat proses dan keputusan",
+                        "Mencatat cuaca",
+                        "Mencatat pengeluaran",
+                        "Mencatat liburan"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Documentation mencatat workflow."
+    },
+    {
+        "id":  "BDW-038",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Risk management dalam workflowâ€¦",
+        "choices":  [
+                        "Mengidentifikasi risiko pengiriman",
+                        "Mengidentifikasi risiko cuaca",
+                        "Mengidentifikasi risiko kesehatan",
+                        "Mengidentifikasi risiko lalu lintas"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Risk management fokus pada pengiriman."
+    },
+    {
+        "id":  "BDW-039",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Performance measurementâ€¦",
+        "choices":  [
+                        "Mengukur efektivitas workflow",
+                        "Mengukur tinggi bangunan",
+                        "Mengukur berat material",
+                        "Mengukur waktu istirahat"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Measurement mengukur performa proses."
+    },
+    {
+        "id":  "BDW-040",
+        "level":  "mixed",
+        "type":  "single",
+        "prompt":  "Continuous improvementâ€¦",
+        "choices":  [
+                        "Meningkatkan workflow berdasarkan pelajaran",
+                        "Meningkatkan gaji",
+                        "Meningkatkan liburan",
+                        "Meningkatkan biaya"
+                    ],
+        "answer_index":  0,
+        "explanation":  "Improvement berdasarkan pembelajaran."
+    },
+    {
+        "id":  "BDW-041",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan CDE (Common Data Environment)?",
+        "choices":  [
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+                    ],
+        "answer_index":  0,
+        "explanation":  "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola."
+    },
+    {
+        "id":  "BDW-042",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama CDE (Common Data Environment) adalah...",
+        "choices":  [
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui.",
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat."
+    },
+    {
+        "id":  "BDW-043",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan WIP (Work in Progress)?",
+        "choices":  [
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu.",
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only."
+                    ],
+        "answer_index":  1,
+        "explanation":  "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan."
+    },
+    {
+        "id":  "BDW-044",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama WIP (Work in Progress) adalah...",
+        "choices":  [
+                        "koordinasi antar tim memakai informasi yang sudah disetujui.",
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance."
+                    ],
+        "answer_index":  2,
+        "explanation":  "mengembangkan informasi internal sebelum QA dan review."
+    },
+    {
+        "id":  "BDW-045",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Shared state?",
+        "choices":  [
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu.",
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container."
+                    ],
+        "answer_index":  2,
+        "explanation":  "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only."
+    },
+    {
+        "id":  "BDW-046",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Shared state adalah...",
+        "choices":  [
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui."
+                    ],
+        "answer_index":  3,
+        "explanation":  "koordinasi antar tim memakai informasi yang sudah disetujui."
+    },
+    {
+        "id":  "BDW-047",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Published state?",
+        "choices":  [
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+                    ],
+        "answer_index":  3,
+        "explanation":  "informasi yang telah diterima sebagai deliverable kontraktual dan diotorisasi untuk penggunaan tertentu."
+    },
+    {
+        "id":  "BDW-048",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Published state adalah...",
+        "choices":  [
+                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "mengendalikan versi resmi yang dipakai lintas tim."
+                    ],
+        "answer_index":  0,
+        "explanation":  "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+    },
+    {
+        "id":  "BDW-049",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Archived state?",
+        "choices":  [
+                        "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only.",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "informasi yang disupersede dan diarsipkan sebagai rekam jejak proyek serta bersifat read-only."
+    },
+    {
+        "id":  "BDW-050",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Archived state adalah...",
+        "choices":  [
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "menyediakan audit trail dan referensi operasi atau maintenance.",
+                        "mengendalikan versi resmi yang dipakai lintas tim.",
+                        "menjaga jejak perubahan internal dan memungkinkan rollback."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menyediakan audit trail dan referensi operasi atau maintenance."
+    },
+    {
+        "id":  "BDW-051",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Status (suitability) code?",
+        "choices":  [
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container.",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan.",
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2)."
+                    ],
+        "answer_index":  1,
+        "explanation":  "metadata yang menunjukkan tujuan dan izin penggunaan sebuah information container."
+    },
+    {
+        "id":  "BDW-052",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Status (suitability) code adalah...",
+        "choices":  [
+                        "mengendalikan versi resmi yang dipakai lintas tim.",
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "mencegah penggunaan informasi di luar tujuan yang diizinkan.",
+                        "menyusun dan menemukan informasi secara konsisten."
+                    ],
+        "answer_index":  2,
+        "explanation":  "mencegah penggunaan informasi di luar tujuan yang diizinkan."
+    },
+    {
+        "id":  "BDW-053",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Revision?",
+        "choices":  [
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan.",
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published).",
+                        "set metadata minimum: state, status code, revision, dan classification."
+                    ],
+        "answer_index":  2,
+        "explanation":  "penomoran untuk melacak informasi yang dibagikan atau diterbitkan (Shared atau Published)."
+    },
+    {
+        "id":  "BDW-054",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Revision adalah...",
+        "choices":  [
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "mengendalikan versi resmi yang dipakai lintas tim."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mengendalikan versi resmi yang dipakai lintas tim."
+    },
+    {
+        "id":  "BDW-055",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Versioning (WIP version)?",
+        "choices":  [
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+                    ],
+        "answer_index":  3,
+        "explanation":  "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
+    },
+    {
+        "id":  "BDW-056",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Versioning (WIP version) adalah...",
+        "choices":  [
+                        "menjaga jejak perubahan internal dan memungkinkan rollback.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "memastikan kepatuhan metadata sebelum review teknis."
+                    ],
+        "answer_index":  0,
+        "explanation":  "menjaga jejak perubahan internal dan memungkinkan rollback."
+    },
+    {
+        "id":  "BDW-057",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Classification code?",
+        "choices":  [
+                        "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "review isi teknis sebelum informasi dibagikan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2)."
+    },
+    {
+        "id":  "BDW-058",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Classification code adalah...",
+        "choices":  [
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "menyusun dan menemukan informasi secara konsisten.",
+                        "memastikan kepatuhan metadata sebelum review teknis.",
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menyusun dan menemukan informasi secara konsisten."
+    },
+    {
+        "id":  "BDW-059",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Information container metadata?",
+        "choices":  [
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "set metadata minimum: state, status code, revision, dan classification.",
+                        "review isi teknis sebelum informasi dibagikan.",
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol."
+                    ],
+        "answer_index":  1,
+        "explanation":  "set metadata minimum: state, status code, revision, dan classification."
+    },
+    {
+        "id":  "BDW-060",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Information container metadata adalah...",
+        "choices":  [
+                        "memastikan kepatuhan metadata sebelum review teknis.",
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "membuat informasi teridentifikasi dan terkelola seragam.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi."
+                    ],
+        "answer_index":  2,
+        "explanation":  "membuat informasi teridentifikasi dan terkelola seragam."
+    },
+    {
+        "id":  "BDW-061",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan QA check?",
+        "choices":  [
+                        "review isi teknis sebelum informasi dibagikan.",
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP."
+                    ],
+        "answer_index":  2,
+        "explanation":  "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared."
+    },
+    {
+        "id":  "BDW-062",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama QA check adalah...",
+        "choices":  [
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "memastikan kepatuhan metadata sebelum review teknis."
+                    ],
+        "answer_index":  3,
+        "explanation":  "memastikan kepatuhan metadata sebelum review teknis."
+    },
+    {
+        "id":  "BDW-063",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Technical review?",
+        "choices":  [
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "review isi teknis sebelum informasi dibagikan."
+                    ],
+        "answer_index":  3,
+        "explanation":  "review isi teknis sebelum informasi dibagikan."
+    },
+    {
+        "id":  "BDW-064",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Technical review adalah...",
+        "choices":  [
+                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi."
+                    ],
+        "answer_index":  0,
+        "explanation":  "memastikan kualitas dan kebenaran konten sebelum koordinasi."
+    },
+    {
+        "id":  "BDW-065",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan BIM Execution Plan (BEP)?",
+        "choices":  [
+                        "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model."
+                    ],
+        "answer_index":  0,
+        "explanation":  "dokumen formal yang mendefinisikan bagaimana BIM dijalankan, dimonitor, dan dikontrol."
+    },
+    {
+        "id":  "BDW-066",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama BIM Execution Plan (BEP) adalah...",
+        "choices":  [
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi.",
+                        "menandai lokasi isu dan melacak penyelesaiannya."
+                    ],
+        "answer_index":  1,
+        "explanation":  "menjelaskan peran, proses, serta cara dan waktu produksi informasi."
+    },
+    {
+        "id":  "BDW-067",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan EIR (Exchange/Employer Information Requirements)?",
+        "choices":  [
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model.",
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital."
+                    ],
+        "answer_index":  1,
+        "explanation":  "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP."
+    },
+    {
+        "id":  "BDW-068",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama EIR (Exchange/Employer Information Requirements) adalah...",
+        "choices":  [
+                        "mendukung interoperabilitas openBIM lintas aplikasi.",
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
+                        "mempercepat pengisian sistem FM saat handover."
+                    ],
+        "answer_index":  2,
+        "explanation":  "menetapkan apa, kapan, dan format informasi yang harus diserahkan."
+    },
+    {
+        "id":  "BDW-069",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan IFC (Industry Foundation Classes)?",
+        "choices":  [
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model.",
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "skema data terbuka untuk pertukaran informasi antar software BIM.",
+                        "tingkat kelengkapan suatu elemen model."
+                    ],
+        "answer_index":  2,
+        "explanation":  "skema data terbuka untuk pertukaran informasi antar software BIM."
+    },
+    {
+        "id":  "BDW-070",
+        "level":  "easy",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama IFC (Industry Foundation Classes) adalah...",
+        "choices":  [
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mendukung interoperabilitas openBIM lintas aplikasi."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mendukung interoperabilitas openBIM lintas aplikasi."
+    },
+    {
+        "id":  "BDW-071",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan BCF (BIM Collaboration Format)?",
+        "choices":  [
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "standar openBIM untuk komunikasi dan manajemen isu pada model."
+                    ],
+        "answer_index":  3,
+        "explanation":  "standar openBIM untuk komunikasi dan manajemen isu pada model."
+    },
+    {
+        "id":  "BDW-072",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama BCF (BIM Collaboration Format) adalah...",
+        "choices":  [
+                        "menandai lokasi isu dan melacak penyelesaiannya.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "koordinasi lintas disiplin dan deteksi konflik."
+                    ],
+        "answer_index":  0,
+        "explanation":  "menandai lokasi isu dan melacak penyelesaiannya."
+    },
+    {
+        "id":  "BDW-073",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan COBie?",
+        "choices":  [
+                        "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+                    ],
+        "answer_index":  0,
+        "explanation":  "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital."
+    },
+    {
+        "id":  "BDW-074",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama COBie adalah...",
+        "choices":  [
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mempercepat pengisian sistem FM saat handover.",
+                        "koordinasi lintas disiplin dan deteksi konflik.",
+                        "memberi informasi terkoordinasi untuk keputusan proyek."
+                    ],
+        "answer_index":  1,
+        "explanation":  "mempercepat pengisian sistem FM saat handover."
+    },
+    {
+        "id":  "BDW-075",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Level of Development (LOD)?",
+        "choices":  [
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "tingkat kelengkapan suatu elemen model.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone.",
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset."
+                    ],
+        "answer_index":  1,
+        "explanation":  "tingkat kelengkapan suatu elemen model."
+    },
+    {
+        "id":  "BDW-076",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Level of Development (LOD) adalah...",
+        "choices":  [
+                        "koordinasi lintas disiplin dan deteksi konflik.",
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu.",
+                        "mendukung fase operasi setelah proyek selesai."
+                    ],
+        "answer_index":  2,
+        "explanation":  "menentukan detail minimum yang dibutuhkan untuk penggunaan tertentu."
+    },
+    {
+        "id":  "BDW-077",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Model federation?",
+        "choices":  [
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone.",
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset.",
+                        "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah."
+                    ],
+        "answer_index":  2,
+        "explanation":  "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi."
+    },
+    {
+        "id":  "BDW-078",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Model federation adalah...",
+        "choices":  [
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "mendukung fase operasi setelah proyek selesai.",
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "koordinasi lintas disiplin dan deteksi konflik."
+                    ],
+        "answer_index":  3,
+        "explanation":  "koordinasi lintas disiplin dan deteksi konflik."
+    },
+    {
+        "id":  "BDW-079",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Information model delivery (PIM)?",
+        "choices":  [
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah.",
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+                    ],
+        "answer_index":  3,
+        "explanation":  "project information model yang ditinjau dan diterima sebagai deliverable pada milestone."
+    },
+    {
+        "id":  "BDW-080",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Information model delivery (PIM) adalah...",
+        "choices":  [
+                        "memberi informasi terkoordinasi untuk keputusan proyek.",
+                        "mendukung fase operasi setelah proyek selesai.",
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "memastikan hanya pihak berwenang mengakses informasi."
+                    ],
+        "answer_index":  0,
+        "explanation":  "memberi informasi terkoordinasi untuk keputusan proyek."
+    },
+    {
+        "id":  "BDW-081",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Asset Information Model (AIM)?",
+        "choices":  [
+                        "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah.",
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "satu sumber informasi resmi yang dipakai seluruh tim."
+                    ],
+        "answer_index":  0,
+        "explanation":  "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset."
+    },
+    {
+        "id":  "BDW-082",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Asset Information Model (AIM) adalah...",
+        "choices":  [
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "mendukung fase operasi setelah proyek selesai.",
+                        "memastikan hanya pihak berwenang mengakses informasi.",
+                        "mengurangi duplikasi dan kesalahan informasi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "mendukung fase operasi setelah proyek selesai."
+    },
+    {
+        "id":  "BDW-083",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Audit trail?",
+        "choices":  [
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah.",
+                        "satu sumber informasi resmi yang dipakai seluruh tim.",
+                        "status isu yang dilacak dari open atau in progress hingga closed."
+                    ],
+        "answer_index":  1,
+        "explanation":  "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah."
+    },
+    {
+        "id":  "BDW-084",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Audit trail adalah...",
+        "choices":  [
+                        "memastikan hanya pihak berwenang mengakses informasi.",
+                        "mengurangi duplikasi dan kesalahan informasi.",
+                        "akuntabilitas dan bukti saat audit atau klaim.",
+                        "memantau progres penyelesaian masalah."
+                    ],
+        "answer_index":  2,
+        "explanation":  "akuntabilitas dan bukti saat audit atau klaim."
+    },
+    {
+        "id":  "BDW-085",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Access control?",
+        "choices":  [
+                        "satu sumber informasi resmi yang dipakai seluruh tim.",
+                        "status isu yang dilacak dari open atau in progress hingga closed.",
+                        "pengaturan hak akses berdasarkan state atau role di CDE.",
+                        "deliverable data pada milestone sementara sebelum handover penuh."
+                    ],
+        "answer_index":  2,
+        "explanation":  "pengaturan hak akses berdasarkan state atau role di CDE."
+    },
+    {
+        "id":  "BDW-086",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Access control adalah...",
+        "choices":  [
+                        "mengurangi duplikasi dan kesalahan informasi.",
+                        "memantau progres penyelesaian masalah.",
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "memastikan hanya pihak berwenang mengakses informasi."
+                    ],
+        "answer_index":  3,
+        "explanation":  "memastikan hanya pihak berwenang mengakses informasi."
+    },
+    {
+        "id":  "BDW-087",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Single source of truth?",
+        "choices":  [
+                        "status isu yang dilacak dari open atau in progress hingga closed.",
+                        "deliverable data pada milestone sementara sebelum handover penuh.",
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "satu sumber informasi resmi yang dipakai seluruh tim."
+                    ],
+        "answer_index":  3,
+        "explanation":  "satu sumber informasi resmi yang dipakai seluruh tim."
+    },
+    {
+        "id":  "BDW-088",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Single source of truth adalah...",
+        "choices":  [
+                        "mengurangi duplikasi dan kesalahan informasi.",
+                        "memantau progres penyelesaian masalah.",
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "mencegah penggunaan di luar tujuan resmi."
+                    ],
+        "answer_index":  0,
+        "explanation":  "mengurangi duplikasi dan kesalahan informasi."
+    },
+    {
+        "id":  "BDW-089",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Issue lifecycle?",
+        "choices":  [
+                        "status isu yang dilacak dari open atau in progress hingga closed.",
+                        "deliverable data pada milestone sementara sebelum handover penuh.",
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only."
+                    ],
+        "answer_index":  0,
+        "explanation":  "status isu yang dilacak dari open atau in progress hingga closed."
+    },
+    {
+        "id":  "BDW-090",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Issue lifecycle adalah...",
+        "choices":  [
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "memantau progres penyelesaian masalah.",
+                        "mencegah penggunaan di luar tujuan resmi.",
+                        "koordinasi tanpa mengubah sumber asli."
+                    ],
+        "answer_index":  1,
+        "explanation":  "memantau progres penyelesaian masalah."
+    },
+    {
+        "id":  "BDW-091",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Interim deliverables (data drops)?",
+        "choices":  [
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "deliverable data pada milestone sementara sebelum handover penuh.",
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only.",
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi."
+                    ],
+        "answer_index":  1,
+        "explanation":  "deliverable data pada milestone sementara sebelum handover penuh."
+    },
+    {
+        "id":  "BDW-092",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Interim deliverables (data drops) adalah...",
+        "choices":  [
+                        "mencegah penggunaan di luar tujuan resmi.",
+                        "koordinasi tanpa mengubah sumber asli.",
+                        "membangun data bertahap agar handover akhir lancar.",
+                        "mencegah pemakaian informasi prematur."
+                    ],
+        "answer_index":  2,
+        "explanation":  "membangun data bertahap agar handover akhir lancar."
+    },
+    {
+        "id":  "BDW-093",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Published information usage?",
+        "choices":  [
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only.",
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi.",
+                        "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native."
+                    ],
+        "answer_index":  2,
+        "explanation":  "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi)."
+    },
+    {
+        "id":  "BDW-094",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Published information usage adalah...",
+        "choices":  [
+                        "koordinasi tanpa mengubah sumber asli.",
+                        "mencegah pemakaian informasi prematur.",
+                        "kolaborasi multi-perangkat lunak.",
+                        "mencegah penggunaan di luar tujuan resmi."
+                    ],
+        "answer_index":  3,
+        "explanation":  "mencegah penggunaan di luar tujuan resmi."
+    },
+    {
+        "id":  "BDW-095",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Shared information usage?",
+        "choices":  [
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi.",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native.",
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only."
+                    ],
+        "answer_index":  3,
+        "explanation":  "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only."
+    },
+    {
+        "id":  "BDW-096",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Shared information usage adalah...",
+        "choices":  [
+                        "koordinasi tanpa mengubah sumber asli.",
+                        "mencegah pemakaian informasi prematur.",
+                        "kolaborasi multi-perangkat lunak.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat."
+                    ],
+        "answer_index":  0,
+        "explanation":  "koordinasi tanpa mengubah sumber asli."
+    },
+    {
+        "id":  "BDW-097",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan WIP information usage?",
+        "choices":  [
+                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi.",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native.",
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan."
+                    ],
+        "answer_index":  0,
+        "explanation":  "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi."
+    },
+    {
+        "id":  "BDW-098",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama WIP information usage adalah...",
+        "choices":  [
+                        "kolaborasi multi-perangkat lunak.",
+                        "mencegah pemakaian informasi prematur.",
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "mengembangkan informasi internal sebelum QA dan review."
+                    ],
+        "answer_index":  1,
+        "explanation":  "mencegah pemakaian informasi prematur."
+    },
+    {
+        "id":  "BDW-099",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Apa yang dimaksud dengan Information exchange via IFC?",
+        "choices":  [
+                        "platform terpusat untuk mengumpulkan, mengelola, dan menyebarkan informasi proyek melalui proses terkelola.",
+                        "pertukaran data lintas software melalui IFC, bukan hanya file native.",
+                        "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan.",
+                        "informasi yang sudah disetujui untuk dibagikan dengan tujuan tertentu dan bersifat read-only."
+                    ],
+        "answer_index":  1,
+        "explanation":  "pertukaran data lintas software melalui IFC, bukan hanya file native."
+    },
+    {
+        "id":  "BDW-100",
+        "level":  "medium",
+        "type":  "single",
+        "prompt":  "Dalam konteks BIM Delivery Workflow: Tujuan utama Information exchange via IFC adalah...",
+        "choices":  [
+                        "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
+                        "mengembangkan informasi internal sebelum QA dan review.",
+                        "kolaborasi multi-perangkat lunak.",
+                        "koordinasi antar tim memakai informasi yang sudah disetujui."
+                    ],
+        "answer_index":  2,
+        "explanation":  "kolaborasi multi-perangkat lunak."
+    }
+]

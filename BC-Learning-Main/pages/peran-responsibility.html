@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Batas Tanggung Jawab Informasi</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <style>
+        .manajemen-info-header {
+            text-align: center;
+            margin: -40px 0 0 0;
+            padding: 5px 10px 0px 10px;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .manajemen-info-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .manajemen-info-header p {
+            font-size: 0.95rem;
+            color: #666;
+            text-transform: none;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .info-diagram {
+            margin-bottom: 2rem;
+        }
+
+        .info-diagram h4 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .gate-box {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            min-width: 160px;
+            min-height: 60px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gate-box.item {
+            background: #ffeaa7;
+            color: #d63031;
+            border: 2px solid #fdcb6e;
+        }
+
+        .gate-box.owner {
+            background: #74b9ff;
+            color: #0984e3;
+            border: 2px solid #0984e3;
+        }
+
+        .gate-box.review {
+            background: #55efc4;
+            color: #00b894;
+            border: 2px solid #00b894;
+        }
+
+        .gate-box.approved {
+            background: #a29bfe;
+            color: #6c5ce7;
+            border: 2px solid #6c5ce7;
+        }
+
+        .gate-box.used {
+            background: #ddd;
+            color: #666;
+            border: 2px solid #999;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: #666;
+            margin: 0 10px;
+        }
+
+        .aha-statement {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #fb873f;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(251, 135, 63, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid #fb873f;
+        }
+
+        .content-explanation,
+        .example,
+        .quick-checklist {
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .gate-box {
+                min-width: 100px;
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .arrow {
+                font-size: 1.2rem;
+                margin: 0 5px;
+            }
+
+            .d-flex {
+                flex-direction: column;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Universal -->
+    <div id="navbar"></div>
+    <script>
+        fetch('/components/navbar.html').then(r => r.text()).then(t => { document.getElementById('navbar').innerHTML = t });
+    </script>
+
+    <!-- Header Start -->
+    <div class="manajemen-info-header">
+        <h1><i class="fas fa-balance-scale me-3"></i>Batas Tanggung Jawab Informasi</h1>
+        <p>Menentukan batas tanggung jawab setiap pihak terhadap informasi BIM</p>
+    </div>
+    <!-- Header End -->
+
+    <!-- Content Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <section class="info-diagram">
+                        <h4>Skema Sederhana</h4>
+                        <div class="bg-light p-4 rounded text-center">
+                            <div class="d-flex justify-content-center align-items-center flex-wrap">
+                                <div class="gate-box item">Info Item</div>
+                                <div class="arrow">→</div>
+                                <div class="gate-box owner">Owner</div>
+                                <div class="arrow">→</div>
+                                <div class="gate-box review">Review</div>
+                                <div class="arrow">→</div>
+                                <div class="gate-box approved">Approved</div>
+                                <div class="arrow">→</div>
+                                <div class="gate-box used">Used on Site</div>
+                            </div>
+                            <p class="text-muted small mt-3" style="text-align: center;">Tanggung jawab tidak otomatis
+                                pindah.</p>
+                        </div>
+                    </section>
+
+                    <p class="aha-statement">
+                        Yang berbahaya bukan salah data, tapi salah mengira siapa penanggung jawab data.
+                    </p>
+
+                    <section class="content-explanation">
+                        <h2>Perbedaan Owner vs User</h2>
+                        <p>Dalam sistem BIM, owner adalah pihak yang bertanggung jawab atas kebenaran, kelengkapan, dan
+                            ketepatan waktu informasi, sedangkan user hanya menggunakan informasi tersebut. Tanggung
+                            jawab tidak otomatis berpindah ketika informasi diserahkan.</p>
+                        <ul>
+                            <li><strong>Owner:</strong> Bertanggung jawab atas akurasi dan keandalan informasi sepanjang
+                                siklus hidupnya</li>
+                            <li><strong>User:</strong> Menggunakan informasi untuk keperluan pekerjaan namun tidak
+                                bertanggung jawab atas kesalahannya</li>
+                            <li><strong>Handover:</strong> Transfer tanggung jawab harus dilakukan secara eksplisit
+                                dengan dokumentasi</li>
+                            <li><strong>Shared Responsibility:</strong> Beberapa pihak dapat memiliki tanggung jawab
+                                berbeda terhadap aspek informasi yang sama</li>
+                        </ul>
+
+                        <h2>Aspek Tanggung Jawab Informasi</h2>
+                        <p>Tanggung jawab dalam BIM mencakup tiga aspek utama: kebenaran data, kelengkapan informasi,
+                            dan ketepatan waktu. Setiap aspek ini dapat memiliki owner yang berbeda tergantung
+                            kompleksitas proyek.</p>
+                        <ul>
+                            <li><strong>Kebenaran (Accuracy):</strong> Owner teknis (engineer/drafter) bertanggung jawab
+                                atas kebenaran teknis data</li>
+                            <li><strong>Kelengkapan (Completeness):</strong> BIM Coordinator bertanggung jawab atas
+                                kelengkapan informasi</li>
+                            <li><strong>Ketepatan Waktu (Timeliness):</strong> Project Manager bertanggung jawab atas
+                                delivery sesuai schedule</li>
+                        </ul>
+
+                        <h2>Tanggung Jawab vs Tanggung Jawab Fisik</h2>
+                        <p>Tanggung jawab informasi BIM berbeda dengan tanggung jawab pekerjaan konstruksi fisik.
+                            Seseorang dapat bertanggung jawab atas informasi tanpa harus mengerjakan pekerjaan fisiknya.
+                        </p>
+                        <ul>
+                            <li>Arsitek bertanggung jawab atas kebenaran gambar desain, bukan mengerjakan konstruksi
+                            </li>
+                            <li>Structural Engineer bertanggung jawab atas perhitungan struktur, bukan membangunnya</li>
+                            <li>BIM Manager bertanggung jawab atas koordinasi model, bukan mengawasi pekerja</li>
+                            <li>Contractor bertanggung jawab atas as-built information setelah handover</li>
+                        </ul>
+                    </section>
+
+                    <section class="example">
+                        <h2>Contoh Kasus Proyek Konstruksi</h2>
+                        <p>Site team menggunakan revisi model struktur yang lama karena tidak ada owner yang "release"
+                            revisi terbaru. Akibatnya, terjadi clash antara struktur yang sudah dibangun dengan MEP yang
+                            mengikuti model terbaru. Rework menghabiskan waktu 2 minggu dan biaya tambahan 18%. Setelah
+                            kejadian ini, proyek menetapkan protokol handover yang jelas antara design team dan site
+                            team.</p>
+                    </section>
+
+                    <section class="quick-checklist">
+                        <h3>Checklist Cepat</h3>
+                        <ul>
+                            <li>Tetapkan owner untuk setiap aspek informasi (akurasi, kelengkapan, timeliness)</li>
+                            <li>Dokumentasikan versioning dan release note untuk setiap perubahan informasi</li>
+                            <li>Buat distribution list yang jelas siapa yang menerima informasi terbaru</li>
+                            <li>Implementasikan responsibility tags pada setiap file dan dokumen BIM</li>
+                            <li>Lakukan handover meeting formal saat transfer tanggung jawab</li>
+                            <li>Monitor penggunaan informasi untuk memastikan versi yang benar digunakan</li>
+                            <li>Buat escalation procedure ketika ada dispute tanggung jawab</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-light footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-4 col-md-6 footer-left text-start">
+                    <h5 class="text-white mb-2">Quick Link</h5>
+                    <div class="d-flex flex-column align-items-start">
+                        <a class="text-light mb-1" href="../pages/about.html" style="font-size: 14px;">About Us</a>
+                        <a class="text-light mb-1" href="../pages/contact.html" style="font-size: 14px;">Contact Us</a>
+                        <a class="text-light mb-1" href="#privacy" style="font-size: 14px;">Privacy Policy</a>
+                        <a class="text-light mb-1" href="#terms" style="font-size: 14px;">Terms & Condition</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-center text-start">
+                    <h5 class="text-white mb-2">Contact</h5>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-map-marker-alt me-2"></i>ITS Tower, Nifarro
+                        Park, Jakarta Selatan 12510</p>
+                    <p class="mb-1" style="font-size: 13px;"><i class="fa fa-phone-alt me-2"></i>(021) 7221003</p>
+                    <p class="mb-2" style="font-size: 13px;"><i
+                            class="fa fa-envelope me-2"></i>nke-bim@nusakonstruksi.com</p>
+                    <div class="d-flex pt-1 align-items-center">
+                        <a class="btn btn-outline-light btn-social me-1" href="https://twitter.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://facebook.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-outline-light btn-social me-1" href="https://youtube.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-youtube"></i></a>
+                        <a class="btn btn-outline-light btn-social" href="https://linkedin.com" target="_blank"
+                            style="width: 30px; height: 30px; font-size: 12px;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 footer-right text-end">
+                    <h5 class="text-white mb-2">Newsletter</h5>
+                    <p style="font-size: 13px;">Bergabunglah dengan komunitas BIM NKE!</p>
+                    <div class="position-relative ms-auto" style="max-width: 300px;">
+                        <form action="mailto:nke-bim@nusakonstruksi.com" method="post" enctype="text/plain">
+                            <input class="form-control border-0 w-100 py-2 ps-3 pe-5" type="email"
+                                placeholder="Your email" required style="font-size: 13px;">
+                            <button class="btn btn-primary py-1 position-absolute top-0 end-0 mt-1 me-1" type="submit"
+                                style="font-size: 12px;">Subscribe</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="copyright">
+                <div class="row">
+                    <div class="col-md-12 text-center py-2">
+                        <small>&copy; <a class="border-bottom" href="../index.html">2025 BIM NKE</a>, Hak Cipta
+                            Dilindungi.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+
+</body>
+
+</html>

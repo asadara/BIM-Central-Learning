@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCL Learning Path</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">
+    <link rel="stylesheet" href="../elearning-assets/css/style.css">
+</head>
+
+<body>
+
+    <!-- Header akan dimuat otomatis oleh component-loader.js -->
+    <div class="header-container"></div>
+
+    <!-- Sidebar akan dimuat otomatis oleh component-loader.js -->
+    <div class="sidebar-container"></div>
+
+    <section class="home-grid">
+        <h1 class="heading">quick options</h1>
+        <div class="box-container">
+            <div class="box">
+                <h3 class="title">Progress</h3>
+                <p class="likes">Completed Modules : <span id="completed-count">0</span></p>
+                <a href="#" class="inline-btn">view progress</a>
+            </div>
+            <div class="box">
+                <h3 class="title">Top Categories</h3>
+                <div class="flex">
+                    <a href="#"><i class="fas fa-code"></i><span>BIM</span></a>
+                    <a href="#"><i class="fas fa-cube"></i><span>CAD</span></a>
+                    <a href="#"><i class="fas fa-building"></i><span>Project</span></a>
+                    <a href="#"><i class="fas fa-chart-line"></i><span>Management</span></a>
+                </div>
+            </div>
+            <div class="box">
+                <h3 class="title">Popular Topics</h3>
+                <div class="flex">
+                    <a href="#"><i class="fab fa-html5"></i><span>IFC</span></a>
+                    <a href="#"><i class="fab fa-js"></i><span>Automation</span></a>
+                    <a href="#"><i class="fab fa-php"></i><span>API</span></a>
+                    <a href="#"><i class="fab fa-bootstrap"></i><span>Visualization</span></a>
+                </div>
+            </div>
+            <div class="box">
+                <h3 class="title">Become a Tutor</h3>
+                <p class="tutor">Bergabunglah menjadi kontributor konten BCL!</p>
+                <a href="#" class="inline-btn">get started</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="courses">
+        <h1 class="heading">Learning Path</h1>
+        <div class="box-container" id="modules-list">Loading modules...</div>
+        <div class="more-btn">
+        </div>
+    </section>
+
+    <!-- Footer akan dimuat otomatis oleh component-loader.js -->
+    <div class="footer-container"></div>
+
+    <!-- custom js file link  -->
+    <script src="../elearning-assets/js/component-loader.js"></script>
+    <script src="../elearning-assets/js/script.js"></script>
+    <script src="../js/learning-path.js"></script>
+</body>
+
+</html>

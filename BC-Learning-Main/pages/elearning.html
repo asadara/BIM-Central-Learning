@@ -1,0 +1,848 @@
+<style>
+    .list-group-item ul {
+        list-style: none;
+        padding-left: 24px;
+    }
+
+    .list-group-item ul li {
+        font-size: 0.95em;
+        color: #555;
+    }
+
+    .badge {
+        font-size: 0.85em;
+    }
+</style>
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+    <title>BCL-BIM Central Learning</title>
+    <meta charset="utf-8">
+    <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Favicon -->
+    <link href="../img/icons/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amarante&display=swap" rel="stylesheet">
+
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons removed due to CDN issues -->
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        .folder-card,
+        .file-card {
+            transition: box-shadow 0.2s, transform 0.2s;
+            cursor: pointer;
+        }
+
+        .folder-card:hover,
+        .file-card:hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            transform: scale(1.04);
+        }
+
+        .search-highlight {
+            border: 2px solid #ffc107 !important;
+            background: #fffbe6 !important;
+        }
+
+        @media (max-width: 768px) {
+
+            .col-lg-3,
+            .col-md-4,
+            .col-sm-6 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+
+        .modal-lg {
+            max-width: 900px;
+        }
+    </style>
+
+    <style>
+        #pdfPreviewContainer {
+            display: none;
+            /* Secara default disembunyikan */
+            width: 100%;
+            height: 500px;
+            /* Default height */
+            min-height: 300px;
+            max-height: 90vh;
+            resize: vertical;
+            /* Bisa diubah ukuran ke atas/bawah */
+            overflow: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+
+    <style>
+        #videoPreviewContainer {
+            display: none;
+            /* Secara default disembunyikan */
+            margin: 20px auto;
+            /* Jarak dari tepi atas & bawah */
+            padding: 15px;
+            /* Padding di dalam container */
+            max-width: 800px;
+            /* Agar tidak terlalu besar */
+            border: 2px solid #ccc;
+            /* Batasan agar lebih jelas */
+            background: #f9f9f9;
+            /* Warna latar belakang agar lebih nyaman dilihat */
+            border-radius: 10px;
+            /* Sudut membulat */
+        }
+    </style>
+
+    <style>
+        /* Pastikan ikon folder dan file tampil dengan ukuran yang sesuai */
+        .content img {
+            max-width: 80px;
+            /* Ukuran maksimal ikon */
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            /* Posisikan di tengah */
+        }
+
+        /* Simple dropdown styles */
+        .simple-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            border-radius: 4px;
+            top: 100%;
+            left: 0;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+    <script src="../js/user.js" defer></script>
+
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #main-content {
+            flex: 1 0 auto;
+        }
+
+        #footer-container {
+            flex-shrink: 0;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+    <div id="main-content">
+        <!-- Container tombol "Kembali" dan pencarian Start -->
+        <div class="container text-center my-2">
+            <h1 class="text-center" style="margin-top: -40px !important; margin-bottom: 20px !important;">Kategori
+                Materi Pembelajaran BCL</h1>
+
+            <!-- Flexbox untuk merapikan tombol dalam satu baris -->
+            <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                <button id="backButton" class="btn btn-secondary" onclick="goBack()" style="display: none;">⬆
+                    Kembali</button>
+
+                <input type="text" id="searchInput" class="form-control w-25" placeholder="Cari file..."
+                    onkeyup="searchFiles()">
+                <button class="btn btn-primary" onclick="searchFiles()">🔍 Cari</button>
+
+                <a href="search.html" class="btn btn-secondary">Pencarian Lanjut</a>
+
+                <!-- Simple Dropdown Training (CSS-only, no Bootstrap JS needed) -->
+                <div class="simple-dropdown">
+                    <button class="btn btn-secondary" id="trainingDropdown" onclick="toggleDropdown()">MENU TRAINING BCL
+                        ▼</button>
+                    <div class="dropdown-content" id="dropdownContent">
+                        <a href="../elearning-assets/home.html">Materi Belajar</a>
+                        <a href="../elearning-assets/practice.html">Latihan Soal</a>
+                        <a href="../elearning-assets/exams.html">Ujian</a>
+                        <a href="../elearning-assets/certification.html">Sertifikasi</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Bagian folder dan file dihapus, hanya tampilkan video tutorial -->
+
+        <!-- Daftar Video Tutorial -->
+        <div class="container mt-4">
+            <h5>Daftar Video Tutorial BIM:</h5>
+            <div id="videoList" class="row g-3"></div>
+        </div>
+
+        <!-- Preview File -->
+        <div id="previewContainer" class="resizable-preview" style="display: none;">
+            <iframe id="filePreview" src="" class="preview-frame"></iframe>
+        </div>
+
+        <div id="searchResults"></div>
+
+        <!-- PDF & Video Preview Container Start -->
+        <div id="pdfPreviewContainer" style="display: none;">
+            <embed id="pdfPreview" src="" type="application/pdf" width="100%" height="100%">
+        </div>
+
+        <div id="videoPreviewContainer" style="display: none;">
+            <video id="videoPreview" width="100%" controls preload="metadata">
+                <source id="videoSource" src="" type="video/mp4">Browser Anda tidak mendukung pemutaran video.
+            </video>
+        </div>
+        <!-- PDF & Video Preview Container End -->
+    </div>
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <!-- Bootstrap JS removed due to CDN issues -->
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!--<script src="../js/searchengine.js"></script>-->
+
+    <!-- API FRONTEND - menggunakan unified tutorials.js -->
+    <script src="../js/tutorials.js"></script>
+
+    <!-- Tambahkan di bagian <head> atau sebelum </body> -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video-js.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.14.3/video.min.js"></script>
+
+    <style>
+        /* Membesarkan ikon PDF */
+        .pdf-icon {
+            max-width: 200px !important;
+            /* Perbesar ukuran ikon PDF */
+            height: auto;
+        }
+
+        .course-card {
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .course-thumbnail {
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .video-card {
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .video-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .video-thumbnail {
+            height: 120px;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .loading-spinner i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+    </style>
+
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/script.js"></script>
+
+    <!-- Custom E-Learning JavaScript -->
+    <script>
+        // Global variables
+        let allCourses = [];
+        let allVideos = [];
+        let currentCategory = 'all';
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function () {
+            loadElearningContent();
+            initializeEventListeners();
+        });
+
+        // Main function to load all content
+        async function loadElearningContent() {
+            showLoadingState();
+
+            try {
+                // Load courses and videos in parallel
+                const [coursesResult, videosResult] = await Promise.all([
+                    fetchCourses(),
+                    fetchVideos()
+                ]);
+
+                // Store all videos (remove the 20 limit)
+                allVideos = videosResult;
+
+                // Display content
+                displayCourses(coursesResult);
+                displayVideosForPage(currentPage);
+
+                // Initialize pagination
+                updatePaginationControls();
+
+                hideLoadingState();
+
+            } catch (error) {
+                console.error('Failed to load elearning content:', error);
+                showErrorState(error);
+            }
+        }
+
+        // Fetch courses from backend
+        async function fetchCourses() {
+            try {
+                const response = await fetch('http://10.0.0.90:5051/api/courses');
+                if (!response.ok) throw new Error('Failed to fetch courses');
+
+                const courses = await response.json();
+                allCourses = courses;
+                return courses;
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+                return [];
+            }
+        }
+
+        // Fetch videos from backend
+        async function fetchVideos() {
+            try {
+                const response = await fetch('http://10.0.0.90:5051/api/tutorials');
+                if (!response.ok) throw new Error('Failed to fetch videos');
+
+                const videos = await response.json();
+                // Remove the 20 video limit - load all videos
+                return videos;
+            } catch (error) {
+                console.error('Error fetching videos:', error);
+                return [];
+            }
+        }
+
+        // Display videos for specific page
+        function displayVideosForPage(page) {
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const videosForPage = allVideos.slice(startIndex, endIndex);
+
+            displayVideos(videosForPage, startIndex + 1);
+        }
+
+        // Update pagination controls
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(allVideos.length / itemsPerPage);
+            const paginationContainer = document.getElementById('pagination-container');
+
+            if (!paginationContainer) {
+                // Create pagination container
+                const container = document.createElement('div');
+                container.id = 'pagination-container';
+                container.className = 'd-flex justify-content-center align-items-center mt-4 gap-3';
+
+                // Insert after video list
+                const videoSection = document.querySelector('.container.mt-4');
+                if (videoSection) {
+                    videoSection.appendChild(container);
+                }
+            }
+
+            const container = document.getElementById('pagination-container');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            // Previous button
+            paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left me-1"></i>Previous
+            </button>`;
+
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(1)">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span class="mx-2">...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} btn-sm" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<span class="mx-2">...</span>`;
+                }
+                paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(${totalPages})">${totalPages}</button>`;
+            }
+
+            // Next button
+            paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                Next<i class="fas fa-chevron-right ms-1"></i>
+            </button>`;
+
+            // Page info
+            paginationHTML += `<div class="ms-3 text-muted small">
+                Halaman ${currentPage} dari ${totalPages} (${allVideos.length} video)
+            </div>`;
+
+            container.innerHTML = paginationHTML;
+        }
+
+        // Change page function
+        function changePage(page) {
+            const totalPages = Math.ceil(allVideos.length / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+
+            currentPage = page;
+            displayVideosForPage(currentPage);
+            updatePaginationControls();
+
+            // Scroll to top of video list
+            const videoList = document.getElementById('videoList');
+            if (videoList) {
+                videoList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Display courses section
+        function displayCourses(courses) {
+            let coursesGrid = document.getElementById('coursesGrid');
+
+            // Create courses section if it doesn't exist
+            if (!coursesGrid) {
+                const coursesSection = document.createElement('div');
+                coursesSection.className = 'container mt-5';
+                coursesSection.innerHTML = `
+                    <h3 class="text-center mb-4">
+                        <i class="fas fa-graduation-cap text-primary me-2"></i>
+                        Kategori Pembelajaran BIM
+                    </h3>
+                    <div class="row g-4" id="coursesGrid"></div>
+                `;
+
+                // Insert after the existing container
+                const existingContainer = document.querySelector('.container.text-center.my-2');
+                existingContainer.insertAdjacentElement('afterend', coursesSection);
+                coursesGrid = document.getElementById('coursesGrid');
+            }
+
+            // Clear existing content and add filtered courses
+            coursesGrid.innerHTML = '';
+            courses.forEach(course => {
+                const courseCard = createCourseCard(course);
+                coursesGrid.appendChild(courseCard);
+            });
+        }
+
+        // Helper function to get appropriate thumbnail by category
+        function getThumbnailByCategory(category) {
+            // Map categories to specific thumbnail images
+            const categoryThumbnails = {
+                'Fundamentals': '../img/course-1.jpg',
+                'Software Tools': '../img/course-2.jpg',
+                '3D Modeling': '../img/course-3.jpg',
+                'Collaboration': '../img/course-4.jpg',
+                'Certification': '../img/course-5.jpg',
+                'Automation': '../img/course-6.jpg',
+                'General BIM': '../img/course-7.jpg',
+                'Revit BIM': '../img/course-8.jpg',
+                'AutoCAD': '../img/course-9.jpg',
+                'Navisworks': '../img/course-10.jpg',
+                'Dynamo': '../img/course-11.jpg',
+                'Enscape': '../img/course-12.png'
+            };
+
+            // Return specific thumbnail if category matches, otherwise use default
+            return categoryThumbnails[category] || '../img/default.jpg';
+        }
+
+        // Create course card
+        function createCourseCard(course) {
+            const card = document.createElement('div');
+            card.className = 'col-lg-3 col-md-4 col-sm-6';
+            card.innerHTML = `
+                <div class="card course-card h-100">
+                    <img src="${getThumbnailByCategory(course.category)}" class="course-thumbnail card-img-top"
+                         alt="${course.title}" onerror="this.src='../img/fallback-thumb.png'">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">${course.title}</h5>
+                        <p class="card-text flex-grow-1">${course.description}</p>
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-play-circle me-1"></i>
+                                    ${course.videoCount || 0} Videos
+                                </small>
+                                <span class="badge bg-primary">${course.icon ? '<i class="' + course.icon + '"></i>' : '🎓'}</span>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="openCourse('${course.id}')">
+                                <i class="fas fa-eye me-2"></i>Lihat Kursus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // Display videos section
+        function displayVideos(videos) {
+            const videoList = document.getElementById('videoList');
+            videoList.innerHTML = '';
+
+            if (videos.length === 0) {
+                videoList.innerHTML = '<div class="col-12"><p class="text-center">Tidak ada video tersedia.</p></div>';
+                return;
+            }
+
+            // Create table structure
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'table-responsive';
+
+            const table = document.createElement('table');
+            table.className = 'table table-striped table-hover';
+
+            table.innerHTML = `
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col" style="width: 60px;">No</th>
+                        <th scope="col">Judul Video</th>
+                        <th scope="col" style="width: 150px;">Kategori</th>
+                        <th scope="col" style="width: 100px;">Views</th>
+                        <th scope="col" style="width: 120px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${videos.map((video, index) => createVideoTableRow(video, index + 1)).join('')}
+                </tbody>
+            `;
+
+            tableContainer.appendChild(table);
+            videoList.appendChild(tableContainer);
+        }
+
+        // Create video table row
+        function createVideoTableRow(video, index) {
+            const category = detectVideoCategory(video.name);
+            return `
+                <tr>
+                    <td class="text-center">${index}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="${category.icon} me-2 text-primary"></i>
+                            <div>
+                                <div title="${video.name}">${video.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            <i class="${category.icon} me-1"></i>
+                            ${video.category || category.name}
+                        </small>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-eye me-1"></i>
+                            ${video.viewCount || 0}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-outline-primary btn-sm" onclick="playVideo('${video.id}', '${video.path}')" title="Putar Video">
+                            <i class="fas fa-play me-1"></i>Putar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Search function
+            window.searchFiles = function () {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+                if (!searchTerm) {
+                    // Reset to show all content
+                    displayCourses(allCourses);
+                    displayVideos(allVideos);
+                    document.getElementById('searchResults').innerHTML = '';
+                    return;
+                }
+
+                // Filter courses
+                const filteredCourses = allCourses.filter(course =>
+                    course.title.toLowerCase().includes(searchTerm) ||
+                    course.description.toLowerCase().includes(searchTerm)
+                );
+
+                // Filter videos
+                const filteredVideos = allVideos.filter(video =>
+                    video.name.toLowerCase().includes(searchTerm) ||
+                    video.category.toLowerCase().includes(searchTerm)
+                );
+
+                // Display filtered results
+                displayCourses(filteredCourses);
+                displayVideos(filteredVideos);
+
+                // Show search results summary
+                const totalResults = filteredCourses.length + filteredVideos.length;
+                document.getElementById('searchResults').innerHTML =
+                    `<p class="mt-3">Ditemukan ${totalResults} hasil (${filteredCourses.length} kursus, ${filteredVideos.length} video) dari ${allCourses.length + allVideos.length} total konten untuk "<strong>${document.getElementById('searchInput').value}</strong>"</p>`;
+            };
+
+
+
+            // Course opening function
+            window.openCourse = function (courseId) {
+                // Find course and filter videos by category
+                const course = allCourses.find(c => c.id === courseId);
+                if (course) {
+                    const categoryName = course.title.toLowerCase().replace(/\s+/g, '');
+                    window.location.href = `tutorial.html?category=${categoryName}`;
+                } else {
+                    alert('Kursus tidak ditemukan.');
+                }
+            };
+
+            // Video playing function
+            window.playVideo = function (videoId, videoPath) {
+                // Use the same video player from tutorials page
+                if (typeof playVideoFullscreen === 'function') {
+                    playVideoFullscreen(videoId, videoPath);
+                } else {
+                    window.open(`/api/video-stream/${encodeURIComponent(videoPath.replace(/^\/videos\//, ''))}`, '_blank');
+                }
+            };
+        }
+
+        // Utility functions
+        function showLoadingState() {
+            document.getElementById('videoList').innerHTML = `
+                <div class="col-12">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Memuat materi pembelajaran...</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function hideLoadingState() {
+            // Loading state will be replaced when content is displayed
+        }
+
+        function showErrorState(error) {
+            document.getElementById('videoList').innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Gagal memuat konten!</strong>
+                        <p class="mb-0 mt-2">${error.message}</p>
+                        <p class="mb-0">Periksa koneksi server dan coba refresh halaman.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Navigation functions
+        window.goBack = function () {
+            window.history.back();
+        };
+
+        // Simple dropdown toggle function
+        window.toggleDropdown = function () {
+            const content = document.getElementById('dropdownContent');
+            if (content) {
+                content.classList.toggle('show');
+            }
+        };
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (event) {
+            const dropdown = document.querySelector('.simple-dropdown');
+            const content = document.getElementById('dropdownContent');
+            if (dropdown && content && !dropdown.contains(event.target)) {
+                content.classList.remove('show');
+            }
+        });
+
+        // Helper function to detect video category
+        function detectVideoCategory(filename) {
+            const name = filename.toLowerCase();
+
+            // Check for most specific software names first
+            if (name.includes('archicad') || name.includes('archi-cad') || name.includes('gs-')) {
+                return { name: 'ArchiCAD', icon: 'fas fa-home' };
+            }
+            if (name.includes('navisworks') || name.includes('nwd') || name.includes('nw-')) {
+                return { name: 'Navisworks', icon: 'fas fa-project-diagram' };
+            }
+            if (name.includes('enscape') || name.includes('en-')) {
+                return { name: 'Enscape', icon: 'fas fa-camera' };
+            }
+            if (name.includes('lumion') || name.includes('lm-')) {
+                return { name: 'Lumion', icon: 'fas fa-palette' };
+            }
+            if (name.includes('dynamo') || name.includes('dy-')) {
+                return { name: 'Dynamo', icon: 'fas fa-code-branch' };
+            }
+            if (name.includes('civil') || name.includes('infraworks') || name.includes('civil-3d') || name.includes('c3d')) {
+                return { name: 'Civil 3D', icon: 'fas fa-road' };
+            }
+            if (name.includes('revit') || name.includes('rvt') || name.includes('rv-')) {
+                return { name: 'Revit BIM', icon: 'fas fa-building' };
+            }
+            if (name.includes('autocad') || name.includes('acad') || name.includes('dwg') || name.includes('ac-')) {
+                return { name: 'AutoCAD', icon: 'fas fa-drafting-compass' };
+            }
+
+            // General BIM-related keywords (checked last)
+            if (name.includes('bim') || name.includes('building information') || name.includes('modeling')) {
+                return { name: 'General BIM', icon: 'fas fa-cubes' };
+            }
+
+            // Check for other common software
+            if (name.includes('sketchup') || name.includes('sketch-up') || name.includes('skp')) {
+                return { name: 'SketchUp', icon: 'fas fa-cube' };
+            }
+            if (name.includes('rhino') || name.includes('rhinoceros') || name.includes('3dm')) {
+                return { name: 'Rhino 3D', icon: 'fas fa-shapes' };
+            }
+            if (name.includes('blender') || name.includes('blend')) {
+                return { name: 'Blender', icon: 'fas fa-magic' };
+            }
+            if (name.includes('maya') || name.includes('autodesk maya')) {
+                return { name: 'Maya', icon: 'fas fa-film' };
+            }
+
+            // Tutorial and general content
+            if (name.includes('tutorial') || name.includes('training') || name.includes('course')) {
+                return { name: 'Tutorials', icon: 'fas fa-graduation-cap' };
+            }
+            if (name.includes('workflow') || name.includes('process') || name.includes('method')) {
+                return { name: 'Workflow', icon: 'fas fa-stream' };
+            }
+
+            return { name: 'Other Tutorials', icon: 'fas fa-video' };
+        }
+
+        // Jika user pindah ke dashboard, simpan halaman ini
+        sessionStorage.setItem("lastPageFromPages", window.location.pathname);
+    </script>
+
+
+</body>
+
+</html>

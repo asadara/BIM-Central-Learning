@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Diagnostic Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 200px;
+        }
+
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔧 Login Diagnostic Test</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Direct API Call</h2>
+        <input type="email" id="test-email" placeholder="Email" value="admin@bcl.local">
+        <input type="password" id="test-password" placeholder="Password" value="AdminBCL2025!">
+        <button onclick="testDirectLogin()">Test Login API</button>
+        <div id="test1-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Server Connectivity</h2>
+        <button onclick="testServerPing()">Test Server Ping</button>
+        <button onclick="testServerStatus()">Test Server Status</button>
+        <div id="test2-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: User Data Storage</h2>
+        <button onclick="checkLocalStorage()">Check Local Storage</button>
+        <button onclick="clearLocalStorage()">Clear Local Storage</button>
+        <div id="test3-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Available Users</h2>
+        <button onclick="showAvailableUsers()">Show Test Users</button>
+        <div id="test4-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testDirectLogin() {
+            const resultDiv = document.getElementById('test1-result');
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+
+            resultDiv.innerHTML = '⏳ Testing login...';
+            resultDiv.className = 'result';
+
+            try {
+                // Test multiple endpoints
+                const endpoints = [
+                    'http://localhost:5051/api/login',
+                    'http://127.0.0.1:5051/api/login',
+                    `http://${window.location.hostname}:5051/api/login`
+                ];
+
+                for (const url of endpoints) {
+                    try {
+                        console.log('Testing:', url);
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && (result.success || result.token)) {
+                            resultDiv.innerHTML = `✅ SUCCESS with ${url}:\n${JSON.stringify(result, null, 2)}`;
+                            resultDiv.className = 'result success';
+                            return;
+                        } else {
+                            resultDiv.innerHTML = `❌ FAILED with ${url}:\n${JSON.stringify(result, null, 2)}`;
+                            resultDiv.className = 'result error';
+                        }
+                    } catch (endpointError) {
+                        console.log(`Endpoint ${url} failed:`, endpointError.message);
+                        continue;
+                    }
+                }
+
+                resultDiv.innerHTML = '❌ All endpoints failed';
+                resultDiv.className = 'result error';
+
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testServerPing() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = '⏳ Testing server ping...';
+
+            try {
+                const response = await fetch('http://localhost:5051/ping');
+                const result = await response.text();
+
+                resultDiv.innerHTML = `✅ Server responding:\n${result}`;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Server not responding: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testServerStatus() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = '⏳ Testing server status...';
+
+            try {
+                const response = await fetch('http://localhost:5051/api/server/status');
+                const result = await response.json();
+
+                resultDiv.innerHTML = `✅ Server status:\n${JSON.stringify(result, null, 2)}`;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Server status failed: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('test3-result');
+            const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+
+            resultDiv.innerHTML = `Local Storage Status:\n` +
+                `User: ${user ? 'Present' : 'Not found'}\n` +
+                `Token: ${token ? 'Present' : 'Not found'}\n` +
+                `Username: ${username ? username : 'Not found'}\n\n` +
+                `Raw User Data: ${user || 'null'}`;
+
+            resultDiv.className = 'result';
+        }
+
+        function clearLocalStorage() {
+            localStorage.clear();
+            checkLocalStorage();
+            alert('Local storage cleared!');
+        }
+
+        function showAvailableUsers() {
+            const resultDiv = document.getElementById('test4-result');
+
+            // Test users from backend/users.json
+            const testUsers = [
+                { email: 'admin@bcl.local', password: 'AdminBCL2025!', role: 'Admin' },
+                { email: 'aji.sadara@nusakonstruksi.co.id', password: 'Sadara', role: 'User' },
+                { email: 'nke-bim@nusakonstruksi.com', password: 'A13040002486', role: 'User' },
+                { email: 'asadara83@gmail.com', password: 'aji123', role: 'User' }
+            ];
+
+            resultDiv.innerHTML = 'Available Test Users:\n\n' +
+                testUsers.map(user => `${user.email} / ${user.password} (${user.role})`).join('\n');
+
+            resultDiv.className = 'result warning';
+        }
+    </script>
+</body>
+
+</html>

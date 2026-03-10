@@ -72,24 +72,47 @@ function getPcbim02Candidates() {
         candidates.push(process.env.PCBIM02_ROOT);
     }
 
+    // Prefer the local synchronized workspace first. It is the most stable
+    // source and avoids selecting an empty cache mirror when the live share
+    // is still available.
+    candidates.push(LOCAL_PCBIM02_ROOT);
+
     try {
         const lanManager = new LANMountManager();
         const mount = lanManager.getMountById('pc-bim02');
         if (mount) {
+            if (mount.localMountPoint) candidates.push(mount.localMountPoint);
             if (mount.remotePath) candidates.push(mount.remotePath);
             if (mount.host && mount.shareName) {
                 candidates.push(`\\\\${mount.host}\\${mount.shareName}`);
             }
-            if (mount.localMountPoint) candidates.push(mount.localMountPoint);
         }
     } catch (error) {
         // Ignore LAN mount resolution errors; fallback to network path
     }
-
-    candidates.push(LOCAL_PCBIM02_ROOT);
     candidates.push(NETWORK_PCBIM02_ROOT);
 
-    return [...new Set(candidates.filter(Boolean))];
+    const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
+    const localRootNormalized = normalizePathValue(LOCAL_PCBIM02_ROOT);
+
+    return uniqueCandidates.sort((left, right) => {
+        const leftNormalized = normalizePathValue(left);
+        const rightNormalized = normalizePathValue(right);
+        const leftIsLocal = leftNormalized === localRootNormalized ? 0 : 1;
+        const rightIsLocal = rightNormalized === localRootNormalized ? 0 : 1;
+
+        if (leftIsLocal !== rightIsLocal) {
+            return leftIsLocal - rightIsLocal;
+        }
+
+        const leftIsCacheMirror = /pc-bim02-cache/i.test(String(left));
+        const rightIsCacheMirror = /pc-bim02-cache/i.test(String(right));
+        if (leftIsCacheMirror !== rightIsCacheMirror) {
+            return leftIsCacheMirror ? 1 : -1;
+        }
+
+        return 0;
+    });
 }
 
 function getMethodeRootCandidates(base) {

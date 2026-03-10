@@ -83,6 +83,7 @@ nginx/nginx-1.28.0/temp/
 nginx/nginx-1.28.0/*.pid
 
 # Large/local linked data sources
+PC-BIM*/
 PC-BIM02
 PC-BIM02/
 

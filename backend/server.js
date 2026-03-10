@@ -2722,12 +2722,14 @@ const PROJECT_SOURCES = [
     {
         id: 'pc-bim02-2025',
         name: 'PC-BIM02 PROJECT BIM 2025',
-        path: null, // Will be set when mounted
+        path: path.resolve(__dirname, '..', 'PC-BIM02'),
         mountId: 'pc-bim02', // Reference to LAN mount
         priority: 2,
         enabled: true, // âœ… ENABLED by default, will auto-disable if mount fails
         folderPattern: 'PROJECT BIM {year}', // \\pc-bim02\PROJECT BIM 2025
         mediaRoute: '/media-bim02',
+        rootScan: true,
+        fixedYears: ['2025'],
         groupId: 'pc-bim02',
         groupName: 'PC-BIM02 PROJECT BIM'
     },
@@ -2947,6 +2949,17 @@ function normalizeYears(years = []) {
 }
 
 function getStaticMountPath(mountId, fallbackPath) {
+    if (mountId === 'pc-bim02') {
+        try {
+            const stats = fs.statSync(LOCAL_PCBIM02_PROJECT_2025_ROOT);
+            if (stats.isDirectory()) {
+                return LOCAL_PCBIM02_PROJECT_2025_ROOT;
+            }
+        } catch (err) {
+            // Ignore local override failures and continue.
+        }
+    }
+
     try {
         const LANMountManager = require('./utils/lanMountManager');
         const staticMountManager = new LANMountManager();
@@ -2961,7 +2974,22 @@ function getStaticMountPath(mountId, fallbackPath) {
 }
 
 async function resolveSourcePath(source, lanManager, options = {}) {
-    if (!source || !source.mountId) {
+    if (!source) {
+        return null;
+    }
+
+    if (source.path) {
+        try {
+            const stats = fs.statSync(source.path);
+            if (stats.isDirectory()) {
+                return source.path;
+            }
+        } catch (err) {
+            // Ignore local path fallback and continue to mount resolution.
+        }
+    }
+
+    if (!source.mountId) {
         return source ? source.path : null;
     }
 
@@ -3182,6 +3210,7 @@ const WATERMARK_LOGO_NKE = path.resolve(__dirname, '..', 'public', 'logo_nke.png
 const WATERMARK_SIZE_SCALE = 0.2;
 const BIM_METHODE_FOLDER_NAME = '20. METHODE ESTIMATE & TENDER';
 const LOCAL_PCBIM02_ROOT = path.resolve(__dirname, '..', 'PC-BIM02');
+const LOCAL_PCBIM02_PROJECT_2025_ROOT = LOCAL_PCBIM02_ROOT;
 const NETWORK_PCBIM02_ROOT = '\\\\pc-bim02\\PROJECT BIM 2025';
 
 function getWatermarkFontFile() {
@@ -3296,21 +3325,54 @@ function getPcbim02Candidates() {
 
     candidates.push(NETWORK_PCBIM02_ROOT);
 
-    return [...new Set(candidates.filter(Boolean))];
+    const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
+    const localRootNormalized = normalizePathValue(LOCAL_PCBIM02_ROOT);
+
+    return uniqueCandidates.sort((left, right) => {
+        const leftNormalized = normalizePathValue(left);
+        const rightNormalized = normalizePathValue(right);
+        const leftIsLocal = leftNormalized === localRootNormalized ? 0 : 1;
+        const rightIsLocal = rightNormalized === localRootNormalized ? 0 : 1;
+
+        if (leftIsLocal !== rightIsLocal) {
+            return leftIsLocal - rightIsLocal;
+        }
+
+        const leftIsCacheMirror = /pc-bim02-cache/i.test(String(left));
+        const rightIsCacheMirror = /pc-bim02-cache/i.test(String(right));
+        if (leftIsCacheMirror !== rightIsCacheMirror) {
+            return leftIsCacheMirror ? 1 : -1;
+        }
+
+        return 0;
+    });
 }
 
 function resolveBimMethodeRoot() {
     const candidates = getPcbim02Candidates();
+    let firstExistingRoot = null;
 
     for (const base of candidates) {
         const root = path.join(base, BIM_METHODE_FOLDER_NAME);
         try {
             if (fs.existsSync(root)) {
-                return { base, root, exists: true };
+                if (!firstExistingRoot) {
+                    firstExistingRoot = { base, root, exists: true };
+                }
+
+                const entries = fs.readdirSync(root, { withFileTypes: true });
+                const hasCategoryDirs = entries.some(entry => entry.isDirectory());
+                if (hasCategoryDirs) {
+                    return { base, root, exists: true };
+                }
             }
         } catch (error) {
             // Skip inaccessible root
         }
+    }
+
+    if (firstExistingRoot) {
+        return firstExistingRoot;
     }
 
     const fallbackBase = candidates[0] || NETWORK_PCBIM02_ROOT;
@@ -3793,16 +3855,20 @@ async function getYearsFromMultipleSources() {
             let years = [];
 
             if (source.rootScan) {
-                let detectedYear = extractYearFromLabel(sourcePath);
-                if (!detectedYear && source.mountId) {
-                    const mount = lanManager.getMountById(source.mountId);
-                    if (mount) {
-                        detectedYear = extractYearFromLabel(mount.shareName)
-                            || extractYearFromLabel(mount.remotePath)
-                            || extractYearFromLabel(mount.name);
+                if (Array.isArray(source.fixedYears) && source.fixedYears.length > 0) {
+                    years = normalizeYears(source.fixedYears);
+                } else {
+                    let detectedYear = extractYearFromLabel(sourcePath);
+                    if (!detectedYear && source.mountId) {
+                        const mount = lanManager.getMountById(source.mountId);
+                        if (mount) {
+                            detectedYear = extractYearFromLabel(mount.shareName)
+                                || extractYearFromLabel(mount.remotePath)
+                                || extractYearFromLabel(mount.name);
+                        }
                     }
+                    years = normalizeYears(detectedYear ? [detectedYear] : []);
                 }
-                years = normalizeYears(detectedYear ? [detectedYear] : []);
                 console.log(`âœ… ${source.id}: ROOT scan source - detected years: ${years.join(', ') || 'none'}`);
             } else {
                 const items = fs.readdirSync(sourcePath, { withFileTypes: true });
@@ -3932,8 +3998,9 @@ async function getProjectsFromMultipleSources(year) {
                 const projectPath = path.join(projectDir, projectName);
 
                 try {
+                    const scanConfig = getProjectScanConfig(source);
                     const thumbnail = findProjectThumbnailFromSource(projectPath, year, projectName, sourcePath, source.mediaRoute);
-                    const mediaCount = countProjectMedia(projectPath);
+                    const mediaCount = countProjectMedia(projectPath, sourcePath, source.mediaRoute, scanConfig);
 
                     // For PC-BIM02 projects, include them even without media/thumbnail for now
                     const isAlwaysIncludedSource = source.id === 'pc-bim02-2025';
@@ -3977,10 +4044,12 @@ async function getProjectsFromMultipleSources(year) {
 
 // Helper untuk find thumbnail dari various source paths
 function findProjectThumbnailFromSource(projectPath, year, projectName, sourcePath, mediaRoute = '/media') {
+    const scanConfig = getProjectScanConfigForSourcePath(sourcePath, projectPath);
     const thumbnailPriority = [
         () => findThumbnailInFolderFromSource(projectPath, /render|presentasi/i, sourcePath, false, mediaRoute),
         () => findThumbnailInSubfoldersFromSource(projectPath, sourcePath, mediaRoute),
-        () => findThumbnailInFolderFromSource(projectPath, null, sourcePath, true, mediaRoute)
+        () => findThumbnailInFolderFromSource(projectPath, null, sourcePath, true, mediaRoute),
+        () => findThumbnailRecursiveFromSource(projectPath, sourcePath, mediaRoute, scanConfig)
     ];
 
     for (const priorityFunc of thumbnailPriority) {
@@ -3995,6 +4064,55 @@ function findProjectThumbnailFromSource(projectPath, year, projectName, sourcePa
     }
 
     return null;
+}
+
+function getProjectScanConfig(source) {
+    const sourceId = String(source && source.id ? source.id : '').toLowerCase();
+    if (sourceId.startsWith('pc-bim02')) {
+        return {
+            maxDepth: 12,
+            excludedFolders: ['clash', 'Clash Detection', 'Texture Image Marbel']
+        };
+    }
+
+    return {
+        maxDepth: 5,
+        excludedFolders: EXCLUDED_FOLDERS
+    };
+}
+
+function getProjectScanConfigForSourcePath(sourcePath, projectPath) {
+    const normalizedSourcePath = String(sourcePath || '').toLowerCase();
+    const normalizedProjectPath = String(projectPath || '').toLowerCase();
+    if (normalizedSourcePath.includes('\\pc-bim02')
+        || normalizedProjectPath.includes('\\pc-bim02')
+        || normalizedSourcePath.includes('project bim 2025')
+        || normalizedProjectPath.includes('project bim 2025')
+        || normalizedSourcePath.includes('project bim 2026')
+        || normalizedProjectPath.includes('project bim 2026')) {
+        return getProjectScanConfig({ id: 'pc-bim02-detected' });
+    }
+
+    return getProjectScanConfig(null);
+}
+
+function shouldSkipProjectFolder(folderName, excludedFolders = EXCLUDED_FOLDERS) {
+    const normalizedName = String(folderName || '').toLowerCase();
+    return excludedFolders.some(excluded => normalizedName.includes(String(excluded || '').toLowerCase()));
+}
+
+function findThumbnailRecursiveFromSource(projectPath, sourcePath, mediaRoute = '/media', scanConfig = null) {
+    const effectiveConfig = scanConfig || getProjectScanConfigForSourcePath(sourcePath, projectPath);
+    const mediaFiles = findMediaRecursive(
+        projectPath,
+        Math.max(6, effectiveConfig.maxDepth || 5),
+        0,
+        sourcePath,
+        mediaRoute,
+        effectiveConfig
+    );
+
+    return mediaFiles.find((url) => VALID_IMAGE_EXT.includes(path.extname(String(url).split('?')[0]).toLowerCase())) || null;
 }
 
 function findThumbnailInFolderFromSource(basePath, folderPattern, sourcePath, isRoot = false, mediaRoute = '/media') {
@@ -4152,8 +4270,9 @@ app.get('/api/project-media/:year/:project', async (req, res) => {
     try {
         const baseDir = foundSourcePath || BASE_PROJECT_DIR;
         const mediaRoute = foundSource.mediaRoute || '/media';
+        const scanConfig = getProjectScanConfig(foundSource);
 
-        media = findMediaRecursive(projectPath, 5, 0, baseDir, mediaRoute);
+        media = findMediaRecursive(projectPath, Math.max(5, scanConfig.maxDepth || 5), 0, baseDir, mediaRoute, scanConfig);
         scannedFolders = 1;
 
         console.log(`ðŸ“ Scanned project directory for media: ${media.length} files found using route ${mediaRoute}`);
@@ -4181,7 +4300,11 @@ app.get('/api/project-media/:year/:project', async (req, res) => {
 });
 
 // âœ… Fixed: Improved recursive media finder with multi-source support
-function findMediaRecursive(dir, maxDepth = 5, currentDepth = 0, baseDir = BASE_PROJECT_DIR, mediaRoute = '/media') {
+function findMediaRecursive(dir, maxDepth = 5, currentDepth = 0, baseDir = BASE_PROJECT_DIR, mediaRoute = '/media', scanConfig = null) {
+    const excludedFolders = scanConfig && Array.isArray(scanConfig.excludedFolders)
+        ? scanConfig.excludedFolders
+        : EXCLUDED_FOLDERS;
+
     if (currentDepth >= maxDepth) {
         console.warn(`âš ï¸ Max depth reached for: ${dir}`);
         return [];
@@ -4202,12 +4325,10 @@ function findMediaRecursive(dir, maxDepth = 5, currentDepth = 0, baseDir = BASE_
 
             if (item.isDirectory()) {
                 // Skip excluded folders
-                if (EXCLUDED_FOLDERS.some(excluded =>
-                    item.name.toLowerCase().includes(excluded.toLowerCase())
-                )) {
+                if (shouldSkipProjectFolder(item.name, excludedFolders)) {
                     continue;
                 }
-                mediaFiles = mediaFiles.concat(findMediaRecursive(fullPath, maxDepth, currentDepth + 1, baseDir, mediaRoute));
+                mediaFiles = mediaFiles.concat(findMediaRecursive(fullPath, maxDepth, currentDepth + 1, baseDir, mediaRoute, scanConfig));
             } else {
                 const ext = path.extname(item.name).toLowerCase();
                 if (VALID_IMAGE_EXT.includes(ext) || VALID_VIDEO_EXT.includes(ext)) {
@@ -4393,9 +4514,17 @@ function findThumbnailInSubfolders(projectPath) {
     return null;
 }
 
-function countProjectMedia(projectPath) {
+function countProjectMedia(projectPath, baseDir = BASE_PROJECT_DIR, mediaRoute = '/media', scanConfig = null) {
     try {
-        const mediaFiles = findMediaRecursive(projectPath, 3);
+        const effectiveConfig = scanConfig || getProjectScanConfigForSourcePath(baseDir, projectPath);
+        const mediaFiles = findMediaRecursive(
+            projectPath,
+            Math.max(5, effectiveConfig.maxDepth || 5),
+            0,
+            baseDir,
+            mediaRoute,
+            effectiveConfig
+        );
         return mediaFiles.length;
     } catch (err) {
         console.warn(`âš ï¸ Error counting media:`, err.message);

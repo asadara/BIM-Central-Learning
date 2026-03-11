@@ -227,7 +227,7 @@ function setupLoginForm() {
          candidates.push(`${protocol}//${hostname}:5052/api/login`);
       }
 
-      candidates.push('http://localhost:5052/api/login');
+      candidates.push(`${window.location.protocol}//localhost:5052/api/login`);
       return [...new Set(candidates)];
    };
 

@@ -94,7 +94,7 @@
       ];
 
       if (host) {
-        endpoints.push(`http://${host}:5052/api/update-profile`);
+        endpoints.push(`${window.location.protocol}//${host}:5052/api/update-profile`);
       }
 
       return Array.from(new Set(endpoints));

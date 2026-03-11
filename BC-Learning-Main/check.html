@@ -34,22 +34,22 @@
 </head>
 
 <body>
-  <h2>🔍 Mendeteksi server aktif...</h2>
+  <h2>Mendeteksi server aktif...</h2>
   <div class="spinner"></div>
   <p>Mohon tunggu, Anda akan diarahkan secara otomatis.</p>
 
   <script>
-    const address = "http://bcl.local:5150"; // 🔁 Ganti jika nama domain berbeda
+    const address = "https://bcl.nke.net";
 
-    fetch(address + "/ping", { method: "GET" })
+    fetch(`${address}/ping`, { method: "GET" })
       .then(() => {
         window.location.href = address;
       })
       .catch(() => {
         document.body.innerHTML = `
-          <h2>❌ Gagal menghubungi server</h2>
-          <p>Pastikan komputer server menyala dan terhubung ke jaringan kantor.</p>
-          <p>Jika Anda admin, periksa IP terbaru atau file hosts Anda.</p>
+          <h2>Gagal menghubungi server</h2>
+          <p>Pastikan server BCL menyala dan dapat diakses dari jaringan Anda.</p>
+          <p>Jika masalah berlanjut, periksa koneksi dan sertifikat HTTPS.</p>
         `;
       });
   </script>

@@ -27,7 +27,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Favicon -->
-    <link href="../img/icons/icon.png" rel="icon">
+    <link href="/img/icons/logo-bcl.png" rel="icon">
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -372,7 +372,7 @@
                 candidates.push(`${protocol}//${hostname}:5052${path}`);
             }
 
-            candidates.push(`http://localhost:5052${path}`);
+            candidates.push(`${window.location.protocol}//localhost:5052${path}`);
             return [...new Set(candidates)];
         }
 

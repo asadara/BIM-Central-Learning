@@ -112,7 +112,7 @@ class BIMGallery {
 
             if (isLocalhost) {
                 bases.push(`${protocol}//${hostname}:5052`);
-                bases.push('http://localhost:5052');
+                bases.push(`${protocol}//localhost:5052`);
             } else {
                 bases.push(`${protocol}//${hostname}:5052`);
             }

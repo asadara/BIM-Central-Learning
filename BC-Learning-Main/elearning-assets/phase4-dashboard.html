@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phase 3 Learning Platform - System Dashboard</title>
-  <link rel="icon" href="../img/favicon.ico">
+  <link rel="icon" href="/img/icons/logo-bcl.png">
   <style>
     * {
       margin: 0;
@@ -821,7 +821,7 @@
           if (hostname && isHttp) {
             candidates.push(`${protocol}//${hostname}:5052${path}`);
           }
-          candidates.push(`http://localhost:5052${path}`);
+          candidates.push(`${window.location.protocol}//localhost:5052${path}`);
         });
 
         return [...new Set(candidates)];

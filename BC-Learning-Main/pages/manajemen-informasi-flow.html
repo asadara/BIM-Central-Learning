@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -182,18 +182,18 @@
                         <div class="bg-light p-4 rounded text-center">
                             <div class="d-flex justify-content-center align-items-center flex-wrap mb-3">
                                 <div class="flow-box pembuatan">Pembuatan</div>
-                                <div class="arrow">→</div>
+                                <div class="arrow">&rarr;</div>
                                 <div class="flow-box review">Review</div>
-                                <div class="arrow">→</div>
+                                <div class="arrow">&rarr;</div>
                                 <div class="flow-box koordinasi">Koordinasi</div>
-                                <div class="arrow">→</div>
+                                <div class="arrow">&rarr;</div>
                                 <div class="flow-box approval">Approval</div>
-                                <div class="arrow">→</div>
+                                <div class="arrow">&rarr;</div>
                                 <div class="flow-box penggunaan">Penggunaan</div>
                             </div>
                             <div class="d-flex justify-content-center align-items-center flex-wrap mb-3">
                                 <div class="flow-box update">Update</div>
-                                <div class="arrow">↔</div>
+                                <div class="arrow">� </div>
                                 <div class="flow-box archive">Archive</div>
                             </div>
                             <p class="text-muted small mt-3" style="text-align: center;">Diagram alur informasi proyek
@@ -232,13 +232,13 @@
                         <p>Informasi berpindah tangan antara berbagai peran dalam proyek. Setiap handover harus
                             didokumentasikan dengan jelas untuk menjaga traceability dan akuntabilitas.</p>
                         <ul>
-                            <li><strong>Designer → Engineer:</strong> Transfer konsep desain untuk analisis teknis</li>
-                            <li><strong>Engineer → BIM Coordinator:</strong> Model terstruktur untuk koordinasi disiplin
+                            <li><strong>Designer &rarr; Engineer:</strong> Transfer konsep desain untuk analisis teknis</li>
+                            <li><strong>Engineer &rarr; BIM Coordinator:</strong> Model terstruktur untuk koordinasi disiplin
                             </li>
-                            <li><strong>BIM Coordinator → Contractor:</strong> Model konstruksi siap pakai untuk site
+                            <li><strong>BIM Coordinator &rarr; Contractor:</strong> Model konstruksi siap pakai untuk site
                             </li>
-                            <li><strong>Contractor → Site Team:</strong> Informasi harian untuk eksekusi pekerjaan</li>
-                            <li><strong>Site Team → Project Manager:</strong> Laporan progress dan isu lapangan</li>
+                            <li><strong>Contractor &rarr; Site Team:</strong> Informasi harian untuk eksekusi pekerjaan</li>
+                            <li><strong>Site Team &rarr; Project Manager:</strong> Laporan progress dan isu lapangan</li>
                         </ul>
 
                         <h2>Siklus Revisi dan Update</h2>

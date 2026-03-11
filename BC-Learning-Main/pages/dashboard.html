@@ -46,6 +46,46 @@
             height: 70vh;
             /* Sesuaikan dengan tinggi layar */
         }
+
+        .dashboard-shell .card {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            border-width: 1px;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .dashboard-shell .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+        }
+
+        .dashboard-shell .card-title {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            max-width: none;
+        }
+
+        .dashboard-shell .card-body {
+            text-align: left;
+        }
+
+        .dashboard-shell .card-footer {
+            height: auto;
+            justify-content: flex-start;
+        }
+
+        @media (max-width: 767.98px) {
+            .container.dashboard-shell {
+                height: auto;
+                min-height: calc(100vh - 140px);
+                justify-content: flex-start;
+                padding-top: 8px;
+                padding-bottom: 24px;
+            }
+        }
     </style>
 
 </head>
@@ -57,7 +97,7 @@
     <!-- Navbar End -->
 
 
-    <div class="container">
+    <div class="container dashboard-shell">
         <!-- Unified Dashboard Content -->
         <div class="row g-4">
             <!-- BIM Projects Section -->

@@ -36,6 +36,7 @@
 
     <!-- Template Stylesheet -->
     <link href="../css/style.css" rel="stylesheet">
+    <link href="../css/modul.css" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
@@ -56,7 +57,7 @@
         <p>Pilih dokumen PDF untuk membaca atau mengunduh.</p>
 
         <!-- Input Pencarian & Sortir -->
-        <div class="d-flex mb-3 gap-2">
+        <div class="d-flex mb-3 gap-2 flex-wrap responsive-toolbar">
             <input type="text" id="searchInput" class="form-control w-25" placeholder="Cari dokumen..."
                 onkeyup="searchPDFs()">
             <button class="btn btn-primary" onclick="searchPDFs()">🔍 Cari</button>

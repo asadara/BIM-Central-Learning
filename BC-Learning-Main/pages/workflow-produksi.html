@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -213,16 +213,16 @@
                         <div class="bg-light p-4 rounded text-center">
                             <div class="d-flex justify-content-center align-items-center flex-wrap mb-3">
                                 <div class="flow-box input">Input</div>
-                                <div class="arrow">→</div>
+                                <div class="arrow">&rarr;</div>
                                 <div class="flow-box build">Model Build</div>
-                                <div class="arrow">→</div>
+                                <div class="arrow">&rarr;</div>
                                 <div class="flow-box check">Self-check</div>
-                                <div class="arrow">→</div>
+                                <div class="arrow">&rarr;</div>
                                 <div class="flow-box submit">Submit Review</div>
                             </div>
                             <div class="d-flex justify-content-center align-items-center flex-wrap">
                                 <div class="flow-box rework">Rework</div>
-                                <div class="arrow">↗</div>
+                                <div class="arrow">&nearr;</div>
                                 <div class="flow-box release">Release</div>
                             </div>
                             <p class="text-muted small mt-3">Proses produksi model BIM</p>
@@ -241,7 +241,7 @@
                     </div>
 
                     <p class="aha-statement">
-                        Model BIM bukan gambar statis—model adalah representasi digital yang hidup dan dapat
+                        Model BIM bukan gambar statis&mdash;model adalah representasi digital yang hidup dan dapat
                         diverifikasi.
                     </p>
 

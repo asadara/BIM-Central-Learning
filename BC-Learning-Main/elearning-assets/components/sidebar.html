@@ -1,71 +1,132 @@
 <div class="side-bar">
-    <div id="close-btn">
+    <button id="close-btn" type="button" aria-label="Close sidebar">
         <i class="fas fa-times"></i>
-    </div>
+    </button>
+    <button class="sidebar-toggle-handle" type="button" aria-label="Collapse sidebar">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+
     <div class="profile" id="sidebar-user-profile-box">
-        <!-- Profile Image Container - Always Centered -->
         <div class="profile-image-container">
             <img id="sidebar-user-img" src="/elearning-assets/images/pic-1.jpg" class="image" alt="Profile Picture">
         </div>
 
-        <!-- User Info Section -->
         <div class="user-info">
+            <p class="profile-eyebrow">Learning account</p>
             <h3 class="name" id="sidebar-user-name">Guest User</h3>
-            <p class="role-level" id="sidebar-user-role-level">Please login to access courses</p>
+            <p class="role-level" id="sidebar-user-role-level">Silakan login untuk membuka seluruh fitur belajar</p>
         </div>
 
-        <!-- Profile Action Button -->
         <div class="profile-actions">
-            <a id="sidebar-user-profile" href="/pages/login.html" class="btn profile-btn">Login to Start Learning</a>
+            <a id="sidebar-user-profile" href="/elearning-assets/login.html" class="btn profile-btn">Login to Start Learning</a>
         </div>
     </div>
 
-    <!-- Dashboard Section -->
     <div class="nav-section">
         <h4 class="nav-section-title">Dashboard</h4>
         <nav class="navbar">
-            <a href="/elearning-assets/dashboard.html"><span>My Progress</span></a>
+            <a href="/elearning-assets/dashboard.html" data-sidebar-match="/elearning-assets/dashboard.html">
+                <span class="nav-link-icon"><i class="fas fa-chart-line"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">My Progress</span>
+                    <span class="nav-link-hint">Ringkasan capaian dan statistik belajar</span>
+                </span>
+            </a>
         </nav>
     </div>
 
-    <!-- Learning Path Section -->
     <div class="nav-section">
         <h4 class="nav-section-title">Learning Path</h4>
         <nav class="navbar">
-            <a href="/elearning-assets/courses.html"><span>Courses</span></a>
-            <a href="/elearning-assets/practice.html"><span>Practice</span></a>
-            <a href="/elearning-assets/exams.html"><span>Exams</span></a>
-            <a href="/elearning-assets/dashboard.html"><span>Quiz Record</span></a>
-            <a href="/elearning-assets/certification.html"><span>Certifications</span></a>
+            <a href="/elearning-assets/courses.html" data-sidebar-match="/elearning-assets/courses.html">
+                <span class="nav-link-icon"><i class="fas fa-book-open"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Courses</span>
+                    <span class="nav-link-hint">Materi video dan modul pembelajaran</span>
+                </span>
+            </a>
+            <a href="/elearning-assets/practice.html" data-sidebar-match="/elearning-assets/practice.html">
+                <span class="nav-link-icon"><i class="fas fa-dumbbell"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Practice</span>
+                    <span class="nav-link-hint">Latihan mandiri untuk memperkuat skill</span>
+                </span>
+            </a>
+            <a href="/elearning-assets/exams.html" data-sidebar-match="/elearning-assets/exams.html">
+                <span class="nav-link-icon"><i class="fas fa-clipboard-check"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Exams</span>
+                    <span class="nav-link-hint">Ujian formal dan sertifikasi</span>
+                </span>
+            </a>
+            <a href="/elearning-assets/dashboard.html#quiz-record" data-sidebar-match="/elearning-assets/dashboard.html">
+                <span class="nav-link-icon"><i class="fas fa-history"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Quiz Record</span>
+                    <span class="nav-link-hint">Riwayat percobaan dan skor terbaru</span>
+                </span>
+            </a>
+            <a href="/elearning-assets/certification.html" data-sidebar-match="/elearning-assets/certification.html">
+                <span class="nav-link-icon"><i class="fas fa-certificate"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Certifications</span>
+                    <span class="nav-link-hint">Sertifikat dan validasi pencapaian</span>
+                </span>
+            </a>
         </nav>
     </div>
 
-    <!-- Profile & Settings Section -->
     <div class="nav-section">
         <h4 class="nav-section-title">Account</h4>
         <nav class="navbar">
-            <a href="/elearning-assets/profile.html"><span>My Profile</span></a>
-            <a href="/elearning-assets/badges.html"><span>My Badges</span></a>
-            <a href="/elearning-assets/level-request.html"><span>Request Level Change</span></a>
+            <a href="/elearning-assets/profile.html" data-sidebar-match="/elearning-assets/profile.html">
+                <span class="nav-link-icon"><i class="fas fa-user-circle"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">My Profile</span>
+                    <span class="nav-link-hint">Profil, preferensi, dan identitas belajar</span>
+                </span>
+            </a>
+            <a href="/elearning-assets/badges.html" data-sidebar-match="/elearning-assets/badges.html">
+                <span class="nav-link-icon"><i class="fas fa-medal"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">My Badges</span>
+                    <span class="nav-link-hint">Badge, achievement, dan milestone</span>
+                </span>
+            </a>
+            <a href="/elearning-assets/level-request.html" data-sidebar-match="/elearning-assets/level-request.html">
+                <span class="nav-link-icon"><i class="fas fa-level-up-alt"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Request Level Change</span>
+                    <span class="nav-link-hint">Ajukan upgrade level kompetensi BIM</span>
+                </span>
+            </a>
         </nav>
     </div>
 
-    <!-- Content Management Section (Admin Only) -->
     <div class="nav-section admin-content-section" style="display: none;">
         <h4 class="nav-section-title">Content Management</h4>
         <nav class="navbar">
             <a href="javascript:void(0)"
-                onclick="console.log('Learning Materials clicked'); window.openContentManager ? window.openContentManager() : alert('Function not found')"><span>Learning Materials</span></a>
+                onclick="console.log('Learning Materials clicked'); window.openContentManager ? window.openContentManager() : alert('Function not found')">
+                <span class="nav-link-icon"><i class="fas fa-folder-open"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Learning Materials</span>
+                    <span class="nav-link-hint">Kelola modul, PDF, dan media belajar</span>
+                </span>
+            </a>
             <a href="javascript:void(0)"
-                onclick="console.log('Exam Materials clicked'); window.openExamManager ? window.openExamManager() : alert('Function not found')"><span>Exam Materials</span></a>
+                onclick="console.log('Exam Materials clicked'); window.openExamManager ? window.openExamManager() : alert('Function not found')">
+                <span class="nav-link-icon"><i class="fas fa-file-signature"></i></span>
+                <span class="nav-link-meta">
+                    <span class="nav-link-label">Exam Materials</span>
+                    <span class="nav-link-hint">Kelola bank soal dan berkas ujian</span>
+                </span>
+            </a>
         </nav>
-        <div style="font-size: 1.4rem; text-align: center; margin-top: 10px; opacity: 0.8;">
-            Admin Only Access
+        <div class="sidebar-admin-note">
+            Admin only access
         </div>
     </div>
-
-    <!-- BIM Projects Section removed (covered by navbar) -->
-    <!-- General Section removed (covered by navbar) -->
 </div>
 
 <script>

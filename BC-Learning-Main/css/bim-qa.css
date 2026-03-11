@@ -1,0 +1,217 @@
+.chat-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.open-form-btn {
+    background: #ff7f00;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.open-form-btn:hover {
+    background: #e66a00;
+}
+
+.popup-form {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    width: min(350px, calc(100vw - 24px));
+    text-align: center;
+    border-top: 5px solid #ff7f00;
+    z-index: 1050;
+}
+
+.popup-form .close-btn {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.popup-form h2 {
+    color: #ff7f00;
+}
+
+.popup-form input,
+.popup-form textarea {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.popup-form textarea {
+    height: 60px;
+}
+
+.popup-form button {
+    background: #ff7f00;
+    color: white;
+    padding: 8px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.popup-form button:hover {
+    background: #e66a00;
+}
+
+#qa-list {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.qa-item {
+    background: #fff3e0;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border-left: 5px solid #ff7f00;
+}
+
+.qa-item .question {
+    font-weight: bold;
+}
+
+.qa-item .answer {
+    color: green;
+    margin-top: 5px;
+}
+
+.drag-bar {
+    width: 100%;
+    padding: 8px;
+    background: #ff7f00;
+    color: white;
+    text-align: center;
+    cursor: grab;
+    font-weight: bold;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+#containertanya,
+#qa-list,
+.popup-form {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+#containertanya h2,
+.popup-form h2 {
+    color: orange;
+    font-weight: bold;
+    text-align: left;
+    margin: 10px 0;
+}
+
+#containertanya h3,
+.popup-form h3 {
+    color: black;
+    font-weight: bold;
+    text-align: left;
+    margin: 10px 0;
+}
+
+#containertanya p,
+#qa-list p,
+.popup-form p {
+    text-align: justify;
+}
+
+#containertanya ul,
+#containertanya ol,
+#qa-list ul,
+#qa-list ol {
+    padding-left: 20px;
+}
+
+#containertanya li,
+#qa-list li {
+    text-align: justify;
+}
+
+#containertanya {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.question-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.question-card .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.question-card p {
+    padding: 5px;
+    line-height: 1.4;
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.delete-btn {
+    background: #ff6666;
+    font-size: 14px;
+    padding: 5px 8px;
+    border-radius: 5px;
+}
+
+.delete-btn:hover {
+    background: #cc0000;
+}
+
+@media (max-width: 767.98px) {
+    .chat-container {
+        padding: 16px 12px;
+    }
+
+    #containertanya {
+        padding: 0;
+    }
+
+    .question-card .question-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}

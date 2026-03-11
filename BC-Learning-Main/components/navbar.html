@@ -1,16 +1,15 @@
-<nav class="navbar navbar-expand-lg navbar-light shadow sticky-top p-0"
-    style="position: fixed; top: 0; width: 100%; z-index: 1030; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+<nav class="navbar bcl-main-navbar navbar-expand-lg navbar-light shadow sticky-top p-0"
+    style="position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 1030; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
     <a href="../index.html" class="navbar-brand d-flex align-items-center px-2 px-md-3 px-lg-4">
         <p class="m-0 fw-bold" style="font-size: 24px;"><img src="/img/icons/logo-bcl.png" alt="BCL Logo" height="45px"
                 style="margin-right: 10px; mix-blend-mode: multiply;">N<span style="color: #fb873f;">KE</span></p>
     </a>
 
-    <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+    <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
         aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
 
-    <!-- Menu BCL Start -->
     <div class="collapse navbar-collapse" id="navbarCollapse">
         <div class="navbar-nav ms-auto p-4 p-lg-0 me-3">
             <div class="nav-item">
@@ -24,16 +23,12 @@
             </div>
             <div class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">BIM Governance</a>
-                <div class="dropdown-menu fade-down m-0" id="bim-governance-menu"
-                    style="max-height: 70vh; overflow-y: auto;">
+                <div class="dropdown-menu fade-down m-0" id="bim-governance-menu" style="max-height: 70vh; overflow-y: auto;">
                     <h6 class="dropdown-header">Manajemen Informasi</h6>
-                    <a href="/pages/manajemen-informasi-validity.html" class="dropdown-item">Definisi & Status
-                        Informasi</a>
+                    <a href="/pages/manajemen-informasi-validity.html" class="dropdown-item">Definisi & Status Informasi</a>
                     <a href="/pages/manajemen-informasi-flow.html" class="dropdown-item">Alur Informasi Proyek</a>
-                    <a href="/pages/manajemen-informasi-authority.html" class="dropdown-item">Otoritas & Validasi
-                        Data</a>
-                    <a href="/pages/manajemen-informasi-decision.html" class="dropdown-item">Penggunaan Informasi untuk
-                        Keputusan</a>
+                    <a href="/pages/manajemen-informasi-authority.html" class="dropdown-item">Otoritas & Validasi Data</a>
+                    <a href="/pages/manajemen-informasi-decision.html" class="dropdown-item">Penggunaan Informasi untuk Keputusan</a>
                     <div class="dropdown-divider"></div>
                     <h6 class="dropdown-header">Peran & Tanggung Jawab</h6>
                     <a href="/pages/peran-role.html" class="dropdown-item">Peran dalam Sistem BIM</a>
@@ -47,8 +42,7 @@
                     <a href="/pages/change-control.html" class="dropdown-item">Issue, RFI, & Perubahan</a>
                     <a href="/pages/trace-lessons.html" class="dropdown-item">Audit Trail & Lessons Learned</a>
                     <div class="dropdown-divider"></div>
-                    <a href="/pages/bim-governance-quiz.html" class="dropdown-item"><i
-                            class="fas fa-question-circle me-2"></i>BIM Governance Quiz</a>
+                    <a href="/pages/bim-governance-quiz.html" class="dropdown-item"><i class="fas fa-question-circle me-2"></i>BIM Governance Quiz</a>
                 </div>
             </div>
             <div class="nav-item dropdown">
@@ -62,8 +56,7 @@
                     <a href="/pages/workflow-deliverables.html" class="dropdown-item">Dokumen Teknis (Deliverables)</a>
                     <a href="/pages/workflow-tools.html" class="dropdown-item">Tools & Workflow</a>
                     <div class="dropdown-divider"></div>
-                    <a href="/pages/bim-delivery-workflow-quiz.html" class="dropdown-item"><i
-                            class="fas fa-question-circle me-2"></i>BIM Delivery Workflow Quiz</a>
+                    <a href="/pages/bim-delivery-workflow-quiz.html" class="dropdown-item"><i class="fas fa-question-circle me-2"></i>BIM Delivery Workflow Quiz</a>
                 </div>
             </div>
             <div class="nav-item dropdown">
@@ -101,46 +94,73 @@
                     </a>
                 </div>
             </div>
-            <!-- Community menu - commented out to save space -->
-            <!--
-            <div class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Community</a>
-                <div class="dropdown-menu fade-down m-0">
-                    <a href="/pages/forum.html" class="dropdown-item">Forum Diskusi</a>
-                    <a href="https://www.instagram.com/institutbim/?hl=en" class="dropdown-item">IBIMI</a>
-                    <a href="/pages/team.html" class="dropdown-item">Tim BIM NKE</a>
-                    <a href="/pages/testimonial.html" class="dropdown-item">Testimonial</a>
-                    <a href="/pages/contact.html" class="dropdown-item">Contact Us</a>
-                </div>
-            </div>
-            -->
             <div class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fas fa-user"></i> <span id="account-name">Account</span></a>
+                    <i class="fas fa-user"></i> <span id="account-name">Account</span>
+                </a>
                 <div class="dropdown-menu fade-down m-0">
-                <a href="/pages/login.html" class="dropdown-item" id="login-link"><i
-                        class="fa-solid fa-sign-in-alt"></i> Log in</a>
-                <a href="/pages/signup.html" class="dropdown-item" id="register-link"><i
-                        class="fa-solid fa-user-plus"></i> Sign up</a>
-                <a href="/elearning-assets/profile.html" class="dropdown-item" id="profile-link"><i
-                        class="fa-solid fa-id-card"></i> My Profile</a>
-                <a href="#" class="dropdown-item" id="logout-link" style="display: none;"><i
-                        class="fa-solid fa-sign-out-alt"></i> Log out</a>
-            </div>
+                    <a href="/pages/login.html" class="dropdown-item" id="login-link"><i class="fa-solid fa-sign-in-alt"></i> Log in</a>
+                    <a href="/pages/signup.html" class="dropdown-item" id="register-link"><i class="fa-solid fa-user-plus"></i> Sign up</a>
+                    <a href="/elearning-assets/profile.html" class="dropdown-item" id="profile-link"><i class="fa-solid fa-id-card"></i> My Profile</a>
+                    <a href="#" class="dropdown-item" id="logout-link" style="display: none;"><i class="fa-solid fa-sign-out-alt"></i> Log out</a>
+                </div>
             </div>
         </div>
     </div>
 </nav>
 
 <style>
-    .nav-mobile .navbar,
-    .nav-mobile .navbar .navbar-collapse,
-    .nav-mobile .navbar .navbar-nav {
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    body {
+        margin: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .bcl-main-navbar {
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-inline: 12px;
+        overflow: visible;
+    }
+
+    .bcl-main-navbar .navbar-brand {
+        min-width: 0;
+        flex: 1 1 auto;
+        margin-right: 0;
+        max-width: calc(100% - 72px);
+    }
+
+    .bcl-main-navbar .navbar-brand p {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bcl-main-navbar .navbar-toggler {
+        flex: 0 0 auto;
+        margin: 0 0 0 auto !important;
+    }
+
+    .nav-mobile .bcl-main-navbar,
+    .nav-mobile .bcl-main-navbar .navbar-collapse,
+    .nav-mobile .bcl-main-navbar .navbar-nav {
         width: 100%;
         max-width: 100%;
     }
 
-    .nav-mobile .navbar .navbar-collapse {
+    .nav-mobile .bcl-main-navbar .navbar-collapse {
         box-sizing: border-box;
         overflow-x: hidden;
         background: rgba(255, 255, 255, 0.98);
@@ -153,18 +173,18 @@
         overflow-y: auto;
     }
 
-    .nav-mobile .navbar .navbar-nav {
+    .nav-mobile .bcl-main-navbar .navbar-nav {
         flex-direction: column;
         padding: 10px;
         margin: 0;
     }
 
-    .nav-mobile .navbar .navbar-nav .nav-item {
+    .nav-mobile .bcl-main-navbar .navbar-nav .nav-item {
         width: 100%;
     }
 
-    .nav-mobile .navbar .navbar-nav .nav-link,
-    .nav-mobile .navbar .dropdown-item {
+    .nav-mobile .bcl-main-navbar .navbar-nav .nav-link,
+    .nav-mobile .bcl-main-navbar .dropdown-item {
         white-space: normal;
         overflow-wrap: anywhere;
         word-break: break-word;
@@ -173,33 +193,33 @@
         align-items: center;
     }
 
-    .nav-mobile .navbar .navbar-nav .nav-link {
+    .nav-mobile .bcl-main-navbar .navbar-nav .nav-link {
         font-size: 16px;
         padding: 12px 16px;
         border-radius: 8px;
         color: #333 !important;
     }
 
-    .nav-mobile .navbar .navbar-nav .nav-link:hover {
+    .nav-mobile .bcl-main-navbar .navbar-nav .nav-link:hover {
         background: rgba(251, 135, 63, 0.1);
         color: #fb873f !important;
         transform: translateX(5px);
     }
 
-    .nav-mobile .navbar .dropdown-menu {
+    .nav-mobile .bcl-main-navbar .dropdown-menu {
         width: 100%;
         max-width: 100%;
         background: rgba(251, 135, 63, 0.05);
         border: none;
         border-radius: 8px;
-        margin: 5px 15px 5px 30px;
+        margin: 5px 0 8px;
         box-shadow: none;
         padding: 0;
         max-height: 200px;
         overflow-y: auto;
     }
 
-    .nav-mobile .navbar .dropdown-item {
+    .nav-mobile .bcl-main-navbar .dropdown-item {
         padding: 10px 16px;
         font-size: 14px;
         color: #555 !important;
@@ -207,13 +227,12 @@
         margin: 2px 0;
     }
 
-    .nav-mobile .navbar .dropdown-item:hover {
+    .nav-mobile .bcl-main-navbar .dropdown-item:hover {
         background: rgba(251, 135, 63, 0.1);
         color: #fb873f !important;
         transform: translateX(5px);
     }
 
-    /* Force hamburger behavior for touch gadgets <= 10" */
     .nav-mobile .navbar-expand-lg .navbar-collapse {
         display: none !important;
     }
@@ -222,286 +241,273 @@
         display: block !important;
     }
 
-    .nav-mobile .navbar-toggler {
+    .nav-mobile .bcl-main-navbar .navbar-toggler {
         display: flex !important;
         align-items: center;
         justify-content: center;
     }
 
-    .nav-mobile .navbar-collapse {
+    .nav-mobile .bcl-main-navbar .navbar-collapse {
         position: absolute;
         top: 100%;
-        left: 0;
-        right: 0;
-        width: 100%;
+        left: 10px;
+        right: 10px;
+        width: auto;
         z-index: 1029;
     }
 
-    .nav-mobile .dropdown-menu {
+    .nav-mobile .bcl-main-navbar .dropdown-menu {
         position: static !important;
         float: none !important;
     }
+
+    @media (max-width: 1024px) {
+        .bcl-main-navbar {
+            padding-inline: 10px;
+        }
+
+        .bcl-main-navbar .navbar-brand {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            max-width: calc(100% - 64px);
+        }
+
+        .bcl-main-navbar .navbar-brand p {
+            font-size: clamp(18px, 4vw, 22px) !important;
+        }
+
+        .bcl-main-navbar .navbar-brand img {
+            height: 34px !important;
+            margin-right: 8px !important;
+        }
+
+        .nav-mobile .bcl-main-navbar .navbar-nav {
+            padding: 10px;
+        }
+    }
 </style>
 
-<!-- Enhanced Navbar Script for Mobile/Tablet Responsiveness -->
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        console.log('🔧 Enhanced responsive navbar loaded');
+    function adjustNavbarPaths() {
+        const currentPath = window.location.pathname;
+        let pathPrefix = '';
 
+        if (currentPath.startsWith('/pages/sub/')) {
+            pathPrefix = '../../';
+        } else if (currentPath.startsWith('/pages/') || currentPath.startsWith('/elearning-assets/')) {
+            pathPrefix = '../';
+        }
+
+        const brandLink = document.querySelector('.bcl-main-navbar .navbar-brand');
+        if (brandLink && brandLink.getAttribute('href') === '../index.html') {
+            brandLink.setAttribute('href', pathPrefix + 'index.html');
+        }
+
+        const basicIndexLink = document.querySelector('.bcl-main-navbar .dropdown-menu a[href="/index.html"]');
+        if (basicIndexLink) {
+            basicIndexLink.setAttribute('href', pathPrefix + 'index.html');
+        }
+    }
+
+    function initializeResponsiveNavbar() {
         const rootElement = document.documentElement;
+        const navbar = document.querySelector('.bcl-main-navbar');
+        if (!navbar) {
+            return;
+        }
+
+        const navbarToggler = navbar.querySelector('.navbar-toggler');
+        const navbarCollapse = navbar.querySelector('.navbar-collapse');
+        const dropdowns = Array.from(navbar.querySelectorAll('.dropdown'));
+
+        function closeNavbar() {
+            if (!navbarCollapse || !navbarCollapse.classList.contains('show')) {
+                return;
+            }
+
+            if (window.bootstrap && bootstrap.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(navbarCollapse).hide();
+            } else {
+                navbarCollapse.classList.remove('show');
+                if (navbarToggler) {
+                    navbarToggler.setAttribute('aria-expanded', 'false');
+                }
+            }
+        }
+
+        function closeAllDropdowns(exceptMenu) {
+            navbar.querySelectorAll('.dropdown-menu.show').forEach(openMenu => {
+                if (exceptMenu && openMenu === exceptMenu) {
+                    return;
+                }
+
+                openMenu.classList.remove('show');
+                const openToggle = openMenu.closest('.dropdown').querySelector('.dropdown-toggle');
+                if (openToggle) {
+                    openToggle.classList.remove('show');
+                    openToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        function handleDropdownHover(event) {
+            const dropdown = event.currentTarget.closest('.dropdown');
+            const menu = dropdown.querySelector('.dropdown-menu');
+
+            closeAllDropdowns(menu);
+            menu.classList.add('show');
+            event.currentTarget.classList.add('show');
+            event.currentTarget.setAttribute('aria-expanded', 'true');
+        }
+
+        function handleDropdownLeave(event) {
+            const dropdown = event.currentTarget;
+            const menu = dropdown.querySelector('.dropdown-menu');
+            const toggle = dropdown.querySelector('.dropdown-toggle');
+
+            setTimeout(() => {
+                if (!menu.matches(':hover') && !toggle.matches(':hover')) {
+                    menu.classList.remove('show');
+                    toggle.classList.remove('show');
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            }, 100);
+        }
+
+        function handleDropdownClick(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = event.currentTarget.closest('.dropdown');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            const toggle = dropdown.querySelector('.dropdown-toggle');
+            const isOpen = menu.classList.contains('show');
+
+            closeAllDropdowns(menu);
+
+            if (isOpen) {
+                menu.classList.remove('show');
+                toggle.classList.remove('show');
+                toggle.setAttribute('aria-expanded', 'false');
+                return;
+            }
+
+            menu.classList.add('show');
+            toggle.classList.add('show');
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+
+        function initializeDropdownBehavior() {
+            const isMobile = rootElement.classList.contains('nav-mobile');
+
+            dropdowns.forEach(dropdown => {
+                const toggle = dropdown.querySelector('.dropdown-toggle');
+                const menu = dropdown.querySelector('.dropdown-menu');
+
+                if (!toggle || !menu) {
+                    return;
+                }
+
+                if (!toggle.dataset.originalBsToggle) {
+                    toggle.dataset.originalBsToggle = toggle.getAttribute('data-bs-toggle') || '';
+                }
+
+                toggle.removeEventListener('mouseenter', handleDropdownHover);
+                dropdown.removeEventListener('mouseleave', handleDropdownLeave);
+                toggle.removeEventListener('click', handleDropdownClick);
+
+                if (isMobile) {
+                    toggle.removeAttribute('data-bs-toggle');
+                    toggle.setAttribute('aria-expanded', menu.classList.contains('show') ? 'true' : 'false');
+                    toggle.addEventListener('click', handleDropdownClick);
+                } else {
+                    if (toggle.dataset.originalBsToggle) {
+                        toggle.setAttribute('data-bs-toggle', toggle.dataset.originalBsToggle);
+                    }
+
+                    toggle.setAttribute('aria-expanded', 'false');
+                    toggle.addEventListener('mouseenter', handleDropdownHover);
+                    dropdown.addEventListener('mouseleave', handleDropdownLeave);
+                }
+            });
+        }
 
         function updateNavMode() {
             const isSmallScreen = window.matchMedia('(max-width: 1024px)').matches;
             const isTouchDevice = window.matchMedia('(pointer: coarse)').matches
                 || window.matchMedia('(hover: none)').matches
                 || ('ontouchstart' in window);
+            const isMobileMode = isSmallScreen && isTouchDevice;
 
-            rootElement.classList.toggle('nav-mobile', isSmallScreen && isTouchDevice);
+            rootElement.classList.toggle('nav-mobile', isMobileMode);
+
+            if (!isMobileMode) {
+                closeAllDropdowns();
+            }
+
+            initializeDropdownBehavior();
+        }
+
+        function adjustNavbarForScreenSize() {
+            const isMobileMode = rootElement.classList.contains('nav-mobile');
+
+            if (navbarToggler) {
+                navbarToggler.style.display = isMobileMode ? 'flex' : '';
+            }
+
+            if (!isMobileMode) {
+                closeNavbar();
+            }
         }
 
         updateNavMode();
-        window.addEventListener('resize', updateNavMode);
-        window.addEventListener('orientationchange', updateNavMode);
-
-        // Enhanced hamburger button functionality
-        const navbarToggler = document.querySelector('.navbar-toggler');
-        const navbarCollapse = document.querySelector('.navbar-collapse');
-
-        if (navbarToggler && navbarCollapse) {
-            // Close navbar when clicking outside
-            document.addEventListener('click', function (event) {
-                const isClickInsideNavbar = navbarCollapse.contains(event.target) || navbarToggler.contains(event.target);
-                const isNavbarExpanded = navbarCollapse.classList.contains('show');
-
-                if (!isClickInsideNavbar && isNavbarExpanded) {
-                    const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
-                        hide: true
-                    });
-                }
-            });
-
-            // Enhanced touch interaction for mobile
-            if ('ontouchstart' in window) {
-                const navLinks = navbarCollapse.querySelectorAll('.nav-link');
-                navLinks.forEach(link => {
-                    link.addEventListener('touchstart', function () {
-                        this.style.backgroundColor = 'rgba(251, 135, 63, 0.1)';
-                    });
-
-                    link.addEventListener('touchend', function () {
-                        setTimeout(() => {
-                            this.style.backgroundColor = '';
-                        }, 150);
-                    });
-                });
-            }
-
-            // Prevent dropdown menus from closing navbar on mobile
-            const dropdowns = navbarCollapse.querySelectorAll('.dropdown');
-            dropdowns.forEach(dropdown => {
-                dropdown.addEventListener('show.bs.dropdown', function () {
-                    // Keep navbar open when dropdown is shown
-                    if (rootElement.classList.contains('nav-mobile')) {
-                        navbarCollapse.classList.add('show');
-                    }
-                });
-            });
-        }
-
-        // Dynamic navbar adjustments based on screen size
-        function adjustNavbarForScreenSize() {
-            const screenWidth = window.innerWidth;
-            const isNavMobile = rootElement.classList.contains('nav-mobile');
-
-            if (isNavMobile) {
-                if (navbarCollapse) {
-                    navbarCollapse.classList.remove('show');
-                }
-                if (navbarToggler) {
-                    navbarToggler.style.display = 'block';
-                }
-                return;
-            }
-
-            if (screenWidth >= 1024 && screenWidth <= 1366) {
-                // Tablet landscape - ensure navbar is always expanded
-                if (navbarCollapse) {
-                    navbarCollapse.classList.add('show');
-                    if (navbarToggler) {
-                        navbarToggler.style.display = 'none';
-                    }
-                }
-            } else if (screenWidth < 768) {
-                // Mobile - ensure hamburger button is visible
-                if (navbarToggler) {
-                    navbarToggler.style.display = 'block';
-                }
-            }
-        }
-
-        // Adjust on load and resize
         adjustNavbarForScreenSize();
-        window.addEventListener('resize', adjustNavbarForScreenSize);
 
-        // Smooth scroll for dropdown items
-        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-        dropdownMenus.forEach(menu => {
-            if (menu.scrollHeight > window.innerHeight * 0.6) {
-                menu.style.maxHeight = '60vh';
-                menu.style.overflowY = 'auto';
+        window.addEventListener('resize', () => {
+            clearTimeout(window.bclNavbarResizeTimeout);
+            window.bclNavbarResizeTimeout = setTimeout(() => {
+                updateNavMode();
+                adjustNavbarForScreenSize();
+            }, 150);
+        });
+
+        window.addEventListener('orientationchange', () => {
+            updateNavMode();
+            adjustNavbarForScreenSize();
+        });
+
+        document.addEventListener('click', event => {
+            const isClickInsideNavbar = navbar.contains(event.target);
+            if (!isClickInsideNavbar) {
+                closeAllDropdowns();
+                closeNavbar();
             }
         });
-    });
 
-    // Dynamic path adjustment based on current page location
-    function adjustNavbarPaths() {
-        const currentPath = window.location.pathname;
-        console.log('🔄 Adjusting navbar paths for:', currentPath);
+        if (navbarCollapse) {
+            navbarCollapse.querySelectorAll('.dropdown-item, .nav-link:not(.dropdown-toggle)').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (rootElement.classList.contains('nav-mobile')) {
+                        closeAllDropdowns();
+                        closeNavbar();
+                    }
+                });
+            });
 
-        // Determine the base path adjustment needed
-        let pathPrefix = '';
-
-        if (currentPath.startsWith('/pages/sub/')) {
-            // From sub-sub folder (e.g., /pages/sub/adminbcl.html) - need to go up two levels
-            pathPrefix = '../../';
-            console.log('📁 Sub-sub folder detected - using ../../ paths');
-        } else if (currentPath.startsWith('/pages/')) {
-            // From pages folder - need to go up one level
-            pathPrefix = '../';
-            console.log('📁 Pages folder detected - using ../ paths');
-        } else if (currentPath.startsWith('/elearning-assets/')) {
-            // From elearning-assets folder - need to go up one level
-            pathPrefix = '../';
-            console.log('📁 E-learning folder detected - using ../ paths');
-        } else {
-            // From root - no prefix needed
-            pathPrefix = '';
-            console.log('📁 Root folder detected - using direct paths');
+            navbarCollapse.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.scrollHeight > window.innerHeight * 0.6) {
+                    menu.style.maxHeight = '60vh';
+                    menu.style.overflowY = 'auto';
+                }
+            });
         }
-
-        // Adjust the brand logo link
-        const brandLink = document.querySelector('.navbar-brand');
-        if (brandLink && brandLink.href.includes('../index.html')) {
-            brandLink.href = pathPrefix + 'index.html';
-            console.log('✅ Brand link adjusted to:', brandLink.href);
-        }
-
-        // Adjust the BASIC dropdown Index link
-        const basicIndexLink = document.querySelector('.dropdown-menu a[href="/index.html"]');
-        if (basicIndexLink) {
-            basicIndexLink.href = pathPrefix + 'index.html';
-            console.log('✅ BASIC Index link adjusted to:', basicIndexLink.href);
-        }
-
-        console.log('🎯 Navbar paths adjusted for current location');
     }
 
-    // Run path adjustment when navbar loads
     adjustNavbarPaths();
 
-    // Ensure navbar works with dynamic loading
-    if (window.adjustAccountLinks) {
-        // Function exists from another script, no action needed
-        console.log('📋 Account link adjustment function available');
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeResponsiveNavbar, { once: true });
+    } else {
+        initializeResponsiveNavbar();
     }
-
-    // Enhanced dropdown behavior for hover and click compatibility
-    function initializeDropdownBehavior() {
-        console.log('🔧 Initializing enhanced dropdown behavior...');
-
-        const dropdowns = document.querySelectorAll('.navbar .dropdown');
-        const isMobile = document.documentElement.classList.contains('nav-mobile');
-
-        dropdowns.forEach(dropdown => {
-            const toggle = dropdown.querySelector('.dropdown-toggle');
-            const menu = dropdown.querySelector('.dropdown-menu');
-
-            if (!toggle || !menu) return;
-
-            // Remove any existing event listeners to prevent conflicts
-            toggle.removeEventListener('mouseenter', handleDropdownHover);
-            toggle.removeEventListener('mouseleave', handleDropdownLeave);
-            toggle.removeEventListener('click', handleDropdownClick);
-
-            // Add hover behavior for desktop
-            if (!isMobile) {
-                toggle.addEventListener('mouseenter', handleDropdownHover);
-                dropdown.addEventListener('mouseleave', handleDropdownLeave);
-                console.log('✅ Hover dropdown enabled for desktop');
-            } else {
-                // Ensure click behavior for mobile
-                toggle.addEventListener('click', handleDropdownClick);
-                console.log('✅ Click dropdown enabled for mobile');
-            }
-        });
-
-        // Handle window resize to switch between hover/click
-        window.addEventListener('resize', function() {
-            // Debounce resize event
-            clearTimeout(window.resizeTimeout);
-            window.resizeTimeout = setTimeout(initializeDropdownBehavior, 250);
-        });
-    }
-
-    function handleDropdownHover(event) {
-        const dropdown = event.currentTarget.closest('.dropdown');
-        const menu = dropdown.querySelector('.dropdown-menu');
-
-        // Close other dropdowns first
-        document.querySelectorAll('.navbar .dropdown-menu.show').forEach(openMenu => {
-            if (openMenu !== menu) {
-                openMenu.classList.remove('show');
-                const toggle = openMenu.closest('.dropdown').querySelector('.dropdown-toggle');
-                if (toggle) toggle.classList.remove('show');
-            }
-        });
-
-        // Show current dropdown
-        menu.classList.add('show');
-        event.currentTarget.classList.add('show');
-    }
-
-    function handleDropdownLeave(event) {
-        const dropdown = event.currentTarget;
-        const menu = dropdown.querySelector('.dropdown-menu');
-        const toggle = dropdown.querySelector('.dropdown-toggle');
-
-        // Only hide if mouse is not over the menu
-        setTimeout(() => {
-            if (!menu.matches(':hover') && !toggle.matches(':hover')) {
-                menu.classList.remove('show');
-                if (toggle) toggle.classList.remove('show');
-            }
-        }, 100);
-    }
-
-    function handleDropdownClick(event) {
-        event.preventDefault();
-
-        const dropdown = event.currentTarget.closest('.dropdown');
-        const menu = dropdown.querySelector('.dropdown-menu');
-        const toggle = dropdown.querySelector('.dropdown-toggle');
-
-        // Close other dropdowns
-        document.querySelectorAll('.navbar .dropdown-menu.show').forEach(openMenu => {
-            if (openMenu !== menu) {
-                openMenu.classList.remove('show');
-                const otherToggle = openMenu.closest('.dropdown').querySelector('.dropdown-toggle');
-                if (otherToggle) otherToggle.classList.remove('show');
-            }
-        });
-
-        // Toggle current dropdown
-        const isOpen = menu.classList.contains('show');
-        if (isOpen) {
-            menu.classList.remove('show');
-            toggle.classList.remove('show');
-        } else {
-            menu.classList.add('show');
-            toggle.classList.add('show');
-        }
-    }
-
-    // Initialize dropdown behavior after navbar loads
-    setTimeout(initializeDropdownBehavior, 100);
 </script>

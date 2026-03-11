@@ -1,0 +1,84 @@
+#pdfContainer {
+    row-gap: 1rem;
+}
+
+.pdf-card {
+    height: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pdf-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.pdf-card .card-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 16px;
+}
+
+.pdf-thumbnail {
+    width: min(140px, 42%);
+    height: auto;
+    object-fit: contain;
+    cursor: pointer;
+}
+
+.pdf-info {
+    width: 100%;
+    padding-top: 12px;
+}
+
+.pdf-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    color: #2c2c2c;
+    word-break: break-word;
+}
+
+.pdf-size {
+    font-size: 12px;
+    color: #707070;
+    margin-bottom: 0;
+}
+
+.responsive-toolbar {
+    align-items: stretch;
+}
+
+.responsive-toolbar .form-control,
+.responsive-toolbar .form-select {
+    min-width: 160px;
+}
+
+@media (max-width: 767.98px) {
+    .responsive-toolbar > * {
+        width: 100%;
+    }
+
+    .responsive-toolbar .btn,
+    .responsive-toolbar .form-control,
+    .responsive-toolbar .form-select {
+        width: 100% !important;
+    }
+
+    #pdfContainer {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    #pdfContainer > * {
+        width: 100%;
+    }
+}

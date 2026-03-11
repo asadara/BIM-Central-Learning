@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -191,13 +191,13 @@
                         <div class="bg-light p-4 rounded text-center">
                             <div class="d-flex justify-content-center align-items-center flex-column">
                                 <div class="gate-box issue">Issue/RFI</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box triage">Triage (owner + due date)</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box update">Update (model/doc/schedule)</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box approve">Re-approve (gate)</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box broadcast">Broadcast change</div>
                             </div>
                             <p class="text-muted small mt-3" style="text-align: center;">Loop kontrol perubahan dengan
@@ -206,7 +206,7 @@
                     </section>
 
                     <p class="aha-statement">
-                        Perubahan tidak berbahaya—yang berbahaya perubahan tanpa jejak.
+                        Perubahan tidak berbahaya&mdash;yang berbahaya perubahan tanpa jejak.
                     </p>
 
                     <section class="content-explanation">
@@ -248,7 +248,7 @@
 
                     <section class="example">
                         <h2>Contoh Kasus Proyek</h2>
-                        <p>Perubahan lapangan tidak masuk model → progress report menyesatkan</p>
+                        <p>Perubahan lapangan tidak masuk model &rarr; progress report menyesatkan</p>
                         <p>Dalam proyek gedung, perubahan layout MEP di lapangan tidak diupdate ke model BIM. Progress
                             report menunjukkan 90% complete, namun actual progress hanya 70% karena perubahan tersebut
                             tidak terakomodasi dalam baseline schedule.</p>

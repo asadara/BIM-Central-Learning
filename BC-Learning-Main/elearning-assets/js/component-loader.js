@@ -227,6 +227,8 @@ class ComponentLoader {
             tempDiv.innerHTML = sidebarHTML;
             const sidebarElement = tempDiv.firstElementChild;
 
+            this.applySidebarUserState(sidebarElement);
+
             // Mark as persistent with timestamp
             sidebarElement.setAttribute('data-persistent', 'true');
             sidebarElement.setAttribute('data-loaded-by', 'component-loader');
@@ -525,8 +527,80 @@ class ComponentLoader {
         });
     }
 
+    getSidebarUserState() {
+        const username = localStorage.getItem('username') || '';
+        const role = localStorage.getItem('role') || 'student';
+        const level = localStorage.getItem('level') || '';
+        const userimg = localStorage.getItem('userimg') || '';
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        const finalUsername = username || user.username || userData.name || '';
+        const finalRole = role || user.role || userData.role || 'student';
+        const finalLevel = level || user.level || userData.level || '';
+        const finalImage = userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg';
+        const isGuest = !finalUsername || finalUsername === 'Account' || finalUsername === 'Guest User';
+
+        return {
+            username: isGuest ? 'Guest User' : finalUsername,
+            roleLevel: isGuest
+                ? 'Silakan login untuk membuka seluruh fitur belajar'
+                : (finalLevel ? `${finalRole} - ${finalLevel}` : finalRole),
+            image: finalImage,
+            profileHref: isGuest ? '/elearning-assets/login.html' : '/elearning-assets/profile.html',
+            profileText: isGuest ? 'Login to Start Learning' : 'View Profile',
+            finalUsername,
+            finalRole
+        };
+    }
+
+    applySidebarUserState(root = document) {
+        const state = this.getSidebarUserState();
+        const query = root.querySelector ? root.querySelector.bind(root) : document.querySelector.bind(document);
+        const sidebarUserName = query('#sidebar-user-name');
+        const sidebarUserRoleLevel = query('#sidebar-user-role-level');
+        const sidebarUserImg = query('#sidebar-user-img');
+        const sidebarUserProfile = query('#sidebar-user-profile');
+
+        if (sidebarUserName) {
+            sidebarUserName.textContent = state.username;
+        }
+
+        if (sidebarUserRoleLevel) {
+            sidebarUserRoleLevel.textContent = state.roleLevel;
+        }
+
+        if (sidebarUserImg) {
+            sidebarUserImg.src = state.image;
+        }
+
+        if (sidebarUserProfile) {
+            sidebarUserProfile.href = state.profileHref;
+            sidebarUserProfile.textContent = state.profileText;
+        }
+
+        const adminContentSection = query('.admin-content-section');
+        if (adminContentSection) {
+            const isAdmin = state.finalUsername === 'adminBCL' ||
+                localStorage.getItem('admin_token') === 'AdminBCL2025!' ||
+                state.finalRole === 'System Administrator';
+
+            adminContentSection.classList.toggle('show', isAdmin);
+        }
+
+        return state;
+    }
+
     // Sinkronisasi user info di sidebar dengan struktur baru
     syncSidebarUserInfo() {
+        if (typeof window.syncElearningSidebarUserInfo === 'function') {
+            window.syncElearningSidebarUserInfo();
+            return;
+        }
+
+        const state = this.applySidebarUserState(document);
+        console.log('Syncing sidebar user info:', state);
+
         // Ambil data user dari localStorage (support both formats)
         const username = localStorage.getItem('username');
         const role = localStorage.getItem('role') || 'student';

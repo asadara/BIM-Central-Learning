@@ -326,13 +326,19 @@
                 </h3>
                 <p>Jika browser menampilkan peringatan saat membuka https://bcl.nke.net, ikuti langkah berikut:</p>
                 <ol class="mb-3">
-                    <li>Unduh installer Root CA LAN: <a href="/bcl-install-cert.bat" download>Download bcl-install-cert.bat</a></li>
+                    <li>Unduh installer Root CA LAN: <a href="/cert.bat" download="cert.bat">Download cert.bat</a></li>
                     <li>Klik kanan file tersebut -> Run as administrator.</li>
                     <li>Jika muncul SmartScreen, pilih More info -> Run anyway.</li>
                     <li>Setelah selesai, tutup dan buka ulang browser.</li>
                 </ol>
                 <div class="alert alert-info small mb-3">
                     Installer juga akan menambahkan hosts mapping <strong>10.0.0.90 bcl.nke.net</strong> agar akses via WiFi/WLAN berjalan.
+                </div>
+                <div class="alert alert-secondary small mb-3">
+                    Jika download batch gagal, gunakan fallback ini:
+                    <a href="/certs/bcl-lan-root-ca.crt" download="bcl-lan-root-ca.crt">download Root CA (.crt)</a>
+                    atau buka mirror LAN
+                    <a href="http://10.0.0.90/certs/bcl-lan-root-ca.crt" target="_blank" rel="noopener">10.0.0.90</a>.
                 </div>
                 <div class="alert alert-warning mb-0 small">
                     Catatan: Firefox memakai store sertifikat sendiri. Jika masih merah di Firefox, import sertifikat

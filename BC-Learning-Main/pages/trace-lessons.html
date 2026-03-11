@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -191,13 +191,13 @@
                         <div class="bg-light p-4 rounded text-center">
                             <div class="d-flex justify-content-center align-items-center flex-column">
                                 <div class="gate-box decision">Decision</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box info">Based on Info (version/status)</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box approved">Approved by (who/when)</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box stored">Stored/Archived</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box lesson">Lesson captured</div>
                             </div>
                             <p class="text-muted small mt-3" style="text-align: center;">Trace chain untuk audit dan
@@ -206,7 +206,7 @@
                     </section>
 
                     <p class="aha-statement">
-                        Tanpa jejak, tidak ada pembelajaran—hanya pengulangan masalah.
+                        Tanpa jejak, tidak ada pembelajaran&mdash;hanya pengulangan masalah.
                     </p>
 
                     <section class="content-explanation">

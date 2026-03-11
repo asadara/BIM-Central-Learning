@@ -85,13 +85,14 @@ body {
 }
 
 /* Main content flex */
-.container-xxl,
-.container-xl,
-.container-lg,
-.container-md,
-.container-sm,
-.container {
-    flex: 1 !important;
+#navbar-container,
+#footer-container {
+    flex: 0 0 auto;
+}
+
+#footer-container {
+    margin-top: auto !important;
+    width: 100% !important;
 }
 
 /* Responsive adjustments */

@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -226,20 +226,20 @@
                         <div class="bg-light p-4 rounded">
                             <div class="decision-gate-diagram">
                                 <div class="gate-box draft">Draft</div>
-                                <div class="arrow vertical">↓</div>
+                                <div class="arrow vertical">&darr;</div>
                                 <div class="gate-box review">Review</div>
-                                <div class="arrow vertical">↓</div>
+                                <div class="arrow vertical">&darr;</div>
                                 <div class="gate-box approved">Approved?</div>
-                                <div class="arrow vertical">↓</div>
+                                <div class="arrow vertical">&darr;</div>
                                 <div class="branch-container">
                                     <div class="branch yes-branch">
                                         <span class="branch-label">YES</span>
-                                        <div class="arrow vertical">↓</div>
+                                        <div class="arrow vertical">&darr;</div>
                                         <div class="gate-box allowed">Decision Allowed</div>
                                     </div>
                                     <div class="branch no-branch">
                                         <span class="branch-label">NO</span>
-                                        <div class="arrow vertical">↓</div>
+                                        <div class="arrow vertical">&darr;</div>
                                         <div class="gate-box blocked">Decision Blocked</div>
                                     </div>
                                 </div>

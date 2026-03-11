@@ -186,6 +186,69 @@ body {
     /* Lebih besar untuk logo yang lebih besar */
     min-height: 100vh !important;
     /* Hapus display flex agar grid Bootstrap berjalan normal */
+    display: flex;
+    flex-direction: column;
+}
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+}
+
+iframe {
+    max-width: 100%;
+}
+
+.container,
+.container-fluid,
+.container-sm,
+.container-md,
+.container-lg,
+.container-xl,
+.container-xxl {
+    width: 100%;
+}
+
+@media (max-width: 991.98px) {
+    body {
+        padding-top: 84px !important;
+    }
+
+    .container,
+    .container-fluid,
+    .container-sm,
+    .container-md,
+    .container-lg,
+    .container-xl,
+    .container-xxl {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body {
+        padding-top: 76px !important;
+    }
+
+    .container,
+    .container-fluid,
+    .container-sm,
+    .container-md,
+    .container-lg,
+    .container-xl,
+    .container-xxl {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
 }
 
 .navbar .dropdown-toggle::after {
@@ -942,14 +1005,14 @@ body {
     border-top: 1px solid rgba(256, 256, 256, .1);
 }
 
-/* Ensure main content takes up remaining space */
-.container-xxl,
-.container-xl,
-.container-lg,
-.container-md,
-.container-sm,
-.container {
-    flex: 1 !important;
+#navbar-container,
+#footer-container {
+    flex: 0 0 auto;
+}
+
+#footer-container {
+    margin-top: auto;
+    width: 100%;
 }
 
 .footer .btn.btn-social {
@@ -1084,27 +1147,6 @@ body {
     margin-bottom: 10px;
 }
 
-/* Card grid berita agar proporsional */
-.card {
-    width: 100%;
-    max-width: 320px;
-    min-width: 250px;
-    transition: transform 0.2s;
-}
-
-.card:hover {
-    transform: scale(1.05);
-}
-
-.card-title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 90%;
-    /* Sesuaikan dengan ukuran card */
-}
-
 /* Atur teks di kolom ukuran file agar rata kanan */
 td.file-size {
     text-align: right !important;
@@ -1186,377 +1228,6 @@ thead {
     color: black;
 }
 
-#breadcrumb {
-    margin-bottom: 10px;
-    /* Beri jarak agar tidak terlalu dekat dengan daftar file */
-}
-
-.container {
-    max-width: 90%;
-    /* Sesuaikan dengan lebar card agar sejajar */
-}
-
-.breadcrumb {
-    font-size: 16px;
-    /* Ukuran teks breadcrumb agar tidak terlalu kecil */
-    border-radius: 5px;
-}
-
-.resizable-preview {
-    width: 100%;
-    min-height: 300px;
-    max-height: 80vh;
-    /* Maksimal 80% tinggi layar */
-    overflow: auto;
-    /* Tambahkan scroll jika konten terlalu besar */
-    resize: vertical;
-    /* Memungkinkan pengguna mengubah tinggi */
-    border: 1px solid #ccc;
-    padding: 10px;
-    background: #f9f9f9;
-}
-
-.preview-frame {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.preview-box {
-    width: 100%;
-    min-height: 300px;
-    max-height: 80vh;
-    overflow: auto;
-    resize: vertical;
-    border: 1px solid #ccc;
-    padding: 10px;
-    background: #f9f9f9;
-}
-
-.preview-frame {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    text-align: left;
-
-}
-
-.file-card {
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin: 10px;
-    display: inline-block;
-}
-
-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-#videoContainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    /* 4 kolom responsive dengan min width 280px */
-    gap: 20px;
-    /* Jarak antar card */
-    padding: 20px;
-    max-width: 1400px;
-    /* Batasi lebar maksimal container */
-    margin: 0 auto;
-    /* Center container */
-}
-
-/* Media queries untuk responsive design */
-@media (min-width: 1200px) {
-    #videoContainer {
-        grid-template-columns: repeat(4, 1fr);
-        /* Paksa 4 kolom di layar besar */
-    }
-
-    .video-title {
-        font-size: 15px;
-    }
-}
-
-@media (max-width: 992px) {
-    #videoContainer {
-        grid-template-columns: repeat(3, 1fr);
-        /* 3 kolom di tablet */
-    }
-
-    .video-thumbnail {
-        height: 180px;
-    }
-}
-
-@media (max-width: 768px) {
-    #videoContainer {
-        grid-template-columns: repeat(2, 1fr);
-        /* 2 kolom di mobile */
-        gap: 15px;
-        padding: 15px;
-    }
-
-    .video-thumbnail {
-        height: 160px;
-    }
-
-    .video-title {
-        font-size: 13px;
-    }
-
-    .card {
-        padding: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    #videoContainer {
-        grid-template-columns: 1fr;
-        /* 1 kolom di mobile kecil */
-        gap: 10px;
-        padding: 10px;
-    }
-
-    .video-thumbnail {
-        height: 200px;
-    }
-
-    .video-title {
-        font-size: 14px;
-    }
-}
-
-.card {
-    /* width: 100% dihapus agar grid Bootstrap bisa mengatur lebar kolom */
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 15px;
-    text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    height: auto;
-}
-
-.video-thumbnail {
-    width: 100%;
-    height: 200px;
-    /* Tinggi tetap untuk konsistensi */
-    object-fit: cover;
-    /* Crop image untuk mengisi area */
-    border-radius: 8px;
-    transition: transform 0.3s ease, filter 0.3s ease;
-}
-
-.video-title {
-    font-size: 14px;
-    font-weight: bold;
-    margin: 10px 0 5px 0;
-    line-height: 1.3;
-    color: #333;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    /* Batasi maksimal 2 baris */
-    -webkit-box-orient: vertical;
-}
-
-.video-size {
-    font-size: 12px;
-    color: #666;
-    margin: 5px 0;
-}
-
-.view-count {
-    font-size: 12px;
-    color: #888;
-    margin: 5px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.video-card {
-    transition: transform 0.5s ease, box-shadow 0.5s ease, border 0.5s ease;
-    border: 2px solid transparent;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.video-card:hover {
-    transform: scale(1.02);
-    box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.15);
-    border: 2px solid #FF6B35;
-    cursor: pointer;
-}
-
-.video-card:hover .video-thumbnail {
-    transform: scale(1.03);
-    filter: brightness(1.1);
-}
-
-.video-info {
-    padding: 15px 10px 10px 10px;
-    text-align: center;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.video-card:hover .video-title {
-    color: #FF6B35;
-}
-
-.modal {
-    display: none;
-    /* Default modal disembunyikan */
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-}
-
-.modal-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    max-width: 80%;
-}
-
-video {
-    width: 100%;
-    max-height: 80vh;
-    border-radius: 10px;
-}
-
-.close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    cursor: pointer;
-    color: #333;
-}
-
-.pdf-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-    padding: 10px;
-}
-
-.pdf-card {
-    width: 250px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    text-align: center;
-    transition: transform 0.3s ease-in-out;
-}
-
-.pdf-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.pdf-thumbnail {
-    width: 35%;
-    height: auto;
-    object-fit: cover;
-    border-bottom: 1px solid #ddd;
-    cursor: pointer;
-    align-items: center;
-}
-
-.pdf-info {
-    padding: 10px;
-}
-
-.pdf-title {
-    font-weight: bold;
-    font-size: 14px;
-    margin-bottom: 5px;
-    cursor: pointer;
-}
-
-.pdf-size {
-    font-size: 12px;
-    color: gray;
-}
-
-#content {
-    width: 100%;
-    /* Lebar penuh */
-    background: #fff;
-    /* Pastikan latar belakang tetap putih */
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    /* Tambahkan efek bayangan */
-    border-radius: 8px;
-    /* Buat sudut lebih halus */
-    padding: 20px;
-    /* Beri jarak dalam card */
-    min-height: 100px;
-    /* Supaya tidak terlalu kecil jika kontennya sedikit */
-    transition: all 0.3s ease-in-out;
-    /* Animasi halus */
-    text-align: left;
-    transform: scale(1.05);
-}
-
-#contentContainer {
-    transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
-    /* Animasi lebih smooth */
-}
-
-#contentContainer:hover {
-    transform: scale(1.01);
-    /* Zooming lebih kecil */
-}
-
-.content-wrapper {
-    max-width: 1200px;
-    /* Batasi lebar maksimal agar tidak terlalu lebar */
-    width: 90%;
-    /* Biarkan fleksibel hingga batas maksimal */
-    margin: 0 auto;
-    /* Pusatkan di tengah */
-    transition: all 0.3s ease-in-out;
-    /* Animasi halus saat ukuran berubah */
-}
-
-.dropdown00:hover {
-    transform: scale(1.1);
-    /* Bisa menyebabkan elemen lain bergeser */
-}
-
 .d-flex .btn,
 .d-flex input {
     height: 40px;
@@ -1598,229 +1269,6 @@ video {
     height: auto !important;
     min-height: 200px;
     /* Sesuaikan dengan kebutuhan */
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    margin: 0;
-    padding: 20px;
-    text-align: center;
-}
-
-.chat-container {
-    width: 100%;
-    max-width: 1200px;
-    /* Sesuaikan dengan halaman utama */
-    margin: auto;
-}
-
-.open-form-btn {
-    background: #ff7f00;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-    display: inline-block;
-    /* Pastikan terlihat */
-    margin-bottom: 20px;
-}
-
-.open-form-btn:hover {
-    background: #e66a00;
-}
-
-/* Popup Form */
-.popup-form {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-    width: 350px;
-    text-align: center;
-    border-top: 5px solid #ff7f00;
-}
-
-.popup-form .close-btn {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.popup-form h2 {
-    color: #ff7f00;
-}
-
-.popup-form input,
-.popup-form textarea {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-.popup-form textarea {
-    height: 60px;
-}
-
-.popup-form button {
-    background: #ff7f00;
-    color: white;
-    padding: 8px;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    width: 100%;
-}
-
-.popup-form button:hover {
-    background: #e66a00;
-}
-
-/* Daftar Pertanyaan */
-#qa-list {
-    margin-top: 20px;
-    text-align: left;
-}
-
-.qa-item {
-    background: #fff3e0;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
-    border-left: 5px solid #ff7f00;
-}
-
-.qa-item .question {
-    font-weight: bold;
-}
-
-.qa-item .answer {
-    color: green;
-    margin-top: 5px;
-}
-
-.drag-bar {
-    width: 100%;
-    padding: 8px;
-    background: #ff7f00;
-    color: white;
-    text-align: center;
-    cursor: grab;
-    font-weight: bold;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    margin: 20px;
-}
-
-h2 {
-    color: orange;
-    font-weight: bold;
-    text-align: left;
-    margin: 10px 0;
-}
-
-h3 {
-    color: black;
-    font-weight: bold;
-    text-align: left;
-    margin: 10px 0;
-}
-
-p {
-    text-align: justify;
-}
-
-ul,
-ol {
-    padding-left: 20px;
-}
-
-li {
-    text-align: justify;
-}
-
-/* Style daftar pertanyaan */
-#containertanya {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 auto;
-    padding: 10px;
-}
-
-/* Style kartu pertanyaan */
-.question-card {
-    background: #fff;
-    /* Putih agar lebih bersih */
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-    width: 100% !important;
-    max-width: none !important;
-}
-
-/* Header pertanyaan */
-.question-card .question-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #333;
-}
-
-/* Teks pertanyaan */
-.question-card p {
-    padding: 5px;
-    line-height: 1.4;
-    margin: 5px 0;
-    font-size: 14px;
-    color: #555;
-}
-
-/* Tombol Hapus */
-.delete-btn {
-    background: #ff6666;
-    font-size: 14px;
-    padding: 5px 8px;
-    border-radius: 5px;
-}
-
-.delete-btn:hover {
-    background: #cc0000;
-}
-
-.view-count {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 1rem;
-    color: #666;
-    margin-top: 5px;
-}
-
-.view-count i {
-    color: #888;
-    font-size: 1rem;
 }
 
 /* BIM Library Bookshelf Style */

@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -220,11 +220,11 @@
                         <div class="bg-light p-4 rounded text-center">
                             <div class="decision-gate">
                                 <div class="flow-box approved">Approved Model?</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div style="display: flex; align-items: center;">
                                     <div style="text-align: right; margin-right: 1rem;">
                                         <div class="flow-box simulate">YES: 4D/5D/Progress</div>
-                                        <div class="arrow" style="transform: rotate(-90deg);">→</div>
+                                        <div class="arrow" style="transform: rotate(-90deg);">&rarr;</div>
                                         <div class="flow-box decision">Decision</div>
                                     </div>
                                     <div style="text-align: left; margin-left: 1rem;">
@@ -240,26 +240,26 @@
                         <div class="mapping-step">
                             <strong>Model Element</strong>
                         </div>
-                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-arrow">&rarr;</div>
                         <div class="mapping-step">
                             <strong>WBS</strong>
                         </div>
-                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-arrow">&rarr;</div>
                         <div class="mapping-step">
                             <strong>Activity</strong>
                         </div>
-                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-arrow">&rarr;</div>
                         <div class="mapping-step">
                             <strong>Baseline</strong>
                         </div>
-                        <div class="mapping-arrow">→</div>
+                        <div class="mapping-arrow">&rarr;</div>
                         <div class="mapping-step">
                             <strong>Progress Update</strong>
                         </div>
                     </div>
 
                     <p class="aha-statement">
-                        Simulasi bukan ramalan—simulasi adalah alat untuk menguji skenario dan mengurangi risiko.
+                        Simulasi bukan ramalan&mdash;simulasi adalah alat untuk menguji skenario dan mengurangi risiko.
                     </p>
 
                     <section class="ringkas">

@@ -1,0 +1,58 @@
+.resizable-preview {
+    width: 100%;
+    min-height: 300px;
+    max-height: 80vh;
+    overflow: auto;
+    resize: vertical;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background: #f9f9f9;
+}
+
+.preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.file-card {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 10px;
+    display: inline-block;
+}
+
+.responsive-toolbar {
+    align-items: stretch;
+}
+
+.responsive-toolbar #searchInput {
+    min-width: 220px;
+}
+
+@media (max-width: 767.98px) {
+    .resizable-preview {
+        min-height: 240px;
+        padding: 8px;
+    }
+
+    .file-card {
+        margin: 8px 0;
+        width: 100%;
+    }
+
+    .responsive-toolbar {
+        width: 100%;
+    }
+
+    .responsive-toolbar > * {
+        width: 100%;
+    }
+
+    .responsive-toolbar .btn,
+    .responsive-toolbar .form-control,
+    .responsive-toolbar .simple-dropdown,
+    .responsive-toolbar .simple-dropdown .btn {
+        width: 100% !important;
+    }
+}

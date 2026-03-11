@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -185,11 +185,11 @@
                         <div class="bg-light p-4 rounded text-center">
                             <div class="d-flex justify-content-center align-items-center flex-column">
                                 <div class="gate-box wip">WIP/Draft</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box review">Review</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box approved">Approved/Published</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="gate-box used">Used for Site/Decision</div>
                             </div>
                             <p class="text-muted small mt-3" style="text-align: center;">Quality gate memastikan data
@@ -228,7 +228,7 @@
                         </ul>
 
                         <h2>Stop-rule</h2>
-                        <p>Jika belum lewat gate → jangan dipakai</p>
+                        <p>Jika belum lewat gate &rarr; jangan dipakai</p>
                         <ul>
                             <li>Data draft tidak boleh untuk procurement</li>
                             <li>Model unreviewed tidak untuk konstruksi</li>
@@ -239,7 +239,7 @@
 
                     <section class="example">
                         <h2>Contoh Kasus Proyek</h2>
-                        <p>Drawing/shop/4D dipakai lapangan sebelum gate → rework</p>
+                        <p>Drawing/shop/4D dipakai lapangan sebelum gate &rarr; rework</p>
                         <p>Dalam proyek gedung, shop drawing yang masih draft digunakan untuk fabrikasi material.
                             Akibatnya, setelah review ditemukan kesalahan dimensi yang menyebabkan rework 20% dari total
                             pekerjaan, dengan biaya tambahan dan delay schedule 2 minggu.</p>

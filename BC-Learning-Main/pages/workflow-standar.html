@@ -37,8 +37,8 @@
     <style>
         .manajemen-info-header {
             text-align: center;
-            margin: -40px 0 0 0;
-            padding: 5px 10px 0px 10px;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
             color: #333;
             border-radius: 0;
             background: #f8f9fa;
@@ -216,11 +216,11 @@
                         <div class="bg-light p-4 rounded text-center">
                             <div class="d-flex flex-column align-items-center">
                                 <div class="flow-box draft">Draft/WIP</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="flow-box review">Review/Shared</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="flow-box approved">Approved/Published</div>
-                                <div class="arrow">↓</div>
+                                <div class="arrow">&darr;</div>
                                 <div class="flow-box archived">Archived</div>
                             </div>
                             <p class="text-muted small mt-3">Status ladder informasi BIM</p>
@@ -247,7 +247,7 @@
                     </div>
 
                     <p class="aha-statement">
-                        Standar bukan hambatan—standar adalah fondasi untuk konsistensi dan kepercayaan.
+                        Standar bukan hambatan&mdash;standar adalah fondasi untuk konsistensi dan kepercayaan.
                     </p>
 
                     <section class="ringkas">

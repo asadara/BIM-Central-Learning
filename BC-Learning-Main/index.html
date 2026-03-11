@@ -540,7 +540,7 @@
                 <div class="small">Jika ada peringatan HTTPS, unduh dan jalankan installer sertifikat BCL (Run as Administrator).</div>
             </div>
             <div class="text-md-end d-flex gap-2 flex-wrap justify-content-md-end">
-                <a class="btn btn-warning btn-sm" href="./bcl-install-cert.bat" download="bcl-install-cert.bat" id="cert-download">
+                <a class="btn btn-warning btn-sm" href="/cert.bat" download="cert.bat" id="cert-download">
                     <i class="fa fa-shield-alt me-1"></i>Install Sertifikat
                 </a>
                 <button class="btn btn-outline-secondary btn-sm" type="button" id="cert-banner-installed">
@@ -1242,17 +1242,32 @@
                 "set \"DOMAIN=bcl.nke.net\"",
                 "set \"SERVER_IP=10.0.0.90\"",
                 "set \"CA_FILE=bcl-lan-root-ca.crt\"",
-                "set \"CA_PATH=%~dp0%CA_FILE%\"",
-                "set \"CA_URL=http://%SERVER_IP%/certs/%CA_FILE%\"",
+                "set \"CA_PATH=%TEMP%\\%CA_FILE%\"",
+                "set \"CA_URL_DOMAIN=http://%DOMAIN%/certs/%CA_FILE%\"",
+                "set \"CA_URL_IP=http://%SERVER_IP%/certs/%CA_FILE%\"",
+                "set \"OPEN_URL=https://%SERVER_IP%/?cert=installed\"",
                 "",
-                "echo Downloading LAN Root CA from %CA_URL% ...",
-                "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%CA_URL%' -OutFile '%CA_PATH%'\" >nul 2>&1",
+                "if exist \"%CA_PATH%\" del /q \"%CA_PATH%\" >nul 2>&1",
+                "echo Downloading LAN Root CA from %CA_URL_DOMAIN% ...",
+                "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%CA_URL_DOMAIN%' -OutFile '%CA_PATH%'\" >nul 2>&1",
+                "if not exist \"%CA_PATH%\" (",
+                "  powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri '%CA_URL_IP%' -OutFile '%CA_PATH%'\" >nul 2>&1",
+                ")",
+                "if exist \"%CA_PATH%\" (",
+                "  certutil -dump \"%CA_PATH%\" >nul 2>&1",
+                "  if !errorlevel! neq 0 del /q \"%CA_PATH%\" >nul 2>&1",
+                ")",
                 "if not exist \"%CA_PATH%\" (",
                 "  where curl.exe >nul 2>&1",
-                "  if !errorlevel! equ 0 curl.exe -L -o \"%CA_PATH%\" \"%CA_URL%\" >nul 2>&1",
+                "  if !errorlevel! equ 0 curl.exe -L -o \"%CA_PATH%\" \"%CA_URL_IP%\" >nul 2>&1",
+                ")",
+                "if exist \"%CA_PATH%\" (",
+                "  certutil -dump \"%CA_PATH%\" >nul 2>&1",
+                "  if !errorlevel! neq 0 del /q \"%CA_PATH%\" >nul 2>&1",
                 ")",
                 "if not exist \"%CA_PATH%\" (",
                 "  echo ERROR: gagal download %CA_FILE%",
+                "  echo Coba buka langsung: %CA_URL_IP%",
                 "  pause",
                 "  exit /b 1",
                 ")",
@@ -1265,15 +1280,18 @@
                 "  copy /Y \"%TEMP%\\bcl-hosts.tmp\" \"%SystemRoot%\\System32\\drivers\\etc\\hosts\" >nul",
                 "  del /q \"%TEMP%\\bcl-hosts.tmp\" >nul 2>&1",
                 "  ipconfig /flushdns >nul 2>&1",
+                "  set \"OPEN_URL=https://%DOMAIN%/?cert=installed\"",
                 ") else (",
-                "  echo NOTE: jalankan ulang sebagai Administrator untuk update hosts file.",
+                "  echo WARNING: install hanya partial karena bukan Administrator.",
                 "  certutil -user -addstore -f Root \"%CA_PATH%\" >nul",
                 "  echo Tambahkan manual: %SERVER_IP% %DOMAIN%",
+                "  echo Gunakan dulu: https://%SERVER_IP%",
                 ")",
                 "",
                 "echo Selesai. Silakan tutup dan buka ulang browser.",
-                "start \"\" \"https://%DOMAIN%/?cert=installed\"",
+                "start \"\" \"%OPEN_URL%\"",
                 "pause",
+                "del /q \"%CA_PATH%\" >nul 2>&1",
                 "endlocal"
             ].join("\r\n");
 
@@ -1292,7 +1310,7 @@
             link.addEventListener('click', async (event) => {
                 event.preventDefault();
 
-                const filename = link.getAttribute('download') || 'bcl-install-cert.bat';
+                const filename = link.getAttribute('download') || 'cert.bat';
                 if (window.location.protocol === 'file:') {
                     downloadText(fallbackContent, filename);
                     return;

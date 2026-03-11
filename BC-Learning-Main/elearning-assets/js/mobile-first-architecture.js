@@ -298,21 +298,21 @@ class MobileFirstArchitecture {
                     name: 'My Courses',
                     short_name: 'Courses',
                     description: 'View your enrolled courses',
-                    url: '/courses',
+                    url: '/elearning-assets/courses.html',
                     icons: [{ src: '/img/shortcut-courses.png', sizes: '96x96' }]
                 },
                 {
                     name: 'Practice',
                     short_name: 'Practice',
                     description: 'Practice exercises and quizzes',
-                    url: '/practice',
+                    url: '/elearning-assets/practice.html',
                     icons: [{ src: '/img/shortcut-practice.png', sizes: '96x96' }]
                 },
                 {
                     name: 'Profile',
                     short_name: 'Profile',
                     description: 'View your learning profile',
-                    url: '/profile',
+                    url: '/elearning-assets/profile.html',
                     icons: [{ src: '/img/shortcut-profile.png', sizes: '96x96' }]
                 }
             ]
@@ -988,6 +988,14 @@ async function doBackgroundSync() {
             { icon: '⚙️', label: 'Settings', action: () => this.openSettings() }
         ];
 
+        navItems.splice(0, navItems.length,
+            { icon: 'HOME', label: 'Home', action: () => this.navigateToHome() },
+            { icon: 'USER', label: 'Profil', action: () => this.navigateToProfile() },
+            { icon: 'FAV', label: 'Fav', action: () => this.navigateToFavorites() },
+            { icon: 'FIND', label: 'Search', action: () => this.navigateToSearch() },
+            { icon: 'SET', label: 'Setting', action: () => this.openSettings() }
+        );
+
         navItems.forEach(item => {
             const navItem = document.createElement('button');
             navItem.className = 'mobile-nav-item';
@@ -1053,6 +1061,55 @@ async function doBackgroundSync() {
 
         installBtn.onclick = () => this.promptInstall();
         document.body.appendChild(installBtn);
+    }
+
+    getElearningPageUrl(pageName) {
+        return `/elearning-assets/${pageName}`;
+    }
+
+    navigateToPath(path) {
+        if (!path || typeof path !== 'string') {
+            return;
+        }
+
+        window.location.href = path;
+    }
+
+    navigateToHome() {
+        this.navigateToPath(this.getElearningPageUrl('home.html'));
+    }
+
+    navigateToCourses() {
+        this.navigateToPath(this.getElearningPageUrl('courses.html'));
+    }
+
+    navigateToProfile() {
+        this.navigateToPath(this.getElearningPageUrl('profile.html'));
+    }
+
+    navigateToFavorites() {
+        this.navigateToPath(this.getElearningPageUrl('favorites.html'));
+    }
+
+    navigateToSearch() {
+        const currentPath = window.location.pathname || '';
+        if (currentPath.endsWith('/search.html')) {
+            const searchTarget = document.querySelector('#searchInput, input[type="search"], input[name="search_box"]');
+            if (searchTarget && typeof searchTarget.focus === 'function') {
+                searchTarget.focus();
+                return;
+            }
+        }
+
+        this.navigateToPath(this.getElearningPageUrl('search.html'));
+    }
+
+    openChat() {
+        this.navigateToFavorites();
+    }
+
+    openSettings() {
+        this.navigateToPath(this.getElearningPageUrl('update.html'));
     }
 
     // Utility Methods

@@ -48,6 +48,7 @@ migrations/
 *.backup-*
 *_backup.*
 *-backup-*
+BC-Learning-Main/elearning-assets/js/practice-backup.js
 
 # Local database / generated storage
 postgres/

@@ -84,6 +84,22 @@ function initializeButtons() {
             }, 50);
         }
     }
+
+    initializeMobilePageNav();
+}
+
+function initializeMobilePageNav() {
+    const currentPath = window.location.pathname.replace(/\/+$/, '');
+    const navLinks = document.querySelectorAll('.mobile-page-nav a[data-nav-match]');
+
+    navLinks.forEach((link) => {
+        try {
+            const targetPath = new URL(link.href, window.location.origin).pathname.replace(/\/+$/, '');
+            link.classList.toggle('active', targetPath === currentPath);
+        } catch (error) {
+            link.classList.remove('active');
+        }
+    });
 }
 
 // Handle close button for component-based sidebar
@@ -95,6 +111,10 @@ document.addEventListener('click', (e) => {
             document.body.classList.remove('active');
         }
     }
+});
+
+document.addEventListener('componentsLoaded', () => {
+    setTimeout(initializeMobilePageNav, 50);
 });
 
 // Handle clicks outside of profile and search to close them

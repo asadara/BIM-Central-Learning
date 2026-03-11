@@ -1,45 +1,121 @@
-<!-- Navbar Container for E-learning Pages -->
-<div id="navbar-container"></div>
+<div class="elearning-header-shell">
+    <div id="navbar-container"></div>
 
-<header class="header">
-    <section class="flex">
-        <a href="/elearning-assets/home.html" class="logo">BIM Central Learning - TRAINING CENTER</a>
+    <header class="header">
+        <section class="flex">
+            <a href="/elearning-assets/home.html" class="logo">BIM Central Learning - TRAINING CENTER</a>
 
-        <form action="/elearning-assets/search.html" method="post" class="search-form">
-            <input type="text" name="search_box" required placeholder="search courses..." maxlength="100">
-            <button type="submit" class="fas fa-search"></button>
-        </form>
+            <form action="/elearning-assets/search.html" method="get" class="search-form">
+                <input type="text" name="q" placeholder="search courses..." maxlength="100">
+                <button type="submit" class="fas fa-search"></button>
+            </form>
 
-        <div class="icons">
-            <div id="menu-btn" class="fas fa-bars"></div>
-            <div id="search-btn" class="fas fa-search"></div>
-            <div id="user-btn" class="fas fa-user"></div>
-            <div id="toggle-btn" class="fas fa-sun"></div>
-        </div>
-
-        <div class="profile">
-            <img id="header-user-img" src="/elearning-assets/images/pic-1.jpg" class="image" alt="">
-            <h3 class="name" id="header-user-name">Guest</h3>
-            <p class="role" id="header-user-role">visitor</p>
-
-            <!-- Untuk user yang sudah login -->
-            <div id="logged-in-options" style="display: none;">
-                <a href="/elearning-assets/update.html" class="btn">update profile</a>
-                <a href="/elearning-assets/profile.html" class="btn">view profile</a>
-                <div class="flex-btn">
-                    <a href="#" id="logout-btn" class="option-btn">logout</a>
-                </div>
+            <div class="icons">
+                <div id="menu-btn" class="fas fa-bars"></div>
+                <div id="search-btn" class="fas fa-search"></div>
+                <div id="user-btn" class="fas fa-user"></div>
+                <div id="toggle-btn" class="fas fa-sun"></div>
             </div>
 
-            <!-- Untuk user yang belum login -->
-            <div id="guest-options">
-                <p style="font-size: 14px; color: #666; margin: 10px 0;">Please login to access all features</p>
-                <div class="flex-btn">
-                    <a href="/elearning-assets/login.html" class="option-btn">login</a>
-                    <a href="/elearning-assets/register.html" class="option-btn">register</a>
+            <div class="profile">
+                <img id="header-user-img" src="/elearning-assets/images/pic-1.jpg" class="image" alt="">
+                <h3 class="name" id="header-user-name">Guest</h3>
+                <p class="role" id="header-user-role">visitor</p>
+
+                <div id="logged-in-options" style="display: none;">
+                    <a href="/elearning-assets/update.html" class="btn">update profile</a>
+                    <a href="/elearning-assets/profile.html" class="btn">view profile</a>
+                    <div class="flex-btn">
+                        <a href="#" id="logout-btn" class="option-btn">logout</a>
+                    </div>
+                </div>
+
+                <div id="guest-options">
+                    <p style="font-size: 14px; color: #666; margin: 10px 0;">Please login to access all features</p>
+                    <div class="flex-btn">
+                        <a href="/elearning-assets/login.html" class="option-btn">login</a>
+                        <a href="/elearning-assets/register.html" class="option-btn">register</a>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-</header>
+        </section>
+    </header>
 
+    <nav class="mobile-page-nav" aria-label="Quick navigation">
+        <a href="/elearning-assets/home.html" data-nav-match="/elearning-assets/home.html">
+            <i class="fas fa-home" aria-hidden="true"></i>
+            <span>Home</span>
+        </a>
+        <a href="/elearning-assets/profile.html" data-nav-match="/elearning-assets/profile.html">
+            <i class="fas fa-user" aria-hidden="true"></i>
+            <span>Profil</span>
+        </a>
+        <a href="/elearning-assets/favorites.html" data-nav-match="/elearning-assets/favorites.html">
+            <i class="fas fa-heart" aria-hidden="true"></i>
+            <span>Fav</span>
+        </a>
+        <a href="/elearning-assets/search.html" data-nav-match="/elearning-assets/search.html">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <span>Search</span>
+        </a>
+        <a href="/elearning-assets/update.html" data-nav-match="/elearning-assets/update.html">
+            <i class="fas fa-cog" aria-hidden="true"></i>
+            <span>Setting</span>
+        </a>
+    </nav>
+</div>
+
+<style>
+    .mobile-page-nav {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding-bottom: 7.6rem;
+        }
+
+        .mobile-page-nav {
+            position: fixed;
+            left: 1.2rem;
+            right: 1.2rem;
+            bottom: 1.2rem;
+            z-index: 1100;
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.6rem;
+            padding: 0.8rem;
+            border-radius: 1.8rem;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+            backdrop-filter: blur(10px);
+        }
+
+        .mobile-page-nav a {
+            min-height: 5.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            color: var(--light-color);
+            border-radius: 1.2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .mobile-page-nav a i {
+            font-size: 1.7rem;
+        }
+
+        .mobile-page-nav a.active,
+        .mobile-page-nav a:hover {
+            color: var(--main-color);
+            background: rgba(138, 43, 226, 0.08);
+            transform: translateY(-1px);
+        }
+    }
+</style>

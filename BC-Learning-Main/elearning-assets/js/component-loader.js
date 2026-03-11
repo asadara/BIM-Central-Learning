@@ -163,20 +163,19 @@ class ComponentLoader {
             const response = await fetch('/elearning-assets/components/header.html');
             const headerHTML = await response.text();
 
-            // Insert header HTML
-            const headerContainer = document.querySelector('.header-container') ||
-                document.querySelector('body');
-
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = headerHTML;
-            const headerElement = tempDiv.firstElementChild;
-
-            // Replace existing header atau insert sebagai first child
-            const existingHeader = document.querySelector('.header');
-            if (existingHeader) {
-                existingHeader.replaceWith(headerElement);
+            const headerContainer = document.querySelector('.header-container');
+            if (headerContainer) {
+                headerContainer.innerHTML = headerHTML;
             } else {
-                headerContainer.insertBefore(headerElement, headerContainer.firstChild);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = headerHTML;
+                const fragment = document.createDocumentFragment();
+
+                while (tempDiv.firstChild) {
+                    fragment.appendChild(tempDiv.firstChild);
+                }
+
+                document.body.insertBefore(fragment, document.body.firstChild);
             }
 
             // Load navbar into the header component

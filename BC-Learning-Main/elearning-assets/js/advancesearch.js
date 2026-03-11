@@ -1,4 +1,4 @@
-const baseURL = `http://${window.location.hostname}:5151`;
+const baseURL = window.location.origin;
 
 //Fungsi Pencarian Lanjutan
 function startSearch() {
@@ -13,7 +13,7 @@ function startSearch() {
     document.getElementById("searchResults").innerHTML = ""; // Kosongkan tabel
     document.getElementById("fileCount").innerText = ""; // Kosongkan jumlah file
 
-    fetch(`http://${window.location.hostname}:5151/api/search?q=${encodeURIComponent(query)}`)
+    fetch(`${baseURL}/api/search?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
         .then(data => {
             console.log('Search API Response:', data); // Debug log

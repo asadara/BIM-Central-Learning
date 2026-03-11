@@ -57,7 +57,7 @@ const newFunction = [
   "                    infoDiv.innerHTML = '<span style=color:#ef4444>⏰ Timeout: Server tidak merespons</span>';",
   "                } else if (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {",
   "                    infoDiv.innerHTML = '<span style=color:#ef4444>🌐 Network Error: Akses melalui URL server yang benar</span>';",
-  "                    console.log('💡 Pastikan mengakses dashboard melalui: http://localhost:5051/elearning-assets/phase4-dashboard.html');",
+  "                    console.log('💡 Pastikan mengakses dashboard melalui: http://localhost:5052/elearning-assets/phase4-dashboard.html');",
   "                } else if (err.message.includes('CORS')) {",
   "                    infoDiv.innerHTML = '<span style=color:#ef4444>🚫 CORS Error: Gunakan URL server</span>';",
   "                } else {",

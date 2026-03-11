@@ -11,8 +11,8 @@ if ($nginxProcess) {
 }
 
 # Start Nginx
-$nginxPath = "C:\nginx\nginx-1.28.0\nginx.exe"
-$configPath = "C:\nginx\nginx-1.28.0\conf\nginx.conf"
+$nginxPath = "C:\BCL\nginx\nginx-1.28.0\nginx.exe"
+$configPath = "C:\BCL\nginx\nginx-1.28.0\conf\nginx.conf"
 
 Write-Host "Starting Nginx with config: $configPath" -ForegroundColor Cyan
 
@@ -27,7 +27,7 @@ try {
         Write-Host "🔒 HTTPS Reverse proxy running:" -ForegroundColor Green
         Write-Host "   • HTTPS: https://bcl.nke.net (port 443)" -ForegroundColor Green
         Write-Host "   • HTTP redirects to HTTPS automatically" -ForegroundColor Cyan
-        Write-Host "🔄 Proxying to http://localhost:5051" -ForegroundColor Cyan
+        Write-Host "🔄 Proxying to http://localhost:5052" -ForegroundColor Cyan
         Write-Host "" -ForegroundColor White
         Write-Host "⚠️  Note: Self-signed certificate - browser may show security warning" -ForegroundColor Yellow
         Write-Host "   Click 'Advanced' → 'Proceed to bcl.nke.net (unsafe)' to continue" -ForegroundColor Yellow

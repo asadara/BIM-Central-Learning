@@ -1,3 +1,4 @@
+const apiBaseURL = window.location.origin;
 
 // ✅ Fixed: Better search functionality for BCL application
 
@@ -21,7 +22,7 @@ async function fetchFiles(query) {
         // Add loading state
         showLoadingState();
 
-        const response = await fetch(`http://${window.location.hostname}:5151/api/search?q=${encodeURIComponent(query)}`, {
+        const response = await fetch(`${apiBaseURL}/api/search?q=${encodeURIComponent(query)}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -133,7 +134,7 @@ function handleFileOpen(event) {
 
     if (filePath) {
         console.log(`📂 Opening file: ${fileName}`);
-        const fileUrl = `http://${window.location.hostname}:5151/api/file?path=${encodeURIComponent(filePath)}`;
+        const fileUrl = `${apiBaseURL}/api/file?path=${encodeURIComponent(filePath)}`;
         window.open(fileUrl, "_blank");
     }
 }
@@ -230,7 +231,7 @@ function displaySearchResults(files, filter) {
 
     // **Tampilkan hasil dalam tabel**
     filteredFiles.forEach((file, index) => {
-        let fileUrl = `http://${window.location.hostname}:5151/api/file?path=${encodeURIComponent(file.path)}`;
+        let fileUrl = `${apiBaseURL}/api/file?path=${encodeURIComponent(file.path)}`;
         console.log("🔗 File URL:", file.name, "➡", fileUrl);
 
         let fileSize = file.size ? (file.size / (1024 * 1024)).toFixed(2) + " MB" : "-";

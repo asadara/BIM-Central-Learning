@@ -22,12 +22,12 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-echo [3/3] Adding firewall rule for Backend port 5051...
-netsh advfirewall firewall add rule name="BCL Backend Port 5051" dir=in action=allow protocol=TCP localport=5051
+echo [3/3] Adding firewall rule for Backend port 5052...
+netsh advfirewall firewall add rule name="BCL Backend Port 5052" dir=in action=allow protocol=TCP localport=5052
 if %errorlevel% neq 0 (
-    echo [ERROR] Failed to add Backend port 5051 rule
+    echo [ERROR] Failed to add Backend port 5052 rule
 ) else (
-    echo [OK] Backend port 5051 rule added successfully
+    echo [OK] Backend port 5052 rule added successfully
 )
 echo.
 
@@ -38,7 +38,7 @@ echo.
 echo Firewall rules added for BCL network access:
 echo - Port 80  (HTTP reverse proxy)
 echo - Port 443 (HTTPS reverse proxy)
-echo - Port 5051 (Backend server)
+echo - Port 5052 (Backend server)
 echo.
 echo Now other devices on the same network can access:
 echo https://10.0.0.90 and https://bcl.nke.net

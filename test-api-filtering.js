@@ -29,7 +29,7 @@ function detectVideoCategory(filename) {
 
 // Test filtering dengan data dari API
 function testAPIFiltering() {
-    http.get('http://10.0.0.90:5051/api/tutorials', (res) => {
+    http.get('http://10.0.0.90:5052/api/tutorials', (res) => {
         let data = '';
 
         res.on('data', (chunk) => {

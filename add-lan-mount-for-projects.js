@@ -6,7 +6,7 @@
 const axios = require('axios');
 
 // Use relative URL for production, localhost for testing
-const BASE_URL = process.env.BCL_BASE_URL || 'http://localhost:5051';
+const BASE_URL = process.env.BCL_BASE_URL || 'http://localhost:5052';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'AdminBCL2025!'; // Default admin token
 
 async function setupLanMountForProjects() {
@@ -83,14 +83,14 @@ function showManualIntegrationSteps() {
     console.log('===============================');
 
     console.log('\n1. Connect the LAN mount first:');
-    console.log('   POST http://localhost:5051/api/lan/mounts/pc-bim02/connect');
+    console.log('   POST http://localhost:5052/api/lan/mounts/pc-bim02/connect');
 
     console.log('\n2. Modify server.js untuk support multi-source projects:');
     console.log('   - Cari fungsi /api/years dan /api/projects/:year');
     console.log('   - Update untuk scan dari PROJECT_SOURCES array');
     console.log('   - Enable pc-bim02-2025 source setelah mount connected');
 
-    console.log('\n3. Test dengan membuka http://localhost:5051/pages/projects.html');
+    console.log('\n3. Test dengan membuka http://localhost:5052/pages/projects.html');
 
     console.log('\n4. Projects akan muncul dari kedua source:');
     console.log('   - Local: G:/PROJECT 20XX/');

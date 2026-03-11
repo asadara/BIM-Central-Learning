@@ -5,7 +5,7 @@ function fetchVideos() {
     return new Promise((resolve, reject) => {
         const options = {
             hostname: 'localhost',
-            port: 5051,
+            port: parseInt(process.env.BCL_PORT, 10) || 5052,
             path: '/api/tutorials',
             method: 'GET',
             headers: {
@@ -34,7 +34,7 @@ function fetchVideos() {
 }
 
 async function main() {
-    console.log('🔍 Fetching videos from http://localhost:5051/api/tutorials...\n');
+    console.log('🔍 Fetching videos from http://localhost:5052/api/tutorials...\n');
     try {
         const videos = await fetchVideos();
 

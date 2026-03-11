@@ -1,4 +1,4 @@
-const baseURL = `http://${window.location.hostname}:5151`;
+const baseURL = window.location.origin;
 
 window.currentPath = "";
 
@@ -34,7 +34,7 @@ function previewFile(filePath) {
     }
 
     let ext = filePath.split('.').pop().toLowerCase();
-    let fileURL = `http://${window.location.hostname}:5151/api/file?path=${encodeURIComponent(filePath)}`;
+    let fileURL = `${baseURL}/api/file?path=${encodeURIComponent(filePath)}`;
 
     // Reset isi preview
     previewContainer.innerHTML = "";
@@ -82,7 +82,7 @@ function fetchFolder(path = "") {
 
 
 
-    fetch(`http://${window.location.hostname}:5151/api/get-folder?path=${encodeURIComponent(path)}`)
+    fetch(`${baseURL}/api/get-folder?path=${encodeURIComponent(path)}`)
         .then(response => {
             if (!response.ok) throw new Error("Gagal mengambil data folder");
             return response.json();

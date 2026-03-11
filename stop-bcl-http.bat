@@ -8,6 +8,8 @@ if not exist "logs" mkdir "logs"
 set "TIMESTAMP=%date:~-4,4%%date:~-10,2%%date:~-7,2%-%time:~0,2%%time:~3,2%%time:~6,2%"
 set "TIMESTAMP=%TIMESTAMP: =0%"
 set "LOGFILE=logs\stop-%TIMESTAMP%.log"
+set "BACKEND_PORT=%BCL_BACKEND_PORT%"
+if not defined BACKEND_PORT set "BACKEND_PORT=5052"
 
 set "KEEP_OPEN=0"
 for %%A in (%*) do (
@@ -37,9 +39,9 @@ netstat -ano | findstr ":80.*LISTENING" >nul
 if not errorlevel 1 (
     call :log "[WARNING] Port 80 still listening after stop attempt"
 )
-netstat -ano | findstr ":5051.*LISTENING" >nul
+netstat -ano | findstr ":%BACKEND_PORT%.*LISTENING" >nul
 if not errorlevel 1 (
-    call :log "[WARNING] Port 5051 still listening after stop attempt"
+    call :log "[WARNING] Port %BACKEND_PORT% still listening after stop attempt"
 )
 
 if "%STOP_ERRORS%"=="0" (
@@ -73,9 +75,9 @@ if errorlevel 1 (
 exit /b 0
 
 :stop_backend
-call :log "[STEP] Stopping backend on port 5051..."
+call :log "[STEP] Stopping backend on port %BACKEND_PORT%..."
 set "BACKEND_KILLED=0"
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":5051.*LISTENING"') do (
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%BACKEND_PORT%.*LISTENING"') do (
     taskkill /PID %%p /F >nul 2>&1
     if not errorlevel 1 (
         set "BACKEND_KILLED=1"

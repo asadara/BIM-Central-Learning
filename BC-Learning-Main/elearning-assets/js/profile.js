@@ -407,18 +407,36 @@ async function handleProfileSave() {
         const formData = new FormData(form);
         const profileData = Object.fromEntries(formData.entries());
 
+        const storedUser = localStorage.getItem('user');
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        const token = localStorage.getItem('token') || (parsedUser && parsedUser.token);
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+
+        if (token) {
+            headers.authorization = `Bearer ${token}`;
+        }
+
         // Send to server
         const response = await fetch('/api/update-profile', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
             credentials: 'include',
             body: JSON.stringify(profileData)
         });
 
         if (response.ok) {
             const result = await response.json();
+
+            if (result && result.token) {
+                localStorage.setItem('token', result.token);
+
+                if (parsedUser && typeof parsedUser === 'object') {
+                    parsedUser.token = result.token;
+                    localStorage.setItem('user', JSON.stringify(parsedUser));
+                }
+            }
 
             // Update UI with new data
             updateProfileDisplay(profileData);

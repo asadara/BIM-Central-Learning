@@ -73,7 +73,7 @@ try {
     Write-Host ""
     Write-Host "📋 Next Steps:" -ForegroundColor Cyan
     Write-Host "1. Restart your browser (Chrome/Firefox/Edge)" -ForegroundColor White
-    Write-Host "2. Visit: https://10.0.0.90:5051/" -ForegroundColor White
+    Write-Host "2. Visit: https://10.0.0.90:5052/" -ForegroundColor White
     Write-Host "3. The 'Not Secure' warning should be gone!" -ForegroundColor White
 
 }

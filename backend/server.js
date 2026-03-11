@@ -52,7 +52,7 @@ try {
 }
 
 const app = express();
-const HTTP_PORT = process.env.HTTP_PORT || 5051;
+const HTTP_PORT = process.env.HTTP_PORT || 5052;
 const USE_HTTPS = false; // Force HTTP only for consistency
 
 // âœ… SECURITY: Rate limiting to prevent abuse
@@ -84,7 +84,7 @@ const authLimiter = rateLimit({
 
 console.log('\nðŸ”§ BCL Server Configuration');
 console.log('============================');
-console.log('ðŸŒ HTTP mode selected (Port 5051)');
+console.log(`ðŸŒ HTTP mode selected (Port ${HTTP_PORT})`);
 
 // Skip SSL configuration - HTTP only
 let httpsOptions = null;
@@ -1032,6 +1032,22 @@ const profileImageUpload = multer({
     }
 }).single('profile-image');
 
+const profileUpdateUpload = multer({
+    storage: profileImageStorage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname || '').toLowerCase();
+        if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPG, PNG, or WEBP are allowed.'));
+        }
+    }
+}).fields([
+    { name: 'profile_pic', maxCount: 1 },
+    { name: 'profile-image', maxCount: 1 }
+]);
+
 async function fetchProfileImageFromPostgres(userId, email) {
     if (!pgPool) return null;
     try {
@@ -1093,6 +1109,177 @@ function updateProfileImageInJson(userId, email, imageUrl) {
     users[userIndex].profileImage = imageUrl;
     writeUsers(users);
     return true;
+}
+
+async function findUserForProfileUpdate(email, userId) {
+    let postgresLookupFailed = false;
+    let user = null;
+    let storage = 'postgresql';
+
+    try {
+        if (email || userId) {
+            user = await findUserInPostgresByIdentity(email, userId, true);
+        }
+    } catch (error) {
+        postgresLookupFailed = isPostgresConnectionError(error);
+        if (!postgresLookupFailed) {
+            throw error;
+        }
+
+        console.warn('⚠️ PostgreSQL unavailable during profile lookup, falling back to JSON:', error.message);
+    }
+
+    if (!user && (postgresLookupFailed || !pgPool)) {
+        user = findUserInJsonByIdentity(email, userId, true, false);
+        storage = 'json';
+    } else if (!user && email) {
+        user = findUserInJsonByEmail(email, true, false);
+        storage = user ? 'json' : storage;
+    }
+
+    return { user, storage };
+}
+
+async function ensureUniqueProfileIdentity({ email, username, currentUserId, currentEmail, currentUsername }) {
+    if (pgPool) {
+        const duplicateResult = await pgPool.query(
+            `SELECT id, email, username
+             FROM users
+             WHERE (
+                    ($1::text IS NOT NULL AND lower(email) = lower($1))
+                 OR ($2::text IS NOT NULL AND lower(username) = lower($2))
+             )
+               AND (
+                    ($3::text IS NULL OR id::text <> $3::text)
+                 AND ($4::text IS NULL OR lower(email) <> lower($4))
+                 AND ($5::text IS NULL OR lower(username) <> lower($5))
+               )
+             LIMIT 1`,
+            [
+                email || null,
+                username || null,
+                currentUserId ? String(currentUserId) : null,
+                currentEmail || null,
+                currentUsername || null
+            ]
+        );
+
+        if (duplicateResult.rowCount > 0) {
+            return false;
+        }
+    }
+
+    const users = readUsers();
+    const hasDuplicate = users.some((entry) => {
+        const sameUser =
+            (currentUserId && (entry.id === currentUserId || entry.id == currentUserId)) ||
+            (currentEmail && String(entry.email || '').toLowerCase() === String(currentEmail).toLowerCase()) ||
+            (currentUsername && String(entry.username || '').toLowerCase() === String(currentUsername).toLowerCase());
+
+        if (sameUser) return false;
+
+        return (
+            (email && String(entry.email || '').toLowerCase() === String(email).toLowerCase()) ||
+            (username && String(entry.username || '').toLowerCase() === String(username).toLowerCase())
+        );
+    });
+
+    return !hasDuplicate;
+}
+
+async function updateUserProfileInPostgres(currentUser, updates) {
+    if (!pgPool || !currentUser) return null;
+
+    const sets = [];
+    const values = [];
+
+    if (updates.username) {
+        values.push(updates.username);
+        sets.push(`username = $${values.length}`);
+    }
+
+    if (updates.email) {
+        values.push(updates.email);
+        sets.push(`email = $${values.length}`);
+    }
+
+    if (updates.passwordHash) {
+        values.push(updates.passwordHash);
+        sets.push(`password = $${values.length}`);
+    }
+
+    if (updates.profileImage) {
+        values.push(updates.profileImage);
+        sets.push(`profile_image = $${values.length}`);
+    }
+
+    if (sets.length === 0) {
+        return currentUser;
+    }
+
+    sets.push('updated_at = CURRENT_TIMESTAMP');
+
+    values.push(currentUser.id ? String(currentUser.id) : null);
+    const idIndex = values.length;
+    values.push(currentUser.email || null);
+    const emailIndex = values.length;
+
+    const result = await pgPool.query(
+        `UPDATE users
+         SET ${sets.join(', ')}
+         WHERE ($${idIndex}::text IS NOT NULL AND id::text = $${idIndex}::text)
+            OR ($${emailIndex}::text IS NOT NULL AND lower(email) = lower($${emailIndex}))
+         RETURNING id, username, email, password, bim_level, job_role, organization,
+                   login_count, last_login, is_active, profile_image, metadata,
+                   CASE
+                       WHEN lower(coalesce(job_role, '')) LIKE '%admin%' THEN true
+                       WHEN lower(coalesce(metadata->>'isAdmin', 'false')) = 'true' THEN true
+                       ELSE false
+                   END AS is_admin`,
+        values
+    );
+
+    if (result.rows.length === 0) {
+        return null;
+    }
+
+    return normalizeUserRecord(result.rows[0]);
+}
+
+function updateUserProfileInJson(currentUser, updates) {
+    if (!currentUser) return null;
+
+    const users = readUsers();
+    const userIndex = users.findIndex((entry) =>
+        (currentUser.id && (entry.id === currentUser.id || entry.id == currentUser.id)) ||
+        (currentUser.email && String(entry.email || '').toLowerCase() === String(currentUser.email).toLowerCase())
+    );
+
+    if (userIndex === -1) {
+        return null;
+    }
+
+    if (updates.username) {
+        users[userIndex].username = updates.username;
+        users[userIndex].name = updates.username;
+    }
+
+    if (updates.email) {
+        users[userIndex].email = updates.email;
+    }
+
+    if (updates.passwordHash) {
+        users[userIndex].password = updates.passwordHash;
+    }
+
+    if (updates.profileImage) {
+        users[userIndex].profileImage = updates.profileImage;
+        users[userIndex].profile_image = updates.profileImage;
+    }
+
+    users[userIndex].updatedAt = new Date().toISOString();
+    writeUsers(users);
+    return normalizeUserRecord(users[userIndex]);
 }
 
 function normalizeUserRecord(user) {
@@ -1870,6 +2057,193 @@ app.post('/api/upload-profile-image', requireAuth, (req, res) => {
         }
 
         res.json({ success: true, imageUrl });
+    });
+});
+
+app.post('/api/update-profile', (req, res) => {
+    profileUpdateUpload(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ success: false, error: err.message || 'Upload failed' });
+        }
+
+        try {
+            const authHeader = req.headers.authorization || '';
+            const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+            let authUser = null;
+
+            if (bearerToken) {
+                try {
+                    authUser = jwt.verify(bearerToken, SECRET_KEY);
+                } catch (tokenError) {
+                    return res.status(403).json({ success: false, error: 'Invalid or expired token' });
+                }
+            }
+
+            const requestedEmail = sanitizeOptionalText(req.body?.email, 120).toLowerCase();
+            const currentEmail = sanitizeOptionalText(
+                req.body?.current_email || req.body?.email,
+                120
+            ).toLowerCase();
+            const requestedUsername = sanitizeOptionalText(
+                req.body?.name || req.body?.username,
+                80
+            );
+            const oldPassword = String(req.body?.old_pass || req.body?.oldPassword || '').trim();
+            const newPassword = String(req.body?.new_pass || req.body?.newPassword || '').trim();
+            const confirmPassword = String(req.body?.c_pass || req.body?.confirmPassword || '').trim();
+
+            if (!requestedUsername || !requestedEmail) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Name and email are required'
+                });
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(requestedEmail)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid email format'
+                });
+            }
+
+            if (newPassword && newPassword.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Password must be at least 6 characters long'
+                });
+            }
+
+            if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Password confirmation does not match'
+                });
+            }
+
+            const lookupEmail = authUser?.email || currentEmail || requestedEmail;
+            const lookupUserId = authUser?.userId || null;
+            const { user: currentUser } = await findUserForProfileUpdate(lookupEmail, lookupUserId);
+
+            if (!currentUser) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'User not found'
+                });
+            }
+
+            const requiresPasswordCheck = !authUser || !!newPassword;
+            if (requiresPasswordCheck) {
+                if (!oldPassword) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Previous password is required'
+                    });
+                }
+
+                const isValidPassword = await verifyPassword(oldPassword, currentUser.password);
+                if (!isValidPassword) {
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Previous password is incorrect'
+                    });
+                }
+            }
+
+            const hasUniqueIdentity = await ensureUniqueProfileIdentity({
+                email: requestedEmail,
+                username: requestedUsername,
+                currentUserId: currentUser.id,
+                currentEmail: currentUser.email,
+                currentUsername: currentUser.username
+            });
+
+            if (!hasUniqueIdentity) {
+                return res.status(409).json({
+                    success: false,
+                    error: 'Email or username already in use'
+                });
+            }
+
+            const uploadedImage =
+                (req.files && req.files.profile_pic && req.files.profile_pic[0]) ||
+                (req.files && req.files['profile-image'] && req.files['profile-image'][0]) ||
+                null;
+
+            const updates = {
+                username: requestedUsername,
+                email: requestedEmail,
+                passwordHash: newPassword ? await hashPassword(newPassword) : null,
+                profileImage: uploadedImage ? `/uploads/profile-images/${uploadedImage.filename}` : null
+            };
+
+            let updatedUser = null;
+            let storage = 'postgresql';
+
+            if (pgPool) {
+                try {
+                    updatedUser = await updateUserProfileInPostgres(currentUser, updates);
+                } catch (dbError) {
+                    if (dbError && dbError.code === '23505') {
+                        return res.status(409).json({
+                            success: false,
+                            error: 'Email or username already in use'
+                        });
+                    }
+
+                    if (!isPostgresConnectionError(dbError)) {
+                        throw dbError;
+                    }
+
+                    console.warn('⚠️ PostgreSQL unavailable during profile update, falling back to JSON:', dbError.message);
+                    storage = 'json';
+                }
+            } else {
+                storage = 'json';
+            }
+
+            if (!updatedUser) {
+                updatedUser = updateUserProfileInJson(currentUser, updates);
+                storage = 'json';
+            }
+
+            if (!updatedUser) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'User not found for profile update'
+                });
+            }
+
+            const refreshedToken = jwt.sign(
+                {
+                    userId: updatedUser.id,
+                    email: updatedUser.email,
+                    role: updatedUser.job_role || 'Student'
+                },
+                SECRET_KEY,
+                { expiresIn: '7d' }
+            );
+
+            return res.json({
+                success: true,
+                storage,
+                token: refreshedToken,
+                user: {
+                    id: updatedUser.id,
+                    username: updatedUser.username,
+                    name: updatedUser.username,
+                    email: updatedUser.email,
+                    profileImage: updates.profileImage || updatedUser.profile_image || null,
+                    profile_pic: updates.profileImage || updatedUser.profile_image || null
+                }
+            });
+        } catch (error) {
+            console.error('❌ Update profile error:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to update profile'
+            });
+        }
     });
 });
 

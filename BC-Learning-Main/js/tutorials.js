@@ -380,7 +380,7 @@ function fetchVideos(categoryFilter = null, autoPlayVideoId = null) {
     showSpinner(); // 🔁 Tampilkan loading sebelum mulai
 
     // ✅ FIXED: Use relative URL for Nginx proxy compatibility
-    // Nginx will forward /api/* requests to backend server on port 5051
+    // Nginx will forward /api/* requests to the active backend target
     const apiBaseUrl = '/api/tutorials';
 
     console.log('🔍 Fetching videos from:', apiBaseUrl);

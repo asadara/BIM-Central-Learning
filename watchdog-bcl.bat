@@ -3,6 +3,8 @@ setlocal EnableDelayedExpansion
 set "RUN_AS_SYSTEM=0"
 if /I "%USERNAME%"=="SYSTEM" set "RUN_AS_SYSTEM=1"
 set "NATIVE_PG_SERVICE="
+set "BACKEND_PORT=%BCL_BACKEND_PORT%"
+if not defined BACKEND_PORT set "BACKEND_PORT=5052"
 
 cd /d "%~dp0"
 if not exist "logs" mkdir "logs"
@@ -11,6 +13,8 @@ set "DATESTAMP=%date:~-4,4%%date:~-10,2%%date:~-7,2%"
 set "LOGFILE=logs\watchdog-%DATESTAMP%.log"
 set "LOCKDIR=watchdog.lock"
 
+if exist "%LOCKDIR%" rmdir "%LOCKDIR%" >nul 2>&1
+if exist "%LOCKDIR%" del /f /q "%LOCKDIR%" >nul 2>&1
 mkdir "%LOCKDIR%" 2>nul
 if errorlevel 1 exit /b 0
 
@@ -25,7 +29,7 @@ if "%HTTP_CODE%"=="200" set "HTTP_OK=1"
 if "%HTTP_CODE%"=="301" set "HTTP_OK=1"
 if "%HTTP_CODE%"=="302" set "HTTP_OK=1"
 
-for /f %%c in ('curl.exe -s -o nul -w "%%{http_code}" http://127.0.0.1:5051/ping -m 5 2^>nul') do set "BACKEND_CODE=%%c"
+for /f %%c in ('curl.exe -s -o nul -w "%%{http_code}" http://127.0.0.1:%BACKEND_PORT%/ping -m 5 2^>nul') do set "BACKEND_CODE=%%c"
 if "%BACKEND_CODE%"=="200" set "BACKEND_OK=1"
 
 node "%~dp0backend\scripts\db-ping.js" >nul 2>nul
@@ -40,6 +44,17 @@ if not "%DB_OK%"=="1" set "REASON=!REASON! postgres=down"
 
 if exist "runlock" (
     call :log "[INFO] Watchdog detected degraded state but startup already in progress:%REASON%"
+    goto :end
+)
+
+if "%HTTP_OK%"=="1" if "%DB_OK%"=="1" if not "%BACKEND_OK%"=="1" (
+    call :log "[WARNING] Backend-only recovery triggered for port %BACKEND_PORT%:%REASON%"
+    call "%~dp0start-backend-public.bat" >> "%LOGFILE%" 2>&1
+    if errorlevel 1 (
+        call :log "[ERROR] Backend-only recovery failed on port %BACKEND_PORT%"
+    ) else (
+        call :log "[INFO] Backend-only recovery invoked successfully on port %BACKEND_PORT%"
+    )
     goto :end
 )
 
@@ -86,6 +101,7 @@ if errorlevel 1 (
 goto :end
 
 :healthy
+call "%~dp0start-legacy-5051-proxy.bat" >nul 2>&1
 :: Keep healthy runs silent to avoid log bloat.
 goto :end
 

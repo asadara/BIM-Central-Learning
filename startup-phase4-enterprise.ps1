@@ -81,12 +81,12 @@ function Start-BackendServices {
     
     Set-Location $BACKEND_PATH
     
-    # Set environment for HTTP only on port 5051
+    # Set environment for HTTP only on port 5052
     $env:USE_HTTPS = "false"
-    $env:HTTP_PORT = "5051"
+    $env:HTTP_PORT = "5052"
     
     # Start main server with Phase 4 features
-    Write-Host "🔥 Starting BCL Enterprise Server on HTTP port 5051..." -ForegroundColor Cyan
+    Write-Host "🔥 Starting BCL Enterprise Server on HTTP port 5052..." -ForegroundColor Cyan
     $serverProcess = Start-Process -FilePath "node" -ArgumentList "server.js" -PassThru -WindowStyle Minimized
     
     # Wait for server startup
@@ -94,9 +94,9 @@ function Start-BackendServices {
     
     # Test server connection
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:5051" -TimeoutSec 5 -UseBasicParsing
+        $response = Invoke-WebRequest -Uri "http://localhost:5052" -TimeoutSec 5 -UseBasicParsing
         if ($response.StatusCode -eq 200) {
-            Write-Host "✅ Backend server running on http://localhost:5051" -ForegroundColor Green
+            Write-Host "✅ Backend server running on http://localhost:5052" -ForegroundColor Green
         }
     }
     catch {
@@ -144,7 +144,7 @@ function Open-MonitoringDashboard {
     
     # Open main application
     Start-Sleep -Seconds 2
-    Start-Process "http://localhost:5051"
+    Start-Process "http://localhost:5052"
     
     Write-Host "✅ Monitoring dashboard opened!" -ForegroundColor Green
 }
@@ -156,7 +156,7 @@ function Show-SystemStatus {
     Write-Host "=" * 80 -ForegroundColor Cyan
     
     Write-Host "`n🌟 CORE SERVICES:" -ForegroundColor Yellow
-    Write-Host "  ✅ Web Server: http://localhost:5051" -ForegroundColor Green
+    Write-Host "  ✅ Web Server: http://localhost:5052" -ForegroundColor Green
     Write-Host "  ✅ Backend API: OPERATIONAL" -ForegroundColor Green
     Write-Host "  ✅ Database: CONNECTED" -ForegroundColor Green
     
@@ -182,10 +182,10 @@ function Show-SystemStatus {
     Write-Host "  ✅ API Ecosystem: COMPREHENSIVE" -ForegroundColor Green
     
     Write-Host "`n🔧 MANAGEMENT TOOLS:" -ForegroundColor Yellow
-    Write-Host "  📊 Monitoring Dashboard: http://localhost:5051/phase4-dashboard.html" -ForegroundColor Cyan
-    Write-Host "  📈 Analytics: http://localhost:5051/analytics" -ForegroundColor Cyan
-    Write-Host "  🤖 AI Assistant: http://localhost:5051/ai-assistant" -ForegroundColor Cyan
-    Write-Host "  ⛓️ Blockchain Console: http://localhost:5051/blockchain" -ForegroundColor Cyan
+    Write-Host "  📊 Monitoring Dashboard: http://localhost:5052/phase4-dashboard.html" -ForegroundColor Cyan
+    Write-Host "  📈 Analytics: http://localhost:5052/analytics" -ForegroundColor Cyan
+    Write-Host "  🤖 AI Assistant: http://localhost:5052/ai-assistant" -ForegroundColor Cyan
+    Write-Host "  ⛓️ Blockchain Console: http://localhost:5052/blockchain" -ForegroundColor Cyan
     
     Write-Host "`n" + "=" * 80 -ForegroundColor Cyan
 }
@@ -193,7 +193,7 @@ function Show-SystemStatus {
 # Function: Show usage instructions
 function Show-UsageInstructions {
     Write-Host "`n📖 USAGE INSTRUCTIONS:" -ForegroundColor Yellow
-    Write-Host "  1. Access main platform: http://localhost:5051" -ForegroundColor Cyan
+    Write-Host "  1. Access main platform: http://localhost:5052" -ForegroundColor Cyan
     Write-Host "  2. View monitoring dashboard: phase4-dashboard.html" -ForegroundColor Cyan
     Write-Host "  3. Test AI features: Click 'AI Assistant' in navigation" -ForegroundColor Cyan
     Write-Host "  4. Try real-time collaboration: Open multiple browser tabs" -ForegroundColor Cyan

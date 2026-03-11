@@ -5,7 +5,7 @@ const getProjectMedia = (projectName) => {
         const encodedProject = encodeURIComponent(projectName);
         const options = {
             hostname: 'localhost',
-            port: 5051,
+            port: parseInt(process.env.BCL_PORT, 10) || 5052,
             path: `/api/project-media/2025/${encodedProject}`,
             method: 'GET'
         };

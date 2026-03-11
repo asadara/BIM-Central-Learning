@@ -263,8 +263,8 @@ if (-not $SkipFirewall) {
     } else {
         Reset-FirewallRule -Name "BCL HTTP Port 80" -Port "80"
         Reset-FirewallRule -Name "BCL HTTPS Inbound" -Port "443"
-        Reset-FirewallRule -Name "BCL Backend Port 5051" -Port "5051"
-        Write-Host "[OK] Firewall rules untuk 80/443/5051 sudah disiapkan."
+        Reset-FirewallRule -Name "BCL Backend Port 5052" -Port "5052"
+        Write-Host "[OK] Firewall rules untuk 80/443/5052 sudah disiapkan."
     }
 }
 

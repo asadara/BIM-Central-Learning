@@ -29,6 +29,8 @@ set "RUN_AS_SYSTEM=0"
 if /I "%USERNAME%"=="SYSTEM" set "RUN_AS_SYSTEM=1"
 set "POSTGRES_RUNTIME=unknown"
 set "NATIVE_PG_SERVICE="
+set "BACKEND_PORT=%BCL_BACKEND_PORT%"
+if not defined BACKEND_PORT set "BACKEND_PORT=5052"
 
 :: DEBUG: Log startup information for double-click troubleshooting
 echo [DEBUG] Script starting at %DATE% %TIME% > debug_startup.log
@@ -602,9 +604,9 @@ if not "%NGINX_DIR%"=="PATH" (
 
 :: Check if ports are available
 echo [INFO] Checking port availability...
-netstat -ano | findstr ":5051" >nul
+netstat -ano | findstr ":%BACKEND_PORT%" >nul
 if %errorlevel% equ 0 (
-    echo [WARNING] Port 5051 is already in use. Will attempt to free it.
+    echo [WARNING] Port %BACKEND_PORT% is already in use. Will attempt to free it.
 )
 
 netstat -ano | findstr ":80" >nul
@@ -627,8 +629,8 @@ netsh advfirewall firewall delete rule name="BCL Nginx HTTP" >nul 2>&1
 netsh advfirewall firewall add rule name="BCL Nginx HTTP" dir=in action=allow protocol=TCP localport=80 >nul 2>&1
 netsh advfirewall firewall delete rule name="BCL HTTPS Inbound" >nul 2>&1
 netsh advfirewall firewall add rule name="BCL HTTPS Inbound" dir=in action=allow protocol=TCP localport=443 >nul 2>&1
-netsh advfirewall firewall delete rule name="BCL Backend Port 5051" >nul 2>&1
-netsh advfirewall firewall add rule name="BCL Backend Port 5051" dir=in action=allow protocol=TCP localport=5051 >nul 2>&1
+netsh advfirewall firewall delete rule name="BCL Backend Port %BACKEND_PORT%" >nul 2>&1
+netsh advfirewall firewall add rule name="BCL Backend Port %BACKEND_PORT%" dir=in action=allow protocol=TCP localport=%BACKEND_PORT% >nul 2>&1
 
 :: Wait for processes to fully terminate
 call :sleep 3
@@ -844,9 +846,9 @@ if "%RESET_MODE%"=="1" (
         echo [INFO] Native PostgreSQL runtime detected - skipping database reset
     )
 
-    :: Reset backend server (targeted PID kill on port 5051)
+    :: Reset backend server (targeted PID kill on configured backend port)
     echo [INFO] Resetting backend server...
-    for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":5051.*LISTENING"') do (
+    for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%BACKEND_PORT%.*LISTENING"') do (
         echo [INFO] Killing backend process PID: %%p
         taskkill /PID %%p /F >nul 2>&1
         if errorlevel 1 (
@@ -873,7 +875,7 @@ echo [PHASE 5/8] Starting Backend Server...
 echo =======================================
 
 :: Start backend server with error checking
-echo [INFO] Starting Node.js backend server on port 5051...
+echo [INFO] Starting Node.js backend server on port %BACKEND_PORT%...
 cd backend
 
 :: ??? FIXED: Use absolute path to ensure server runs from correct directory
@@ -884,18 +886,18 @@ echo [INFO] Starting server with absolute path: %CD%\server.js
 :: Start server with explicit path and better error handling
 :: Use full absolute path to ensure Node.js can find the module
 :: Perform idempotent check so an existing backend is not spawned twice
-echo [INFO] Checking for existing backend on port 5051...
+echo [INFO] Checking for existing backend on port %BACKEND_PORT%...
 set "BACKEND_ALREADY_RUNNING=0"
 set "BACKEND_PORT_LISTENING=0"
-netstat -ano | findstr ":5051.*LISTENING" >nul
+netstat -ano | findstr ":%BACKEND_PORT%.*LISTENING" >nul
 if not errorlevel 1 set "BACKEND_PORT_LISTENING=1"
-curl.exe -s http://127.0.0.1:5051/ping -m 3 >nul 2>&1
+curl.exe -s http://127.0.0.1:%BACKEND_PORT%/ping -m 3 >nul 2>&1
 if not errorlevel 1 set "BACKEND_ALREADY_RUNNING=1"
 if "%BACKEND_ALREADY_RUNNING%"=="0" if "%BACKEND_PORT_LISTENING%"=="1" set "BACKEND_ALREADY_RUNNING=1"
 
 if "%BACKEND_ALREADY_RUNNING%"=="1" (
     if "%BACKEND_PORT_LISTENING%"=="1" (
-        echo [OK] Port 5051 is already LISTENING - skipping new backend launch
+        echo [OK] Port %BACKEND_PORT% is already LISTENING - skipping new backend launch
     ) else (
         echo [OK] Existing backend is already responding - skipping new launch
     )
@@ -903,14 +905,14 @@ if "%BACKEND_ALREADY_RUNNING%"=="1" (
     echo [INFO] Starting backend server...
     if "%HIDDEN_MODE%"=="1" (
         echo [INFO] Hidden mode active - launching backend without terminal window
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -WindowStyle Hidden -WorkingDirectory '%~dp0backend' -FilePath 'node' -ArgumentList '%~dp0backend\server.js' -RedirectStandardOutput '%~dp0%BACKEND_LOGFILE%' -RedirectStandardError '%~dp0%BACKEND_ERR_LOGFILE%'"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:HTTP_PORT='%BACKEND_PORT%'; Start-Process -WindowStyle Hidden -WorkingDirectory '%~dp0backend' -FilePath 'node.exe' -ArgumentList 'server.js' -RedirectStandardOutput '%~dp0%BACKEND_LOGFILE%' -RedirectStandardError '%~dp0%BACKEND_ERR_LOGFILE%'"
         if errorlevel 1 (
             echo [ERROR] Failed to launch backend process in hidden mode
             set ERROR_FLAG=1
             goto :error_exit
         )
     ) else (
-        start "BCL Backend Server" node "%~dp0backend\server.js"
+        start "BCL Backend Server" cmd /k "set HTTP_PORT=%BACKEND_PORT% && node \"%~dp0backend\server.js\""
     )
 )
 
@@ -922,9 +924,9 @@ if "%BACKEND_ALREADY_RUNNING%"=="0" (
 
 :: Test backend server with curl (non-interactive, explicit timeout)
 echo [INFO] Testing backend server connectivity...
-curl.exe -s http://127.0.0.1:5051/ping -m 10 >nul 2>&1
+curl.exe -s http://127.0.0.1:%BACKEND_PORT%/ping -m 10 >nul 2>&1
 if errorlevel 1 (
-    echo [WARNING] Backend server not responding to curl on port 5051
+    echo [WARNING] Backend server not responding to curl on port %BACKEND_PORT%
     echo [INFO] Checking if server process is actually running...
 
     :: ??? ENHANCED: Additional troubleshooting - check if server process is running
@@ -935,17 +937,20 @@ if errorlevel 1 (
         set ERROR_FLAG=1
         goto :error_exit
     ) else (
-        echo [INFO] Node.js process is running and listening on port 5051
+        echo [INFO] Node.js process is running and listening on port %BACKEND_PORT%
         echo [INFO] Server may be starting up slowly - continuing with startup
         echo [WARNING] Backend connectivity test failed but process is running
         echo [INFO] System will continue - backend may respond after full initialization
     )
 ) else (
-    echo [SUCCESS] Backend server responding on port 5051
+    echo [SUCCESS] Backend server responding on port %BACKEND_PORT%
 )
 
 :: Return to root directory
 cd ..
+
+echo [INFO] Ensuring legacy compatibility proxy on port 5051...
+call "%~dp0start-legacy-5051-proxy.bat" >nul 2>&1
 
 echo.
 
@@ -1089,13 +1094,13 @@ if "%HTTP_SUCCESS%"=="0" (
     echo.
     echo [POSSIBLE CAUSES]
     echo ??? Nginx configuration routing issues
-    echo ??? Backend server not responding - check port 5051
+    echo ??? Backend server not responding - check port %BACKEND_PORT%
     echo ??? Network/firewall blocking localhost connections
     echo ??? Nginx worker processes crashed
     echo.
     echo [ACTION] Check nginx access logs: %NGINX_DIR%\logs\access.log
     echo [ACTION] Check nginx error logs: %NGINX_DIR%\logs\error.log
-    echo [ACTION] Test backend directly: curl http://127.0.0.1:5051/ping
+    echo [ACTION] Test backend directly: curl http://127.0.0.1:%BACKEND_PORT%/ping
     echo.
     set ERROR_FLAG=1
     goto :error_exit
@@ -1211,29 +1216,29 @@ set "PORT_OK=0"
 set "HTTP_OK=0"
 
 for /l %%i in (1,1,6) do (
-    netstat -ano | findstr ":5051.*LISTENING" >nul && set "PORT_OK=1"
-    if "!PORT_OK!"=="1" goto :port_5051_checked
+    netstat -ano | findstr ":%BACKEND_PORT%.*LISTENING" >nul && set "PORT_OK=1"
+    if "!PORT_OK!"=="1" goto :port_backend_checked
     call :sleep 2
 )
-:port_5051_checked
+:port_backend_checked
 
 for /l %%i in (1,1,6) do (
-    for /f %%c in ('curl.exe -s -o nul -w "%%{http_code}" http://127.0.0.1:5051/api/debug/test 2^>nul') do set "HTTP_CODE=%%c"
+    for /f %%c in ('curl.exe -s -o nul -w "%%{http_code}" http://127.0.0.1:%BACKEND_PORT%/api/debug/test 2^>nul') do set "HTTP_CODE=%%c"
     if "!HTTP_CODE!"=="200" (
         set "HTTP_OK=1"
-        goto :http_5051_checked
+        goto :http_backend_checked
     )
     call :sleep 2
 )
-:http_5051_checked
+:http_backend_checked
 
 if "%HTTP_OK%"=="1" (
     echo [OK] Backend HTTP check passed ^(/api/debug/test^)
 ) else if "%PORT_OK%"=="1" (
-    echo [OK] Port 5051 is listening ^(backend server^)
+    echo [OK] Port %BACKEND_PORT% is listening ^(backend server^)
     echo [WARNING] Backend HTTP check did not respond yet
 ) else (
-    echo [ERROR] Port 5051 is not listening!
+    echo [ERROR] Port %BACKEND_PORT% is not listening!
     set ERROR_FLAG=1
 )
 
@@ -1262,7 +1267,7 @@ if "%ERROR_FLAG%"=="0" (
     echo SYSTEM STATUS:
     echo ==============
     echo ??? PostgreSQL Database: Running in Docker
-    echo ??? Backend Server: Running on port 5051
+    echo ??? Backend Server: Running on port %BACKEND_PORT%
     echo ??? Nginx Reverse Proxy: Running on port 80
     echo ??? Web Interface: Available and fully operational
     echo ??? Network Access: Enabled

@@ -218,6 +218,19 @@ function setupLoginForm() {
    const loginForm = document.getElementById("login-form");
    if (!loginForm) return;
 
+   const buildLoginEndpointCandidates = () => {
+      const candidates = ['/api/login'];
+      const { protocol, hostname } = window.location;
+      const isHttp = protocol === 'http:' || protocol === 'https:';
+
+      if (hostname && isHttp) {
+         candidates.push(`${protocol}//${hostname}:5052/api/login`);
+      }
+
+      candidates.push('http://localhost:5052/api/login');
+      return [...new Set(candidates)];
+   };
+
    loginForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -238,13 +251,29 @@ function setupLoginForm() {
       }
 
       try {
-         const response = await fetch(`http://${window.location.hostname}:5051/api/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-         });
+         let response = null;
+         let result = null;
+         let lastError = null;
+         const requestBody = JSON.stringify({ email, password });
 
-         const result = await response.json();
+         for (const endpoint of buildLoginEndpointCandidates()) {
+            try {
+               response = await fetch(endpoint, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: requestBody,
+               });
+
+               result = await response.json();
+               break;
+            } catch (error) {
+               lastError = error;
+            }
+         }
+
+         if (!response || !result) {
+            throw lastError || new Error('Login endpoint unavailable');
+         }
 
          if (response.ok && (result.success || result.token)) {
             const user = {

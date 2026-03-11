@@ -41,7 +41,7 @@ echo         $store.Open("ReadWrite") >> trust-cert.ps1
 echo         $store.Add($cert) >> trust-cert.ps1
 echo         $store.Close() >> trust-cert.ps1
 echo         Write-Host "[SUCCESS] Certificate trusted successfully!" >> trust-cert.ps1
-echo         Write-Host "Restart your browser and visit https://10.0.0.90:5051/" >> trust-cert.ps1
+echo         Write-Host "Restart your browser and visit https://10.0.0.90:5052/" >> trust-cert.ps1
 echo     } catch { >> trust-cert.ps1
 echo         Write-Host "[ERROR] Failed to trust certificate: $($_.Exception.Message)" >> trust-cert.ps1
 echo     } >> trust-cert.ps1
@@ -62,7 +62,7 @@ echo                       CERTIFICATE TRUST PROCESS COMPLETE
 echo ===============================================================================
 echo.
 echo If successful, restart your browser and visit:
-echo   https://10.0.0.90:5051/
+echo   https://10.0.0.90:5052/
 echo.
 echo The "Not Secure" warning should be gone!
 echo.

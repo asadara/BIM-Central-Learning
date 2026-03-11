@@ -358,6 +358,41 @@
         let currentPage = 1;
         const itemsPerPage = 10;
 
+        function getApiCandidates(path) {
+            const candidates = [path];
+            const { protocol, hostname, origin } = window.location;
+            const isHttp = protocol === 'http:' || protocol === 'https:';
+
+            if (isHttp && origin) {
+                candidates.push(`${origin}${path}`);
+            }
+
+            if (hostname && isHttp) {
+                candidates.push(`${protocol}//${hostname}:5052${path}`);
+            }
+
+            candidates.push(`http://localhost:5052${path}`);
+            return [...new Set(candidates)];
+        }
+
+        async function fetchJsonWithFallback(path) {
+            let lastError = null;
+
+            for (const url of getApiCandidates(path)) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            throw lastError || new Error(`Failed to fetch ${path}`);
+        }
+
         // Initialize page
         document.addEventListener('DOMContentLoaded', function () {
             loadElearningContent();
@@ -396,10 +431,7 @@
         // Fetch courses from backend
         async function fetchCourses() {
             try {
-                const response = await fetch('http://10.0.0.90:5051/api/courses');
-                if (!response.ok) throw new Error('Failed to fetch courses');
-
-                const courses = await response.json();
+                const courses = await fetchJsonWithFallback('/api/courses');
                 allCourses = courses;
                 return courses;
             } catch (error) {
@@ -411,10 +443,7 @@
         // Fetch videos from backend
         async function fetchVideos() {
             try {
-                const response = await fetch('http://10.0.0.90:5051/api/tutorials');
-                if (!response.ok) throw new Error('Failed to fetch videos');
-
-                const videos = await response.json();
+                const videos = await fetchJsonWithFallback('/api/tutorials');
                 // Remove the 20 video limit - load all videos
                 return videos;
             } catch (error) {

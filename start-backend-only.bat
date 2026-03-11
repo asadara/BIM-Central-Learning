@@ -2,6 +2,8 @@
 chcp 65001 >nul
 title BCL Backend Server Only
 color 0A
+set "BACKEND_PORT=%BCL_BACKEND_PORT%"
+if not defined BACKEND_PORT set "BACKEND_PORT=5052"
 
 echo ================================================================================
 echo                      BCL BACKEND SERVER ONLY
@@ -45,15 +47,15 @@ set SERVER_IP=%SERVER_IP:~1%
 
 echo [INFO] Starting BCL Backend Server...
 echo [INFO] Server will be accessible at:
-echo [INFO]   Local:   http://localhost:5051
-echo [INFO]   Network: http://%SERVER_IP%:5051
+echo [INFO]   Local:   http://localhost:%BACKEND_PORT%
+echo [INFO]   Network: http://%SERVER_IP%:%BACKEND_PORT%
 echo.
 
 cd backend
 echo [INFO] Backend server starting... (window will stay open to show any errors)
 echo [INFO] Press Ctrl+C in this window to stop the server
 echo.
-start "BCL Backend Server" /wait node server.js
+start "BCL Backend Server" /wait cmd /c "set HTTP_PORT=%BACKEND_PORT% && node server.js"
 
 echo.
 echo [INFO] Backend server stopped.

@@ -2,6 +2,11 @@
 chcp 65001 >nul
 title Test BCL Connection - Troubleshooting Tool
 color 0B
+set "BACKEND_PORT=%BCL_BACKEND_PORT%"
+if not defined BACKEND_PORT set "BACKEND_PORT=5052"
+set "NGINX_DIR=%~dp0nginx\nginx-1.28.0"
+if "%NGINX_DIR:~-1%"=="\" set "NGINX_DIR=%NGINX_DIR:~0,-1%"
+set "NGINX_EXE=%NGINX_DIR%\nginx.exe"
 
 echo ================================================================================
 echo                    BCL CONNECTION TEST & TROUBLESHOOTING
@@ -39,10 +44,10 @@ echo.
 
 :: Test 3: Check Nginx
 echo [3/8] Checking Nginx installation...
-if exist "C:\nginx\nginx-1.28.0\nginx.exe" (
-    echo [OK] Nginx found at C:\nginx\nginx-1.28.0\nginx.exe
+if exist "%NGINX_EXE%" (
+    echo [OK] Nginx found at %NGINX_EXE%
 ) else (
-    echo [ERROR] Nginx not found at C:\nginx\nginx-1.28.0\nginx.exe
+    echo [ERROR] Nginx not found at %NGINX_EXE%
     echo [FIX] Install Nginx to the correct location
 )
 
@@ -71,8 +76,8 @@ if %errorlevel%==0 (
 echo.
 
 :: Test 6: Test localhost backend connection
-echo [6/8] Testing backend server connection (localhost:5051)...
-powershell -NoProfile -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:5051/ping' -TimeoutSec 5 -UseBasicParsing; Write-Host '[OK] Backend server responding on port 5051' } catch { Write-Host '[ERROR] Backend server not responding on port 5051:' $_.Exception.Message }"
+echo [6/8] Testing backend server connection (localhost:%BACKEND_PORT%)...
+powershell -NoProfile -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:%BACKEND_PORT%/ping' -TimeoutSec 5 -UseBasicParsing; Write-Host '[OK] Backend server responding on port %BACKEND_PORT%' } catch { Write-Host '[ERROR] Backend server not responding on port %BACKEND_PORT%:' $_.Exception.Message }"
 
 echo.
 
@@ -103,7 +108,7 @@ node --version >nul 2>&1
 if %errorlevel% neq 0 set "ALL_OK=0"
 
 :: Check Nginx
-if not exist "C:\nginx\nginx-1.28.0\nginx.exe" set "ALL_OK=0"
+if not exist "%NGINX_EXE%" set "ALL_OK=0"
 
 :: Check processes
 tasklist /fi "imagename eq node.exe" /nh >nul 2>&1
@@ -113,7 +118,7 @@ tasklist /fi "imagename eq nginx.exe" /nh >nul 2>&1
 if %errorlevel% neq 0 set "ALL_OK=0"
 
 :: Check connections
-powershell -NoProfile -Command "try { Invoke-WebRequest -Uri 'http://localhost:5051/ping' -TimeoutSec 3 -UseBasicParsing | Out-Null; $backend_ok = $true } catch { $backend_ok = $false }; try { Invoke-WebRequest -Uri 'http://bcl.nke.net/ping' -TimeoutSec 3 -UseBasicParsing | Out-Null; $proxy_ok = $true } catch { $proxy_ok = $false }; if ($backend_ok -and $proxy_ok) { exit 0 } else { exit 1 }" >nul 2>&1
+powershell -NoProfile -Command "try { Invoke-WebRequest -Uri 'http://localhost:%BACKEND_PORT%/ping' -TimeoutSec 3 -UseBasicParsing | Out-Null; $backend_ok = $true } catch { $backend_ok = $false }; try { Invoke-WebRequest -Uri 'http://bcl.nke.net/ping' -TimeoutSec 3 -UseBasicParsing | Out-Null; $proxy_ok = $true } catch { $proxy_ok = $false }; if ($backend_ok -and $proxy_ok) { exit 0 } else { exit 1 }" >nul 2>&1
 if %errorlevel% neq 0 set "ALL_OK=0"
 
 if %ALL_OK%==1 (
@@ -128,7 +133,7 @@ if %ALL_OK%==1 (
     echo 2. Check Windows Firewall settings
     echo 3. Clear browser cache: .\clear-browser-cache.bat
     echo 4. Restart system: .\start-bcl-http.bat
-    echo 5. Check if ports 80 and 5051 are not blocked
+    echo 5. Check if ports 80 and %BACKEND_PORT% are not blocked
 )
 
 echo.

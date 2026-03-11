@@ -1,4 +1,4 @@
-﻿
+
 (() => {
   'use strict';
 
@@ -6,31 +6,31 @@
     {
       id: 'basic-api',
       name: 'Basic API System',
-      icon: '🔌',
+      icon: '??',
       description: 'Layanan API utama untuk autentikasi dan data inti.'
     },
     {
       id: 'video-management',
       name: 'Video Management',
-      icon: '🎥',
+      icon: '??',
       description: 'Manajemen video pembelajaran dan streaming.'
     },
     {
       id: 'user-management',
       name: 'User Management',
-      icon: '👤',
+      icon: '??',
       description: 'Pengelolaan akun, role, dan sesi pengguna.'
     },
     {
       id: 'content-management',
       name: 'Content Management',
-      icon: '📚',
+      icon: '??',
       description: 'Pengelolaan materi, modul, dan metadata.'
     },
     {
       id: 'admin-panel',
       name: 'Admin Panel',
-      icon: '⚙️',
+      icon: '??',
       description: 'Panel administratif untuk konfigurasi sistem.'
     }
   ];
@@ -228,9 +228,9 @@
 
     const endpoints = ['/api/network-info'];
     if (location.hostname) {
-      endpoints.push(`${location.protocol}//${location.hostname}:5051/api/network-info`);
+      endpoints.push(`${location.protocol}//${location.hostname}:5052/api/network-info`);
     }
-    endpoints.push('http://localhost:5051/api/network-info');
+    endpoints.push('http://localhost:5052/api/network-info');
 
     try {
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -313,4 +313,5 @@
     initializeDashboard();
   }
 })();
+
 

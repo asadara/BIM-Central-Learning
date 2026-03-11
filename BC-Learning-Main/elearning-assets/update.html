@@ -1,2 +1,274 @@
-<!DOCTYPE html><html lang="en"><head>   <meta charset="UTF-8">   <meta http-equiv="X-UA-Compatible" content="IE=edge">   <meta name="viewport" content="width=device-width, initial-scale=1.0">   <title>update</title>   <!-- font awesome cdn link  -->   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">   <!-- custom css file link  -->   <link rel="stylesheet" href="css/style.css"></head><body>   <!-- Header akan dimuat otomatis oleh component-loader.js -->   <div class="header-container"></div>   <!-- Sidebar -->`r`n   <div class="side-bar" id="sidebar-container"></div>   <section class="form-container">      <form id="updateProfileForm" method="post" enctype="multipart/form-data" onsubmit="return false;">         <h3>update profile</h3>         <p>update name</p>         <input type="text" name="name" id="name" placeholder="Masukkan nama lengkap" maxlength="50" class="box"            required>         <p>update email</p>         <input type="email" name="email" id="email" placeholder="Masukkan email baru" maxlength="50" class="box"            required>         <p>previous password</p>         <input type="password" name="old_pass" id="old_pass" placeholder="enter your old password" maxlength="20"            class="box">         <p>new password</p>         <input type="password" name="new_pass" id="new_pass" placeholder="enter your new password" maxlength="20"            class="box">         <p>confirm password</p>         <input type="password" name="c_pass" id="c_pass" placeholder="confirm your new password" maxlength="20"            class="box">         <p>update pic</p>         <input type="file" name="profile_pic" id="profile_pic" accept="image/*" class="box">         <input type="hidden" name="current_email" id="current_email">         <button type="button" id="updateBtn" class="btn">update profile</button>         <div id="message" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none;"></div>      </form>   </section>   <!-- Footer akan dimuat otomatis oleh component-loader.js -->   <div class="footer-container"></div>   <!-- custom js file link  -->   <script src="js/script.js"></script>   <script src="js/component-loader.js"></script>   <script src="js/user.js"></script>   <!-- Page tracker untuk last page functionality -->   <script src="../js/page-tracker.js"></script>   <!-- Initialize Components and Profile Update Script -->   <script>      document.addEventListener('DOMContentLoaded', function () {         // Initialize component loader first         const componentLoader = new ComponentLoader();         componentLoader.loadAllComponents().then(() => {            // Initialize update form after components are loaded            initializeUpdateForm();         });      });      function initializeUpdateForm() {         // Use getUserData function from user.js         const currentUser = getUserData();         console.log('Debug - Loading user data:');         console.log('currentUser:', currentUser);         // Check if user is logged in         if (!currentUser || !currentUser.name) {            console.warn('?? User not logged in, redirecting to login page');            alert('Anda harus login terlebih dahulu untuk mengupdate profile!');            window.location.href = '/elearning-assets/login.html';            return;         }         // Set form values after a small delay to ensure DOM is ready         setTimeout(() => {            // Set current email            if (currentUser.email) {               const currentEmailField = document.getElementById('current_email');               const emailField = document.getElementById('email');               if (currentEmailField) currentEmailField.value = currentUser.email;               if (emailField) emailField.value = currentUser.email;               console.log('? Set current_email to:', currentUser.email);            }            // Set current name            if (currentUser.name) {               const nameField = document.getElementById('name');               if (nameField) nameField.value = currentUser.name;               console.log('? Set name to:', currentUser.name);            }         }, 100);         // Handle form submission         const form = document.getElementById('updateProfileForm');         const messageDiv = document.getElementById('message');         const updateBtn = document.getElementById('updateBtn');         if (form && messageDiv && updateBtn) {            console.log('? Form, message div, and update button found');            updateBtn.addEventListener('click', async function (e) {               e.preventDefault();               console.log('?? Update button clicked');               const formData = new FormData(form);               // Make sure current_email is set               let currentEmailValue = formData.get('current_email');               if (!currentEmailValue) {                  const userData = getUserData();                  if (userData && userData.email) {                     formData.set('current_email', userData.email);                     currentEmailValue = userData.email;                     console.log('? Set current_email from userData:', userData.email);                  } else {                     showMessage('Email saat ini tidak ditemukan. Silakan login ulang!', 'error');                     return;                  }               }               // Debug: Log form data               console.log('Debug - Form data being sent:');               for (let [key, value] of formData.entries()) {                  console.log(key + ': ' + value);               }               // Validate password confirmation if passwords are provided               const newPass = formData.get('new_pass');               const confirmPass = formData.get('c_pass');               if (newPass && newPass !== confirmPass) {                  showMessage('Konfirmasi password tidak cocok!', 'error');                  return;               }               console.log('?? Sending request to http://localhost:5151/api/update-profile');               try {                  const response = await fetch('http://localhost:5151/api/update-profile', {                     method: 'POST',                     body: formData                  });                  console.log('?? Response received:', response.status);                  const result = await response.json();                  console.log('?? Response data:', result);                  if (result.success) {                     showMessage('Profile berhasil diupdate!', 'success');                     // Update localStorage with new data                     if (result.user) {                        localStorage.setItem('username', result.user.username);                        localStorage.setItem('email', result.user.email);                        // Update user object if it exists                        const userObj = JSON.parse(localStorage.getItem('user') || '{}');                        userObj.username = result.user.username;                        userObj.email = result.user.email;                        if (result.user.profile_pic) {                           userObj.userimg = result.user.profile_pic;                           localStorage.setItem('userimg', result.user.profile_pic);                        }                        localStorage.setItem('user', JSON.stringify(userObj));                     }                     // Clear password fields                     const oldPassField = document.getElementById('old_pass');                     const newPassField = document.getElementById('new_pass');                     const cPassField = document.getElementById('c_pass');                     if (oldPassField) oldPassField.value = '';                     if (newPassField) newPassField.value = '';                     if (cPassField) cPassField.value = '';                     // Reload page after 2 seconds to show updated data                     setTimeout(() => {                        window.location.reload();                     }, 2000);                  } else {                     showMessage(result.error || 'Gagal mengupdate profile!', 'error');                  }               } catch (error) {                  console.error('? Error updating profile:', error);                  showMessage('Terjadi kesalahan saat mengupdate profile!', 'error');               }            });         } else {            console.error('? Form elements not found:', { form: !!form, messageDiv: !!messageDiv, updateBtn: !!updateBtn });         }         function showMessage(text, type) {            const messageDiv = document.getElementById('message');            if (messageDiv) {               messageDiv.textContent = text;               messageDiv.style.display = 'block';               messageDiv.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';               messageDiv.style.color = type === 'success' ? '#155724' : '#721c24';               messageDiv.style.border = `1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'}`;               // Hide message after 5 seconds               setTimeout(() => {                  messageDiv.style.display = 'none';               }, 5000);            }         }      }   </script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>update</title>
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="header-container"></div>
+  <div class="side-bar" id="sidebar-container"></div>
 
+  <section class="form-container">
+    <form id="updateProfileForm" method="post" enctype="multipart/form-data" onsubmit="return false;">
+      <h3>update profile</h3>
+      <p>update name</p>
+      <input
+        type="text"
+        name="name"
+        id="name"
+        placeholder="Masukkan nama lengkap"
+        maxlength="50"
+        class="box"
+        required
+      >
+      <p>update email</p>
+      <input
+        type="email"
+        name="email"
+        id="email"
+        placeholder="Masukkan email baru"
+        maxlength="50"
+        class="box"
+        required
+      >
+      <p>previous password</p>
+      <input
+        type="password"
+        name="old_pass"
+        id="old_pass"
+        placeholder="enter your old password"
+        maxlength="64"
+        class="box"
+      >
+      <p>new password</p>
+      <input
+        type="password"
+        name="new_pass"
+        id="new_pass"
+        placeholder="enter your new password"
+        maxlength="64"
+        class="box"
+      >
+      <p>confirm password</p>
+      <input
+        type="password"
+        name="c_pass"
+        id="c_pass"
+        placeholder="confirm your new password"
+        maxlength="64"
+        class="box"
+      >
+      <p>update pic</p>
+      <input type="file" name="profile_pic" id="profile_pic" accept="image/*" class="box">
+      <input type="hidden" name="current_email" id="current_email">
+      <button type="button" id="updateBtn" class="btn">update profile</button>
+      <div id="message" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none;"></div>
+    </form>
+  </section>
+
+  <div class="footer-container"></div>
+
+  <script src="js/script.js"></script>
+  <script src="js/component-loader.js"></script>
+  <script src="js/user.js"></script>
+  <script src="../js/page-tracker.js"></script>
+  <script>
+    function getStoredAuthToken() {
+      try {
+        const storedUser = localStorage.getItem('user');
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        return localStorage.getItem('token') || (parsedUser && parsedUser.token) || '';
+      } catch (error) {
+        return localStorage.getItem('token') || '';
+      }
+    }
+
+    function buildUpdateProfileEndpoints() {
+      const host = window.location.hostname;
+      const endpoints = [
+        `${window.location.origin}/api/update-profile`
+      ];
+
+      if (host) {
+        endpoints.push(`http://${host}:5052/api/update-profile`);
+      }
+
+      return Array.from(new Set(endpoints));
+    }
+
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      if (!messageDiv) return;
+
+      messageDiv.textContent = text;
+      messageDiv.style.display = 'block';
+      messageDiv.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';
+      messageDiv.style.color = type === 'success' ? '#155724' : '#721c24';
+      messageDiv.style.border = `1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'}`;
+
+      setTimeout(() => {
+        messageDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    async function submitProfileUpdate(formData) {
+      const token = getStoredAuthToken();
+      const endpoints = buildUpdateProfileEndpoints();
+      let lastError = null;
+
+      for (const endpoint of endpoints) {
+        try {
+          const headers = {};
+          if (token) {
+            headers.authorization = `Bearer ${token}`;
+          }
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            credentials: 'include',
+            body: formData
+          });
+
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            const error = new Error(result.error || `HTTP ${response.status}`);
+            error.result = result;
+            throw error;
+          }
+
+          return result;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error('Profile update failed');
+    }
+
+    function syncUpdatedUser(resultUser, newToken) {
+      if (!resultUser) return;
+
+      const normalizedName = resultUser.username || resultUser.name || '';
+      const normalizedEmail = resultUser.email || '';
+      const normalizedImage =
+        resultUser.profileImage ||
+        resultUser.profile_pic ||
+        resultUser.profile_image ||
+        '';
+
+      localStorage.setItem('username', normalizedName);
+      localStorage.setItem('email', normalizedEmail);
+
+      if (normalizedImage) {
+        localStorage.setItem('userimg', normalizedImage);
+      }
+
+      try {
+        const userObj = JSON.parse(localStorage.getItem('user') || '{}');
+        userObj.username = normalizedName;
+        userObj.name = normalizedName;
+        userObj.email = normalizedEmail;
+        if (normalizedImage) {
+          userObj.userimg = normalizedImage;
+          userObj.photo = normalizedImage;
+          userObj.profileImage = normalizedImage;
+        }
+        if (newToken) {
+          userObj.token = newToken;
+        }
+        localStorage.setItem('user', JSON.stringify(userObj));
+      } catch (error) {
+        console.warn('Failed to sync updated user cache:', error);
+      }
+
+      if (newToken) {
+        localStorage.setItem('token', newToken);
+      }
+    }
+
+    function initializeUpdateForm() {
+      const currentUser = getUserData();
+
+      if (!currentUser || !currentUser.name) {
+        alert('Anda harus login terlebih dahulu untuk mengupdate profile!');
+        window.location.href = '/elearning-assets/login.html';
+        return;
+      }
+
+      const currentEmailField = document.getElementById('current_email');
+      const emailField = document.getElementById('email');
+      const nameField = document.getElementById('name');
+
+      if (currentUser.email) {
+        currentEmailField.value = currentUser.email;
+        emailField.value = currentUser.email;
+      }
+
+      if (currentUser.name) {
+        nameField.value = currentUser.name;
+      }
+
+      const form = document.getElementById('updateProfileForm');
+      const updateBtn = document.getElementById('updateBtn');
+
+      if (!form || !updateBtn) {
+        console.error('Update profile form not found');
+        return;
+      }
+
+      updateBtn.addEventListener('click', async function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const newPass = formData.get('new_pass');
+        const confirmPass = formData.get('c_pass');
+
+        if (newPass && newPass !== confirmPass) {
+          showMessage('Konfirmasi password tidak cocok!', 'error');
+          return;
+        }
+
+        if (!formData.get('current_email') && currentUser.email) {
+          formData.set('current_email', currentUser.email);
+        }
+
+        try {
+          const result = await submitProfileUpdate(formData);
+
+          if (!result.success) {
+            showMessage(result.error || 'Gagal mengupdate profile!', 'error');
+            return;
+          }
+
+          syncUpdatedUser(result.user, result.token);
+          showMessage('Profile berhasil diupdate!', 'success');
+
+          document.getElementById('old_pass').value = '';
+          document.getElementById('new_pass').value = '';
+          document.getElementById('c_pass').value = '';
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } catch (error) {
+          console.error('Error updating profile:', error);
+          showMessage(error.message || 'Terjadi kesalahan saat mengupdate profile!', 'error');
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const componentLoader = new ComponentLoader();
+      componentLoader.loadAllComponents().then(() => {
+        initializeUpdateForm();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -29,7 +29,8 @@ if /i "%~2"=="--proxy" set "USE_PROXY=1"
 
 REM ---- Config ----
 set "HOST=127.0.0.1"
-set "HTTP_PORT=5051"
+set "HTTP_PORT=%BCL_BACKEND_PORT%"
+if not defined HTTP_PORT set "HTTP_PORT=5052"
 set "BACKEND_URL=http://%HOST%:%HTTP_PORT%"
 set "HEALTH_PATH=/ping"
 set "DASHBOARD_PATH=/elearning-assets/phase4-dashboard.html"
@@ -39,7 +40,7 @@ set "SLEEP_SEC=1"
 
 REM ---- Proxy/Nginx (only used if --proxy) ----
 set "PROXY_BASE=http://bcl.nke.net"
-set "NGINX_DIR=C:\nginx\nginx-1.28.0"
+set "NGINX_DIR=%ROOT%\nginx\nginx-1.28.0"
 set "NGINX_EXE=%NGINX_DIR%\nginx.exe"
 set "NGINX_CONF=%NGINX_DIR%\conf\nginx.conf"
 
@@ -68,6 +69,9 @@ REM ---- Resolve ROOT from script location ----
 set "LASTSTEP=RESOLVE_ROOT"
 set "ROOT=%~dp0"
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
+set "NGINX_DIR=%ROOT%\nginx\nginx-1.28.0"
+set "NGINX_EXE=%NGINX_DIR%\nginx.exe"
+set "NGINX_CONF=%NGINX_DIR%\conf\nginx.conf"
 
 REM ---- Detect server.js location ----
 set "LASTSTEP=DETECT_SERVER_JS"
@@ -93,7 +97,7 @@ echo [INFO] Server entry : "%SERVER_JS%"
 REM ------------------------------------------------------------
 REM Check if port already LISTENING (avoid EADDRINUSE)
 REM ------------------------------------------------------------
-set "LASTSTEP=CHECK_PORT_5051"
+set "LASTSTEP=CHECK_BACKEND_PORT"
 echo [INFO] Checking if backend already running on port %HTTP_PORT%...
 set "BACKEND_ALREADY_RUNNING=0"
 netstat -ano | findstr ":%HTTP_PORT% " | findstr "LISTENING" >nul
@@ -111,7 +115,7 @@ set "LASTSTEP=START_BACKEND"
 if "%BACKEND_ALREADY_RUNNING%"=="0" (
   echo [INFO] Starting backend in new window...
   REM Start backend with proper error handling
-  start "BCL Backend" cmd /k "cd /d %ROOT% && node %SERVER_JS%"
+  start "BCL Backend" cmd /k "cd /d %ROOT% && set HTTP_PORT=%HTTP_PORT% && node %SERVER_JS%"
   REM give it a short moment to begin binding the port
   timeout /t 2 >nul
 ) else (
@@ -153,16 +157,16 @@ REM Optional proxy mode: start nginx then open via bcl.nke.net
 REM ------------------------------------------------------------
 if "%USE_PROXY%"=="1" goto :proxy_mode
 
-REM ---- Direct mode: open via 5051 ----
+REM ---- Direct mode: open via configured backend port ----
 set "LASTSTEP=OPEN_DIRECT"
 echo.
 echo [INFO] Opening Enterprise Dashboard (direct):
 echo        %BACKEND_URL%%DASHBOARD_PATH%
-start "" "http://127.0.0.1:5051/elearning-assets/phase4-dashboard.html"
+start "" "%BACKEND_URL%%DASHBOARD_PATH%"
 
 echo [INFO] Opening Main BCL page (direct):
 echo        %BACKEND_URL%/
-start "" "http://127.0.0.1:5051/"
+start "" "%BACKEND_URL%/"
 
 goto :done_ok
 

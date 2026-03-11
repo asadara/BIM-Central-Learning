@@ -111,10 +111,10 @@ class BIMGallery {
             const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 
             if (isLocalhost) {
-                bases.push(`${protocol}//${hostname}:5051`);
-                bases.push('http://localhost:5051');
-            } else if (protocol === 'http:') {
-                bases.push(`${protocol}//${hostname}:5051`);
+                bases.push(`${protocol}//${hostname}:5052`);
+                bases.push('http://localhost:5052');
+            } else {
+                bases.push(`${protocol}//${hostname}:5052`);
             }
         }
 

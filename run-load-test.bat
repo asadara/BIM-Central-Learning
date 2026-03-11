@@ -17,11 +17,12 @@ if not exist "load-test.js" (
 )
 
 echo [INFO] Starting load test with 20 concurrent connections...
-echo [INFO] Target: http://localhost:5051
+echo [INFO] Target: http://localhost:5052
 echo [INFO] Duration: 30 seconds
 echo [INFO] Max requests: 1000
 echo.
 
+set "BCL_PORT=5052"
 node load-test.js 20 30 1000
 
 echo.

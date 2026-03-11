@@ -4,7 +4,7 @@ const getProjects = () => {
     return new Promise((resolve, reject) => {
         const options = {
             hostname: 'localhost',
-            port: 5051,
+            port: parseInt(process.env.BCL_PORT, 10) || 5052,
             path: '/api/projects/2025',
             method: 'GET'
         };

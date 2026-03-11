@@ -101,8 +101,9 @@
             try {
                 // Test multiple endpoints
                 const endpoints = [
-                    'http://localhost:5051/api/login',
-                    'http://127.0.0.1:5051/api/login'
+                    '/api/login',
+                    'http://localhost:5052/api/login',
+                    'http://127.0.0.1:5052/api/login'
                 ];
 
                 let success = false;
@@ -155,7 +156,7 @@
                     if (lastResult) {
                         resultDiv.textContent = `❌ Login Failed\n\nLast response: ${JSON.stringify(lastResult, null, 2)}`;
                     } else if (lastError) {
-                        resultDiv.textContent = `❌ Connection Error\n\n${lastError.message}\n\nMake sure the backend server is running on port 5051.`;
+                        resultDiv.textContent = `❌ Connection Error\n\n${lastError.message}\n\nMake sure the backend server is running on port 5052.`;
                     } else {
                         resultDiv.textContent = '❌ All endpoints failed - check server status';
                     }

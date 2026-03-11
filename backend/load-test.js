@@ -12,7 +12,7 @@ const { performance } = require('perf_hooks');
 class LoadTester {
     constructor(options = {}) {
         this.host = options.host || 'localhost';
-        this.port = options.port || 5051;
+        this.port = options.port || 5052;
         this.concurrency = options.concurrency || 20;
         this.duration = options.duration || 30; // seconds
         this.requests = options.requests || 1000;
@@ -250,7 +250,7 @@ if (require.main === module) {
 
     const options = {
         host: process.env.BCL_HOST || 'localhost',
-        port: parseInt(process.env.BCL_PORT) || 5051,
+        port: parseInt(process.env.BCL_PORT) || 5052,
         concurrency: parseInt(args[0]) || 20,
         duration: parseInt(args[1]) || 30,
         requests: parseInt(args[2]) || 1000

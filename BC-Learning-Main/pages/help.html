@@ -124,6 +124,49 @@
             padding: 2rem;
             text-align: center;
         }
+
+        .platform-card {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: 100%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .platform-card h5 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .platform-card .icon-wrap {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(251, 135, 63, 0.12);
+            color: #fb873f;
+        }
+
+        .platform-steps {
+            padding-left: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .platform-steps li {
+            margin-bottom: 0.5rem;
+        }
+
+        .download-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
     </style>
 
 </head>
@@ -324,23 +367,52 @@
                     <i class="fas fa-shield-alt text-primary me-2"></i>
                     Mengatasi Peringatan HTTPS Merah
                 </h3>
-                <p>Jika browser menampilkan peringatan saat membuka https://bcl.nke.net, ikuti langkah berikut:</p>
-                <ol class="mb-3">
-                    <li>Unduh installer Root CA LAN: <a href="/cert.bat" download="cert.bat">Download cert.bat</a></li>
-                    <li>Klik kanan file tersebut -> Run as administrator.</li>
-                    <li>Jika muncul SmartScreen, pilih More info -> Run anyway.</li>
-                    <li>Setelah selesai, tutup dan buka ulang browser.</li>
-                </ol>
+                <p>Jika browser menampilkan peringatan saat membuka <strong>https://bcl.nke.net</strong>, pilih panduan sesuai perangkat Anda.</p>
+                <div class="row g-4 mb-3">
+                    <div class="col-lg-6">
+                        <div class="platform-card">
+                            <h5>
+                                <span class="icon-wrap"><i class="fab fa-windows"></i></span>
+                                Windows / Desktop
+                            </h5>
+                            <ol class="platform-steps">
+                                <li>Unduh installer Root CA LAN `cert.bat`.</li>
+                                <li>Klik kanan file tersebut lalu pilih <strong>Run as administrator</strong>.</li>
+                                <li>Jika muncul SmartScreen, pilih <strong>More info</strong> lalu <strong>Run anyway</strong>.</li>
+                                <li>Setelah selesai, tutup dan buka ulang browser.</li>
+                            </ol>
+                            <div class="download-actions">
+                                <a class="btn btn-primary btn-sm" href="/cert.bat" download="cert.bat">Download cert.bat</a>
+                                <a class="btn btn-outline-secondary btn-sm" href="/certs/bcl-lan-root-ca.crt" download="bcl-lan-root-ca.crt">Download Root CA (.crt)</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="platform-card">
+                            <h5>
+                                <span class="icon-wrap"><i class="fab fa-android"></i></span>
+                                Android / Mobile
+                            </h5>
+                            <ol class="platform-steps">
+                                <li>Unduh file <strong>Root CA (.crt)</strong> ke perangkat Android Anda.</li>
+                                <li>Buka <strong>Settings</strong> lalu cari menu seperti <strong>Security</strong>, <strong>Encryption &amp; credentials</strong>, atau <strong>Install a certificate</strong>.</li>
+                                <li>Pilih <strong>CA certificate</strong>, lalu pilih file <strong>bcl-lan-root-ca.crt</strong> yang sudah diunduh.</li>
+                                <li>Tutup lalu buka ulang Chrome/browser setelah import selesai.</li>
+                            </ol>
+                            <div class="download-actions">
+                                <a class="btn btn-success btn-sm" href="/certs/bcl-lan-root-ca.crt" download="bcl-lan-root-ca.crt">Download Root CA (.crt)</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="alert alert-info small mb-3">
-                    Installer juga akan menambahkan hosts mapping <strong>10.0.0.90 bcl.nke.net</strong> agar akses via WiFi/WLAN berjalan.
+                    Installer Windows juga akan menambahkan hosts mapping <strong>10.0.0.90 bcl.nke.net</strong> agar akses via WiFi/WLAN berjalan.
                 </div>
                 <div class="alert alert-secondary small mb-3">
-                    Jika download batch gagal, gunakan fallback ini:
-                    <a href="/certs/bcl-lan-root-ca.crt" download="bcl-lan-root-ca.crt">download Root CA (.crt)</a>.
+                    Untuk Android, file yang dipakai tetap <strong>Root CA (.crt)</strong>. Android tidak menggunakan file <code>.bat</code>.
                 </div>
                 <div class="alert alert-warning mb-0 small">
-                    Catatan: Firefox memakai store sertifikat sendiri. Jika masih merah di Firefox, import sertifikat
-                    secara manual via Settings -> Privacy &amp; Security -> Certificates.
+                    Catatan: Firefox memakai store sertifikat sendiri. Di Android dan desktop, peringatan tetap bisa muncul jika akses memakai IP atau hostname yang tidak sesuai sertifikat. Gunakan <strong>https://bcl.nke.net</strong> setelah trust certificate terpasang.
                 </div>
             </div>
 

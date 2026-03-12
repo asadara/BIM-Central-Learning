@@ -22,13 +22,17 @@
             'navisworks': 'Navisworks',
             'civil-3d': 'Civil 3D',
             'archicad': 'ArchiCAD',
+            'twinmotion': 'Twinmotion',
+            'trimble-connect': 'Trimble Connect',
+            'work-stage': 'Work Stage',
+            'projects': 'Projects / Case Studies',
             'other': 'Other Tutorials'
         };
 
         // Try to get course category first, fallback to direct mapping
         const courseCategory = getCourseCategoryFromURL(categoryFilter);
         const displayCategory = courseCategory || categoryFilter;
-        const categoryName = categoryNames[displayCategory] || categoryNames[categoryFilter] || categoryFilter;
+        const categoryName = categoryNames[displayCategory] || categoryNames[categoryFilter] || formatCategoryLabel(displayCategory || categoryFilter);
         document.querySelector('h1').textContent = `Video Tutorial ${categoryName}`;
 
         // Add back button - determine destination based on referrer
@@ -121,6 +125,74 @@ function normalizeTagList(tags) {
     return normalized;
 }
 
+function normalizeCategorySlug(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function formatCategoryLabel(value) {
+    const normalized = String(value || '')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (!normalized) return 'Other';
+
+    const specialLabels = {
+        bim: 'BIM',
+        autocad: 'AutoCAD',
+        'civil3d': 'Civil 3D',
+        'civil 3d': 'Civil 3D',
+        archicad: 'ArchiCAD',
+        sketchup: 'SketchUp',
+        plannerly: 'Plannerly',
+        revit: 'Revit',
+        navisworks: 'Navisworks',
+        enscape: 'Enscape',
+        twinmotion: 'Twinmotion',
+        lumion: 'Lumion',
+        dynamo: 'Dynamo',
+        tekla: 'Tekla',
+        infraworks: 'InfraWorks',
+        'trimble connect': 'Trimble Connect',
+        'work stage': 'Work Stage',
+        'global mapper': 'Global Mapper',
+        'google earth': 'Google Earth',
+        'point cloud': 'Point Cloud',
+        'drone survey': 'Drone Survey',
+        'open bim': 'Open BIM',
+        projects: 'Projects / Case Studies',
+        'fusion 360': 'Fusion 360',
+        solidworks: 'SolidWorks'
+    };
+
+    const lower = normalized.toLowerCase();
+    if (specialLabels[lower]) {
+        return specialLabels[lower];
+    }
+
+    return normalized.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getVideoCategoryKey(video) {
+    const backendKey = normalizeCategorySlug(video?.categoryKey || video?.category);
+    if (backendKey) {
+        return backendKey;
+    }
+
+    return normalizeCategorySlug(detectVideoCategory(video?.name || ''));
+}
+
+function getVideoCategoryLabel(video) {
+    if (video?.category) {
+        return formatCategoryLabel(video.category);
+    }
+
+    return formatCategoryLabel(detectVideoCategory(video?.name || ''));
+}
+
 function parseSizeToMB(sizeValue) {
     const raw = String(sizeValue || '').trim().toLowerCase();
     if (!raw) return 0;
@@ -211,6 +283,9 @@ function detectVideoCategory(filename) {
     if (name.includes('enscape')) {
         return 'enscape';
     }
+    if (name.includes('twinmotion') || name.includes('flashclass') || name.includes('vrex') || name.includes('bimcollab')) {
+        return 'twinmotion';
+    }
     if (name.includes('dynamo') || name.includes('parametric')) {
         return 'dynamo';
     }
@@ -223,6 +298,9 @@ function detectVideoCategory(filename) {
     if (name.includes('archicad') || name.includes('archi-cad')) {
         return 'archicad';
     }
+    if (name === '0718.mp4' || name.includes('work stage')) {
+        return 'work-stage';
+    }
 
     // Default fallback
     return 'other';
@@ -231,6 +309,37 @@ function detectVideoCategory(filename) {
 // Enhanced function to get course category from URL parameter
 function getCourseCategoryFromURL(urlCategory) {
     if (!urlCategory) return null;
+
+    const currentCategory = normalizeCategorySlug(urlCategory);
+    const currentCategoryMappings = {
+        'civil-3d': 'civil-3d',
+        'navisworks': 'navisworks',
+        'revit': 'revit',
+        'autocad': 'autocad',
+        'archicad': 'archicad',
+        'enscape': 'enscape',
+        'twinmotion': 'twinmotion',
+        'infraworks': 'infraworks',
+        'trimble-connect': 'trimble-connect',
+        'plannerly': 'plannerly',
+        'fulcrum': 'fulcrum',
+        'open-bim': 'open-bim',
+        'strubim-cype': 'strubim-cype',
+        'bim': 'bim',
+        'drone-survey': 'drone-survey',
+        'workflow': 'workflow',
+        'traffic-management': 'traffic-management',
+        'design': 'design',
+        'tender': 'tender',
+        'work-stage': 'work-stage',
+        'animasi': 'animasi',
+        'projects': 'projects',
+        'other': 'other'
+    };
+
+    if (currentCategoryMappings[currentCategory]) {
+        return currentCategoryMappings[currentCategory];
+    }
 
     const category = urlCategory.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
 
@@ -289,8 +398,7 @@ function getCourseCategoryFromURL(urlCategory) {
         'plugins': 'autocad',
         'standards': 'advanced',
         'bimstandards': 'advanced',
-        'projects': 'advanced',
-        'bimprojects': 'advanced'
+        'bimprojects': 'projects'
     };
 
     return categoryMappings[category] || null;
@@ -403,19 +511,17 @@ function fetchVideos(categoryFilter = null, autoPlayVideoId = null) {
 
             // Filter by category if specified
             if (categoryFilter) {
-                // First try to map URL category to course level
                 const courseCategory = getCourseCategoryFromURL(categoryFilter);
-                const targetCategory = courseCategory || categoryFilter;
+                const requestedCategoryKey = normalizeCategorySlug(courseCategory || categoryFilter);
 
                 const filteredVideos = videos.filter(video => {
-                    const videoCategory = detectVideoCategory(video.name);
-                    // Check both direct match and course-level match
-                    return videoCategory === targetCategory || videoCategory === categoryFilter;
+                    const videoCategoryKey = getVideoCategoryKey(video);
+                    return videoCategoryKey === requestedCategoryKey;
                 });
 
                 // If no videos match the category, show a helpful message instead of empty results
                 if (filteredVideos.length === 0) {
-                    console.log('⚠️ No videos found for category:', targetCategory, '- showing fallback message');
+                    console.log('⚠️ No videos found for category:', requestedCategoryKey, '- showing fallback message');
                     container.innerHTML = `
                         <div class="alert alert-info" role="alert">
                             <h5 class="alert-heading">
@@ -443,7 +549,13 @@ function fetchVideos(categoryFilter = null, autoPlayVideoId = null) {
                 }
 
                 videos = filteredVideos;
-                console.log('🏷️ Filtered videos:', videos.length, 'videos in category', targetCategory, '(from URL:', categoryFilter + ')');
+                const filteredCategoryLabel = getVideoCategoryLabel(videos[0]);
+                const heading = document.querySelector('h1');
+                if (heading && filteredCategoryLabel) {
+                    heading.textContent = `Video Tutorial ${filteredCategoryLabel}`;
+                }
+
+                console.log('🏷️ Filtered videos:', videos.length, 'videos in category', requestedCategoryKey, '(from URL:', categoryFilter + ')');
             }
             const videosWithTags = videos.map((video) => {
                 video.tags = normalizeTagList(video.tags);

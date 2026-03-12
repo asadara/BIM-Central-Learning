@@ -239,18 +239,49 @@
 
         <!-- Bagian folder dan file dihapus, hanya tampilkan video tutorial -->
 
-        <!-- Daftar Video Tutorial -->
-        <div class="container mt-4">
-            <h5>Daftar Video Tutorial BIM:</h5>
-            <div id="videoList" class="row g-3"></div>
+        <!-- Quick Video Explorer -->
+        <div class="container mt-5">
+            <section class="tutorial-explorer-shell" id="tutorialExplorer">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+                    <div>
+                        <span class="tutorial-explorer-kicker">Video Explorer</span>
+                        <h5 class="mb-1">Jelajahi Video Tutorial BIM</h5>
+                        <p class="text-muted mb-0">Bagian ini fokus untuk menemukan video unggulan dengan cepat. Untuk katalog penuh, buka halaman tutorial lengkap.</p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="tutorial.html" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Semua Video
+                        </a>
+                        <a href="search.html" class="btn btn-light explorer-ghost-btn">
+                            <i class="fas fa-search me-2"></i>Pencarian Lanjut
+                        </a>
+                    </div>
+                </div>
+
+                <div id="videoExplorerStats" class="row g-3 mb-4"></div>
+
+                <div class="explorer-toolbar">
+                    <div id="videoCategoryChips" class="video-category-chips"></div>
+                    <div class="explorer-sort-wrap">
+                        <label for="videoSortMode" class="form-label mb-1">Urutkan video</label>
+                        <select id="videoSortMode" class="form-select">
+                            <option value="popular">Paling Relevan</option>
+                            <option value="name-asc">Nama A-Z</option>
+                            <option value="category">Kategori</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="searchResults" class="video-explorer-summary"></div>
+                <div id="videoList" class="row g-4"></div>
+                <div id="pagination-container" class="explorer-pagination"></div>
+            </section>
         </div>
 
         <!-- Preview File -->
         <div id="previewContainer" class="resizable-preview" style="display: none;">
             <iframe id="filePreview" src="" class="preview-frame"></iframe>
         </div>
-
-        <div id="searchResults"></div>
 
         <!-- PDF & Video Preview Container Start -->
         <div id="pdfPreviewContainer" style="display: none;">
@@ -345,6 +376,249 @@
             font-size: 2rem;
             margin-bottom: 15px;
         }
+
+        .tutorial-explorer-shell {
+            background: linear-gradient(180deg, #f7fafc 0%, #eef4fb 100%);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        }
+
+        .tutorial-explorer-kicker {
+            display: inline-block;
+            margin-bottom: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .explorer-ghost-btn {
+            background: #fff;
+            border-color: rgba(15, 23, 42, 0.12);
+        }
+
+        .video-explorer-stat {
+            height: 100%;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: #fff;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        }
+
+        .video-explorer-stat .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .video-explorer-stat .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
+        }
+
+        .video-explorer-stat .stat-meta {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .explorer-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .video-category-chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .video-category-chip {
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            background: #fff;
+            color: #334155;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .video-category-chip:hover,
+        .video-category-chip.active {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(13, 110, 253, 0.2);
+        }
+
+        .explorer-sort-wrap {
+            min-width: 220px;
+        }
+
+        .video-explorer-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .explore-video-card {
+            height: 100%;
+            border: none;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .explore-video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
+        }
+
+        .explore-video-thumb-wrap {
+            position: relative;
+            cursor: pointer;
+            background: #dbe7f3;
+        }
+
+        .explore-video-thumb {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .explore-video-badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.78);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .explore-video-play {
+            position: absolute;
+            right: 14px;
+            bottom: 14px;
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.92);
+            color: #0d6efd;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+        }
+
+        .explore-video-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.45;
+            min-height: 44px;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .explore-video-meta {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .explore-video-path {
+            font-size: 12px;
+            color: #64748b;
+            min-height: 34px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .explorer-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .explorer-pagination-pages {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .explorer-empty-state {
+            padding: 28px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px dashed rgba(15, 23, 42, 0.16);
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .tutorial-explorer-shell {
+                padding: 20px;
+            }
+
+            .explore-video-thumb {
+                height: 170px;
+            }
+
+            .explorer-sort-wrap {
+                width: 100%;
+            }
+
+            .video-explorer-summary,
+            .explorer-pagination {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
     </style>
 
     <script src="../js/loadComponents.js"></script>
@@ -355,9 +629,15 @@
         // Global variables
         let allCourses = [];
         let allVideos = [];
-        let currentCategory = 'all';
         let currentPage = 1;
-        const itemsPerPage = 10;
+        let visibleCourses = [];
+        let courseLookup = new Map();
+        const videoExplorerState = {
+            query: '',
+            category: 'all',
+            sort: 'popular'
+        };
+        const itemsPerPage = 12;
 
         function getApiCandidates(path) {
             const candidates = [path];
@@ -411,15 +691,12 @@
                     fetchVideos()
                 ]);
 
-                // Store all videos (remove the 20 limit)
+                visibleCourses = coursesResult;
                 allVideos = videosResult;
 
                 // Display content
-                displayCourses(coursesResult);
-                displayVideosForPage(currentPage);
-
-                // Initialize pagination
-                updatePaginationControls();
+                displayCourses(visibleCourses);
+                renderVideoExplorer();
 
                 hideLoadingState();
 
@@ -434,6 +711,7 @@
             try {
                 const courses = await fetchJsonWithFallback('/api/courses');
                 allCourses = courses;
+                courseLookup = new Map(courses.map((course) => [course.id, course]));
                 return courses;
             } catch (error) {
                 console.error('Error fetching courses:', error);
@@ -453,94 +731,262 @@
             }
         }
 
-        // Display videos for specific page
-        function displayVideosForPage(page) {
-            const startIndex = (page - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const videosForPage = allVideos.slice(startIndex, endIndex);
-
-            displayVideos(videosForPage, startIndex + 1);
+        function toCategoryKey(value) {
+            return String(value || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
         }
 
-        // Update pagination controls
-        function updatePaginationControls() {
-            const totalPages = Math.ceil(allVideos.length / itemsPerPage);
-            const paginationContainer = document.getElementById('pagination-container');
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
-            if (!paginationContainer) {
-                // Create pagination container
-                const container = document.createElement('div');
-                container.id = 'pagination-container';
-                container.className = 'd-flex justify-content-center align-items-center mt-4 gap-3';
+        function getCourseInfoByKey(categoryKey) {
+            return courseLookup.get(categoryKey) || null;
+        }
 
-                // Insert after video list
-                const videoSection = document.querySelector('.container.mt-4');
-                if (videoSection) {
-                    videoSection.appendChild(container);
-                }
+        function getExplorerCategoryInfo(video) {
+            const categoryKey = toCategoryKey(video.categoryKey || video.category);
+            const course = getCourseInfoByKey(categoryKey);
+            if (course) {
+                return {
+                    key: categoryKey,
+                    label: course.title || course.category || video.category || 'Other',
+                    icon: course.icon || 'fas fa-play-circle'
+                };
             }
 
+            const fallback = detectVideoCategory(video.name);
+            return {
+                key: categoryKey || 'other',
+                label: video.category || fallback.name,
+                icon: fallback.icon
+            };
+        }
+
+        function getQueryFilteredVideos() {
+            const query = videoExplorerState.query.trim().toLowerCase();
+            if (!query) {
+                return [...allVideos];
+            }
+
+            return allVideos.filter((video) => {
+                const categoryInfo = getExplorerCategoryInfo(video);
+                return video.name.toLowerCase().includes(query) ||
+                    String(video.category || '').toLowerCase().includes(query) ||
+                    categoryInfo.label.toLowerCase().includes(query);
+            });
+        }
+
+        function sortExplorerVideos(videos) {
+            const sortedVideos = [...videos];
+
+            if (videoExplorerState.sort === 'name-asc') {
+                sortedVideos.sort((left, right) => left.name.localeCompare(right.name));
+                return sortedVideos;
+            }
+
+            if (videoExplorerState.sort === 'category') {
+                sortedVideos.sort((left, right) => {
+                    const leftCategory = getExplorerCategoryInfo(left).label;
+                    const rightCategory = getExplorerCategoryInfo(right).label;
+                    return leftCategory.localeCompare(rightCategory) || left.name.localeCompare(right.name);
+                });
+                return sortedVideos;
+            }
+
+            sortedVideos.sort((left, right) => {
+                const leftViews = Number(left.viewCount || 0);
+                const rightViews = Number(right.viewCount || 0);
+                return rightViews - leftViews || left.name.localeCompare(right.name);
+            });
+
+            return sortedVideos;
+        }
+
+        function getVisibleVideos() {
+            const queryFilteredVideos = getQueryFilteredVideos();
+            const categoryFilteredVideos = videoExplorerState.category === 'all'
+                ? queryFilteredVideos
+                : queryFilteredVideos.filter((video) => getExplorerCategoryInfo(video).key === videoExplorerState.category);
+
+            return sortExplorerVideos(categoryFilteredVideos);
+        }
+
+        function renderExplorerStats(queryFilteredVideos, visibleVideos) {
+            const statsContainer = document.getElementById('videoExplorerStats');
+            if (!statsContainer) return;
+
+            const topCategoryEntry = Object.entries(queryFilteredVideos.reduce((accumulator, video) => {
+                const info = getExplorerCategoryInfo(video);
+                accumulator[info.label] = (accumulator[info.label] || 0) + 1;
+                return accumulator;
+            }, {})).sort((left, right) => right[1] - left[1])[0];
+
+            const topVideo = [...queryFilteredVideos].sort((left, right) => {
+                const leftViews = Number(left.viewCount || 0);
+                const rightViews = Number(right.viewCount || 0);
+                return rightViews - leftViews || left.name.localeCompare(right.name);
+            })[0];
+
+            const cards = [
+                {
+                    label: 'Video Aktif',
+                    value: visibleVideos.length,
+                    meta: `${allVideos.length} total video tersedia`
+                },
+                {
+                    label: 'Kategori Aktif',
+                    value: new Set(queryFilteredVideos.map((video) => getExplorerCategoryInfo(video).key)).size,
+                    meta: topCategoryEntry ? `Terpadat: ${topCategoryEntry[0]} (${topCategoryEntry[1]})` : 'Belum ada kategori'
+                },
+                {
+                    label: 'Kursus Tampil',
+                    value: visibleCourses.length,
+                    meta: `${allCourses.length} total cluster materi`
+                },
+                {
+                    label: 'Paling Populer',
+                    value: Number(topVideo?.viewCount || 0),
+                    meta: topVideo ? topVideo.name : 'Belum ada data view'
+                }
+            ];
+
+            statsContainer.innerHTML = cards.map((card) => `
+                <div class="col-lg-3 col-md-6">
+                    <div class="video-explorer-stat">
+                        <div class="stat-label">${card.label}</div>
+                        <div class="stat-value">${card.value}</div>
+                        <div class="stat-meta">${card.meta}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCategoryChips(queryFilteredVideos) {
+            const chipContainer = document.getElementById('videoCategoryChips');
+            if (!chipContainer) return;
+
+            const categoryCounts = new Map();
+            queryFilteredVideos.forEach((video) => {
+                const info = getExplorerCategoryInfo(video);
+                categoryCounts.set(info.key, {
+                    key: info.key,
+                    label: info.label,
+                    count: (categoryCounts.get(info.key)?.count || 0) + 1
+                });
+            });
+
+            const categories = [{
+                key: 'all',
+                label: 'Semua',
+                count: queryFilteredVideos.length
+            }, ...[...categoryCounts.values()].sort((left, right) => {
+                return right.count - left.count || left.label.localeCompare(right.label);
+            })];
+
+            chipContainer.innerHTML = '';
+            categories.forEach((category) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `video-category-chip${videoExplorerState.category === category.key ? ' active' : ''}`;
+                button.innerHTML = `${category.label} <span class="ms-1">(${category.count})</span>`;
+                button.addEventListener('click', () => {
+                    videoExplorerState.category = category.key;
+                    currentPage = 1;
+                    renderVideoExplorer();
+                });
+                chipContainer.appendChild(button);
+            });
+        }
+
+        function updateSearchSummary(totalVisibleVideos) {
+            const summaryElement = document.getElementById('searchResults');
+            if (!summaryElement) return;
+
+            const safeQuery = escapeHtml(videoExplorerState.query);
+            const queryLabel = videoExplorerState.query ? `untuk pencarian "<strong>${safeQuery}</strong>"` : 'tanpa filter kata kunci';
+            const categoryLabel = videoExplorerState.category !== 'all'
+                ? `Kategori aktif: <strong>${escapeHtml(getCourseInfoByKey(videoExplorerState.category)?.title || videoExplorerState.category)}</strong>`
+                : 'Kategori aktif: <strong>Semua</strong>';
+
+            summaryElement.innerHTML = `
+                <span>Menampilkan <strong>${totalVisibleVideos}</strong> video cepat dan <strong>${visibleCourses.length}</strong> kursus ${queryLabel}.</span>
+                <span>${categoryLabel}</span>
+            `;
+        }
+
+        function renderVideoExplorer() {
+            const queryFilteredVideos = getQueryFilteredVideos();
+            renderCategoryChips(queryFilteredVideos);
+
+            const visibleVideos = getVisibleVideos();
+            const totalPages = Math.max(1, Math.ceil(visibleVideos.length / itemsPerPage));
+            if (currentPage > totalPages) {
+                currentPage = 1;
+            }
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const videosForPage = visibleVideos.slice(startIndex, endIndex);
+
+            renderExplorerStats(queryFilteredVideos, visibleVideos);
+            displayVideos(videosForPage, startIndex + 1);
+            updatePaginationControls(visibleVideos.length);
+            updateSearchSummary(visibleVideos.length);
+        }
+
+        function updatePaginationControls(totalItems) {
             const container = document.getElementById('pagination-container');
-            if (totalPages <= 1) {
-                container.innerHTML = '';
+            if (!container) return;
+
+            const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+            if (totalItems <= itemsPerPage) {
+                container.innerHTML = `<div class="text-muted small">Menampilkan semua video terpilih pada satu halaman.</div>`;
                 return;
             }
 
-            let paginationHTML = '';
-
-            // Previous button
-            paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                <i class="fas fa-chevron-left me-1"></i>Previous
-            </button>`;
-
-            // Page numbers
             const startPage = Math.max(1, currentPage - 2);
             const endPage = Math.min(totalPages, currentPage + 2);
 
-            if (startPage > 1) {
-                paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(1)">1</button>`;
-                if (startPage > 2) {
-                    paginationHTML += `<span class="mx-2">...</span>`;
-                }
+            let pagesMarkup = `
+                <button class="btn btn-outline-primary btn-sm" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left me-1"></i>Sebelumnya
+                </button>
+            `;
+
+            for (let page = startPage; page <= endPage; page += 1) {
+                pagesMarkup += `<button class="btn ${page === currentPage ? 'btn-primary' : 'btn-outline-primary'} btn-sm" onclick="changePage(${page})">${page}</button>`;
             }
 
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} btn-sm" onclick="changePage(${i})">${i}</button>`;
-            }
+            pagesMarkup += `
+                <button class="btn btn-outline-primary btn-sm" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Berikutnya<i class="fas fa-chevron-right ms-1"></i>
+                </button>
+            `;
 
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    paginationHTML += `<span class="mx-2">...</span>`;
-                }
-                paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(${totalPages})">${totalPages}</button>`;
-            }
-
-            // Next button
-            paginationHTML += `<button class="btn btn-outline-primary btn-sm" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                Next<i class="fas fa-chevron-right ms-1"></i>
-            </button>`;
-
-            // Page info
-            paginationHTML += `<div class="ms-3 text-muted small">
-                Halaman ${currentPage} dari ${totalPages} (${allVideos.length} video)
-            </div>`;
-
-            container.innerHTML = paginationHTML;
+            container.innerHTML = `
+                <div class="text-muted small">Halaman ${currentPage} dari ${totalPages}</div>
+                <div class="explorer-pagination-pages">${pagesMarkup}</div>
+            `;
         }
 
-        // Change page function
         function changePage(page) {
-            const totalPages = Math.ceil(allVideos.length / itemsPerPage);
+            const totalPages = Math.max(1, Math.ceil(getVisibleVideos().length / itemsPerPage));
             if (page < 1 || page > totalPages) return;
 
             currentPage = page;
-            displayVideosForPage(currentPage);
-            updatePaginationControls();
+            renderVideoExplorer();
 
-            // Scroll to top of video list
-            const videoList = document.getElementById('videoList');
-            if (videoList) {
-                videoList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const explorer = document.getElementById('tutorialExplorer');
+            if (explorer) {
+                explorer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
 
@@ -574,26 +1020,12 @@
             });
         }
 
-        // Helper function to get appropriate thumbnail by category
-        function getThumbnailByCategory(category) {
-            // Map categories to specific thumbnail images
-            const categoryThumbnails = {
-                'Fundamentals': '../img/course-1.jpg',
-                'Software Tools': '../img/course-2.jpg',
-                '3D Modeling': '../img/course-3.jpg',
-                'Collaboration': '../img/course-4.jpg',
-                'Certification': '../img/course-5.jpg',
-                'Automation': '../img/course-6.jpg',
-                'General BIM': '../img/course-7.jpg',
-                'Revit BIM': '../img/course-8.jpg',
-                'AutoCAD': '../img/course-9.jpg',
-                'Navisworks': '../img/course-10.jpg',
-                'Dynamo': '../img/course-11.jpg',
-                'Enscape': '../img/course-12.png'
-            };
+        function getCourseThumbnail(course) {
+            if (course && typeof course.thumbnail === 'string' && course.thumbnail.trim()) {
+                return course.thumbnail;
+            }
 
-            // Return specific thumbnail if category matches, otherwise use default
-            return categoryThumbnails[category] || '../img/default.jpg';
+            return '../img/fallback-thumb.png';
         }
 
         // Create course card
@@ -602,7 +1034,7 @@
             card.className = 'col-lg-3 col-md-4 col-sm-6';
             card.innerHTML = `
                 <div class="card course-card h-100">
-                    <img src="${getThumbnailByCategory(course.category)}" class="course-thumbnail card-img-top"
+                    <img src="${getCourseThumbnail(course)}" class="course-thumbnail card-img-top"
                          alt="${course.title}" onerror="this.src='../img/fallback-thumb.png'">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">${course.title}</h5>
@@ -625,122 +1057,178 @@
             return card;
         }
 
-        // Display videos section
+        function truncatePath(pathValue) {
+            const normalizedPath = String(pathValue || '').replace(/\//g, ' / ');
+            if (normalizedPath.length <= 88) {
+                return normalizedPath;
+            }
+
+            return `${normalizedPath.slice(0, 85)}...`;
+        }
+
+        function createVideoCard(video) {
+            const categoryInfo = getExplorerCategoryInfo(video);
+            const column = document.createElement('div');
+            column.className = 'col-xl-3 col-lg-4 col-md-6';
+
+            const card = document.createElement('div');
+            card.className = 'card explore-video-card';
+
+            const thumbnailWrap = document.createElement('div');
+            thumbnailWrap.className = 'explore-video-thumb-wrap';
+            thumbnailWrap.addEventListener('click', () => playVideo(video.id, video.path));
+
+            const thumbnail = document.createElement('img');
+            thumbnail.className = 'explore-video-thumb';
+            thumbnail.src = video.thumbnail || '../img/fallback-thumb.png';
+            thumbnail.alt = video.name;
+            thumbnail.onerror = function () {
+                this.src = '../img/fallback-thumb.png';
+            };
+
+            const badge = document.createElement('div');
+            badge.className = 'explore-video-badge';
+            badge.innerHTML = `<i class="${categoryInfo.icon}"></i>${categoryInfo.label}`;
+
+            const playButton = document.createElement('button');
+            playButton.type = 'button';
+            playButton.className = 'explore-video-play';
+            playButton.innerHTML = '<i class="fas fa-play"></i>';
+            playButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                playVideo(video.id, video.path);
+            });
+
+            thumbnailWrap.appendChild(thumbnail);
+            thumbnailWrap.appendChild(badge);
+            thumbnailWrap.appendChild(playButton);
+
+            const body = document.createElement('div');
+            body.className = 'card-body d-flex flex-column';
+
+            const title = document.createElement('div');
+            title.className = 'explore-video-title';
+            title.title = video.name;
+            title.textContent = video.name;
+
+            const meta = document.createElement('div');
+            meta.className = 'explore-video-meta';
+            meta.innerHTML = `
+                <span><i class="fas fa-eye me-1"></i>${Number(video.viewCount || 0)} views</span>
+                <span><i class="fas fa-file-video me-1"></i>${video.size || '-'}</span>
+            `;
+
+            const pathText = document.createElement('div');
+            pathText.className = 'explore-video-path';
+            pathText.textContent = truncatePath(video.path);
+
+            const actions = document.createElement('div');
+            actions.className = 'd-flex gap-2 mt-auto pt-3';
+
+            const playAction = document.createElement('button');
+            playAction.type = 'button';
+            playAction.className = 'btn btn-primary btn-sm flex-fill';
+            playAction.innerHTML = '<i class="fas fa-play me-1"></i>Putar';
+            playAction.addEventListener('click', () => playVideo(video.id, video.path));
+
+            const categoryAction = document.createElement('button');
+            categoryAction.type = 'button';
+            categoryAction.className = 'btn btn-outline-secondary btn-sm flex-fill';
+            categoryAction.innerHTML = '<i class="fas fa-layer-group me-1"></i>Kategori';
+            categoryAction.addEventListener('click', () => openCourse(categoryInfo.key));
+
+            actions.appendChild(playAction);
+            actions.appendChild(categoryAction);
+
+            body.appendChild(title);
+            body.appendChild(meta);
+            body.appendChild(pathText);
+            body.appendChild(actions);
+
+            card.appendChild(thumbnailWrap);
+            card.appendChild(body);
+            column.appendChild(card);
+
+            return column;
+        }
+
         function displayVideos(videos) {
             const videoList = document.getElementById('videoList');
             videoList.innerHTML = '';
 
             if (videos.length === 0) {
-                videoList.innerHTML = '<div class="col-12"><p class="text-center">Tidak ada video tersedia.</p></div>';
+                videoList.innerHTML = `
+                    <div class="col-12">
+                        <div class="explorer-empty-state">
+                            <h6 class="mb-2">Belum ada video yang cocok</h6>
+                            <p class="text-muted mb-3">Coba ubah kata kunci pencarian atau pilih kategori lain untuk melihat rekomendasi video.</p>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="resetVideoExplorerFilters()">
+                                Reset Filter Explorer
+                            </button>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
-            // Create table structure
-            const tableContainer = document.createElement('div');
-            tableContainer.className = 'table-responsive';
-
-            const table = document.createElement('table');
-            table.className = 'table table-striped table-hover';
-
-            table.innerHTML = `
-                <thead class="table-dark">
-                    <tr>
-                        <th scope="col" style="width: 60px;">No</th>
-                        <th scope="col">Judul Video</th>
-                        <th scope="col" style="width: 150px;">Kategori</th>
-                        <th scope="col" style="width: 100px;">Views</th>
-                        <th scope="col" style="width: 120px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${videos.map((video, index) => createVideoTableRow(video, index + 1)).join('')}
-                </tbody>
-            `;
-
-            tableContainer.appendChild(table);
-            videoList.appendChild(tableContainer);
-        }
-
-        // Create video table row
-        function createVideoTableRow(video, index) {
-            const category = detectVideoCategory(video.name);
-            return `
-                <tr>
-                    <td class="text-center">${index}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <i class="${category.icon} me-2 text-primary"></i>
-                            <div>
-                                <div title="${video.name}">${video.name}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <small class="text-muted">
-                            <i class="${category.icon} me-1"></i>
-                            ${video.category || category.name}
-                        </small>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-light text-dark">
-                            <i class="fas fa-eye me-1"></i>
-                            ${video.viewCount || 0}
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-outline-primary btn-sm" onclick="playVideo('${video.id}', '${video.path}')" title="Putar Video">
-                            <i class="fas fa-play me-1"></i>Putar
-                        </button>
-                    </td>
-                </tr>
-            `;
+            videos.forEach((video) => {
+                videoList.appendChild(createVideoCard(video));
+            });
         }
 
         // Initialize event listeners
         function initializeEventListeners() {
+            const sortSelect = document.getElementById('videoSortMode');
+            if (sortSelect) {
+                sortSelect.addEventListener('change', (event) => {
+                    videoExplorerState.sort = event.target.value;
+                    currentPage = 1;
+                    renderVideoExplorer();
+                });
+            }
+
             // Search function
             window.searchFiles = function () {
-                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+                videoExplorerState.query = searchTerm;
+                currentPage = 1;
 
                 if (!searchTerm) {
-                    // Reset to show all content
-                    displayCourses(allCourses);
-                    displayVideos(allVideos);
-                    document.getElementById('searchResults').innerHTML = '';
+                    visibleCourses = allCourses;
+                    displayCourses(visibleCourses);
+                    renderVideoExplorer();
                     return;
                 }
 
-                // Filter courses
-                const filteredCourses = allCourses.filter(course =>
+                visibleCourses = allCourses.filter(course =>
                     course.title.toLowerCase().includes(searchTerm) ||
-                    course.description.toLowerCase().includes(searchTerm)
+                    course.description.toLowerCase().includes(searchTerm) ||
+                    String(course.category || '').toLowerCase().includes(searchTerm)
                 );
 
-                // Filter videos
-                const filteredVideos = allVideos.filter(video =>
-                    video.name.toLowerCase().includes(searchTerm) ||
-                    video.category.toLowerCase().includes(searchTerm)
-                );
-
-                // Display filtered results
-                displayCourses(filteredCourses);
-                displayVideos(filteredVideos);
-
-                // Show search results summary
-                const totalResults = filteredCourses.length + filteredVideos.length;
-                document.getElementById('searchResults').innerHTML =
-                    `<p class="mt-3">Ditemukan ${totalResults} hasil (${filteredCourses.length} kursus, ${filteredVideos.length} video) dari ${allCourses.length + allVideos.length} total konten untuk "<strong>${document.getElementById('searchInput').value}</strong>"</p>`;
+                displayCourses(visibleCourses);
+                renderVideoExplorer();
             };
 
-
+            window.resetVideoExplorerFilters = function () {
+                videoExplorerState.query = '';
+                videoExplorerState.category = 'all';
+                videoExplorerState.sort = 'popular';
+                currentPage = 1;
+                visibleCourses = allCourses;
+                document.getElementById('searchInput').value = '';
+                if (sortSelect) {
+                    sortSelect.value = 'popular';
+                }
+                displayCourses(visibleCourses);
+                renderVideoExplorer();
+            };
 
             // Course opening function
             window.openCourse = function (courseId) {
-                // Find course and filter videos by category
                 const course = allCourses.find(c => c.id === courseId);
                 if (course) {
-                    const categoryName = course.title.toLowerCase().replace(/\s+/g, '');
-                    window.location.href = `tutorial.html?category=${categoryName}`;
+                    window.location.href = `tutorial.html?category=${encodeURIComponent(course.id)}`;
                 } else {
                     alert('Kursus tidak ditemukan.');
                 }

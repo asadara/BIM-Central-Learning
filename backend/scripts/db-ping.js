@@ -1,13 +1,10 @@
 const { Client } = require("pg");
+const { createPgConfig } = require("../config/runtimeConfig");
 
-const client = new Client({
+const client = new Client(createPgConfig({
     host: process.env.DB_HOST || "127.0.0.1",
-    port: Number(process.env.DB_PORT || 5432),
-    database: process.env.DB_NAME || "bcl_database",
-    user: process.env.DB_USER || "bcl_user",
-    password: process.env.DB_PASSWORD || "secure_password_2025",
     connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS || 5000)
-});
+}));
 
 (async () => {
     try {

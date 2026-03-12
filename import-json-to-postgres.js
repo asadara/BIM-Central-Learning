@@ -408,7 +408,7 @@ if (require.main === module) {
 
     if (!process.env.DB_PASSWORD) {
         console.error('❌ DB_PASSWORD environment variable required');
-        console.error('   Set DB_PASSWORD=secure_password_2025');
+        console.error('   Set DB_PASSWORD to the PostgreSQL application password from your environment');
         process.exit(1);
     }
 

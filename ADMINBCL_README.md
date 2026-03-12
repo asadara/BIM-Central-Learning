@@ -7,7 +7,7 @@ Sistem ini memungkinkan AdminBCL untuk mengelola tagline materi kursus secara ma
 
 ### 1. User AdminBCL
 - **Username**: AdminBCL
-- **Password**: AdminBCL2025!
+- **Password**: gunakan password admin yang dikonfigurasi di environment aktif
 - **Role**: Administrator dengan full access
 - **Permissions**:
   - Manage users
@@ -60,7 +60,7 @@ Sistem kategori yang dapat dikustomisasi:
 #### Authentication
 Semua API admin memerlukan header:
 ```
-x-admin-token: AdminBCL2025!
+x-admin-token: <ADMIN_TOKEN dari environment>
 ```
 
 #### Endpoints:

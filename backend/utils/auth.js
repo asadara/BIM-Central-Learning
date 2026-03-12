@@ -1,8 +1,13 @@
 const jwt = require('jsonwebtoken');
+const {
+    getJwtSecret,
+    getLegacyAdminBearerSecret,
+    getLegacyAdminToken
+} = require('../config/runtimeConfig');
 
-const SECRET_KEY = process.env.JWT_SECRET || 'supersecretkey_change_in_production';
-const LEGACY_ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'AdminBCL2025!';
-const LEGACY_ADMIN_BEARER = process.env.ADMIN_BEARER_SECRET || 'adminbcl-secret';
+const SECRET_KEY = getJwtSecret();
+const LEGACY_ADMIN_TOKEN = getLegacyAdminToken();
+const LEGACY_ADMIN_BEARER = getLegacyAdminBearerSecret();
 
 function isAdminRole(roleValue) {
     const normalizedRole = String(roleValue || '').toLowerCase();
@@ -30,7 +35,7 @@ function getRequestUser(req) {
     }
 
     const adminTokenHeader = String(req.headers['x-admin-token'] || '');
-    if (adminTokenHeader && adminTokenHeader === LEGACY_ADMIN_TOKEN) {
+    if (LEGACY_ADMIN_TOKEN && adminTokenHeader && adminTokenHeader === LEGACY_ADMIN_TOKEN) {
         return buildAdminUser({
             id: 'legacy-admin-token',
             username: 'legacy_admin_token'
@@ -47,7 +52,7 @@ function getRequestUser(req) {
         return null;
     }
 
-    if (token === LEGACY_ADMIN_BEARER) {
+    if (LEGACY_ADMIN_BEARER && token === LEGACY_ADMIN_BEARER) {
         return buildAdminUser({
             id: 'legacy-admin-bearer',
             username: 'legacy_admin_bearer'

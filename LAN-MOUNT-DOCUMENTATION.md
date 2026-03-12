@@ -168,7 +168,7 @@ GET /api/lan/mounts
 ### 2. Add New Mount
 ```http
 POST /api/lan/mounts
-Header: x-admin-token: AdminBCL2025!
+Header: x-admin-token: <ADMIN_TOKEN dari environment>
 Content-Type: application/json
 ```
 
@@ -188,7 +188,7 @@ Content-Type: application/json
 ### 3. Connect to Mount
 ```http
 POST /api/lan/mounts/{id}/connect
-Header: x-admin-token: AdminBCL2025!
+Header: x-admin-token: <ADMIN_TOKEN dari environment>
 ```
 
 **Response:**
@@ -255,7 +255,7 @@ GET /api/lan/mounts/{id}/status
 ### 6. Disconnect Mount
 ```http
 POST /api/lan/mounts/{id}/disconnect
-Header: x-admin-token: AdminBCL2025!
+Header: x-admin-token: <ADMIN_TOKEN dari environment>
 ```
 
 ### 7. Get LAN Info
@@ -286,7 +286,7 @@ GET /api/lan/info
 
 ```powershell
 # Connect ke mount
-$token = "AdminBCL2025!"
+$token = $env:ADMIN_TOKEN
 $headers = @{ "x-admin-token" = $token }
 
 # Connect
@@ -320,7 +320,7 @@ async function connectMount(mountId) {
         `http://localhost:5051/api/lan/mounts/${mountId}/connect`,
         {
             method: 'POST',
-            headers: { 'x-admin-token': 'AdminBCL2025!' }
+            headers: { 'x-admin-token': '<ADMIN_TOKEN dari environment>' }
         }
     );
     const data = await response.json();
@@ -501,18 +501,18 @@ async function openYear(year, source = 'local') {
 curl http://localhost:5051/api/lan/mounts
 
 # Check specific mount status
-curl -H "x-admin-token: AdminBCL2025!" \
+curl -H "x-admin-token: <ADMIN_TOKEN dari environment>" \
   http://localhost:5051/api/lan/mounts/kantor-pusat/status
 
 # Connect
-curl -X POST -H "x-admin-token: AdminBCL2025!" \
+curl -X POST -H "x-admin-token: <ADMIN_TOKEN dari environment>" \
   http://localhost:5051/api/lan/mounts/kantor-pusat/connect
 
 # List contents
 curl "http://localhost:5051/api/lan/mounts/kantor-pusat/contents?path=2025"
 
 # Disconnect
-curl -X POST -H "x-admin-token: AdminBCL2025!" \
+curl -X POST -H "x-admin-token: <ADMIN_TOKEN dari environment>" \
   http://localhost:5051/api/lan/mounts/kantor-pusat/disconnect
 ```
 

@@ -1,6 +1,6 @@
 ﻿// server.js (CommonJS penuh) - RESTORED VERSION
 
-require("dotenv").config();
+require("dotenv").config({ path: require("path").resolve(__dirname, "..", ".env") });
 const axios = require("axios");
 const multer = require("multer");
 const express = require("express");
@@ -17,6 +17,13 @@ const session = require("express-session");
 const { exec, execFile, spawn } = require("child_process");
 const os = require("os");
 const { Pool } = require("pg");
+const {
+    createPgConfig,
+    getDefaultAdminPassword,
+    getGoogleClientId,
+    getJwtSecret,
+    getSessionSecret
+} = require("./config/runtimeConfig");
 
 // âœ… Phase 4 Enterprise Components Import
 console.log('ðŸš€ Loading Phase 4 Enterprise Components...');
@@ -490,8 +497,9 @@ async function refreshVideoCache() {
     }
 }
 const USERS_FILE = path.join(__dirname, "users.json");
-const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey_change_in_production";
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_OAUTH_CLIENT_ID || '';
+const SECRET_KEY = getJwtSecret();
+const SESSION_SECRET = getSessionSecret();
+const GOOGLE_CLIENT_ID = getGoogleClientId();
 const GOOGLE_TOKENINFO_ENDPOINT = 'https://oauth2.googleapis.com/tokeninfo';
 
 // âœ… Fixed: Proper middleware order
@@ -500,7 +508,7 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' })); // Replaced depr
 
 // Session configuration for admin authentication
 const sessionConfig = {
-    secret: process.env.SESSION_SECRET || 'bcl-admin-session-secret-2025',
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -806,8 +814,13 @@ async function createDefaultAdminUser() {
 
         let users = [];
         const adminUsername = 'admin_bcl';
-        const adminPassword = 'AdminBCL2025!'; // Same password as before
+        const adminPassword = getDefaultAdminPassword();
         const adminEmail = 'admin@bcl.local';
+
+        if (!adminPassword) {
+            console.warn('âš ï¸ DEFAULT_ADMIN_PASSWORD not set; skipping default admin bootstrap.');
+            return;
+        }
 
         // Try PostgreSQL first
         try {
@@ -1098,16 +1111,11 @@ app.use('/api/lan', lanMountRoutes);
 console.log('ðŸ”Œ LAN Mount API endpoints registered at /api/lan/*');
 
 // User Authentication API with PostgreSQL as primary storage
-const pgConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'bcl_database',
-    user: process.env.DB_USER || 'bcl_user',
-    password: process.env.DB_PASSWORD || 'secure_password_2025',
+const pgConfig = createPgConfig({
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000
-};
+});
 
 const pgPool = new Pool(pgConfig);
 

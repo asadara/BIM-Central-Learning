@@ -70,7 +70,7 @@ Panduan detail ada di `POSTGRES-NATIVE-MIGRATION.md`.
 ### **Credentials Admin Default:**
 
 - **Username:** `admin_bcl`
-- **Password:** `AdminBCL2025!`
+- **Password:** gunakan password admin yang dikonfigurasi di environment aktif
 - **Email:** `admin@bcl.local`
 
 ---

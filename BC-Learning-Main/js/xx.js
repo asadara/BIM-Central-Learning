@@ -197,7 +197,7 @@ function retrySourceConnect(sourceFilter) {
 
     // Jika PC-BIM02, tampilkan pesan dan Sarankan coba manual mapping
     if (sourceFilter && sourceFilter.includes('pc-bim02')) {
-        alert('🔄 Mengulang koneksi PC-BIM02...\n\n📋 Instruksi:\n1. Buka Command Prompt sebagai Administrator\n2. Jalankan: net use X: \\10.0.0.122\\PROJECT BIM 2025 /user:user nke86\n3. Jika berhasil, refresh halaman ini\n\n⚠️ Jika masih gagal, ada masalah authenticasi dengan LAN mount manager.');
+        alert('🔄 Mengulang koneksi PC-BIM02...\n\n📋 Instruksi:\n1. Buka Command Prompt sebagai Administrator\n2. Jalankan perintah net use dengan username dan password PC-BIM02 dari environment aktif\n3. Jika berhasil, refresh halaman ini\n\n⚠️ Jika masih gagal, ada masalah authenticasi dengan LAN mount manager.');
     } else {
         // Untuk source lain, reload halaman project
         openYear(selectedYear, sourceFilter);

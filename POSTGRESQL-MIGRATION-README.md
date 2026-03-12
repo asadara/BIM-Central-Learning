@@ -43,7 +43,7 @@ Improvement: 8-16x faster untuk 20+ concurrent users
 ### **Environment Variables:**
 ```bash
 # Set environment variables
-export DB_PASSWORD="your_secure_password_2025"
+export DB_PASSWORD="your_actual_db_password"
 export DB_HOST="localhost"
 export DB_PORT="5432"
 export DB_NAME="bcl_database"
@@ -76,7 +76,7 @@ docker ps
 # Access pgAdmin di browser
 # http://localhost:5050
 # Email: admin@bcl.local
-# Password: admin123
+# Password: set from PGADMIN_DEFAULT_PASSWORD
 ```
 
 #### **3. Initialize Schema**

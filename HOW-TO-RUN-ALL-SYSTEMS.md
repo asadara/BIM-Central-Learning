@@ -174,7 +174,7 @@ node server.js
 ### Database Management
 ```bash
 # Check database connection
-node -e "const {Pool}=require('pg'); const p=new Pool({host:'localhost',port:5432,database:'bcl_database',user:'bcl_user',password:process.env.DB_PASSWORD||'secure_password_2025'}); p.query('SELECT 1').then(()=>{console.log('DB OK'); p.end();}).catch(e=>{console.error(e.message); p.end();});"
+node -e "if (!process.env.DB_PASSWORD) { throw new Error('DB_PASSWORD is required'); } const {Pool}=require('pg'); const p=new Pool({host:'localhost',port:5432,database:'bcl_database',user:'bcl_user',password:process.env.DB_PASSWORD}); p.query('SELECT 1').then(()=>{console.log('DB OK'); p.end();}).catch(e=>{console.error(e.message); p.end();});"
 
 # View data files
 type C:\BCL\backend\data.json

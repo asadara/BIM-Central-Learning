@@ -1,9 +1,10 @@
 const axios = require('axios');
+const { getOptionalEnv, getRequiredEnv } = require('./backend/config/runtimeConfig');
 
 async function connectBIM02Mount() {
     // Use relative URL for production, localhost for testing
-    const BASE_URL = process.env.BCL_BASE_URL || 'http://localhost:5052';
-    const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'AdminBCL2025!';
+    const BASE_URL = getOptionalEnv('BCL_BASE_URL') || 'http://localhost:5052';
+    const ADMIN_TOKEN = getRequiredEnv('ADMIN_TOKEN');
 
     console.log('🔌 Connecting PC-BIM02 LAN mount...');
 

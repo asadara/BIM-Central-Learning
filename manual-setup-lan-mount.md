@@ -9,7 +9,7 @@ Gunakan API call berikut untuk menambahkan PC-BIM02:
 ```bash
 curl -X POST "http://localhost:5051/api/lan/mounts" \
   -H "Content-Type: application/json" \
-  -H "x-admin-token: AdminBCL2025!" \
+  -H "x-admin-token: <ADMIN_TOKEN dari environment>" \
   -d '{
     "id": "pc-bim02",
     "name": "PC-BIM02 PROJECT BIM 2025",
@@ -18,8 +18,8 @@ curl -X POST "http://localhost:5051/api/lan/mounts" \
     "remotePath": "\\\\pc-bim02\\PROJECT BIM 2025",
     "localMountPoint": "X:",
     "enabled": true,
-    "username": "user",
-    "password": "nke86",
+    "username": "<PC_BIM02_USERNAME>",
+    "password": "<PC_BIM02_PASSWORD>",
     "notes": "Network share dari PC-BIM02 untuk project 2025"
   }'
 ```
@@ -32,7 +32,7 @@ curl -X POST "http://localhost:5051/api/lan/mounts" \
 
 ```bash
 curl -X POST "http://localhost:5051/api/lan/mounts/pc-bim02/connect" \
-  -H "x-admin-token: AdminBCL2025!"
+  -H "x-admin-token: <ADMIN_TOKEN dari environment>"
 ```
 
 ### 3. **Verifikasi Connection**

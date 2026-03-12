@@ -27,7 +27,7 @@ Ganti `remotePath` dengan PC Anda. Contoh:
 
 **PowerShell:**
 ```powershell
-$token = "AdminBCL2025!"
+$token = $env:ADMIN_TOKEN
 $headers = @{ "x-admin-token" = $token }
 
 # Test

@@ -4,13 +4,21 @@ param(
     [string]$DbHost = '127.0.0.1',
     [int]$Port = 5432,
     [string]$AdminUser = 'postgres',
-    [string]$AdminPassword = 'secure_password_2025',
+    [string]$AdminPassword = $env:POSTGRES_ADMIN_PASSWORD,
     [string]$AppDb = 'bcl_database',
     [string]$AppUser = 'bcl_user',
-    [string]$AppPassword = 'secure_password_2025'
+    [string]$AppPassword = $env:DB_PASSWORD
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($AdminPassword)) {
+    throw 'AdminPassword is required. Set POSTGRES_ADMIN_PASSWORD or pass -AdminPassword explicitly.'
+}
+
+if ([string]::IsNullOrWhiteSpace($AppPassword)) {
+    throw 'AppPassword is required. Set DB_PASSWORD or pass -AppPassword explicitly.'
+}
 
 function Find-PgBin {
     $candidates = @(

@@ -2,6 +2,6 @@
     "localMountPoint": "X:",
     "remotePath": "\\\\10.0.0.122\\PROJECT BIM 2025",
     "host": "10.0.0.122",
-    "username": "user",
-    "password": "nke86"
+    "username": "<PC_BIM02_USERNAME>",
+    "password": "<PC_BIM02_PASSWORD>"
 }

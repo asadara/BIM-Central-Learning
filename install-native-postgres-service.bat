@@ -1,7 +1,21 @@
 @echo off
 setlocal
 
-set "POSTGRES_PASSWORD=secure_password_2025"
+if exist "%~dp0.env" (
+    for /f "usebackq tokens=1* delims==" %%A in (`findstr /R "^[A-Za-z_][A-Za-z0-9_]*=" "%~dp0.env"`) do (
+        if /I "%%A"=="DB_PASSWORD" if not defined DB_PASSWORD set "DB_PASSWORD=%%B"
+        if /I "%%A"=="POSTGRES_ADMIN_PASSWORD" if not defined POSTGRES_ADMIN_PASSWORD set "POSTGRES_ADMIN_PASSWORD=%%B"
+    )
+)
+
+set "POSTGRES_PASSWORD=%POSTGRES_ADMIN_PASSWORD%"
+if not defined POSTGRES_PASSWORD set "POSTGRES_PASSWORD=%DB_PASSWORD%"
+if not defined POSTGRES_PASSWORD (
+    echo [ERROR] DB_PASSWORD or POSTGRES_ADMIN_PASSWORD must be set before installation.
+    echo [ACTION] Define the value in .env or current shell environment and rerun this script.
+    exit /b 1
+)
+
 set "CHOCOPKG=postgresql15"
 set "NATIVE_SERVICE="
 
@@ -45,7 +59,7 @@ if not defined NATIVE_SERVICE (
 )
 
 echo [INFO] Restoring BCL database backup into native PostgreSQL...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0restore-native-postgres.ps1" -AdminPassword "%POSTGRES_PASSWORD%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0restore-native-postgres.ps1" -AdminPassword "%POSTGRES_PASSWORD%" -AppPassword "%DB_PASSWORD%"
 if errorlevel 1 (
     echo [ERROR] Native PostgreSQL restore failed.
     exit /b 1

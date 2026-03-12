@@ -676,8 +676,23 @@ if errorlevel 1 (
 
 :: Ensure .env file exists for Docker
 if not exist ".env" (
-    echo [WARNING] .env file not found, creating with default password...
-    echo DB_PASSWORD=secure_password_2025 > .env
+    echo [ERROR] .env file not found. Docker PostgreSQL startup requires explicit credentials.
+    echo [ACTION] Copy .env.example to .env and set DB_PASSWORD plus PGADMIN_DEFAULT_PASSWORD first.
+    goto :postgres_start_failed
+)
+
+findstr /R "^DB_PASSWORD=" ".env" >nul
+if errorlevel 1 (
+    echo [ERROR] .env is missing DB_PASSWORD.
+    echo [ACTION] Set DB_PASSWORD in .env before starting Docker PostgreSQL.
+    goto :postgres_start_failed
+)
+
+findstr /R "^PGADMIN_DEFAULT_PASSWORD=" ".env" >nul
+if errorlevel 1 (
+    echo [ERROR] .env is missing PGADMIN_DEFAULT_PASSWORD.
+    echo [ACTION] Set PGADMIN_DEFAULT_PASSWORD in .env before starting Docker PostgreSQL.
+    goto :postgres_start_failed
 )
 
 :: Check if PostgreSQL containers are already running

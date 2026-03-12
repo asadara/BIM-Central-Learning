@@ -14,7 +14,7 @@ What an AI coding agent needs to know to be productive:
   - Start backend (production): `node server.js` (the `backend/package.json` also exposes `start` and `dev` scripts; `npm run dev` uses nodemon if installed).
   - Recommended env vars (used by `server.js` and startup scripts):
     - `USE_HTTPS` ("false" by default in repo), `HTTP_PORT` or `HTTP_PORT` fallback inside `server.js` uses `HTTP_PORT || 5051`.
-    - `JWT_SECRET` used for JWTs (default `supersecretkey_change_in_production` in code — override in env).
+    - `JWT_SECRET` used for JWTs and must be provided from environment.
     - `PHASE4_ENABLED` (used by docs/scripts). See `PHASE4_STARTUP_GUIDE.md` for examples.
   - Quick start (PowerShell example from repo docs):
     - `cd C:\BCL\backend; $env:USE_HTTPS='false'; node server.js`  — server listens on the configured HTTP port (default 5051 in `server.js`).
@@ -28,7 +28,7 @@ What an AI coding agent needs to know to be productive:
 - Project conventions & patterns to preserve
   - Server uses CommonJS and synchronous file access for some utilities (e.g., thumbnail generation, video discovery). Prefer minimal, non-breaking edits when touching `server.js`.
   - Several admin/dev convenience scripts assume Windows (PowerShell or .bat). Do not remove `run-phase4.ps1`, `startup-phase4-enterprise.ps1`, or `start-phase4-enterprise.bat` without updating docs.
-  - Admin token documented in `ADMINBCL_README.md`: header `x-admin-token: AdminBCL2025!` is used by admin endpoints — treat as environment/config in production change requests.
+  - Admin token, if enabled, must come from environment/config and must not be hardcoded in code or docs.
   - Tagging priority: manual tags (`tags.json`) override auto extraction (see `ADMINBCL_README.md`). Keep that order when editing `tutorialRoutes` or tag logic.
 
 - Integration points & external deps
@@ -39,7 +39,7 @@ What an AI coding agent needs to know to be productive:
 
 - Notes for AI edits (how to behave)
   - Keep all Windows-centric scripts and README instructions intact unless adding cross-platform alternatives. If you add Linux/macOS variants, include both scripts and a short README section.
-  - Avoid changing hard-coded admin/demo credentials or demo admin toggles (these are documented in `ADMINBCL_README.md`). If needed, put changes behind a clearly named env var and document it.
+  - Avoid introducing hard-coded admin/demo credentials or demo admin toggles. If needed, put changes behind a clearly named env var and document it.
   - When modifying `server.js`, preserve the top-level component simulation object (`phase4Components`) and endpoints under `/api/phase4/*` — they are used by frontend tests and startup docs.
   - Prefer non-breaking changes: e.g., add new routes under `/api/phase4/*` or `/api/admin/*` and document them in `PHASE4_STARTUP_GUIDE.md` and `ADMINBCL_README.md`.
 

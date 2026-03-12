@@ -582,7 +582,6 @@ class ComponentLoader {
         const adminContentSection = query('.admin-content-section');
         if (adminContentSection) {
             const isAdmin = state.finalUsername === 'adminBCL' ||
-                localStorage.getItem('admin_token') === 'AdminBCL2025!' ||
                 state.finalRole === 'System Administrator';
 
             adminContentSection.classList.toggle('show', isAdmin);
@@ -701,7 +700,6 @@ class ComponentLoader {
         if (adminContentSection) {
             // Check if user is adminBCL
             const isAdmin = finalUsername === 'adminBCL' ||
-                localStorage.getItem('admin_token') === 'AdminBCL2025!' ||
                 finalRole === 'System Administrator';
 
             // Use CSS class instead of inline style for smoother transitions

@@ -1,17 +1,13 @@
 const { Pool } = require('pg');
+const { createPgConfig } = require('./config/runtimeConfig');
 
 // PostgreSQL connection configuration
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'bcl_database',
-    user: process.env.DB_USER || 'bcl_user',
-    password: process.env.DB_PASSWORD || 'secure_password_2025',
+const dbConfig = createPgConfig({
     max: 10,
     min: 2,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
-};
+});
 
 const pool = new Pool(dbConfig);
 

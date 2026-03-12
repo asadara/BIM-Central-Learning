@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { execFile } = require("child_process");
 const { Pool } = require("pg");
+const { createPgConfig } = require("../config/runtimeConfig");
 
 const router = express.Router();
 const videoFolder = "G:/BIM CENTRAL LEARNING/"; // Lokasi utama
@@ -10,17 +11,12 @@ const TAGS_FILE = path.join(__dirname, "../tags.json");
 const VIDEO_TAGS_FILE = path.join(__dirname, "../video-tags.json");
 const THUMBNAIL_DIR = path.join(__dirname, "../public/thumbnails");
 
-const dbConfig = {
-    host: process.env.DB_HOST || "localhost",
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || "bcl_database",
-    user: process.env.DB_USER || "bcl_user",
-    password: process.env.DB_PASSWORD || "secure_password_2025",
+const dbConfig = createPgConfig({
     max: 10,
     min: 2,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000
-};
+});
 
 const pool = new Pool(dbConfig);
 pool.on("error", (err) => {

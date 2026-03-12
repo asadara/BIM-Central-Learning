@@ -59,8 +59,8 @@
 
     <div class="test-section">
         <h2>Test 1: Direct API Call</h2>
-        <input type="email" id="test-email" placeholder="Email" value="admin@bcl.local">
-        <input type="password" id="test-password" placeholder="Password" value="AdminBCL2025!">
+        <input type="email" id="test-email" placeholder="Email">
+        <input type="password" id="test-password" placeholder="Password">
         <button onclick="testDirectLogin()">Test Login API</button>
         <div id="test1-result" class="result"></div>
     </div>
@@ -80,8 +80,8 @@
     </div>
 
     <div class="test-section">
-        <h2>Test 4: Available Users</h2>
-        <button onclick="showAvailableUsers()">Show Test Users</button>
+        <h2>Test 4: Credential Reminder</h2>
+        <button onclick="showAvailableUsers()">Show Guidance</button>
         <div id="test4-result" class="result"></div>
     </div>
 
@@ -192,17 +192,9 @@
 
         function showAvailableUsers() {
             const resultDiv = document.getElementById('test4-result');
-
-            // Test users from backend/users.json
-            const testUsers = [
-                { email: 'admin@bcl.local', password: 'AdminBCL2025!', role: 'Admin' },
-                { email: 'aji.sadara@nusakonstruksi.co.id', password: 'Sadara', role: 'User' },
-                { email: 'nke-bim@nusakonstruksi.com', password: 'A13040002486', role: 'User' },
-                { email: 'asadara83@gmail.com', password: 'aji123', role: 'User' }
-            ];
-
-            resultDiv.innerHTML = 'Available Test Users:\n\n' +
-                testUsers.map(user => `${user.email} / ${user.password} (${user.role})`).join('\n');
+            resultDiv.innerHTML = 'Credential Guidance:\n\n' +
+                'Use a valid account from the current environment.\n' +
+                'This diagnostic page no longer embeds reusable passwords or tokens.';
 
             resultDiv.className = 'result warning';
         }

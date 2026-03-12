@@ -25,6 +25,14 @@ if "%DB_PASSWORD%"=="" (
     exit /b 1
 )
 
+if "%PGADMIN_DEFAULT_PASSWORD%"=="" (
+    echo [ERROR] PGADMIN_DEFAULT_PASSWORD environment variable is not set
+    echo [INFO] Please set PGADMIN_DEFAULT_PASSWORD environment variable
+    echo [INFO] Example: set PGADMIN_DEFAULT_PASSWORD=your_pgadmin_password
+    pause
+    exit /b 1
+)
+
 echo [INFO] Docker detected, proceeding with PostgreSQL setup...
 echo.
 
@@ -32,6 +40,7 @@ echo.
 echo [INFO] Creating .env file for Docker...
 (
 echo DB_PASSWORD=%DB_PASSWORD%
+echo PGADMIN_DEFAULT_PASSWORD=%PGADMIN_DEFAULT_PASSWORD%
 ) > .env
 
 echo [INFO] Starting PostgreSQL and pgAdmin...
@@ -61,18 +70,18 @@ echo   Host: localhost
 echo   Port: 5432
 echo   Database: bcl_database
 echo   Username: bcl_user
-echo   Password: %DB_PASSWORD%
+echo   Password: [configured via DB_PASSWORD]
 echo.
 echo pgAdmin Web Interface:
 echo   URL: http://localhost:5050
 echo   Email: admin@bcl.local
-echo   Password: admin123
+echo   Password: [configured via PGADMIN_DEFAULT_PASSWORD]
 echo.
 echo ================================================================
 echo.
 echo [NEXT STEPS]
 echo 1. Open pgAdmin at http://localhost:5050
-echo 2. Login with admin@bcl.local / admin123
+echo 2. Login with the pgAdmin password you configured in PGADMIN_DEFAULT_PASSWORD
 echo 3. Connect to server: localhost:5432
 echo 4. Run migration script when ready
 echo.

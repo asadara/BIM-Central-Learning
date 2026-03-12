@@ -4,10 +4,14 @@
  */
 
 const axios = require('axios');
+const { getOptionalEnv, getRequiredEnv } = require('./backend/config/runtimeConfig');
 
 // Use relative URL for production, localhost for testing
-const BASE_URL = process.env.BCL_BASE_URL || 'http://localhost:5052';
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'AdminBCL2025!'; // Default admin token
+const BASE_URL = getOptionalEnv('BCL_BASE_URL') || 'http://localhost:5052';
+const ADMIN_TOKEN = getRequiredEnv('ADMIN_TOKEN');
+const PC_BIM02_USERNAME = getRequiredEnv('PC_BIM02_USERNAME');
+const PC_BIM02_PASSWORD = getRequiredEnv('PC_BIM02_PASSWORD');
+const PC_BIM02_DRIVE = getOptionalEnv('PC_BIM02_DRIVE') || 'X:';
 
 async function setupLanMountForProjects() {
     console.log('🚀 Setting up LAN mount for PC-BIM02 PROJECT BIM 2025...');
@@ -22,10 +26,10 @@ async function setupLanMountForProjects() {
             host: 'pc-bim02',
             shareName: 'PROJECT BIM 2025',
             remotePath: '\\\\pc-bim02\\PROJECT BIM 2025',
-            localMountPoint: 'X:', // Pilih drive letter yang tersedia
+            localMountPoint: PC_BIM02_DRIVE,
             enabled: true,
-            username: 'user', // Ganti dengan username yang benar
-            password: 'nke86', // Ganti dengan password yang benar
+            username: PC_BIM02_USERNAME,
+            password: PC_BIM02_PASSWORD,
             notes: 'Network share dari PC-BIM02 untuk project 2025'
         };
 

@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { Pool } = require('pg');
 const { getRequestUser } = require('../utils/auth');
+const { createPgConfig } = require('../config/runtimeConfig');
 
 // Competency data storage
 const COMPETENCY_DATA_FILE = path.join(__dirname, '..', 'competency-data.json');
@@ -13,17 +14,12 @@ const AUTHORITY_DATA_FILE = path.join(__dirname, '..', 'competency-authorities.j
 const USERS_FILE = path.join(__dirname, '..', 'users.json');
 
 // PostgreSQL connection configuration
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'bcl_database',
-    user: process.env.DB_USER || 'bcl_user',
-    password: process.env.DB_PASSWORD || 'secure_password_2025',
+const dbConfig = createPgConfig({
     max: 10,
     min: 2,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
-};
+});
 
 const pool = new Pool(dbConfig);
 pool.on('error', (err) => {

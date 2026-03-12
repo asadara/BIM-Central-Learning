@@ -1,21 +1,17 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+const { createPgConfig, getJwtSecret } = require('../../config/runtimeConfig');
 
 const router = express.Router();
 
-const SECRET_KEY = process.env.JWT_SECRET || 'supersecretkey_change_in_production';
+const SECRET_KEY = getJwtSecret();
 
-const pgPool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT || 5432),
-    database: process.env.DB_NAME || 'bcl_database',
-    user: process.env.DB_USER || 'bcl_user',
-    password: process.env.DB_PASSWORD || 'secure_password_2025',
+const pgPool = new Pool(createPgConfig({
     max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000
-});
+}));
 
 pgPool.on('error', (err) => {
     console.warn('Progress routes PostgreSQL pool error:', err.message);

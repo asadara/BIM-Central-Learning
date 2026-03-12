@@ -3,24 +3,20 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const { createPgConfig, getJwtSecret } = require('../config/runtimeConfig');
 
 const router = express.Router();
 
 const USERS_FILE = path.join(__dirname, '..', 'users.json');
-const SECRET_KEY = process.env.JWT_SECRET || 'supersecretkey_change_in_production';
+const SECRET_KEY = getJwtSecret();
 
 // PostgreSQL connection configuration
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'bcl_database',
-    user: process.env.DB_USER || 'bcl_user',
-    password: process.env.DB_PASSWORD || 'secure_password_2025',
+const dbConfig = createPgConfig({
     max: 10,
     min: 2,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
-};
+});
 
 const pool = new Pool(dbConfig);
 pool.on('error', (err) => {

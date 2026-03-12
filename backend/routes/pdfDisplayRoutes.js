@@ -4,22 +4,18 @@ const path = require('path');
 const PDFParse = require('pdf-parse');
 const { Pool } = require('pg');
 const { requireAdmin, requireAuthenticated, getRequestUser } = require('../utils/auth');
+const { createPgConfig } = require('../config/runtimeConfig');
 
 const router = express.Router();
 
 const LEARNING_MATERIALS_FILE = path.join(__dirname, '../learning-materials.json');
 const PDF_DISPLAY_CONFIG_FILE = path.join(__dirname, '../pdf-display-config.json');
 
-const pgPool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT || 5432),
-    database: process.env.DB_NAME || 'bcl_database',
-    user: process.env.DB_USER || 'bcl_user',
-    password: process.env.DB_PASSWORD || 'secure_password_2025',
+const pgPool = new Pool(createPgConfig({
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000
-});
+}));
 
 pgPool.on('error', (err) => {
     console.warn('PDF display PostgreSQL pool error:', err.message);

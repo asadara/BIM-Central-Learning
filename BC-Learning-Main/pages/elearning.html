@@ -507,11 +507,36 @@
             background: #dbe7f3;
         }
 
+        .explore-video-thumb-wrap.thumb-unavailable {
+            background:
+                linear-gradient(135deg, rgba(13, 110, 253, 0.16), rgba(15, 23, 42, 0.08)),
+                #dbe7f3;
+        }
+
+        .explore-video-thumb-wrap.thumb-unavailable::after {
+            content: 'Thumbnail tidak tersedia';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            text-align: center;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
         .explore-video-thumb {
             width: 100%;
             height: 190px;
             object-fit: cover;
             display: block;
+        }
+
+        .explore-video-thumb.is-hidden {
+            opacity: 0;
         }
 
         .explore-video-badge {
@@ -638,6 +663,7 @@
             sort: 'popular'
         };
         const itemsPerPage = 12;
+        const THUMBNAIL_FALLBACK_SRC = '/img/fallback-thumb.png';
 
         function getApiCandidates(path) {
             const candidates = [path];
@@ -1066,6 +1092,15 @@
             return `${normalizedPath.slice(0, 85)}...`;
         }
 
+        function markVideoThumbnailUnavailable(imgElement) {
+            imgElement.alt = '';
+            imgElement.classList.add('is-hidden');
+            const wrapper = imgElement.closest('.explore-video-thumb-wrap');
+            if (wrapper) {
+                wrapper.classList.add('thumb-unavailable');
+            }
+        }
+
         function createVideoCard(video) {
             const categoryInfo = getExplorerCategoryInfo(video);
             const column = document.createElement('div');
@@ -1080,10 +1115,17 @@
 
             const thumbnail = document.createElement('img');
             thumbnail.className = 'explore-video-thumb';
-            thumbnail.src = video.thumbnail || '../img/fallback-thumb.png';
+            thumbnail.src = video.thumbnail || THUMBNAIL_FALLBACK_SRC;
             thumbnail.alt = video.name;
             thumbnail.onerror = function () {
-                this.src = '../img/fallback-thumb.png';
+                if (this.dataset.fallbackApplied === 'true') {
+                    this.onerror = null;
+                    markVideoThumbnailUnavailable(this);
+                    return;
+                }
+
+                this.dataset.fallbackApplied = 'true';
+                this.src = THUMBNAIL_FALLBACK_SRC;
             };
 
             const badge = document.createElement('div');

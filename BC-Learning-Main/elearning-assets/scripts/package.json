@@ -5,7 +5,8 @@
     "main": "image-mapping-tool.js",
     "scripts": {
         "start": "node image-mapping-tool.js",
-        "extract": "node image-mapping-tool.js"
+        "extract": "node image-mapping-tool.js",
+        "import-unresolved": "node unresolved-question-importer.js"
     },
     "dependencies": {
         "jszip": "^3.10.1",

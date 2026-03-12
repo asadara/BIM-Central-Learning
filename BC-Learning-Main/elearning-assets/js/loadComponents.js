@@ -2,7 +2,7 @@
 
 // loadComponents.js
 function loadNavbar() {
-    fetch('/components/navbar.html')
+    fetch('/elearning-assets/components/navbar.html')
         .then(res => res.text())
         .then(html => {
             const container = document.getElementById('navbar-container');
@@ -30,7 +30,7 @@ function loadNavbar() {
 
 
 function loadFooter() {
-    fetch('/components/footer.html')
+    fetch('/elearning-assets/components/footer.html')
         .then(res => res.text())
         .then(html => {
             const container = document.getElementById('footer-container');
@@ -46,3 +46,4 @@ window.addEventListener("DOMContentLoaded", () => {
     loadNavbar();
     loadFooter();
 });
+

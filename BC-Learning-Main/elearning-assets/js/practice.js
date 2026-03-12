@@ -4,23 +4,46 @@ document.addEventListener('DOMContentLoaded', function () {
     loadEnhancedPracticeSystem().then(() => {
         loadPracticeSets();
         setupEventListeners();
+        setupPracticeMenu();
     });
 });
 
 // Load enhanced practice system
 function loadEnhancedPracticeSystem() {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = '/elearning-assets/js/enhanced-practice-questions.js';
-        script.onload = () => {
-            console.log('Enhanced Practice Questions loaded successfully');
-            resolve();
+    const questionsAssetVersion = '20260312-2';
+    const candidateSources = [
+        `/elearning-assets/js/enhanced-practice-questions-updated.js?v=${questionsAssetVersion}`,
+        `/elearning-assets/js/enhanced-practice-questions.js?v=${questionsAssetVersion}`
+    ];
+
+    return new Promise((resolve) => {
+        const tryLoad = (index) => {
+            if (index >= candidateSources.length) {
+                console.warn('Could not load enhanced practice questions, using fallback data');
+                resolve();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = candidateSources[index];
+            script.onload = () => {
+                if (typeof window.enhancedPracticeQuestions !== 'undefined') {
+                    console.log(`Enhanced Practice Questions loaded successfully from ${candidateSources[index]}`);
+                    resolve();
+                    return;
+                }
+
+                console.warn(`Questions script loaded but dataset was missing: ${candidateSources[index]}`);
+                tryLoad(index + 1);
+            };
+            script.onerror = () => {
+                console.warn(`Could not load questions source: ${candidateSources[index]}`);
+                tryLoad(index + 1);
+            };
+            document.head.appendChild(script);
         };
-        script.onerror = () => {
-            console.warn('Could not load enhanced practice questions, using fallback data');
-            resolve();
-        };
-        document.head.appendChild(script);
+
+        tryLoad(0);
     });
 }
 
@@ -115,7 +138,7 @@ function generateRandomQuiz() {
 // Get practice questions from enhanced system or fallback
 function getPracticeQuestions() {
     if (typeof window.enhancedPracticeQuestions !== 'undefined') {
-        const userData = getUserData();
+        const userData = getCurrentLearningUser();
         const userLevel = userData?.level || 'BIM Modeller';
 
         // Get questions for user's level
@@ -141,25 +164,53 @@ function getPracticeQuestions() {
             Object.keys(questionSets).forEach(difficulty => {
                 const setQuestions = questionSets[difficulty];
                 if (setQuestions.length >= 3) { // Minimum 3 questions for a set (reduced for testing)
-                    practiceSets.push({
-                        id: practiceSets.length + 1,
-                        title: `${categoryData.title} - ${difficulty}`,
-                        category: categoryKey,
-                        level: userLevel.toLowerCase().replace(' ', '_'),
-                        difficulty: difficulty,
-                        questions: Math.min(setQuestions.length, 15), // Max 15 per set
-                        timeLimit: Math.min(setQuestions.length, 15) * 60, // 1 minute per question
-                        description: `${difficulty} level ${categoryData.title} questions for ${userLevel}`,
-                        questions_data: setQuestions.slice(0, 15).map(q => ({
-                            question: q.question,
-                            options: q.options,
-                            correct: typeof q.correctAnswer === 'number' ? q.correctAnswer : q.options.indexOf(q.correctAnswer),
-                            explanation: q.explanation,
-                            learningObjective: q.learningObjective || 'Practice BIM concepts',
-                            practicalScenario: q.practicalScenario
-                        }))
-                    });
+                    const chunkSize = 15;
+                    for (let offset = 0; offset < setQuestions.length; offset += chunkSize) {
+                        const chunk = setQuestions.slice(offset, offset + chunkSize);
+                        if (chunk.length < 3) {
+                            continue;
+                        }
+
+                        const chunkIndex = Math.floor(offset / chunkSize) + 1;
+                        const totalChunks = Math.ceil(setQuestions.length / chunkSize);
+                        const chunkSuffix = totalChunks > 1 ? ` (Set ${chunkIndex})` : '';
+
+                        practiceSets.push({
+                            id: practiceSets.length + 1,
+                            title: `${categoryData.title} - ${difficulty}${chunkSuffix}`,
+                            category: categoryKey,
+                            level: userLevel.toLowerCase().replace(' ', '_'),
+                            difficulty: difficulty,
+                            questions: chunk.length,
+                            timeLimit: chunk.length * 60, // 1 minute per question
+                            description: `${difficulty} level ${categoryData.title} questions for ${userLevel}${chunkSuffix}`,
+                            questions_data: chunk.map(q => ({
+                                id: q.id,
+                                question: q.question,
+                                options: q.options,
+                                correct: typeof q.correctAnswer === 'number' ? q.correctAnswer : q.options.indexOf(q.correctAnswer),
+                                explanation: q.explanation,
+                                learningObjective: q.learningObjective || 'Practice BIM concepts',
+                                practicalScenario: q.practicalScenario,
+                                imageUrl: q.imageUrl
+                            }))
+                        });
+                    }
                 }
+            });
+        });
+
+        const generatedCategories = new Set(practiceSets.map(set => set.category));
+        getFallbackPracticeData().forEach((fallbackSet, index) => {
+            if (generatedCategories.has(fallbackSet.category)) {
+                return;
+            }
+
+            practiceSets.push({
+                ...fallbackSet,
+                id: `fallback-${fallbackSet.category}-${index + 1}`,
+                description: `${fallbackSet.description} (supplemental set)`,
+                isFallbackSupplement: true
             });
         });
 
@@ -260,27 +311,24 @@ function getFallbackPracticeData() {
 
 // Initialize practice data
 let practiceData = [];
+let drillPracticeData = [];
+let mockPracticeData = [];
+let activePracticeFilter = 'all';
+let activePracticeView = 'overview';
+let activeTargetExamId = null;
 
 // Load practice sets with enhanced data
 function loadPracticeSets() {
-    practiceData = getPracticeQuestions();
-    displayPracticeSets(practiceData);
+    activeTargetExamId = new URLSearchParams(window.location.search).get('targetExam');
+    const loadedPracticeSets = getPracticeQuestions();
+    drillPracticeData = loadedPracticeSets.filter(set => !set.isRandomQuiz && !set.isMockExam);
+    mockPracticeData = generateMockPracticeSets();
+    practiceData = [...loadedPracticeSets, ...mockPracticeData.filter(set => !loadedPracticeSets.some(existing => existing.id === set.id))];
+    renderPracticeExperience();
 }
 
-// Display practice sets
-function displayPracticeSets(sets) {
-    const container = document.getElementById('practice-container');
-    if (!container) {
-        console.error('Practice container not found!');
-        return;
-    }
-
-    console.log('🎯 Displaying practice sets:', sets.length, 'sets');
-    sets.forEach((set, index) => {
-        console.log(`  ${index + 1}. ${set.title} (${set.questions} questions)`);
-    });
-
-    container.innerHTML = sets.map(set => `
+function createPracticeSetCardMarkup(set) {
+    return `
         <div class="practice-set-card" data-id="${set.id}">
             <div class="set-header">
                 <h3>${set.title}</h3>
@@ -308,14 +356,37 @@ function displayPracticeSets(sets) {
             </div>
             <div class="set-actions">
                 <button class="btn btn-primary start-practice" onclick="startPractice('${set.id}')">
-                    Start Practice
+                    ${set.isMockExam ? 'Start Mock Test' : 'Start Practice'}
                 </button>
                 <button class="btn btn-outline review-questions" onclick="reviewQuestions('${set.id}')">
                     Review Questions
                 </button>
             </div>
         </div>
-    `).join('');
+    `;
+}
+
+// Display practice sets
+function displayPracticeSets(sets, containerId = 'practice-container') {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error('Practice container not found!');
+        return;
+    }
+
+    console.log('🎯 Displaying practice sets:', sets.length, 'sets');
+    sets.forEach((set, index) => {
+        console.log(`  ${index + 1}. ${set.title} (${set.questions} questions)`);
+    });
+
+    container.innerHTML = sets.length
+        ? sets.map(set => createPracticeSetCardMarkup(set)).join('')
+        : `
+            <div class="practice-empty-state">
+                <h3>No practice sets found</h3>
+                <p class="practice-history-empty">Adjust the current filter or complete more drills to unlock new recommendations.</p>
+            </div>
+        `;
 }
 
 // Setup event listeners
@@ -333,13 +404,419 @@ function setupEventListeners() {
 function searchPracticeSets(event) {
     const searchTerm = event.target.value.toLowerCase();
 
-    let filteredSets = practiceData.filter(set => {
+    let filteredSets = drillPracticeData.filter(set => {
         return set.title.toLowerCase().includes(searchTerm) ||
             set.description.toLowerCase().includes(searchTerm) ||
             set.category.toLowerCase().includes(searchTerm);
     });
 
-    displayPracticeSets(filteredSets);
+    displayPracticeSets(getTargetedDrillSets(applyPracticeFilter(filteredSets)), 'practice-container');
+}
+
+function setupPracticeMenu() {
+    const menu = document.getElementById('practice-menu');
+    if (!menu) {
+        return;
+    }
+
+    menu.addEventListener('click', function (event) {
+        const button = event.target.closest('.practice-menu-btn');
+        if (!button) {
+            return;
+        }
+
+        activatePracticeView(button.dataset.view || 'overview');
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    activeTargetExamId = params.get('targetExam');
+    const requestedView = params.get('view');
+    if (requestedView) {
+        activatePracticeView(requestedView);
+        return;
+    }
+
+    const targetExam = getTargetExamBlueprint();
+    if (targetExam) {
+        activatePracticeView(targetExam.recommendedPracticeMode || 'overview');
+    }
+}
+
+function activatePracticeView(view) {
+    activePracticeView = view;
+
+    document.querySelectorAll('.practice-menu-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.view === view);
+    });
+
+    document.querySelectorAll('.practice-view').forEach(section => {
+        section.classList.toggle('active', section.id === `practice-${view}-view`);
+    });
+}
+
+function getReadinessDashboard() {
+    if (window.LearningReadiness && typeof window.LearningReadiness.getReadinessDashboard === 'function') {
+        return window.LearningReadiness.getReadinessDashboard();
+    }
+
+    return {
+        userLevel: 'BIM Modeller',
+        exams: [],
+        weakCategories: [],
+        readyCount: 0,
+        almostReadyCount: 0,
+        overallReadiness: 0,
+        nextExam: null,
+        practiceHistory: []
+    };
+}
+
+function getPracticeRecommendations() {
+    if (window.LearningReadiness && typeof window.LearningReadiness.getPracticeRecommendations === 'function') {
+        return window.LearningReadiness.getPracticeRecommendations();
+    }
+
+    return [];
+}
+
+function getTargetExamBlueprint() {
+    if (!activeTargetExamId || !window.LearningReadiness || !window.LearningReadiness.EXAM_BLUEPRINTS) {
+        return null;
+    }
+
+    return window.LearningReadiness.EXAM_BLUEPRINTS[activeTargetExamId] || null;
+}
+
+function getTargetedDrillSets(sets) {
+    const targetExam = getTargetExamBlueprint();
+    if (!targetExam || activePracticeFilter !== 'all') {
+        return sets;
+    }
+
+    const targetedSets = sets.filter(set => targetExam.targetCategories.includes(set.category));
+    return targetedSets.length ? targetedSets : sets;
+}
+
+function generateMockPracticeSets() {
+    const mockSets = practiceData.filter(set => set.isRandomQuiz);
+    const dashboard = getReadinessDashboard();
+    const allQuestions = [];
+
+    if (typeof window.enhancedPracticeQuestions !== 'undefined') {
+        Object.values(window.enhancedPracticeQuestions).forEach(levelData => {
+            Object.entries(levelData.categories || {}).forEach(([categoryKey, categoryData]) => {
+                (categoryData.questions || []).forEach(question => {
+                    allQuestions.push({
+                        ...question,
+                        category: categoryKey,
+                        sourceCategory: categoryData.title
+                    });
+                });
+            });
+        });
+    }
+
+    dashboard.exams
+        .filter(exam => exam.levelEligible)
+        .forEach((exam, index) => {
+            const examQuestions = allQuestions
+                .filter(question => exam.targetCategories.includes(question.category))
+                .slice(0, 20);
+
+            if (examQuestions.length < 5) {
+                return;
+            }
+
+            mockSets.push({
+                id: `mock-${exam.examId}-${index + 1}`,
+                title: `${exam.shortTitle} Mock`,
+                category: 'exam-style',
+                level: exam.requiredLevel.toLowerCase().replace(' ', '_'),
+                difficulty: exam.status === 'ready' ? 'Exam Ready' : 'Preparation',
+                questions: examQuestions.length,
+                timeLimit: examQuestions.length * 75,
+                description: `Timed mock set aligned to ${exam.title}.`,
+                isMockExam: true,
+                targetExamId: exam.examId,
+                questions_data: examQuestions.map(question => ({
+                    id: question.id,
+                    question: question.question,
+                    options: question.options,
+                    correct: typeof question.correctAnswer === 'number' ? question.correctAnswer : question.options.indexOf(question.correctAnswer),
+                    explanation: question.explanation,
+                    learningObjective: question.learningObjective || 'Practice BIM concepts',
+                    category: question.category,
+                    sourceCategory: question.sourceCategory,
+                    imageUrl: question.imageUrl
+                }))
+            });
+        });
+
+    return mockSets;
+}
+
+function renderPracticeExperience() {
+    renderPracticeHero();
+    renderOverviewMetrics();
+    renderReadinessGrid();
+    renderRecommendations();
+    renderPracticeFilters();
+    displayPracticeSets(getTargetedDrillSets(applyPracticeFilter(drillPracticeData)), 'practice-container');
+    displayPracticeSets(mockPracticeData, 'practice-mock-container');
+    renderPracticeHistory();
+}
+
+function renderPracticeHero() {
+    const dashboard = getReadinessDashboard();
+    const targetExam = getTargetExamBlueprint();
+    const heroCard = document.getElementById('practice-readiness-hero');
+    const heroActions = document.getElementById('practice-hero-actions');
+    const heroTitle = document.getElementById('practice-hero-title');
+    const heroCopy = document.getElementById('practice-hero-copy');
+
+    if (heroTitle && heroCopy) {
+        if (targetExam) {
+            heroTitle.textContent = `Preparation path for ${targetExam.shortTitle}`;
+            heroCopy.textContent = `Focus on ${targetExam.targetCategories.join(', ')} and build enough accuracy, attempts, and coverage before moving into the formal exam.`;
+        } else {
+            heroTitle.textContent = 'Build exam readiness with measured drills and mock sessions';
+            heroCopy.textContent = 'Strengthen weak topics, track consistency, and move into formal exams only when your readiness score is strong enough.';
+        }
+    }
+
+    if (heroCard) {
+        const targetExamStatus = targetExam
+            ? dashboard.exams.find(exam => exam.examId === targetExam.examId)
+            : null;
+
+        heroCard.innerHTML = `
+            <span class="practice-score-label">Overall readiness</span>
+            <div class="practice-score">${dashboard.overallReadiness}%</div>
+            <h3>${targetExam ? targetExam.shortTitle : (dashboard.nextExam ? dashboard.nextExam.shortTitle : 'No exam target yet')}</h3>
+            <p>${targetExamStatus ? targetExamStatus.recommendation : (dashboard.nextExam ? dashboard.nextExam.recommendation : 'Start with skill drills to create your first readiness baseline.')}</p>
+            <div class="practice-mini-metrics">
+                <div>
+                    <div class="practice-mini-label">Ready now</div>
+                    <div class="practice-score" style="font-size:2.4rem;">${dashboard.readyCount}</div>
+                </div>
+                <div>
+                    <div class="practice-mini-label">Almost ready</div>
+                    <div class="practice-score" style="font-size:2.4rem;">${dashboard.almostReadyCount}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    if (heroActions) {
+        const linkedExam = targetExam || dashboard.nextExam;
+        const nextExamLink = linkedExam
+            ? `<a class="practice-link-btn" href="exams.html?targetExam=${linkedExam.examId}">
+                    <i class="fas fa-arrow-right"></i> Open ${linkedExam.shortTitle}
+               </a>`
+            : '';
+
+        heroActions.innerHTML = `
+            <a class="practice-link-btn secondary" href="exams.html${linkedExam ? `?targetExam=${linkedExam.examId}` : ''}">
+                <i class="fas fa-clipboard-check"></i> View Exams
+            </a>
+            ${nextExamLink}
+        `;
+    }
+}
+
+function renderOverviewMetrics() {
+    const dashboard = getReadinessDashboard();
+    const history = dashboard.practiceHistory || [];
+    const metrics = [
+        {
+            label: 'Practice Attempts',
+            value: history.length,
+            caption: 'Measured attempts stored from your quiz activity.'
+        },
+        {
+            label: 'Weak Topics',
+            value: dashboard.weakCategories.length,
+            caption: dashboard.weakCategories.length
+                ? dashboard.weakCategories.map(item => item.category).join(', ')
+                : 'No weak topics yet.'
+        },
+        {
+            label: 'Ready Exams',
+            value: dashboard.readyCount,
+            caption: 'Exams currently meeting readiness thresholds.'
+        },
+        {
+            label: 'Current Level',
+            value: dashboard.userLevel,
+            caption: 'This determines which exam paths can be unlocked.'
+        }
+    ];
+
+    const container = document.getElementById('practice-overview-metrics');
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = metrics.map(item => `
+        <div class="practice-panel">
+            <div class="practice-mini-label">${item.label}</div>
+            <div class="practice-score" style="font-size:2.8rem;">${item.value}</div>
+            <div class="practice-stat-caption">${item.caption}</div>
+        </div>
+    `).join('');
+}
+
+function renderReadinessGrid() {
+    const dashboard = getReadinessDashboard();
+    const container = document.getElementById('practice-readiness-grid');
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = dashboard.exams.map(exam => `
+        <div class="practice-recommendation-card">
+            <div class="practice-panel-title">
+                <h4>${exam.shortTitle}</h4>
+                <span class="practice-badge ${exam.status}">${exam.status.replace('-', ' ')}</span>
+            </div>
+            <div class="practice-score" style="font-size:2.6rem;">${exam.readinessScore}%</div>
+            <p>${exam.recommendation}</p>
+            <div class="practice-history-row">
+                <span>Accuracy</span>
+                <strong>${exam.accuracy}%</strong>
+            </div>
+            <div class="practice-history-row">
+                <span>Attempts</span>
+                <strong>${exam.attempts}/${exam.minAttempts}</strong>
+            </div>
+            <div class="practice-history-row">
+                <span>Coverage</span>
+                <strong>${exam.coverage}%</strong>
+            </div>
+            <div class="practice-pill-row">
+                <a class="practice-link-btn secondary" href="exams.html?targetExam=${exam.examId}">Open exam path</a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderRecommendations() {
+    const recommendations = getPracticeRecommendations();
+    const container = document.getElementById('practice-recommendations');
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = recommendations.length
+        ? recommendations.map(item => `
+            <div class="practice-recommendation-card">
+                <div class="practice-badge">${item.type === 'exam' ? 'Exam path' : 'Weak topic'}</div>
+                <h4>${item.title}</h4>
+                <p>${item.description}</p>
+                <div class="practice-pill-row">
+                    <button class="practice-link-btn secondary" type="button" onclick="activatePracticeView('${item.targetView || 'skill-drills'}')">
+                        ${item.type === 'exam' ? 'Open prep mode' : 'Focus this skill'}
+                    </button>
+                    ${item.targetExamId ? `<a class="practice-link-btn" href="exams.html?targetExam=${item.targetExamId}">See exam gate</a>` : ''}
+                </div>
+            </div>
+        `).join('')
+        : `
+            <div class="practice-empty-state">
+                <h3>No recommendations yet</h3>
+                <p class="practice-history-empty">Complete at least one practice set so the system can start measuring readiness.</p>
+            </div>
+        `;
+}
+
+function renderPracticeFilters() {
+    const dashboard = getReadinessDashboard();
+    const weakCategories = dashboard.weakCategories.map(item => item.category);
+    const categories = [...new Set(drillPracticeData.map(set => set.category))];
+    const filters = ['all', 'weak-topics', ...categories];
+    const container = document.getElementById('practice-filter-bar');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = filters.map(filter => {
+        const label = filter === 'all'
+            ? 'All Drills'
+            : filter === 'weak-topics'
+                ? 'Weak Topics'
+                : filter;
+
+        return `<button class="practice-filter-btn ${filter === activePracticeFilter ? 'active' : ''}" data-filter="${filter}">${label}</button>`;
+    }).join('');
+
+    container.onclick = function (event) {
+        const button = event.target.closest('.practice-filter-btn');
+        if (!button) {
+            return;
+        }
+
+        activePracticeFilter = button.dataset.filter || 'all';
+        renderPracticeFilters();
+
+        const searchTerm = document.getElementById('practice-search')?.value?.toLowerCase() || '';
+        const searchedSets = drillPracticeData.filter(set => {
+            return !searchTerm ||
+                set.title.toLowerCase().includes(searchTerm) ||
+                set.description.toLowerCase().includes(searchTerm) ||
+                set.category.toLowerCase().includes(searchTerm);
+        });
+
+        displayPracticeSets(getTargetedDrillSets(applyPracticeFilter(searchedSets, weakCategories)), 'practice-container');
+    };
+}
+
+function applyPracticeFilter(sets, weakCategories = getReadinessDashboard().weakCategories.map(item => item.category)) {
+    if (activePracticeFilter === 'all') {
+        return sets;
+    }
+
+    if (activePracticeFilter === 'weak-topics') {
+        return sets.filter(set => weakCategories.includes(set.category));
+    }
+
+    return sets.filter(set => set.category === activePracticeFilter);
+}
+
+function renderPracticeHistory() {
+    const dashboard = getReadinessDashboard();
+    const history = [...dashboard.practiceHistory].slice(-6).reverse();
+    const container = document.getElementById('practice-history-container');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = history.length
+        ? history.map(entry => `
+            <div class="practice-history-card">
+                <h4>${entry.title || entry.category || entry.setId}</h4>
+                <p>${entry.mode === 'mock-tests' || entry.mode === 'mock' ? 'Mock progression' : 'Skill drill performance'}</p>
+                <div class="practice-history-row">
+                    <span>Score</span>
+                    <strong>${entry.score}%</strong>
+                </div>
+                <div class="practice-history-row">
+                    <span>Time</span>
+                    <strong>${Math.round((entry.timeSpent || 0) / 60)} min</strong>
+                </div>
+                <div class="practice-history-row">
+                    <span>Categories</span>
+                    <strong>${Array.isArray(entry.categories) ? entry.categories.join(', ') : (entry.category || '-')}</strong>
+                </div>
+            </div>
+        `).join('')
+        : `
+            <div class="practice-empty-state">
+                <h3>No history yet</h3>
+                <p class="practice-history-empty">Complete a drill or mock test to start tracking progress over time.</p>
+            </div>
+        `;
 }
 
 // Global variables for quiz functionality
@@ -378,7 +855,7 @@ function startPractice(setId) {
 
 // Review questions without timer in modal
 function reviewQuestions(setId) {
-    const practiceSet = practiceData.find(set => set.id === setId);
+    const practiceSet = practiceData.find(set => set.id.toString() == setId.toString());
     if (!practiceSet) return;
 
     // Initialize review
@@ -392,8 +869,9 @@ function reviewQuestions(setId) {
     loadCurrentQuestion();
 }
 
-// Get user data from localStorage
-function getUserData() {
+// Get practice-specific local data from localStorage.
+// Keep this separate from the global auth helpers loaded by user.js.
+function getPracticeUserData() {
     try {
         return JSON.parse(localStorage.getItem('userData')) || {};
     } catch (error) {
@@ -410,12 +888,16 @@ function getAuthenticatedUser() {
     }
 }
 
+function getCurrentLearningUser() {
+    return getAuthenticatedUser() || getPracticeUserData();
+}
+
 function getAuthToken() {
     return localStorage.getItem('token') || '';
 }
 
-// Save user data to localStorage
-function saveUserData(userData) {
+// Save practice-specific local data to localStorage
+function savePracticeUserData(userData) {
     try {
         localStorage.setItem('userData', JSON.stringify(userData));
     } catch (error) {
@@ -473,13 +955,25 @@ async function submitPracticeResultToServer(setData, resultData) {
 
 // Update practice history
 function updatePracticeHistory(setId, score, timeSpent) {
-    const userData = getUserData();
+    const userData = getPracticeUserData();
     if (!userData.practiceHistory) {
         userData.practiceHistory = [];
     }
 
+    const categories = [...new Set(
+        (currentPracticeSet?.questions_data || [])
+            .map(question => question.category || currentPracticeSet?.category)
+            .filter(Boolean)
+    )];
+
     userData.practiceHistory.push({
         setId: setId,
+        title: currentPracticeSet?.title || `Practice Set ${setId}`,
+        category: currentPracticeSet?.category || null,
+        categories,
+        difficulty: currentPracticeSet?.difficulty || null,
+        mode: currentPracticeSet?.isMockExam || currentPracticeSet?.isRandomQuiz ? 'mock-tests' : 'skill-drills',
+        targetExamId: currentPracticeSet?.targetExamId || null,
         score: score,
         timeSpent: timeSpent,
         date: new Date().toISOString(),
@@ -491,12 +985,14 @@ function updatePracticeHistory(setId, score, timeSpent) {
         userData.practiceHistory = userData.practiceHistory.slice(-50);
     }
 
-    saveUserData(userData);
+    savePracticeUserData(userData);
+    renderPracticeExperience();
+    displayPracticeStats();
 }
 
 // Get practice statistics
 function getPracticeStats() {
-    const userData = getUserData();
+    const userData = getPracticeUserData();
     const history = userData.practiceHistory || [];
 
     if (history.length === 0) {

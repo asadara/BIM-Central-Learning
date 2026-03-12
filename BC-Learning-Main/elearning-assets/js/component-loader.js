@@ -10,6 +10,8 @@ class ComponentLoader {
 
     // Load all components
     async loadAllComponents() {
+        this.ensureFavicon();
+
         // Load authentication guard first for e-learning pages
         await this.loadAuthGuard();
 
@@ -301,7 +303,7 @@ class ComponentLoader {
                 console.log('✅ Navbar loaded successfully for e-learning page');
             } else {
                 // Fallback: load navbar directly
-                const navbarPath = '../components/navbar.html';
+                const navbarPath = '/elearning-assets/components/navbar.html';
                 console.log('📂 Using navbar path:', navbarPath);
 
                 const response = await fetch(navbarPath);
@@ -323,14 +325,52 @@ class ComponentLoader {
                         document.body.appendChild(newScript);
                     });
 
-                    console.log('✅ Navbar loaded and scripts executed for e-learning page');
+                    console.log('✅ Navbar loaded and scripts executed for e-learning page from:', navbarPath);
                 } else {
                     console.warn('❌ Navbar container not found in header component');
                 }
             }
+
+            this.syncPublicLearningNavbarLayout();
         } catch (error) {
             console.warn('❌ Failed to load navbar for e-learning page:', error);
         }
+    }
+
+    syncPublicLearningNavbarLayout() {
+        const publicLearningPage = document.body?.dataset?.publicLearningPage === 'true';
+
+        if (!publicLearningPage) {
+            return;
+        }
+
+        const applyNavbarOffset = () => {
+            const navbar = document.querySelector('#navbar-container .navbar');
+            if (!navbar) {
+                return;
+            }
+
+            const navbarHeight = Math.max(Math.ceil(navbar.getBoundingClientRect().height), 60);
+            const navbarOffset = `${navbarHeight + 12}px`;
+
+            document.body.style.setProperty('--elearn-top-offset', navbarOffset);
+            document.body.style.setProperty('--elearn-top-offset-desktop', navbarOffset);
+        };
+
+        applyNavbarOffset();
+        requestAnimationFrame(applyNavbarOffset);
+
+        if (this.publicLearningNavbarLayoutHandler) {
+            window.removeEventListener('resize', this.publicLearningNavbarLayoutHandler);
+            window.removeEventListener('orientationchange', this.publicLearningNavbarLayoutHandler);
+        }
+
+        this.publicLearningNavbarLayoutHandler = () => {
+            requestAnimationFrame(applyNavbarOffset);
+        };
+
+        window.addEventListener('resize', this.publicLearningNavbarLayoutHandler);
+        window.addEventListener('orientationchange', this.publicLearningNavbarLayoutHandler);
     }
 
     // Load authentication guard for e-learning pages
@@ -341,6 +381,15 @@ class ComponentLoader {
             // Only load auth guard on e-learning pages
             if (!window.location.pathname.startsWith('/elearning-assets/')) {
                 console.log('🔓 Auth guard not needed for non-e-learning pages');
+                return;
+            }
+
+            const publicLearningPage =
+                window.disableElearningAuthGuard === true ||
+                document.body?.dataset?.publicLearningPage === 'true';
+
+            if (publicLearningPage) {
+                console.log('Public learning page detected - auth guard skipped');
                 return;
             }
 
@@ -448,6 +497,23 @@ class ComponentLoader {
             if (registerLink) registerLink.style.display = 'block';
             if (logoutLink) logoutLink.style.display = 'none';
         }
+    }
+
+    ensureFavicon() {
+        const faviconHref = '/img/icons/icon_bcl.ico?v=20260312b';
+        const iconRels = ['icon', 'shortcut icon', 'apple-touch-icon'];
+
+        document
+            .querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
+            .forEach((link) => link.remove());
+
+        iconRels.forEach((rel) => {
+            const link = document.createElement('link');
+            link.rel = rel;
+            link.href = faviconHref;
+            link.type = 'image/x-icon';
+            document.head.appendChild(link);
+        });
     }
 
     // Handle logout functionality
@@ -803,3 +869,5 @@ if (document.readyState === 'loading') {
 } else {
     componentLoader.loadAllComponents();
 }
+
+

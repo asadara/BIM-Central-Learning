@@ -13,15 +13,220 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <link rel="icon" href="/img/icons/icon_bcl.ico?v=20260312b" type="image/x-icon">
+    <link rel="shortcut icon" href="/img/icons/icon_bcl.ico?v=20260312b" type="image/x-icon">
 
     <!-- font awesome cdn link - Alternative CDN -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.2/css/all.css">
 
     <!-- custom css file link  -->
-    <link rel="stylesheet" href="../css/bootstrap.min.css"><link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css"><link rel="stylesheet" href="css/style.css">
+    <style>
+        .practice-shell {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .practice-hero {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: 2rem;
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.12), rgba(52, 152, 219, 0.1));
+            border: var(--border);
+            border-radius: 1.6rem;
+            padding: 2.4rem;
+        }
+
+        .practice-hero-copy h2 {
+            font-size: 2.8rem;
+            color: var(--black);
+            margin-bottom: 1rem;
+        }
+
+        .practice-hero-copy p,
+        .practice-readiness-card p,
+        .practice-panel-subtitle,
+        .practice-recommendation-card p,
+        .practice-history-empty,
+        .practice-stat-caption {
+            font-size: 1.4rem;
+            color: var(--light-color);
+            line-height: 1.6;
+        }
+
+        .practice-pill-row,
+        .practice-menu,
+        .practice-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .practice-pill,
+        .practice-menu-btn,
+        .practice-filter-btn {
+            border: var(--border);
+            border-radius: 999px;
+            background: var(--white);
+            color: var(--black);
+            cursor: pointer;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 1rem 1.6rem;
+        }
+
+        .practice-menu-btn.active,
+        .practice-filter-btn.active {
+            background: var(--main-color);
+            color: #fff;
+        }
+
+        .practice-readiness-card,
+        .practice-panel,
+        .practice-recommendation-card,
+        .practice-history-card,
+        .practice-empty-state {
+            background: var(--white);
+            border: var(--border);
+            border-radius: 1.4rem;
+            padding: 1.8rem;
+        }
+
+        .practice-readiness-card {
+            display: grid;
+            gap: 1.2rem;
+            align-content: start;
+        }
+
+        .practice-score {
+            font-size: 4.2rem;
+            font-weight: 800;
+            color: var(--main-color);
+            line-height: 1;
+        }
+
+        .practice-score-label,
+        .practice-mini-label {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--light-color);
+        }
+
+        .practice-mini-metrics,
+        .practice-overview-grid,
+        .practice-recommendation-grid,
+        .practice-history-grid {
+            display: grid;
+            gap: 1.4rem;
+        }
+
+        .practice-mini-metrics,
+        .practice-overview-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+
+        .practice-recommendation-grid,
+        .practice-history-grid {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        .practice-panel-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .practice-panel-title h3,
+        .practice-readiness-card h3,
+        .practice-recommendation-card h4,
+        .practice-history-card h4 {
+            font-size: 1.8rem;
+            color: var(--black);
+            margin: 0;
+        }
+
+        .practice-view {
+            display: none;
+            gap: 1.6rem;
+        }
+
+        .practice-view.active {
+            display: grid;
+        }
+
+        .practice-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .8rem;
+            border-radius: 999px;
+            background: var(--main-color);
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 1rem 1.6rem;
+            text-decoration: none;
+        }
+
+        .practice-link-btn.secondary {
+            background: rgba(142, 68, 173, 0.12);
+            color: var(--main-color);
+        }
+
+        .practice-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .6rem;
+            border-radius: 999px;
+            background: rgba(142, 68, 173, 0.12);
+            color: var(--main-color);
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: .7rem 1rem;
+        }
+
+        .practice-badge.ready {
+            background: rgba(34, 197, 94, 0.16);
+            color: #15803d;
+        }
+
+        .practice-badge.almost-ready {
+            background: rgba(245, 158, 11, 0.16);
+            color: #b45309;
+        }
+
+        .practice-badge.locked {
+            background: rgba(148, 163, 184, 0.16);
+            color: #475569;
+        }
+
+        .practice-history-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 1.3rem;
+            color: var(--black);
+            padding: .8rem 0;
+            border-top: var(--border);
+        }
+
+        .practice-history-row:first-of-type {
+            border-top: 0;
+        }
+
+        @media (max-width: 768px) {
+            .practice-hero {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 
-<body>
+<body data-public-learning-page="true">
 
     <!-- Header akan dimuat otomatis oleh component-loader.js -->
     <div class="header-container"></div>
@@ -30,21 +235,88 @@
 
     <section class="practice">
         <h1 class="heading">Practice Questions</h1>
-
-        <!-- Search Bar -->
-        <div class="search-bar" style="margin-bottom: 2rem;">
-            <div class="search-input" style="max-width: 500px; margin: 0 auto;">
-                <input type="text" id="practice-search" placeholder="Search practice questions..."
-                    style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
-                <i class="fas fa-search"
-                    style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666;"></i>
+        <div class="practice-shell">
+            <div class="practice-hero">
+                <div class="practice-hero-copy">
+                    <div class="practice-pill-row">
+                        <span class="practice-pill"><i class="fas fa-route"></i> Learn -> Practice -> Exam</span>
+                        <span class="practice-pill"><i class="fas fa-chart-line"></i> Measured readiness</span>
+                    </div>
+                    <h2 id="practice-hero-title">Build exam readiness with measured drills and mock sessions</h2>
+                    <p id="practice-hero-copy">
+                        Strengthen weak topics, track consistency, and move into formal exams only when your readiness score is strong enough.
+                    </p>
+                    <div class="practice-pill-row" id="practice-hero-actions"></div>
+                </div>
+                <div class="practice-readiness-card" id="practice-readiness-hero">
+                    <!-- Readiness summary will be loaded dynamically -->
+                </div>
             </div>
-        </div>
 
-        <!-- Practice Sets -->
-        <div class="practice-sets">
-            <div class="box-container" id="practice-container">
-                <!-- Practice sets will be loaded dynamically -->
+            <div class="practice-menu" id="practice-menu">
+                <button class="practice-menu-btn active" data-view="overview">Overview</button>
+                <button class="practice-menu-btn" data-view="skill-drills">Skill Drills</button>
+                <button class="practice-menu-btn" data-view="mock-tests">Mock Tests</button>
+                <button class="practice-menu-btn" data-view="history">History</button>
+            </div>
+
+            <div class="practice-view active" id="practice-overview-view">
+                <div class="practice-overview-grid" id="practice-overview-metrics"></div>
+                <div class="practice-panel">
+                    <div class="practice-panel-title">
+                        <h3>Readiness by Exam</h3>
+                        <span class="practice-panel-subtitle">Measured from accuracy, attempts, coverage, and consistency.</span>
+                    </div>
+                    <div class="practice-recommendation-grid" id="practice-readiness-grid"></div>
+                </div>
+                <div class="practice-panel">
+                    <div class="practice-panel-title">
+                        <h3>Next Best Actions</h3>
+                        <span class="practice-panel-subtitle">Use these shortcuts to move from drilling into formal assessment.</span>
+                    </div>
+                    <div class="practice-recommendation-grid" id="practice-recommendations"></div>
+                </div>
+            </div>
+
+            <div class="practice-view" id="practice-skill-drills-view">
+                <div class="search-bar" style="margin-bottom: 1rem;">
+                    <div class="search-input" style="max-width: 500px; margin: 0 auto;">
+                        <input type="text" id="practice-search" placeholder="Search practice questions..."
+                            style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                        <i class="fas fa-search"
+                            style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666;"></i>
+                    </div>
+                </div>
+                <div class="practice-filter-bar" id="practice-filter-bar"></div>
+                <div class="practice-sets">
+                    <div class="box-container" id="practice-container">
+                        <!-- Practice drill sets will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="practice-view" id="practice-mock-tests-view">
+                <div class="practice-panel">
+                    <div class="practice-panel-title">
+                        <h3>Exam-Style Mock Tests</h3>
+                        <span class="practice-panel-subtitle">Timed simulations linked directly to the exam pathways on the Exams page.</span>
+                    </div>
+                    <div class="box-container" id="practice-mock-container">
+                        <!-- Mock test cards will be loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="practice-view" id="practice-history-view">
+                <div class="practice-panel">
+                    <div class="practice-panel-title">
+                        <h3>Measured Progress</h3>
+                        <span class="practice-panel-subtitle">Recent attempts, improvement trend, and weak topics.</span>
+                    </div>
+                    <div class="practice-history-grid" id="practice-history-container">
+                        <!-- Practice history will be loaded dynamically -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -127,16 +399,19 @@
     <div class="footer-container"></div>
 
     <!-- Core Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script><script src="js/component-loader.js"></script>
-    <script src="js/script.js"></script>
-    <script src="js/sidebar-loader.js"></script>
-    <script src="js/practice.js"></script>
-    <script src="../js/user.js"></script>
-    <script src="../js/page-tracker.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script><script src="js/component-loader.js?v=20260312-2"></script>
+    <script src="js/script.js?v=20260312-1"></script>
+    <script src="js/sidebar-loader.js?v=20260312-1"></script>
+    <script src="js/learning-readiness.js?v=20260312-2"></script>
+    <script src="js/practice.js?v=20260312-5"></script>
+    <script src="js/user.js?v=20260312-1"></script>
+    <script src="js/page-tracker.js?v=20260312-1"></script>
 
 </body>
 
 </html>
+
+
 
 
 

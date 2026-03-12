@@ -245,12 +245,17 @@ function createLegacyContentRoutes({
         }
     });
 
-    router.use(express.static(path.join(backendDir, "public")));
+    router.use(express.static(path.join(backendDir, "..", "public")));
+    router.use("/logos", express.static(path.join(backendDir, "..", "public", "logos")));
     router.use("/data", express.static(path.join(backendDir, "../data")));
     router.use("/img", express.static(path.join(backendDir, "../BC-Learning-Main/img")));
     router.use("/elearning-assets", express.static(path.join(backendDir, "../BC-Learning-Main/elearning-assets")));
     router.use("/plugin-packages", express.static(pluginPackagesDir));
     router.use("/files", express.static(baseDir));
+
+    router.get("/favicon.ico", (req, res) => {
+        res.sendFile(path.join(backendDir, "..", "public", "logos", "icon_bcl.ico"));
+    });
 
     router.get("/files/:filePath", (req, res) => {
         const filePath = path.join(baseDir, req.params.filePath);

@@ -3,7 +3,7 @@
         "id":  "BDW-001",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Delivery Workflow menjelaskanâ€¦",
+        "prompt":  "BIM Delivery Workflow menjelaskan...",
         "choices":  [
                         "Urutan software",
                         "Alur informasi dari kebutuhan hingga dipakai",
@@ -17,7 +17,7 @@
         "id":  "BDW-002",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Tahap pertama workflow adalahâ€¦",
+        "prompt":  "Tahap pertama workflow adalah...",
         "choices":  [
                         "Modeling",
                         "Menentukan kebutuhan informasi",
@@ -31,7 +31,7 @@
         "id":  "BDW-003",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Koordinasi dilakukan setelahâ€¦",
+        "prompt":  "Koordinasi dilakukan setelah...",
         "choices":  [
                         "Model acak",
                         "Informasi diproduksi sesuai kebutuhan",
@@ -45,7 +45,7 @@
         "id":  "BDW-004",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Validasi berartiâ€¦",
+        "prompt":  "Validasi berarti...",
         "choices":  [
                         "Cek visual",
                         "Cek kelayakan untuk tujuan tertentu",
@@ -59,7 +59,7 @@
         "id":  "BDW-005",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Rilis dilakukan ketikaâ€¦",
+        "prompt":  "Rilis dilakukan ketika...",
         "choices":  [
                         "Model selesai",
                         "Informasi sudah disahkan",
@@ -73,7 +73,7 @@
         "id":  "BDW-006",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Jika workflow dilompati, risiko utamanya adalahâ€¦",
+        "prompt":  "Jika workflow dilompati, risiko utamanya adalah...",
         "choices":  [
                         "Proyek cepat",
                         "Keputusan salah karena alur tidak utuh",
@@ -87,7 +87,7 @@
         "id":  "BDW-007",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Workflow mencakup tahapâ€¦",
+        "prompt":  "BIM Workflow mencakup tahap...",
         "choices":  [
                         "Hanya modeling",
                         "Requirements, Production, Coordination, Validation, Release",
@@ -101,7 +101,7 @@
         "id":  "BDW-008",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information requirements ditentukan olehâ€¦",
+        "prompt":  "Information requirements ditentukan oleh...",
         "choices":  [
                         "BIM Manager saja",
                         "Stakeholders dan tujuan proyek",
@@ -115,7 +115,7 @@
         "id":  "BDW-009",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Production phase melibatkanâ€¦",
+        "prompt":  "Production phase melibatkan...",
         "choices":  [
                         "Membuat model tanpa rencana",
                         "Membuat model dan dokumen sesuai requirements",
@@ -129,7 +129,7 @@
         "id":  "BDW-010",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Coordination phase memastikanâ€¦",
+        "prompt":  "Coordination phase memastikan...",
         "choices":  [
                         "Tidak ada konflik antar disiplin",
                         "Model selesai cepat",
@@ -143,7 +143,7 @@
         "id":  "BDW-011",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Validation phase memeriksaâ€¦",
+        "prompt":  "Validation phase memeriksa...",
         "choices":  [
                         "Hanya visual",
                         "Kesesuaian dengan requirements",
@@ -157,7 +157,7 @@
         "id":  "BDW-012",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Release phase menandaiâ€¦",
+        "prompt":  "Release phase menandai...",
         "choices":  [
                         "Akhir proyek",
                         "Informasi siap digunakan",
@@ -171,7 +171,7 @@
         "id":  "BDW-013",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Workflow mencegahâ€¦",
+        "prompt":  "Workflow mencegah...",
         "choices":  [
                         "Komunikasi",
                         "Produksi informasi yang tidak diperlukan",
@@ -185,7 +185,7 @@
         "id":  "BDW-014",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Execution Plan (BEP) mendefinisikanâ€¦",
+        "prompt":  "BIM Execution Plan (BEP) mendefinisikan...",
         "choices":  [
                         "Jadwal konstruksi",
                         "Workflow dan deliverables",
@@ -199,7 +199,7 @@
         "id":  "BDW-015",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information Delivery Milestone (IDM)â€¦",
+        "prompt":  "Information Delivery Milestone (IDM)...",
         "choices":  [
                         "Titik kontrol dalam workflow",
                         "Jadwal pengiriman material",
@@ -213,7 +213,7 @@
         "id":  "BDW-016",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Model Progression Specification (MPS)â€¦",
+        "prompt":  "Model Progression Specification (MPS)...",
         "choices":  [
                         "Standar untuk model maturity",
                         "Spesifikasi hardware",
@@ -227,7 +227,7 @@
         "id":  "BDW-017",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Employer Information Requirements (EIR)â€¦",
+        "prompt":  "Employer Information Requirements (EIR)...",
         "choices":  [
                         "Kebutuhan informasi dari owner",
                         "Requirements dari kontraktor",
@@ -241,7 +241,7 @@
         "id":  "BDW-018",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Protocol menentukanâ€¦",
+        "prompt":  "BIM Protocol menentukan...",
         "choices":  [
                         "Software yang digunakan",
                         "Tanggung jawab dan proses",
@@ -255,7 +255,7 @@
         "id":  "BDW-019",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Task Information Delivery Plan (TIDP)â€¦",
+        "prompt":  "Task Information Delivery Plan (TIDP)...",
         "choices":  [
                         "Rencana pengiriman untuk tugas spesifik",
                         "Plan keseluruhan",
@@ -269,7 +269,7 @@
         "id":  "BDW-020",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Asset Information Model (AIM)â€¦",
+        "prompt":  "Asset Information Model (AIM)...",
         "choices":  [
                         "Model untuk konstruksi",
                         "Model untuk operasi dan maintenance",
@@ -283,7 +283,7 @@
         "id":  "BDW-021",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Project Information Model (PIM)â€¦",
+        "prompt":  "Project Information Model (PIM)...",
         "choices":  [
                         "Model untuk operasi",
                         "Model untuk konstruksi",
@@ -297,7 +297,7 @@
         "id":  "BDW-022",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Master Information Delivery Plan (MIDP)â€¦",
+        "prompt":  "Master Information Delivery Plan (MIDP)...",
         "choices":  [
                         "Rencana tugas kecil",
                         "Rencana keseluruhan pengiriman",
@@ -311,7 +311,7 @@
         "id":  "BDW-023",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Coordination Register mencatatâ€¦",
+        "prompt":  "Coordination Register mencatat...",
         "choices":  [
                         "Semua file",
                         "Isu koordinasi dan resolusi",
@@ -325,7 +325,7 @@
         "id":  "BDW-024",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Clash detection dilakukan padaâ€¦",
+        "prompt":  "Clash detection dilakukan pada...",
         "choices":  [
                         "Tahap requirements",
                         "Tahap koordinasi",
@@ -339,7 +339,7 @@
         "id":  "BDW-025",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Quality assurance dalam workflowâ€¦",
+        "prompt":  "Quality assurance dalam workflow...",
         "choices":  [
                         "Membuat model cepat",
                         "Memastikan standar terpenuhi",
@@ -353,7 +353,7 @@
         "id":  "BDW-026",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information exchange dilakukan melaluiâ€¦",
+        "prompt":  "Information exchange dilakukan melalui...",
         "choices":  [
                         "Email saja",
                         "Format dan platform yang disepakati",
@@ -367,7 +367,7 @@
         "id":  "BDW-027",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM deliverables termasukâ€¦",
+        "prompt":  "BIM deliverables termasuk...",
         "choices":  [
                         "Hanya model 3D",
                         "Model, dokumen, data",
@@ -381,7 +381,7 @@
         "id":  "BDW-028",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Workflow iteration memungkinkanâ€¦",
+        "prompt":  "Workflow iteration memungkinkan...",
         "choices":  [
                         "Pengulangan tanpa tujuan",
                         "Perbaikan berdasarkan feedback",
@@ -395,7 +395,7 @@
         "id":  "BDW-029",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Gate reviews memastikanâ€¦",
+        "prompt":  "Gate reviews memastikan...",
         "choices":  [
                         "Kesiapan untuk tahap berikutnya",
                         "Proyek selesai",
@@ -409,7 +409,7 @@
         "id":  "BDW-030",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM maturity level mempengaruhiâ€¦",
+        "prompt":  "BIM maturity level mempengaruhi...",
         "choices":  [
                         "Kompleksitas workflow",
                         "Warna model",
@@ -423,7 +423,7 @@
         "id":  "BDW-031",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Collaboration dalam workflow melibatkanâ€¦",
+        "prompt":  "Collaboration dalam workflow melibatkan...",
         "choices":  [
                         "Hanya satu disiplin",
                         "Semua disiplin dan stakeholder",
@@ -437,7 +437,7 @@
         "id":  "BDW-032",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information management systemâ€¦",
+        "prompt":  "Information management system...",
         "choices":  [
                         "Platform untuk mengelola informasi",
                         "Sistem operasi komputer",
@@ -451,7 +451,7 @@
         "id":  "BDW-033",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Version control dalam BIMâ€¦",
+        "prompt":  "Version control dalam BIM...",
         "choices":  [
                         "Mengubah versi software",
                         "Melacak perubahan model",
@@ -465,7 +465,7 @@
         "id":  "BDW-034",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Approval process dalam workflowâ€¦",
+        "prompt":  "Approval process dalam workflow...",
         "choices":  [
                         "Menyetujui deliverables",
                         "Menyetujui liburan",
@@ -479,7 +479,7 @@
         "id":  "BDW-035",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Handover information untukâ€¦",
+        "prompt":  "Handover information untuk...",
         "choices":  [
                         "Konstruksi",
                         "Operasi dan maintenance",
@@ -493,7 +493,7 @@
         "id":  "BDW-036",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "As-built information mencatatâ€¦",
+        "prompt":  "As-built information mencatat...",
         "choices":  [
                         "Desain awal",
                         "Kondisi akhir konstruksi",
@@ -507,7 +507,7 @@
         "id":  "BDW-037",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Workflow documentationâ€¦",
+        "prompt":  "Workflow documentation...",
         "choices":  [
                         "Mencatat proses dan keputusan",
                         "Mencatat cuaca",
@@ -521,7 +521,7 @@
         "id":  "BDW-038",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Risk management dalam workflowâ€¦",
+        "prompt":  "Risk management dalam workflow...",
         "choices":  [
                         "Mengidentifikasi risiko pengiriman",
                         "Mengidentifikasi risiko cuaca",
@@ -535,7 +535,7 @@
         "id":  "BDW-039",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Performance measurementâ€¦",
+        "prompt":  "Performance measurement...",
         "choices":  [
                         "Mengukur efektivitas workflow",
                         "Mengukur tinggi bangunan",
@@ -549,7 +549,7 @@
         "id":  "BDW-040",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Continuous improvementâ€¦",
+        "prompt":  "Continuous improvement...",
         "choices":  [
                         "Meningkatkan workflow berdasarkan pelajaran",
                         "Meningkatkan gaji",

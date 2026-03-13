@@ -3,7 +3,7 @@
         "id":  "BG-001",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Tujuan utama BIM Governance adalahâ€¦",
+        "prompt":  "Tujuan utama BIM Governance adalah...",
         "choices":  [
                         "Mengatur software",
                         "Menjamin keputusan berbasis informasi sah dan terlacak",
@@ -17,7 +17,7 @@
         "id":  "BG-002",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Perbedaan responsibility dan authority adalahâ€¦",
+        "prompt":  "Perbedaan responsibility dan authority adalah...",
         "choices":  [
                         "Tidak ada",
                         "Responsibility mengerjakan, authority mengesahkan",
@@ -31,7 +31,7 @@
         "id":  "BG-003",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Decision gate berfungsi untukâ€¦",
+        "prompt":  "Decision gate berfungsi untuk...",
         "choices":  [
                         "Memperlambat proyek",
                         "Menentukan kapan informasi boleh dipakai",
@@ -45,7 +45,7 @@
         "id":  "BG-004",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Quality gate memastikanâ€¦",
+        "prompt":  "Quality gate memastikan...",
         "choices":  [
                         "Visual bagus",
                         "Informasi layak pakai sesuai tujuan",
@@ -59,7 +59,7 @@
         "id":  "BG-005",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Risiko terbesar tanpa governance adalahâ€¦",
+        "prompt":  "Risiko terbesar tanpa governance adalah...",
         "choices":  [
                         "File berantakan",
                         "Keputusan salah tanpa jejak",
@@ -73,7 +73,7 @@
         "id":  "BG-006",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Dalam proyek kompleks, fungsi BIM Governance adalahâ€¦",
+        "prompt":  "Dalam proyek kompleks, fungsi BIM Governance adalah...",
         "choices":  [
                         "Menambah detail",
                         "Menjamin kejelasan otoritas, status, dan jejak keputusan",
@@ -87,7 +87,7 @@
         "id":  "BG-007",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Governance mencakupâ€¦",
+        "prompt":  "BIM Governance mencakup...",
         "choices":  [
                         "Hanya software",
                         "Manajemen informasi, pengambilan keputusan, kontrol risiko",
@@ -101,7 +101,7 @@
         "id":  "BG-008",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Authority dalam BIM berartiâ€¦",
+        "prompt":  "Authority dalam BIM berarti...",
         "choices":  [
                         "Tugas harian",
                         "Kekuasaan untuk menyetujui atau mengotorisasi tindakan",
@@ -115,7 +115,7 @@
         "id":  "BG-009",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Responsibility dalam BIM berartiâ€¦",
+        "prompt":  "Responsibility dalam BIM berarti...",
         "choices":  [
                         "Menyetujui segalanya",
                         "Tugas untuk melakukan pekerjaan",
@@ -129,7 +129,7 @@
         "id":  "BG-010",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Tanpa decision gate, proyek rentanâ€¦",
+        "prompt":  "Tanpa decision gate, proyek rentan...",
         "choices":  [
                         "File besar",
                         "Keputusan prematur",
@@ -143,7 +143,7 @@
         "id":  "BG-011",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Quality gate berbeda dari visual check karenaâ€¦",
+        "prompt":  "Quality gate berbeda dari visual check karena...",
         "choices":  [
                         "Lebih cepat",
                         "Memeriksa kesesuaian untuk tujuan spesifik",
@@ -157,7 +157,7 @@
         "id":  "BG-012",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Governance framework membantuâ€¦",
+        "prompt":  "Governance framework membantu...",
         "choices":  [
                         "Mengganti software",
                         "Standardisasi proses",
@@ -171,7 +171,7 @@
         "id":  "BG-013",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Manager biasanya memilikiâ€¦",
+        "prompt":  "BIM Manager biasanya memiliki...",
         "choices":  [
                         "Otoritas penuh atas proyek",
                         "Otoritas atas proses BIM",
@@ -185,7 +185,7 @@
         "id":  "BG-014",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information producer bertanggung jawab atasâ€¦",
+        "prompt":  "Information producer bertanggung jawab atas...",
         "choices":  [
                         "Menyetujui model",
                         "Membuat informasi akurat",
@@ -199,7 +199,7 @@
         "id":  "BG-015",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information consumer menggunakan informasi untukâ€¦",
+        "prompt":  "Information consumer menggunakan informasi untuk...",
         "choices":  [
                         "Membuat model",
                         "Membuat keputusan",
@@ -213,7 +213,7 @@
         "id":  "BG-016",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Execution Plan (BEP) adalahâ€¦",
+        "prompt":  "BIM Execution Plan (BEP) adalah...",
         "choices":  [
                         "Jadwal konstruksi",
                         "Dokumen yang menguraikan proses BIM",
@@ -227,7 +227,7 @@
         "id":  "BG-017",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "C-Level approval diperlukan untukâ€¦",
+        "prompt":  "C-Level approval diperlukan untuk...",
         "choices":  [
                         "Perubahan kecil",
                         "Keputusan besar",
@@ -241,7 +241,7 @@
         "id":  "BG-018",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Risk register dalam BIM mencatatâ€¦",
+        "prompt":  "Risk register dalam BIM mencatat...",
         "choices":  [
                         "Semua file",
                         "Risiko potensial dan mitigasi",
@@ -255,7 +255,7 @@
         "id":  "BG-019",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Audit trail memungkinkanâ€¦",
+        "prompt":  "Audit trail memungkinkan...",
         "choices":  [
                         "Membuat model baru",
                         "Pelacakan perubahan dan keputusan",
@@ -269,7 +269,7 @@
         "id":  "BG-020",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Governance maturity levelâ€¦",
+        "prompt":  "BIM Governance maturity level...",
         "choices":  [
                         "Diukur oleh ukuran model",
                         "Diukur oleh adopsi proses",
@@ -283,7 +283,7 @@
         "id":  "BG-021",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Dalam BIM, \u0027fit-for-purpose\u0027 berartiâ€¦",
+        "prompt":  "Dalam BIM, \u0027fit-for-purpose\u0027 berarti...",
         "choices":  [
                         "Model cantik",
                         "Informasi sesuai dengan kebutuhan spesifik",
@@ -297,7 +297,7 @@
         "id":  "BG-022",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Governance mencegahâ€¦",
+        "prompt":  "Governance mencegah...",
         "choices":  [
                         "Komunikasi",
                         "Konflik kepentingan dan kesalahan",
@@ -311,7 +311,7 @@
         "id":  "BG-023",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Protocol adalahâ€¦",
+        "prompt":  "BIM Protocol adalah...",
         "choices":  [
                         "Software baru",
                         "Perjanjian tentang penggunaan informasi BIM",
@@ -325,7 +325,7 @@
         "id":  "BG-024",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information status dalam BIM menunjukkanâ€¦",
+        "prompt":  "Information status dalam BIM menunjukkan...",
         "choices":  [
                         "Siapa yang membuat",
                         "Kesiapan informasi untuk digunakan",
@@ -339,7 +339,7 @@
         "id":  "BG-025",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Governance committee terdiri dariâ€¦",
+        "prompt":  "BIM Governance committee terdiri dari...",
         "choices":  [
                         "Hanya BIM Manager",
                         "Stakeholder kunci",
@@ -353,7 +353,7 @@
         "id":  "BG-026",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Change management dalam BIM melibatkanâ€¦",
+        "prompt":  "Change management dalam BIM melibatkan...",
         "choices":  [
                         "Mengubah software",
                         "Proses untuk mengubah informasi",
@@ -367,7 +367,7 @@
         "id":  "BG-027",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Standards membantuâ€¦",
+        "prompt":  "BIM Standards membantu...",
         "choices":  [
                         "Memperlambat proyek",
                         "Memastikan konsistensi",
@@ -381,7 +381,7 @@
         "id":  "BG-028",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information ownership dalam BIMâ€¦",
+        "prompt":  "Information ownership dalam BIM...",
         "choices":  [
                         "Selalu BIM Manager",
                         "Menentukan siapa yang bertanggung jawab",
@@ -395,7 +395,7 @@
         "id":  "BG-029",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Governance policy mencakupâ€¦",
+        "prompt":  "BIM Governance policy mencakup...",
         "choices":  [
                         "Hanya software",
                         "Prosedur dan pedoman",
@@ -409,7 +409,7 @@
         "id":  "BG-030",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Risk assessment dalam BIMâ€¦",
+        "prompt":  "Risk assessment dalam BIM...",
         "choices":  [
                         "Meningkatkan risiko",
                         "Mengidentifikasi dan menilai risiko",
@@ -423,7 +423,7 @@
         "id":  "BG-031",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Manager role meliputiâ€¦",
+        "prompt":  "BIM Manager role meliputi...",
         "choices":  [
                         "Membuat semua model",
                         "Koordinasi dan pengawasan",
@@ -437,7 +437,7 @@
         "id":  "BG-032",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information validation adalahâ€¦",
+        "prompt":  "Information validation adalah...",
         "choices":  [
                         "Membuat informasi baru",
                         "Proses memverifikasi akurasi",
@@ -451,7 +451,7 @@
         "id":  "BG-033",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Governance auditâ€¦",
+        "prompt":  "BIM Governance audit...",
         "choices":  [
                         "Membuat audit keuangan",
                         "Memeriksa kepatuhan",
@@ -465,7 +465,7 @@
         "id":  "BG-034",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Decision authority matrixâ€¦",
+        "prompt":  "Decision authority matrix...",
         "choices":  [
                         "Matriks koordinasi",
                         "Menentukan siapa yang bisa memutuskan apa",
@@ -479,7 +479,7 @@
         "id":  "BG-035",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Information Delivery Plan (IDP)â€¦",
+        "prompt":  "BIM Information Delivery Plan (IDP)...",
         "choices":  [
                         "Jadwal pengiriman material",
                         "Rencana pengiriman informasi",
@@ -493,7 +493,7 @@
         "id":  "BG-036",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Quality assurance dalam BIMâ€¦",
+        "prompt":  "Quality assurance dalam BIM...",
         "choices":  [
                         "Membuat model cepat",
                         "Proses untuk memastikan kualitas",
@@ -507,7 +507,7 @@
         "id":  "BG-037",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Governance trainingâ€¦",
+        "prompt":  "BIM Governance training...",
         "choices":  [
                         "Mengajari software saja",
                         "Meningkatkan pemahaman",
@@ -521,7 +521,7 @@
         "id":  "BG-038",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Information security dalam BIMâ€¦",
+        "prompt":  "Information security dalam BIM...",
         "choices":  [
                         "Membuat informasi publik",
                         "Melindungi data sensitif",
@@ -535,7 +535,7 @@
         "id":  "BG-039",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "BIM Governance metricsâ€¦",
+        "prompt":  "BIM Governance metrics...",
         "choices":  [
                         "Mengukur ukuran file",
                         "Mengukur efektivitas",
@@ -549,7 +549,7 @@
         "id":  "BG-040",
         "level":  "mixed",
         "type":  "single",
-        "prompt":  "Continuous improvement dalam BIM Governanceâ€¦",
+        "prompt":  "Continuous improvement dalam BIM Governance...",
         "choices":  [
                         "Berhenti setelah implementasi",
                         "Meningkatkan proses secara berkala",

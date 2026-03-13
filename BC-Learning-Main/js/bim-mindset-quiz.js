@@ -51,7 +51,7 @@ class BIMMindsetQuiz {
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            this.questions = await response.json();
+            this.questions = this.normalizeQuestionBank(await response.json());
 
             if (!Array.isArray(this.questions) || this.questions.length === 0) {
                 throw new Error('Invalid question bank format');
@@ -68,6 +68,36 @@ class BIMMindsetQuiz {
         this.elements.prevBtn.addEventListener('click', () => this.previousQuestion());
         this.elements.nextBtn.addEventListener('click', () => this.nextQuestion());
         this.elements.retryBtn.addEventListener('click', () => this.restartQuiz());
+    }
+
+    normalizeQuestionBank(questions) {
+        if (!Array.isArray(questions)) {
+            return questions;
+        }
+
+        return questions.map((question) => ({
+            ...question,
+            prompt: this.normalizeText(question.prompt),
+            explanation: this.normalizeText(question.explanation),
+            choices: Array.isArray(question.choices)
+                ? question.choices.map((choice) => this.normalizeText(choice))
+                : question.choices
+        }));
+    }
+
+    normalizeText(value) {
+        if (typeof value !== 'string' || value.indexOf('\u00E2') === -1) {
+            return value;
+        }
+
+        return value
+            .replace(/\u00E2\u20AC\u02DC|\u00E2\u20AC\u2122/g, "'")
+            .replace(/\u00E2\u20AC\u0153|\u00E2\u20AC\u009D/g, '"')
+            .replace(/\u00E2\u20AC\u00A6/g, '...')
+            .replace(/\u00E2\u2030\u00A0/g, '!=')
+            .replace(/\u00E2\u20AC\u00A2/g, '-')
+            .replace(/\u00E2\u2020\u2019/g, '->')
+            .replace(/\u00C3\u00A2\u00E2\u201A\u00AC\u00E2\u20AC\u00A0\u00E2\u20AC\u2122/g, '->');
     }
 
     checkPreviousAttempt() {
@@ -94,7 +124,7 @@ class BIMMindsetQuiz {
         prevAttemptDiv.innerHTML = `
             <small>
                 <i class="fas fa-history me-1"></i>
-                ${scoreText} • ${timeAgo}
+                ${scoreText} - ${timeAgo}
             </small>
         `;
         this.elements.quizIntro.appendChild(prevAttemptDiv);

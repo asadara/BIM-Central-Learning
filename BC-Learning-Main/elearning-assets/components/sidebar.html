@@ -107,7 +107,7 @@
         <h4 class="nav-section-title">Content Management</h4>
         <nav class="navbar">
             <a href="javascript:void(0)"
-                onclick="console.log('Learning Materials clicked'); window.openContentManager ? window.openContentManager() : alert('Function not found')">
+                onclick="window.openContentManager ? window.openContentManager() : alert('Function not found')">
                 <span class="nav-link-icon"><i class="fas fa-folder-open"></i></span>
                 <span class="nav-link-meta">
                     <span class="nav-link-label">Learning Materials</span>
@@ -115,7 +115,7 @@
                 </span>
             </a>
             <a href="javascript:void(0)"
-                onclick="console.log('Exam Materials clicked'); window.openExamManager ? window.openExamManager() : alert('Function not found')">
+                onclick="window.openExamManager ? window.openExamManager() : alert('Function not found')">
                 <span class="nav-link-icon"><i class="fas fa-file-signature"></i></span>
                 <span class="nav-link-meta">
                     <span class="nav-link-label">Exam Materials</span>
@@ -130,9 +130,6 @@
 </div>
 
 <script>
-    // Define functions immediately when sidebar loads
-    console.log('Sidebar component loaded - defining content management functions');
-
     // Fallback handler untuk tombol main page jika component-loader tidak tersedia
     function handleMainPageClick(event) {
         event.preventDefault();
@@ -155,19 +152,16 @@
             targetPath = '/index.html';
         }
 
-        console.log('Main page fallback navigation from:', currentPath, 'to:', targetPath);
         window.location.href = targetPath;
     }
 
     // Test function to verify sidebar functions are working
     window.testSidebarFunction = function () {
-        console.log('Sidebar function called successfully!');
         alert('Sidebar function works!');
     };
 
     // Define content management functions in sidebar for immediate availability
     window.openContentManager = function () {
-        console.log('openContentManager called from sidebar');
         alert('Content Manager opened from sidebar!');
 
         // Create modal if it doesn't exist
@@ -195,12 +189,10 @@
                 </div>
             `;
             document.body.insertAdjacentHTML('beforeend', modalHTML);
-            console.log('Modal created from sidebar');
         }
 
         // Load Bootstrap if not loaded
         if (typeof bootstrap === 'undefined') {
-            console.log('Loading Bootstrap from sidebar...');
             const bootstrapCSS = document.createElement('link');
             bootstrapCSS.rel = 'stylesheet';
             bootstrapCSS.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
@@ -215,7 +207,6 @@
             if (typeof bootstrap !== 'undefined') {
                 const modal = new bootstrap.Modal(document.getElementById('admin-modal'));
                 modal.show();
-                console.log('Modal shown from sidebar');
             } else {
                 alert('Bootstrap not loaded yet, please try again');
             }
@@ -223,7 +214,6 @@
     };
 
     window.openExamManager = function () {
-        console.log('openExamManager called from sidebar');
         alert('Exam Manager opened from sidebar!');
 
         // Create modal if it doesn't exist
@@ -251,12 +241,10 @@
                 </div>
             `;
             document.body.insertAdjacentHTML('beforeend', modalHTML);
-            console.log('Exam modal created from sidebar');
         }
 
         // Load Bootstrap if not loaded
         if (typeof bootstrap === 'undefined') {
-            console.log('Loading Bootstrap for exam from sidebar...');
             const bootstrapCSS = document.createElement('link');
             bootstrapCSS.rel = 'stylesheet';
             bootstrapCSS.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
@@ -271,16 +259,11 @@
             if (typeof bootstrap !== 'undefined') {
                 const modal = new bootstrap.Modal(document.getElementById('admin-modal'));
                 modal.show();
-                console.log('Exam modal shown from sidebar');
             } else {
                 alert('Bootstrap not loaded yet, please try again');
             }
         }, 500);
     };
-
-    console.log('Sidebar content management functions defined');
-    console.log('openContentManager available:', typeof window.openContentManager);
-    console.log('openExamManager available:', typeof window.openExamManager);
 </script>
 </div>
 

@@ -17,7 +17,6 @@
         // Jangan simpan jika ini adalah halaman login/register
         if (!excludedPages.includes(currentPath)) {
             localStorage.setItem('lastPage', currentPath);
-            console.log('📍 Last page saved:', currentPath);
         }
     }
 

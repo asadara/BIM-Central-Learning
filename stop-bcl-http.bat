@@ -121,67 +121,14 @@ if defined NATIVE_PG_SERVICE (
     exit /b 0
 )
 
-call :log "[STEP] Stopping PostgreSQL containers..."
-call :detect_docker_compose
-call :docker_ping
-if errorlevel 1 (
-    call :log "[WARNING] Docker Engine not reachable during stop; skipping container shutdown"
-    set /a STOP_ERRORS+=1
-    exit /b 0
-)
-
-if exist "docker-compose.postgres.yml" (
-    %DOCKER_COMPOSE_CMD% -f docker-compose.postgres.yml down >> "%LOGFILE%" 2>&1
-    if errorlevel 1 (
-        call :log "[WARNING] docker compose down failed; attempting direct container stop"
-        docker stop bcl-pgadmin bcl-postgres >> "%LOGFILE%" 2>&1
-        docker rm bcl-pgadmin bcl-postgres >> "%LOGFILE%" 2>&1
-        if errorlevel 1 set /a STOP_ERRORS+=1
-    ) else (
-        call :log "[OK] PostgreSQL stack stopped via docker compose"
-    )
-) else (
-    docker stop bcl-pgadmin bcl-postgres >> "%LOGFILE%" 2>&1
-    docker rm bcl-pgadmin bcl-postgres >> "%LOGFILE%" 2>&1
-    call :log "[INFO] Compose file not found; attempted direct container stop"
-)
-exit /b 0
-
-:detect_docker_compose
-set "DOCKER_COMPOSE_CMD=docker-compose"
-docker compose version >nul 2>&1
-if not errorlevel 1 (
-    set "DOCKER_COMPOSE_CMD=docker compose"
-) else (
-    docker-compose version >nul 2>&1
-    if errorlevel 1 (
-        set "DOCKER_COMPOSE_CMD=docker compose"
-    )
-)
+call :log "[WARNING] Native PostgreSQL service not found; no database stop action was performed"
+set /a STOP_ERRORS+=1
 exit /b 0
 
 :detect_native_postgres_service
 set "NATIVE_PG_SERVICE="
 for /f "usebackq delims=" %%i in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$svc = Get-Service | Where-Object { $_.Name -like 'postgresql*' -or $_.DisplayName -like 'PostgreSQL*' } | Sort-Object Name | Select-Object -First 1 -ExpandProperty Name; if ($svc) { Write-Output $svc }"`) do set "NATIVE_PG_SERVICE=%%i"
 exit /b 0
-
-:docker_ping
-set "ORIG_DOCKER_HOST=%DOCKER_HOST%"
-set "DOCKER_OK=0"
-
-docker info >nul 2>nul && set "DOCKER_OK=1"
-if "!DOCKER_OK!"=="1" exit /b 0
-
-set "DOCKER_HOST=npipe:////./pipe/dockerDesktopLinuxEngine"
-docker info >nul 2>nul && set "DOCKER_OK=1"
-if "!DOCKER_OK!"=="1" exit /b 0
-
-set "DOCKER_HOST=npipe:////./pipe/docker_engine"
-docker info >nul 2>nul && set "DOCKER_OK=1"
-if "!DOCKER_OK!"=="1" exit /b 0
-
-set "DOCKER_HOST=%ORIG_DOCKER_HOST%"
-exit /b 1
 
 :sleep
 set "SLEEP_SECS=%~1"

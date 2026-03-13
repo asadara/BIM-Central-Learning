@@ -129,6 +129,20 @@ function ensureDefaultUIState() {
     document.getElementById('admin-interface').classList.add('d-none');
 }
 
+function syncAdminPanelAuthState() {
+    if (!window.adminPanel) {
+        return;
+    }
+
+    window.adminPanel.isAdminLoggedIn = isAdminLoggedIn;
+    window.adminPanel.adminUser = adminUser;
+
+    const videosModule = window.adminPanel.modules?.get('videos')?.instance;
+    if (isAdminLoggedIn && videosModule && typeof videosModule.loadPersistentData === 'function') {
+        videosModule.loadPersistentData();
+    }
+}
+
 // Admin login form handler
 document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -155,6 +169,7 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
             console.log('âœ… Admin login successful:', data);
             adminUser = data.user;
             isAdminLoggedIn = true;
+            syncAdminPanelAuthState();
 
             document.getElementById('auth-section').classList.add('d-none');
             document.getElementById('admin-interface').classList.remove('d-none');
@@ -191,6 +206,7 @@ async function checkAdminSession() {
                 console.log('âœ… Admin session valid for:', data.user.username);
                 adminUser = data.user;
                 isAdminLoggedIn = true;
+                syncAdminPanelAuthState();
                 document.getElementById('auth-section').classList.add('d-none');
                 document.getElementById('admin-interface').classList.remove('d-none');
                 if (typeof updateUserUI === 'function') {
@@ -218,6 +234,9 @@ async function checkAdminSession() {
     }
     // If we reach here, authentication failed - ensure auth section is visible
     console.log('ðŸ”’ No valid admin session - showing auth section');
+    adminUser = null;
+    isAdminLoggedIn = false;
+    syncAdminPanelAuthState();
     ensureDefaultUIState();
     return false;
 }
@@ -229,6 +248,7 @@ function adminLogout() {
             .then(() => {
                 adminUser = null;
                 isAdminLoggedIn = false;
+                syncAdminPanelAuthState();
                 document.getElementById('auth-section').classList.remove('d-none');
                 document.getElementById('admin-interface').classList.add('d-none');
                 document.getElementById('admin-login-form').reset();
@@ -1740,9 +1760,33 @@ function loadSystem() {
 
 // Global utility functions
 function constructTaggedMediaUrl(filename, type, fullPath) {
-    // Basic implementation - can be enhanced later
-    if (!fullPath) return `/media/${encodeURIComponent(filename)}`;
-    return `/media/${encodeURIComponent(fullPath)}`;
+    const sourcePath = String(fullPath || filename || '').trim();
+    if (!sourcePath) {
+        return '';
+    }
+
+    let normalizedPath = sourcePath.replace(/\//g, '\\');
+    if (/^PC-BIM02[\\/]/i.test(normalizedPath)) {
+        normalizedPath = `\\\\pc-bim02\\PROJECT BIM 2025\\${normalizedPath.replace(/^PC-BIM02[\\/]+/i, '')}`;
+    }
+
+    if (/^\\\\pc-bim02\\/i.test(normalizedPath)) {
+        const publicRelativePath = normalizedPath
+            .replace(/^\\\\pc-bim02\\+/i, '')
+            .replace(/\\/g, '/')
+            .split('/')
+            .filter(Boolean)
+            .map((segment) => encodeURIComponent(segment))
+            .join('/');
+
+        return `/data/bim-media-public/pc-bim02/${publicRelativePath}`;
+    }
+
+    if (/^G:[\\/]/i.test(normalizedPath)) {
+        return `/api/admin/preview-media?path=${encodeURIComponent(normalizedPath.replace(/\\/g, '/'))}`;
+    }
+
+    return '';
 }
 
 // PDF Management Functions

@@ -34,7 +34,7 @@ function createProjectCatalogRoutes({
         }
 
         try {
-            const result = await projectCatalogService.getProjectsFromMultipleSources(year);
+            const result = await projectCatalogService.getProjectsFromMultipleSources(year, sourceId || null);
             let projects = Array.isArray(result.projects) ? result.projects : [];
             let hiddenProjects = Array.isArray(result.hiddenProjects) ? result.hiddenProjects : [];
             if (sourceId) {

@@ -28,7 +28,6 @@ class ContentManagementModule {
      * Initialize the content management module
      */
     initialize() {
-        console.log('ðŸ“„ðŸ–¼ï¸ Initializing Content Management Module');
         this.setupEventListeners();
         this.loadPersistentData();
     }
@@ -74,7 +73,6 @@ class ContentManagementModule {
             const saved = localStorage.getItem('bcl_pdf_custom_categories');
             if (saved) {
                 this.pdfCustomCategories = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded PDF custom categories from localStorage:', this.pdfCustomCategories.length, 'categories');
                 this.applyPDFCustomCategoriesToDropdown();
             } else {
                 this.pdfCustomCategories = [];
@@ -91,7 +89,6 @@ class ContentManagementModule {
     savePDFCustomCategoriesToStorage() {
         try {
             localStorage.setItem('bcl_pdf_custom_categories', JSON.stringify(this.pdfCustomCategories));
-            console.log('ðŸ’¾ Saved PDF custom categories to localStorage:', this.pdfCustomCategories.length, 'categories');
         } catch (error) {
             console.error('âŒ Error saving PDF custom categories to localStorage:', error);
         }
@@ -117,7 +114,6 @@ class ContentManagementModule {
             });
         }
 
-        console.log('âœ… Applied', this.pdfCustomCategories.length, 'PDF custom categories to dropdown');
     }
 
     /**
@@ -200,7 +196,6 @@ class ContentManagementModule {
         input.value = '';
 
         alert('âœ… New PDF category "' + categoryName + '" added successfully and saved!');
-        console.log('New PDF category added and saved:', newCategory);
     }
 
     /**
@@ -223,7 +218,6 @@ class ContentManagementModule {
             if (saved) {
                 const savedIds = JSON.parse(saved);
                 this.selectedPDFManagementIds = new Set(savedIds);
-                console.log('ðŸ“‚ Loaded selected PDF IDs from localStorage:', savedIds.length, 'PDFs');
             } else {
                 this.selectedPDFManagementIds = new Set();
             }
@@ -240,7 +234,6 @@ class ContentManagementModule {
         try {
             const idsArray = Array.from(this.selectedPDFManagementIds);
             localStorage.setItem('bcl_pdf_display_selected', JSON.stringify(idsArray));
-            console.log('ðŸ’¾ Saved selected PDF IDs to localStorage:', idsArray.length, 'PDFs');
         } catch (error) {
             console.error('âŒ Error saving selected PDF IDs:', error);
         }
@@ -267,7 +260,6 @@ class ContentManagementModule {
      * Load PDF management
      */
     async loadPDFManagement() {
-        console.log('ðŸ”„ Loading PDF management...');
 
         const tableBody = document.getElementById('pdfManagementTableBody');
         tableBody.innerHTML = `
@@ -286,12 +278,10 @@ class ContentManagementModule {
             const response = await fetch('/api/admin/pdf-display/list', {
                 credentials: 'include'
             });
-            console.log('ðŸ“¡ PDF materials API response:', response.status);
 
             if (response.ok) {
                 const data = await response.json();
                 const pdfList = data.pdfs || data.data || [];
-                console.log('âœ… PDF materials loaded:', pdfList.length, 'PDFs');
 
                 this.allPDFManagementData = pdfList;
                 let selectedIds = [];
@@ -581,7 +571,6 @@ class ContentManagementModule {
             });
 
             const newCount = this.selectedPDFManagementIds.size;
-            console.log(`ðŸ”„ Updated PDF display selection: ${previousCount} â†’ ${newCount} PDFs selected`);
 
             this.saveSelectedPDFManagementIds();
             this.updateSelectedPDFManagementCount(newCount);
@@ -610,7 +599,6 @@ class ContentManagementModule {
 
         while (retryCount < maxRetries) {
             try {
-                console.log(`ðŸ’¾ Auto-saving PDF display selection to server (attempt ${retryCount + 1}/${maxRetries}):`, selectedPDFIdsArray.length, 'PDFs');
 
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -629,11 +617,9 @@ class ContentManagementModule {
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('âœ… Auto-saved PDF display selection to server successfully:', result);
                     return true;
                 } else {
                     const errorText = await response.text();
-                    console.warn(`âš ï¸ PDF auto-save failed (attempt ${retryCount + 1}):`, response.status, errorText);
 
                     if (response.status === 401) {
                         console.error('ðŸš« Session expired, redirecting to login');
@@ -645,13 +631,11 @@ class ContentManagementModule {
                     retryCount++;
                     if (retryCount < maxRetries) {
                         const delay = Math.pow(2, retryCount) * 1000;
-                        console.log(`â³ Retrying PDF auto-save in ${delay}ms...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                     }
                 }
             } catch (error) {
                 if (error.name === 'AbortError') {
-                    console.warn(`â° PDF auto-save timed out (attempt ${retryCount + 1})`);
                 } else {
                     console.error(`âŒ PDF auto-save network error (attempt ${retryCount + 1}):`, error.message);
                 }
@@ -659,7 +643,6 @@ class ContentManagementModule {
                 retryCount++;
                 if (retryCount < maxRetries) {
                     const delay = Math.pow(2, retryCount) * 1000;
-                    console.log(`â³ Retrying PDF auto-save in ${delay}ms...`);
                     await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
@@ -676,7 +659,6 @@ class ContentManagementModule {
     async savePDFDisplaySelection() {
         const selectedPDFIds = this.getOrderedSelectedPDFIds();
 
-        console.log('ðŸ’¾ Saving PDF display selection:', { selectedPDFIds });
 
         try {
             const button = event && event.target ? event.target : document.querySelector('button[onclick*="savePDFDisplaySelection"]');
@@ -693,7 +675,6 @@ class ContentManagementModule {
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('âœ… PDF display selection saved:', result);
                 alert('âœ… PDF display configuration saved successfully!');
 
                 await this.loadPDFManagement();
@@ -1396,7 +1377,6 @@ class ContentManagementModule {
             const saved = localStorage.getItem('bcl_bim_media_tags');
             if (saved) {
                 this.savedBIMTags = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded saved BIM tags from localStorage:', Object.keys(this.savedBIMTags || {}).length, 'files');
             } else {
                 this.savedBIMTags = {};
             }
@@ -1414,7 +1394,6 @@ class ContentManagementModule {
             const saved = localStorage.getItem('bcl_bim_custom_categories');
             if (saved) {
                 this.bimCustomCategories = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded BIM custom categories from localStorage');
             } else {
                 this.bimCustomCategories = {};
             }
@@ -1430,7 +1409,6 @@ class ContentManagementModule {
     saveBIMTagsToStorage() {
         try {
             localStorage.setItem('bcl_bim_media_tags', JSON.stringify(this.savedBIMTags));
-            console.log('ðŸ’¾ Saved BIM tags to localStorage:', Object.keys(this.savedBIMTags).length, 'files');
         } catch (error) {
             console.error('âŒ Error saving BIM tags to localStorage:', error);
         }
@@ -1440,7 +1418,6 @@ class ContentManagementModule {
      * Apply saved BIM tags to media files
      */
     applySavedBIMTagsToMedia(mediaFiles) {
-        console.log('ðŸ”„ Applying saved BIM tags to media files...');
         let taggedCount = 0;
 
         mediaFiles.forEach(file => {
@@ -1451,13 +1428,11 @@ class ContentManagementModule {
                 file.tagged = true;
                 file.localSave = true;
                 taggedCount++;
-                console.log('âœ… Applied BIM tags to file:', file.name);
             } else {
                 file.tagged = false;
             }
         });
 
-        console.log('ðŸ“Š Applied saved BIM tags to', taggedCount, 'files');
         return mediaFiles;
     }
 
@@ -1466,7 +1441,6 @@ class ContentManagementModule {
      */
     async loadBIMMedia() {
         try {
-            console.log('Starting BIM Media load...');
 
             let content = `
                 <div class="row mb-4">
@@ -1684,17 +1658,13 @@ class ContentManagementModule {
                 </div>`;
 
             document.getElementById('bim-media-content').innerHTML = content;
-            console.log('BIM media content set successfully');
 
             this.loadTaggedMediaOverview();
             this.setupTaggingForm();
 
-            console.log('BIM Media interface loaded successfully!');
 
         } catch (error) {
             console.error('Error loading BIM media:', error);
-            console.error('Error details:', error.message);
-            console.error('Stack trace:', error.stack);
             document.getElementById('bim-media-content').innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>Error loading BIM media management interface: ' + error.message + '</div>';
         }
     }
@@ -1728,9 +1698,7 @@ class ContentManagementModule {
                         const files = await filesResponse.json();
                         allFiles = allFiles.concat(files.map(file => ({ ...file, source: source.name })));
                     }
-                } catch (error) {
-                    console.warn(`Failed to scan source ${source.id}:`, error);
-                }
+                } catch (error) {}
             }
 
             this.allMediaFiles = allFiles;
@@ -1924,7 +1892,6 @@ class ContentManagementModule {
     }
 
     addBIMTagToInput(tag) {
-        console.log('BIM tag clicked:', tag);
     }
 
     async loadTaggedMediaOverview() {
@@ -2308,66 +2275,33 @@ class ContentManagementModule {
     }
 
     constructTaggedMediaUrl(filename, type, fullPath) {
-        if (!fullPath) return `/media/${encodeURIComponent(filename)}`;
-
-        let normalizedPath = fullPath;
-        try {
-            let decoded;
-            do {
-                decoded = decodeURIComponent(normalizedPath);
-                if (decoded === normalizedPath) break;
-                normalizedPath = decoded;
-            } while (true);
-        } catch (e) {
-            normalizedPath = fullPath;
+        const sourcePath = String(fullPath || filename || '').trim();
+        if (!sourcePath) {
+            return '';
         }
 
-        normalizedPath = normalizedPath.replace(/\\/g, '/');
-
-        let year = '2025';
-        const yearMatch = normalizedPath.match(/PROJECT\s+BIM\s+(\d{4})/i);
-        if (yearMatch) {
-            year = yearMatch[1];
+        let normalizedPath = sourcePath.replace(/\//g, '\\');
+        if (/^PC-BIM02[\\/]/i.test(normalizedPath)) {
+            normalizedPath = `\\\\pc-bim02\\PROJECT BIM 2025\\${normalizedPath.replace(/^PC-BIM02[\\/]+/i, '')}`;
         }
 
-        if (normalizedPath.startsWith('G:/')) {
-            const relativePath = normalizedPath.substring(3);
-            return `/media/${encodeURIComponent(relativePath)}`;
-        } else if (normalizedPath.startsWith('G:PROJECT BIM ')) {
-            const projectMatch = normalizedPath.match(/G:PROJECT\s+BIM\s+(\d{4})\s+(.+)/i);
-            if (projectMatch) {
-                const extractedYear = projectMatch[1];
-                const relativePath = projectMatch[2];
-                return `/media/PROJECT%20BIM%20${extractedYear}/${encodeURIComponent(relativePath)}`;
-            }
-            const relativePath = normalizedPath.substring(2);
-            return `/media/PROJECT%20BIM%20${year}/${encodeURIComponent(relativePath)}`;
-        } else if (normalizedPath.startsWith('\\\\pc-bim02\\')) {
-            const relativePath = normalizedPath.substring(11);
-            return `/media/PROJECT%20BIM%20${year}/${encodeURIComponent(relativePath.replace(/^\/+/, ''))}`;
-        } else if (normalizedPath.startsWith('X:/')) {
-            const relativePath = normalizedPath.substring(3);
-            return `/media/PROJECT%20BIM%20${year}/${encodeURIComponent(relativePath.replace(/^\/+/, ''))}`;
-        } else if (normalizedPath.includes('PC-BIM02')) {
-            const pcBim02Index = normalizedPath.indexOf('PC-BIM02');
-            if (pcBim02Index !== -1) {
-                const relativePath = normalizedPath.substring(pcBim02Index + 9);
-                return `/media/PROJECT%20BIM%20${year}/${encodeURIComponent(relativePath.replace(/^\/+/, ''))}`;
-            }
-        } else if (normalizedPath.includes('PROJECT BIM')) {
-            const projectMatch = normalizedPath.match(/PROJECT\s+BIM\s+(\d{4})(.*)/i);
-            if (projectMatch) {
-                const extractedYear = projectMatch[1];
-                const relativePath = projectMatch[2].replace(/^[\s\/]+/, '');
-                return `/media/PROJECT%20BIM%20${extractedYear}/${encodeURIComponent(relativePath)}`;
-            }
+        if (/^\\\\pc-bim02\\/i.test(normalizedPath)) {
+            const publicRelativePath = normalizedPath
+                .replace(/^\\\\pc-bim02\\+/i, '')
+                .replace(/\\/g, '/')
+                .split('/')
+                .filter(Boolean)
+                .map((segment) => encodeURIComponent(segment))
+                .join('/');
+
+            return `/data/bim-media-public/pc-bim02/${publicRelativePath}`;
         }
 
-        if (normalizedPath.startsWith('/media')) {
-            return normalizedPath;
+        if (/^G:[\\/]/i.test(normalizedPath)) {
+            return `/api/admin/preview-media?path=${encodeURIComponent(normalizedPath.replace(/\\/g, '/'))}`;
         }
 
-        return `/media/${encodeURIComponent(normalizedPath)}`;
+        return '';
     }
 
     formatFileSize(bytes) {
@@ -2399,7 +2333,6 @@ class ContentManagementModule {
 
 // Initialize and register the content management module immediately when script loads
 (function() {
-    console.log('ðŸ“„ðŸ–¼ï¸ Initializing Content Management Module...');
 
     // Ensure adminPanel exists
     if (!window.adminPanel) {
@@ -2427,7 +2360,6 @@ class ContentManagementModule {
         // Initialize the module
         contentManagementModule.initialize();
 
-        console.log('âœ… Content Management module initialized and registered successfully');
     } catch (error) {
         console.error('âŒ Failed to initialize content management module:', error);
     }

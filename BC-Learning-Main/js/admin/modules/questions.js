@@ -82,7 +82,7 @@ class QuestionsModule {
             </tr>`;
 
         try {
-            const response = await fetch('/api/admin/questions');
+            const response = await fetch('/api/questions');
             console.log('📡 Questions API response:', response.status, response.statusText);
 
             if (response.ok) {

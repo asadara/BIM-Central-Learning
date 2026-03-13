@@ -16,8 +16,6 @@ class AdminPanel {
     async initialize() {
         if (this.initialized) return;
 
-        console.log('ðŸš€ Initializing AdminPanel...');
-
         try {
             // Ensure default UI state
             this.ensureDefaultUIState();
@@ -25,8 +23,10 @@ class AdminPanel {
             // Load saved data
             this.loadPersistentData();
 
-            // Check admin session
-            await this.checkAdminSession();
+            // Check admin session unless page-specific auth flow handles it.
+            if (window.BCL_SKIP_ADMIN_PANEL_SESSION_CHECK !== true) {
+                await this.checkAdminSession();
+            }
 
             // Initialize modules
             await this.initializeModules();
@@ -38,7 +38,6 @@ class AdminPanel {
             this.handleInitialNavigation();
 
             this.initialized = true;
-            console.log('âœ… AdminPanel initialized successfully');
 
         } catch (error) {
             console.error('âŒ Failed to initialize AdminPanel:', error);
@@ -81,7 +80,6 @@ class AdminPanel {
             }
             return token;
         } catch (error) {
-            console.warn('Failed to read stored admin token:', error);
             return null;
         }
     }
@@ -110,7 +108,6 @@ class AdminPanel {
             const data = await response.json();
             return !!(data && data.authenticated);
         } catch (error) {
-            console.warn('Bridge admin session failed:', error);
             return false;
         }
     }
@@ -143,8 +140,6 @@ class AdminPanel {
      */
     async loadModule(name, path) {
         try {
-            console.log(`ðŸ“¦ Loading module: ${name}`);
-
             // Dynamic import would be ideal here, but for compatibility we'll use a different approach
             // For now, modules will register themselves when loaded
 
@@ -154,7 +149,6 @@ class AdminPanel {
                 instance: null // Will be set by the module itself
             });
 
-            console.log(`âœ… Module ${name} loaded`);
         } catch (error) {
             console.error(`âŒ Failed to load module ${name}:`, error);
             throw error;
@@ -205,8 +199,6 @@ class AdminPanel {
         const email = document.getElementById('adminEmail').value;
         const password = document.getElementById('adminPassword').value;
 
-        console.log('ðŸ” Attempting admin login:', { email: email ? 'present' : 'empty' });
-
         try {
             const response = await fetch('/api/admin/login', {
                 method: 'POST',
@@ -217,7 +209,6 @@ class AdminPanel {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('âœ… Admin login successful:', data);
 
                 this.adminUser = data.user;
                 this.isAdminLoggedIn = true;
@@ -229,7 +220,6 @@ class AdminPanel {
                 this.loadDashboardStats();
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                console.error('âŒ Admin login failed:', errorData);
                 alert('Login failed: ' + (errorData.error || 'Invalid credentials'));
             }
         } catch (error) {
@@ -243,23 +233,18 @@ class AdminPanel {
      */
     async checkAdminSession() {
         try {
-            console.log('ðŸ” Checking admin session...');
             const response = await fetch('/api/admin/session', { credentials: 'include' });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('ðŸ“¡ Session check response:', data);
 
                 if (data.authenticated && data.user) {
-                    console.log('âœ… Admin session valid for:', data.user.username);
                     this.adminUser = data.user;
                     this.isAdminLoggedIn = true;
                     document.getElementById('auth-section').classList.add('d-none');
                     document.getElementById('admin-interface').classList.remove('d-none');
                     this.loadDashboardStats();
                     return true;
-                } else {
-                    console.log('âŒ Admin session not authenticated');
                 }
             } else {
                 console.error('âŒ Session check failed with status:', response.status);
@@ -273,7 +258,6 @@ class AdminPanel {
             return this.checkAdminSession();
         }
 
-        console.log('ðŸ”’ No valid admin session - showing auth section');
         this.ensureDefaultUIState();
         return false;
     }
@@ -386,8 +370,6 @@ class AdminPanel {
      * Fallback dashboard stats loading
      */
     async fallbackLoadDashboardStats() {
-        console.log('ðŸ”„ Loading dashboard statistics...');
-
         try {
             const [usersRes, questionsRes, videosRes, mediaRes] = await Promise.allSettled([
                 fetch('/api/users/stats').then(res => res.ok ? res.json() : Promise.reject(res.status)),
@@ -401,8 +383,6 @@ class AdminPanel {
             this.updateDashboardStat('question-count', questionsRes);
             this.updateDashboardStat('video-count', videosRes);
             this.updateDashboardStat('media-count', mediaRes, 'stats.totalTagged');
-
-            console.log('âœ… Dashboard statistics loaded (fallback)');
         } catch (error) {
             console.error('âŒ Critical error loading dashboard stats:', error);
             ['user-count', 'question-count', 'video-count', 'media-count'].forEach(id => {
@@ -431,7 +411,6 @@ class AdminPanel {
             }
 
             element.textContent = value;
-            console.log(`âœ… ${elementId}: ${value}`);
         } else {
             console.error(`âŒ ${elementId} API failed:`, response.reason);
             element.textContent = 'N/A';
@@ -468,7 +447,6 @@ class AdminPanel {
             const saved = localStorage.getItem('bcl_video_tags');
             if (saved) {
                 this.savedTags = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded saved tags from localStorage:', Object.keys(this.savedTags || {}).length, 'videos');
             } else {
                 this.savedTags = {};
             }
@@ -483,7 +461,6 @@ class AdminPanel {
             const saved = localStorage.getItem('bcl_custom_categories');
             if (saved) {
                 this.customCategories = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded custom categories from localStorage:', this.customCategories.length, 'categories');
             } else {
                 this.customCategories = [];
             }
@@ -498,7 +475,6 @@ class AdminPanel {
             const saved = localStorage.getItem('bcl_pdf_custom_categories');
             if (saved) {
                 this.pdfCustomCategories = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded PDF custom categories from localStorage:', this.pdfCustomCategories.length, 'categories');
             } else {
                 this.pdfCustomCategories = [];
             }
@@ -513,7 +489,6 @@ class AdminPanel {
             const saved = localStorage.getItem('bcl_bim_media_tags');
             if (saved) {
                 this.savedBIMTags = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded saved BIM tags from localStorage:', Object.keys(this.savedBIMTags || {}).length, 'files');
             } else {
                 this.savedBIMTags = {};
             }
@@ -528,7 +503,6 @@ class AdminPanel {
             const saved = localStorage.getItem('bcl_bim_custom_categories');
             if (saved) {
                 this.bimCustomCategories = JSON.parse(saved);
-                console.log('ðŸ“‚ Loaded BIM custom categories from localStorage');
             } else {
                 this.bimCustomCategories = {};
             }

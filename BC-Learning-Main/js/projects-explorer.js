@@ -22,6 +22,8 @@
         this.boundPreviewViewportHandler = () => this.updatePreviewViewportConstraints();
         this.apiBaseCandidates = this.getApiBaseCandidates();
         this.apiBase = this.apiBaseCandidates[0] || '';
+        this.cacheBasePath = '/data/projects-explorer-cache';
+        this.mediaCacheBasePath = `${this.cacheBasePath}/media`;
         this.previewLoadTimeoutMs = 12000;
         this.previewRenderToken = 0;
 
@@ -82,6 +84,30 @@
         }
 
         throw lastError || new Error('Network request failed');
+    }
+
+    async fetchStaticCacheJson(fileName) {
+        const response = await fetch(`${this.cacheBasePath}/${fileName}?v=20260313a`, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response.json();
+    }
+
+    async fetchStaticMediaCacheJson(year, projectName, sourceId) {
+        const fileName = this.buildProjectMediaCacheFileName(year, projectName, sourceId);
+        const response = await fetch(`${this.mediaCacheBasePath}/${fileName}?v=20260313a`, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response.json();
+    }
+
+    buildProjectMediaCacheFileName(year, projectName, sourceId) {
+        const safe = (value) => encodeURIComponent(String(value || '').trim()).replace(/%/g, '_');
+        return `${safe(year)}__${safe(sourceId || 'unknown')}__${safe(projectName)}.json`;
     }
 
     isTokenExpired(token) {
@@ -239,7 +265,13 @@
         }
 
         try {
-            const data = await this.fetchJsonWithFallback('/api/years');
+            let data;
+            try {
+                data = await this.fetchStaticCacheJson('years.json');
+            } catch (cacheError) {
+                data = await this.fetchJsonWithFallback('/api/years');
+            }
+
             this.years = Array.isArray(data.years) ? data.years : [];
             this.yearsBySource = data.yearsBySource && typeof data.yearsBySource === 'object' ? data.yearsBySource : {};
             this.sources = Array.isArray(data.sources) ? data.sources : [];
@@ -400,16 +432,25 @@
 
         try {
             const query = sourceId ? `?sourceId=${encodeURIComponent(sourceId)}` : '';
-            const data = await this.fetchJsonWithFallback(`/api/projects/${year}${query}`);
+            let data;
+            try {
+                data = await this.fetchStaticCacheJson(`projects-${year}.json`);
+            } catch (cacheError) {
+                data = await this.fetchJsonWithFallback(`/api/projects/${year}${query}`);
+            }
+
             this.projects = Array.isArray(data.projects) ? data.projects : [];
             this.hiddenProjects = Array.isArray(data.hiddenProjects) ? data.hiddenProjects : [];
+            if (sourceId) {
+                this.projects = this.projects.filter(project => project.sourceId === sourceId);
+                this.hiddenProjects = this.hiddenProjects.filter(project => project.sourceId === sourceId);
+            }
             this.renderProjectList();
 
-            if (this.projects.length > 0) {
-                const firstProject = this.projects.find((project) => (project.mediaCount || 0) > 0) || this.projects[0];
-                this.selectProject(firstProject.name, firstProject.sourceId || null);
-            } else {
+            if (this.projects.length === 0) {
                 this.renderEmptyState('Tidak ada proyek untuk tahun ini.');
+            } else {
+                this.renderEmptyState('Pilih proyek dari daftar untuk melihat media.');
             }
         } catch (error) {
             this.hiddenProjects = [];
@@ -494,7 +535,12 @@
 
         try {
             const query = sourceId ? `?sourceId=${encodeURIComponent(sourceId)}` : '';
-            const data = await this.fetchJsonWithFallback(`/api/project-media/${encodeURIComponent(this.selectedYear)}/${encodeURIComponent(projectName)}${query}`);
+            let data;
+            try {
+                data = await this.fetchStaticMediaCacheJson(this.selectedYear, projectName, sourceId || 'unknown');
+            } catch (cacheError) {
+                data = await this.fetchJsonWithFallback(`/api/project-media/${encodeURIComponent(this.selectedYear)}/${encodeURIComponent(projectName)}${query}`);
+            }
             const mediaList = Array.isArray(data.media) ? data.media : [];
             const detailsList = Array.isArray(data.mediaDetails) ? data.mediaDetails : [];
             const detailMap = new Map(

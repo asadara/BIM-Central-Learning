@@ -1089,40 +1089,33 @@
     <script src="/js/pesan.js"></script>
 
     <!-- Video Information Display System -->
-    <script src="/js/video-info-display.js?v=20260305a"></script>
+    <script src="/js/video-info-display.js?v=20260313b"></script>
 
     <script>
         // Enhanced initialization with fallback for video display system
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('🎬 Initializing Video Display System...');
 
             // Wait a bit for all scripts to load
             setTimeout(() => {
                 const container = document.getElementById('video-info-display');
 
                 if (!container) {
-                    console.error('❌ Video display container not found');
                     return;
                 }
 
                 // Check if VideoInfoDisplay class is available
                 if (typeof VideoInfoDisplay === 'undefined') {
-                    console.error('❌ VideoInfoDisplay class not loaded, showing fallback');
                     showFallbackCarousel();
                     return;
                 }
 
-                console.log('✅ VideoInfoDisplay class found, initializing...');
 
                 try {
                     const display = new VideoInfoDisplay({
                         containerId: 'video-info-display'
                     });
 
-                    display.init().then(() => {
-                        console.log('✅ Video display system initialized successfully');
-                    }).catch((error) => {
-                        console.error('❌ Video display initialization failed:', error);
+                    display.init().catch(() => {
                         showFallbackCarousel();
                     });
 
@@ -1130,7 +1123,6 @@
                     window.videoInfoDisplay = display;
 
                 } catch (error) {
-                    console.error('❌ Video display creation failed:', error);
                     showFallbackCarousel();
                 }
 
@@ -1138,7 +1130,6 @@
         });
 
         function showFallbackCarousel() {
-            console.log('🔄 Showing fallback carousel');
 
             const container = document.getElementById('video-info-display');
             if (!container) return;
@@ -1169,10 +1160,8 @@
                             1000: { items: 1 }
                         }
                     });
-                    console.log('✅ Fallback carousel initialized');
-                } else {
-                    console.warn('⚠️ Owl Carousel not available for fallback');
                 }
+
             }
         }
     </script>
@@ -1348,7 +1337,6 @@
 
             async loadCourses() {
                 try {
-                    console.log('📚 Loading courses from API...');
 
                     // Show loading
                     if (this.loadingElement) {
@@ -1363,13 +1351,11 @@
                     }
 
                     const data = await response.json();
-                    console.log('✅ Courses loaded:', data);
 
                     // Process and display courses
                     this.displayCourses(data.courses || data || []);
 
                 } catch (error) {
-                    console.error('❌ Failed to load courses from API, using fallback:', error);
                     this.loadFallbackCourses();
                 } finally {
                     // Hide loading
@@ -1381,7 +1367,6 @@
 
             // Fallback course data when API fails
             loadFallbackCourses() {
-                console.log('🔄 Using fallback course data...');
 
                 const fallbackCourses = [
                     {
@@ -1446,7 +1431,6 @@
                     }
                 ];
 
-                console.log('✅ Loaded fallback courses:', fallbackCourses.length);
                 this.displayCourses(fallbackCourses);
             }
 
@@ -1471,7 +1455,6 @@
                     this.container.appendChild(courseElement);
                 });
 
-                console.log(`✅ Displayed ${displayCourses.length} courses`);
             }
 
             createCourseElement(course, index) {

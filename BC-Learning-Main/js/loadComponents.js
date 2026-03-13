@@ -28,10 +28,8 @@ function loadNavbar() {
                 const updateUIWithRetry = () => {
                     if (typeof updateUserUI === 'function') {
                         updateUserUI();
-                        console.log('✅ User UI updated after navbar load');
                     } else if (retryCount < maxRetries) {
                         retryCount++;
-                        console.log(`🔄 Retrying user UI update (${retryCount}/${maxRetries})`);
                         setTimeout(updateUIWithRetry, 200);
                     }
                 };
@@ -43,7 +41,6 @@ function loadNavbar() {
                 setTimeout(() => {
                     if (typeof updateUserUI === 'function') {
                         updateUserUI();
-                        console.log('🔄 Additional user UI update for cross-section sync');
                     }
                 }, 500);
 
@@ -72,36 +69,43 @@ function loadFooter() {
         .catch(err => console.error('❌ Gagal load footer:', err));
 }
 
+function ensureFavicon() {
+    const faviconHref = '/img/icons/icon_bcl.ico?v=20260313c';
+    const iconRels = ['icon', 'shortcut icon', 'apple-touch-icon'];
+
+    document
+        .querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]')
+        .forEach((link) => link.remove());
+
+    iconRels.forEach((rel) => {
+        const link = document.createElement('link');
+        link.rel = rel;
+        link.href = faviconHref;
+        link.type = 'image/x-icon';
+        document.head.appendChild(link);
+    });
+}
+
 // Function to adjust account submenu links based on current page path
 function adjustAccountSubmenuLinks() {
     const currentPath = window.location.pathname;
-    console.log('🔄 Adjusting account submenu links, current path:', currentPath);
 
     // If current path starts with '/pages/', adjust account submenu links to point to '/elearning-assets/'
     if (currentPath.startsWith('/pages/')) {
-        console.log('📝 Path starts with /pages/, updating links...');
-
         // Find links by text content instead of href to be more reliable
         const dropdownItems = document.querySelectorAll('.dropdown-menu a.dropdown-item');
-        console.log('Found dropdown items:', dropdownItems.length);
 
         dropdownItems.forEach(link => {
             const text = link.textContent.trim();
-            console.log('Link text:', text, 'href:', link.href);
 
             if (text === 'My Profiles') {
                 link.href = '/elearning-assets/profile.html';
-                console.log('✅ Updated My Profiles to:', link.href);
             } else if (text === 'My Progress') {
                 link.href = '/elearning-assets/dashboard.html';
-                console.log('✅ Updated My Progress to:', link.href);
             } else if (text === 'My Badges') {
                 link.href = '/elearning-assets/badges.html';
-                console.log('✅ Updated My Badges to:', link.href);
             }
         });
-    } else {
-        console.log('⏭️ Path does not start with /pages/, no changes needed');
     }
 }
 
@@ -121,7 +125,7 @@ function setupDropdownListener() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    console.log("🧩 Memuat komponen navbar & footer...");
+    ensureFavicon();
     loadNavbar();
     loadFooter();
 });

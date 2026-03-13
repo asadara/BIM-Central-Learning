@@ -69,6 +69,35 @@
     });
 
 
+    // Mailto newsletter forms
+    $(document).on('submit', '.js-mailto-form', function (event) {
+        event.preventDefault();
+
+        var form = event.currentTarget;
+        if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+            return;
+        }
+
+        var recipient = form.dataset.mailto || '';
+        if (!recipient) {
+            return;
+        }
+
+        var emailField = form.querySelector('input[type="email"]');
+        var emailValue = emailField ? emailField.value.trim() : '';
+        var subject = form.dataset.mailSubject || 'Newsletter Subscription';
+        var body = form.dataset.mailBody || 'Please add this email to the BIM NKE newsletter list:';
+
+        if (emailValue) {
+            body += '\n\n' + emailValue;
+        }
+
+        window.location.href = 'mailto:' + recipient
+            + '?subject=' + encodeURIComponent(subject)
+            + '&body=' + encodeURIComponent(body);
+    });
+
+
     // Header carousel
     $(".header-carousel").owlCarousel({
         autoplay: true,

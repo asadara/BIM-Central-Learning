@@ -32,9 +32,10 @@ class VideosModule {
      * Initialize the videos module
      */
     initialize() {
-        console.log('🎥 Initializing Videos Module');
         this.setupEventListeners();
-        this.loadPersistentData();
+        if (this.adminPanel && this.adminPanel.isAdminLoggedIn) {
+            this.loadPersistentData();
+        }
     }
 
     /**
@@ -99,7 +100,6 @@ class VideosModule {
             const localCategories = localStorage.getItem('bcl_custom_categories');
 
             if ((localTags || localCategories) && Object.keys(this.savedTags).length === 0 && this.customCategories.length === 0) {
-                console.log('🔄 Found localStorage data that needs migration...');
 
                 const migrationData = {
                     videoTags: localTags ? JSON.parse(localTags) : {},
@@ -115,7 +115,6 @@ class VideosModule {
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('✅ Migration successful:', result);
 
                     // Reload data from server
                     await this.loadSavedTags();
@@ -125,7 +124,6 @@ class VideosModule {
                     this.showMigrationSuccessMessage(result.migrated);
 
                 } else {
-                    console.warn('⚠️ Migration failed, keeping localStorage data');
                 }
             }
         } catch (error) {
@@ -154,7 +152,6 @@ class VideosModule {
     async loadSavedTags() {
         try {
             // Try to load from server first
-            console.log('📡 Loading video tags from server...');
             const response = await this.authFetch('/api/admin/videos/tags');
 
             if (response.ok) {
@@ -164,7 +161,6 @@ class VideosModule {
                 if (data.videoTags) {
                     // Server response format
                     this.savedTags = data.videoTags;
-                    console.log('✅ Loaded video tags from server:', Object.keys(this.savedTags).length, 'videos');
                 } else if (Array.isArray(data)) {
                     // Alternative format
                     this.savedTags = {};
@@ -182,15 +178,12 @@ class VideosModule {
                             };
                         }
                     });
-                    console.log('✅ Loaded video tags from database:', Object.keys(this.savedTags).length, 'videos');
                 }
             } else {
-                console.warn('⚠️ Server not available for video tags, falling back to localStorage');
                 // Fallback to localStorage
                 const saved = localStorage.getItem('bcl_video_tags');
                 if (saved) {
                     this.savedTags = JSON.parse(saved);
-                    console.log('📂 Loaded saved tags from localStorage:', Object.keys(this.savedTags).length, 'videos');
                 } else {
                     this.savedTags = {};
                 }
@@ -202,7 +195,6 @@ class VideosModule {
                 const saved = localStorage.getItem('bcl_video_tags');
                 if (saved) {
                     this.savedTags = JSON.parse(saved);
-                    console.log('📂 Loaded saved tags from localStorage (fallback):', Object.keys(this.savedTags).length, 'videos');
                 } else {
                     this.savedTags = {};
                 }
@@ -219,7 +211,6 @@ class VideosModule {
     async loadCustomCategories() {
         try {
             // Try to load from server first
-            console.log('📡 Loading custom categories from server...');
             const response = await this.authFetch('/api/admin/videos/categories');
 
             if (response.ok) {
@@ -232,15 +223,12 @@ class VideosModule {
                         value: cat.value,
                         created_at: cat.created_at
                     }));
-                    console.log('✅ Loaded custom categories from server:', this.customCategories.length, 'categories');
                 }
             } else {
-                console.warn('⚠️ Server not available for categories, falling back to localStorage');
                 // Fallback to localStorage
                 const saved = localStorage.getItem('bcl_custom_categories');
                 if (saved) {
                     this.customCategories = JSON.parse(saved);
-                    console.log('📂 Loaded custom categories from localStorage:', this.customCategories.length, 'categories');
                 } else {
                     this.customCategories = [];
                 }
@@ -252,7 +240,6 @@ class VideosModule {
                 const saved = localStorage.getItem('bcl_custom_categories');
                 if (saved) {
                     this.customCategories = JSON.parse(saved);
-                    console.log('📂 Loaded custom categories from localStorage (fallback):', this.customCategories.length, 'categories');
                 } else {
                     this.customCategories = [];
                 }
@@ -283,7 +270,6 @@ class VideosModule {
             });
         }
 
-        console.log('✅ Applied', this.customCategories.length, 'custom categories to dropdowns');
     }
 
     /**
@@ -306,7 +292,6 @@ class VideosModule {
             filterSelect.appendChild(newOption);
         });
 
-        console.log('✅ Updated video category filter with', this.customCategories.length, 'custom categories');
     }
 
     /**
@@ -315,7 +300,6 @@ class VideosModule {
     saveTagsToStorage() {
         try {
             localStorage.setItem('bcl_video_tags', JSON.stringify(this.savedTags));
-            console.log('💾 Saved tags to localStorage:', Object.keys(this.savedTags).length, 'videos');
         } catch (error) {
             console.error('❌ Error saving tags to localStorage:', error);
         }
@@ -325,7 +309,6 @@ class VideosModule {
      * Apply saved tags to videos
      */
     applySavedTagsToVideos(videos) {
-        console.log('🔄 Applying saved tags to videos...');
         let taggedCount = 0;
 
         videos.forEach(video => {
@@ -336,7 +319,6 @@ class VideosModule {
                 video.tagged = true;
                 video.localSave = true; // Mark as locally saved
                 taggedCount++;
-                console.log('✅ Applied tags to video:', video.id, video.name);
             } else {
                 // Ensure video has default values if no tags saved
                 video.category = video.category || 'general';
@@ -345,7 +327,6 @@ class VideosModule {
             }
         });
 
-        console.log('📊 Applied saved tags to', taggedCount, 'videos');
         return videos;
     }
 
@@ -353,7 +334,6 @@ class VideosModule {
      * Scan video sources
      */
     async scanVideoSources() {
-        console.log('🔄 Scanning video sources...');
 
         const gridContainer = document.getElementById('videosGrid');
         gridContainer.innerHTML = `
@@ -369,11 +349,9 @@ class VideosModule {
         try {
             // Try to get videos from the tutorials API
             const response = await fetch('/api/tutorials');
-            console.log('📡 Video scan API response:', response.status, response.statusText);
 
             if (response.ok) {
                 const videos = await response.json();
-                console.log('✅ Videos scanned successfully:', videos.length, 'videos');
 
                 // Transform video data for tagging
                 const transformedVideos = videos.map(video => ({
@@ -404,7 +382,6 @@ class VideosModule {
                 // Update total videos count badge
                 this.updateTotalVideosCount(transformedVideos.length);
 
-                console.log('✅ Video sources scanned and displayed');
             } else {
                 const errorText = await response.text();
                 console.error('❌ Video scan API failed:', response.status, errorText);
@@ -568,10 +545,8 @@ class VideosModule {
      * Open video preview modal
      */
     openVideoPreviewModal(videoId, videoName, videoDataStr) {
-        console.log('Opening video preview modal for:', videoName);
         try {
             const videoData = JSON.parse(videoDataStr);
-            console.log('Video data:', videoData);
 
             // Create video preview modal HTML
             let modalHtml = '<div class="modal fade" id="videoPreviewModal" tabindex="-1">';
@@ -663,20 +638,17 @@ class VideosModule {
 
             // Add modal to body
             document.body.insertAdjacentHTML('beforeend', modalHtml);
-            console.log('Modal HTML added to body');
 
             // Show modal
             const modalElement = document.getElementById('videoPreviewModal');
             if (modalElement) {
                 const modal = new bootstrap.Modal(modalElement);
                 modal.show();
-                console.log('Modal shown successfully');
 
                 // Auto-load video when modal opens
                 modal._element.addEventListener('shown.bs.modal', function () {
                     const video = document.getElementById('videoPlayer');
                     if (video) {
-                        console.log('Loading video:', video.src);
                         video.load();
                     } else {
                         console.error('Video player element not found');
@@ -782,7 +754,6 @@ class VideosModule {
         // Show success message
         alert('✅ New category "' + categoryName + '" added successfully and saved!');
 
-        console.log('New category added and saved:', newCategory);
     }
 
     cancelCustomCategory() {
@@ -796,7 +767,6 @@ class VideosModule {
     saveCustomCategoriesToStorage() {
         try {
             localStorage.setItem('bcl_custom_categories', JSON.stringify(this.customCategories));
-            console.log('💾 Saved custom categories to localStorage:', this.customCategories.length, 'categories');
         } catch (error) {
             console.error('❌ Error saving custom categories to localStorage:', error);
         }
@@ -806,17 +776,13 @@ class VideosModule {
      * Open video tag modal
      */
     openVideoTagModal(videoId) {
-        console.log('Opening video tag modal for ID:', videoId);
-        console.log('Available videos in allVideos:', this.allVideos.length);
 
         try {
             // Find video data from global array
             const videoData = this.allVideos.find(v => v.id == videoId);
-            console.log('Found video data:', videoData);
 
             if (!videoData) {
                 console.error('Video not found in allVideos array');
-                console.log('Available video IDs:', this.allVideos.map(v => v.id));
                 alert('Video not found. Please refresh the page and try again.');
                 return;
             }
@@ -854,7 +820,6 @@ class VideosModule {
             // Show modal
             const modal = new bootstrap.Modal(document.getElementById('videoTagModal'));
             modal.show();
-            console.log('Video tag modal opened successfully');
 
             // Highlight selected card (only if event context exists)
             if (event && event.currentTarget) {
@@ -963,7 +928,6 @@ class VideosModule {
         }
 
         try {
-            console.log('💾 Saving video tags:', tagData);
 
             // Try to save to server API
             const response = await this.authFetch('/api/admin/videos/tags', {
@@ -974,7 +938,6 @@ class VideosModule {
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Server save successful:', result);
                 alert('✅ Video tags saved successfully to persistent storage!');
 
                 // Update local video data
@@ -1007,7 +970,6 @@ class VideosModule {
 
                 // Check if API endpoint exists but returned error
                 if (responseText.includes('<!DOCTYPE') || responseText.includes('<html>')) {
-                    console.log('📝 API endpoint not available, saving to localStorage only...');
                     alert('⚠️ Server not available. Tags saved locally.\n\nNote: Tags will persist in browser but may be lost if you clear browser data.');
 
                     // Save to localStorage only
@@ -1039,7 +1001,6 @@ class VideosModule {
                     alert('❌ Failed to save video tags: ' + (error.error || 'Unknown error'));
                 } catch (jsonError) {
                     alert('❌ Server error. Tags saved locally.');
-                    console.log('📝 Saving locally due to server error...');
 
                     // Save locally as fallback
                     const videoIndex = this.allVideos.findIndex(v => v.id === this.currentSelectedVideo.id);
@@ -1067,7 +1028,6 @@ class VideosModule {
             console.error('❌ Network error saving video tags:', error);
 
             // Fallback: save to localStorage only
-            console.log('📝 Network error, saving to localStorage...');
             alert('⚠️ Network error. Tags saved locally.\n\nNote: Tags will persist in browser but may be lost if you clear browser data.');
 
             // Update local video data
@@ -1092,7 +1052,6 @@ class VideosModule {
             this.displayVideos(this.allVideos);
             this.currentSelectedVideo = null;
 
-            console.log('✅ Tags saved to localStorage due to network error');
         }
     }
 
@@ -1396,11 +1355,9 @@ class VideosModule {
             if (projectMatch) {
                 const extractedYear = projectMatch[1];
                 const relativePath = projectMatch[2]; // Get everything after the year
-                console.log('Parsed path:', { extractedYear, relativePath });
                 return `/media/PROJECT%20BIM%20${extractedYear}/${encodeURIComponent(relativePath)}`;
             }
             // If regex doesn't match, try simpler approach
-            console.log('Regex failed for path:', normalizedPath);
             const relativePath = normalizedPath.substring(2); // Remove 'G:'
             return `/media/PROJECT%20BIM%20${year}/${encodeURIComponent(relativePath)}`;
         } else if (normalizedPath.startsWith('\\\\pc-bim02\\')) {
@@ -1440,7 +1397,6 @@ class VideosModule {
 
 // Initialize and register the videos module immediately when script loads
 (function() {
-    console.log('🎥 Initializing Videos Module...');
 
     // Ensure adminPanel exists
     if (!window.adminPanel) {
@@ -1468,7 +1424,6 @@ class VideosModule {
         // Initialize the module
         videosModule.initialize();
 
-        console.log('✅ Videos module initialized and registered successfully');
     } catch (error) {
         console.error('❌ Failed to initialize videos module:', error);
     }

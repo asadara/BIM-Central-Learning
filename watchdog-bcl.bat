@@ -12,11 +12,19 @@ if not exist "logs" mkdir "logs"
 set "DATESTAMP=%date:~-4,4%%date:~-10,2%%date:~-7,2%"
 set "LOGFILE=logs\watchdog-%DATESTAMP%.log"
 set "LOCKDIR=watchdog.lock"
+set "FORCE_BACKEND_RELOAD_FLAG=force-backend-reload.flag"
 
 if exist "%LOCKDIR%" rmdir "%LOCKDIR%" >nul 2>&1
 if exist "%LOCKDIR%" del /f /q "%LOCKDIR%" >nul 2>&1
 mkdir "%LOCKDIR%" 2>nul
 if errorlevel 1 exit /b 0
+
+if exist "%FORCE_BACKEND_RELOAD_FLAG%" (
+    call :log "[WARNING] Forced backend recycle requested via %FORCE_BACKEND_RELOAD_FLAG%"
+    del /f /q "%FORCE_BACKEND_RELOAD_FLAG%" >nul 2>&1
+    call :recycle_backend
+    goto :end
+)
 
 set "HTTP_OK=0"
 set "BACKEND_OK=0"
@@ -70,12 +78,7 @@ if "%RUN_AS_SYSTEM%"=="1" (
             call :log "[INFO] SYSTEM watchdog invoked startup command successfully"
         )
     ) else (
-        schtasks /Run /TN "BCL Auto Start (Logon Hidden Fallback)" >nul 2>&1
-        if not errorlevel 1 (
-            call :log "[INFO] Watchdog requested user logon fallback recovery:%REASON%"
-        ) else (
-            call :log "[WARNING] Watchdog running as SYSTEM cannot recover Docker Desktop stack directly:%REASON%"
-        )
+        call :log "[ERROR] Native PostgreSQL service is missing; watchdog cannot recover database runtime:%REASON%"
     )
     goto :end
 )
@@ -91,7 +94,7 @@ if defined NATIVE_PG_SERVICE (
     goto :end
 )
 
-call :log "[WARNING] Watchdog recovery triggered:%REASON%"
+call :log "[ERROR] Native PostgreSQL service is missing; watchdog startup recovery cannot proceed safely:%REASON%"
 call "%~dp0start-bcl-http.bat" --hidden --auto >> "%LOGFILE%" 2>&1
 if errorlevel 1 (
     call :log "[ERROR] Watchdog failed to invoke startup command"
@@ -107,6 +110,45 @@ goto :end
 
 :end
 rmdir "%LOCKDIR%" >nul 2>&1
+exit /b 0
+
+:recycle_backend
+set "RECYCLE_OK=0"
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%BACKEND_PORT%.*LISTENING"') do (
+    taskkill /PID %%p /F >nul 2>&1
+    if not errorlevel 1 (
+        set "RECYCLE_OK=1"
+        call :log "[INFO] Forced recycle terminated backend listener PID %%p"
+    ) else (
+        wmic process where "ProcessId=%%p" call terminate >nul 2>&1
+        if not errorlevel 1 (
+            set "RECYCLE_OK=1"
+            call :log "[INFO] Forced recycle terminated backend listener PID %%p via WMIC fallback"
+        ) else (
+            call :log "[WARNING] Forced recycle could not terminate backend listener PID %%p"
+        )
+    )
+)
+
+if "%RECYCLE_OK%"=="0" (
+    call :log "[INFO] Forced recycle did not find an active backend listener on port %BACKEND_PORT%"
+)
+
+call :sleep 3
+call "%~dp0start-backend-public.bat" >> "%LOGFILE%" 2>&1
+if errorlevel 1 (
+    call :log "[ERROR] Forced backend recycle failed to invoke start-backend-public.bat"
+    exit /b 1
+)
+
+set "BACKEND_CODE=000"
+for /f %%c in ('curl.exe -s -o nul -w "%%{http_code}" http://127.0.0.1:%BACKEND_PORT%/ping -m 15 2^>nul') do set "BACKEND_CODE=%%c"
+if "%BACKEND_CODE%"=="200" (
+    call :log "[SUCCESS] Forced backend recycle completed successfully on port %BACKEND_PORT%"
+    exit /b 0
+)
+
+call :log "[WARNING] Forced backend recycle completed but /ping returned %BACKEND_CODE%"
 exit /b 0
 
 :log

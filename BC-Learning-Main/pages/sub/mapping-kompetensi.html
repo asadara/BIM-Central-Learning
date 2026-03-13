@@ -907,12 +907,20 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        window.BCL_SKIP_GLOBAL_ADMIN_SESSION_UI_PROBE = true;
+        if (window.BCL_ENABLE_DEBUG_LOGS !== true) {
+            console.log = () => {};
+            console.info = () => {};
+            console.debug = () => {};
+        }
+    </script>
 
     <!-- Component Loading Script -->
     <script src="../../js/loadComponents.js"></script>
 
     <!-- User Management Script -->
-    <script src="../../js/user.js"></script>
+    <script src="../../js/user.js?v=20260313d"></script>
 
     <!-- Competency Mapping Script -->
     <script>

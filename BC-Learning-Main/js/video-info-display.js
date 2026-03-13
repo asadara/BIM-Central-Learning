@@ -42,7 +42,6 @@ class VideoInfoDisplay {
         this.sidebarContainer = null;
         this.statsContainer = null;
 
-        console.log('🎬 VideoInfoDisplay initialized with options:', this.options);
     }
 
     /**
@@ -50,7 +49,6 @@ class VideoInfoDisplay {
      */
     async init() {
         try {
-            console.log('🚀 Initializing Video Information Display System...');
 
             // Find containers
             this.container = document.getElementById(this.options.containerId);
@@ -71,10 +69,8 @@ class VideoInfoDisplay {
             this.startDisplay();
 
             this.isInitialized = true;
-            console.log('✅ Video Information Display System initialized successfully');
 
         } catch (error) {
-            console.error('❌ Failed to initialize Video Information Display:', error);
             this.showFallbackDisplay(error.message);
         }
     }
@@ -178,14 +174,12 @@ class VideoInfoDisplay {
         this.sidebarContainer = document.getElementById(this.options.sidebarContainerId);
         this.statsContainer = document.getElementById(this.options.statsContainerId);
 
-        console.log('📦 Display containers created');
     }
 
     /**
      * Load videos and news data
      */
     async loadData() {
-        console.log('📡 Loading display data...');
 
         try {
             // Load videos and news in parallel
@@ -197,18 +191,14 @@ class VideoInfoDisplay {
             // Process videos
             if (videosResponse.status === 'fulfilled') {
                 this.videos = videosResponse.value;
-                console.log(`✅ Loaded ${this.videos.length} display videos`);
             } else {
-                console.warn('⚠️ Failed to load videos:', videosResponse.reason);
                 this.videos = [];
             }
 
             // Process news
             if (newsResponse.status === 'fulfilled') {
                 this.news = newsResponse.value;
-                console.log(`✅ Loaded ${this.news.length} news items`);
             } else {
-                console.warn('⚠️ Failed to load news:', newsResponse.reason);
                 this.news = this.getFallbackNews();
             }
 
@@ -216,7 +206,6 @@ class VideoInfoDisplay {
             await this.loadStats();
 
         } catch (error) {
-            console.error('❌ Error loading display data:', error);
             throw error;
         }
     }
@@ -225,16 +214,13 @@ class VideoInfoDisplay {
      * Load selected videos for display
      */
     async loadVideos() {
-        console.log('🎬 Loading selected videos from API...');
         const response = await fetch('/api/video-display/selected');
 
         if (!response.ok) {
-            console.error(`❌ Videos API failed: ${response.status} ${response.statusText}`);
             throw new Error(`Videos API failed: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('📡 Videos API response:', data);
 
         // Update settings from server
         if (data.settings) {
@@ -242,27 +228,18 @@ class VideoInfoDisplay {
         }
 
         const videos = data.videos || [];
-        console.log(`✅ Loaded ${videos.length} selected videos:`, videos.map(v => ({ id: v.id, name: v.name })));
 
         if (videos.length === 0) {
-            console.warn('⚠️ No videos returned from API. This might indicate:');
-            console.warn('   - No videos selected in admin panel');
-            console.warn('   - Video IDs in config don\'t match actual videos');
-            console.warn('   - Video cache not populated');
-            console.warn('   - Fallback mode:', data.fallback ? 'active' : 'inactive');
 
             // Try to load all available videos as fallback
-            console.log('🔄 Attempting to load all available videos as fallback...');
             try {
                 const fallbackResponse = await fetch('/api/tutorials');
                 if (fallbackResponse.ok) {
                     const allVideos = await fallbackResponse.json();
                     const fallbackVideos = allVideos.slice(0, 10); // Take first 10 videos
-                    console.log(`✅ Loaded ${fallbackVideos.length} videos as fallback`);
                     return fallbackVideos;
                 }
             } catch (fallbackError) {
-                console.error('❌ Fallback video loading failed:', fallbackError);
             }
         }
 
@@ -281,10 +258,8 @@ class VideoInfoDisplay {
             ]);
 
             if (allNewsResult.status === 'rejected') {
-                console.warn('all-news failed:', allNewsResult.reason?.message || allNewsResult.reason);
             }
             if (localNewsResult.status === 'rejected') {
-                console.warn('local-news failed:', localNewsResult.reason?.message || localNewsResult.reason);
             }
 
             const allNews = allNewsResult.status === 'fulfilled' ? allNewsResult.value : [];
@@ -298,7 +273,6 @@ class VideoInfoDisplay {
             mergedNews.sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
             return mergedNews.slice(0, 10);
         } catch (error) {
-            console.warn('News API failed, using fallback news');
             return this.getFallbackNews();
         }
     }
@@ -379,36 +353,33 @@ class VideoInfoDisplay {
      */
     async loadStats() {
         try {
-            // Try to load from multiple sources (real values only)
+            // Homepage must stay on public endpoints only.
             const statsPromises = await Promise.allSettled([
-                fetch('/api/users/get-all').then(r => r.ok ? r.json() : null),
                 fetch('/api/tutorials').then(r => r.ok ? r.json() : null),
                 fetch('/api/courses').then(r => r.ok ? r.json() : null),
                 fetch('/api/user-activity/public').then(r => r.ok ? r.json() : null)
             ]);
 
-            const users = (statsPromises[0].status === 'fulfilled' && Array.isArray(statsPromises[0].value))
+            const videos = (statsPromises[0].status === 'fulfilled' && Array.isArray(statsPromises[0].value))
                 ? statsPromises[0].value
                 : null;
-            const videos = (statsPromises[1].status === 'fulfilled' && Array.isArray(statsPromises[1].value))
+            const courses = (statsPromises[1].status === 'fulfilled' && Array.isArray(statsPromises[1].value))
                 ? statsPromises[1].value
                 : null;
-            const courses = (statsPromises[2].status === 'fulfilled' && Array.isArray(statsPromises[2].value))
+            const userActivity = (statsPromises[2].status === 'fulfilled' && statsPromises[2].value)
                 ? statsPromises[2].value
                 : null;
-            const userActivity = (statsPromises[3].status === 'fulfilled' && statsPromises[3].value)
-                ? statsPromises[3].value
-                : null;
 
-            const totalUsers = users ? users.length : null;
+            const totalUsers = this.parseNumeric(
+                userActivity?.totalUsers ??
+                userActivity?.registeredUsers ??
+                userActivity?.totalRegisteredUsers
+            );
             const totalVideos = videos ? videos.length : null;
             const totalCourses = courses ? courses.length : null;
 
-            // Active users from public activity endpoint, fallback to explicit user flags if available.
+            // Active users from public activity endpoint.
             let activeUsers = this.parseNumeric(userActivity?.totalActiveUsers);
-            if (activeUsers === null && users) {
-                activeUsers = users.filter(user => user?.isActive === true || user?.is_active === true).length;
-            }
 
             const completionRate = this.computeAverageFromKeys(courses, ['completionRate', 'completion_rate']);
             const avgRating = this.computeAverageFromKeys(
@@ -425,10 +396,8 @@ class VideoInfoDisplay {
                 avgRating
             };
 
-            console.log('Stats loaded:', this.stats);
 
         } catch (error) {
-            console.warn('Failed to load stats:', error);
             this.stats = {
                 totalUsers: null,
                 totalVideos: null,
@@ -526,7 +495,6 @@ class VideoInfoDisplay {
             videoElement.addEventListener('timeupdate', () => this.updateProgress());
         }
 
-        console.log('🎧 Event listeners setup complete');
     }
 
     /**
@@ -549,7 +517,6 @@ class VideoInfoDisplay {
             this.startVideoRotation();
         }
 
-        console.log('▶️ Display system started');
     }
 
     /**
@@ -557,7 +524,6 @@ class VideoInfoDisplay {
      */
     showVideo(index) {
         if (!this.videos || this.videos.length === 0) {
-            console.warn('⚠️ No videos available to show');
             this.showFallbackDisplay('No videos available');
             return;
         }
@@ -568,8 +534,6 @@ class VideoInfoDisplay {
         this.currentVideoIndex = index;
         const video = this.videos[index];
 
-        console.log(`🎬 Showing video ${index + 1}/${this.videos.length}: ${video.name}`);
-        console.log(`📁 Video path: ${video.path}`);
 
         const videoElement = this.videoContainer.querySelector('video.display-video');
         const iframeElement = document.getElementById('youtube-player');
@@ -649,7 +613,6 @@ class VideoInfoDisplay {
                 // Add timeout for slow loading videos
                 this.loadTimeout = setTimeout(() => {
                     if (loadingElement && loadingElement.style.display !== 'none') {
-                        console.warn('⚠️ Video loading timeout, skipping to next...');
                         this.handleVideoLoadFailure(video, 'Loading timeout');
                     }
                 }, 60000); // 60 second timeout
@@ -681,7 +644,6 @@ class VideoInfoDisplay {
             videoElement.play().catch(e => {
                 // Ignore aborts caused by rapid pause/switch
                 if (e && e.name === 'AbortError') return;
-                console.warn('Auto-play failed:', e);
                 // If autoplay fails, show play button overlay
                 const overlay = document.querySelector('.video-overlay');
                 if (overlay) {
@@ -691,14 +653,12 @@ class VideoInfoDisplay {
             });
         }
 
-        console.log('✅ Video loaded successfully');
     }
 
     /**
      * Handle video load failure with retry logic
      */
     handleVideoLoadFailure(video, reason) {
-        console.error(`❌ Video load failure: ${video?.name || 'unknown'} - ${reason}`);
 
         // Clear loading timeout
         if (this.loadTimeout) {
@@ -727,7 +687,6 @@ class VideoInfoDisplay {
         // Remove failed video from rotation
         const failedIndex = this.videos.findIndex(v => v === video || v.id === video?.id);
         if (failedIndex !== -1) {
-            console.warn(`🚫 Removing failed video from rotation: ${this.videos[failedIndex].name}`);
             this.videos.splice(failedIndex, 1);
 
             // Adjust current index if needed
@@ -738,7 +697,6 @@ class VideoInfoDisplay {
 
         // Check if any videos remaining
         if (this.videos.length === 0) {
-            console.error('❌ No videos remaining after removing failed ones');
             this.showFallbackDisplay('Semua video gagal dimuat. Silakan cek koneksi atau format video.');
             return;
         }
@@ -765,22 +723,9 @@ class VideoInfoDisplay {
      */
     onVideoError(error) {
         const currentVideo = this.videos[this.currentVideoIndex];
-        console.error('❌ Video loading error:', {
-            error,
-            videoName: currentVideo?.name,
-            videoPath: currentVideo?.path,
-            videoIndex: this.currentVideoIndex,
-            totalVideos: this.videos.length
-        });
 
         // Log additional debugging info
         if (currentVideo) {
-            console.warn('🔍 Debugging video path:', {
-                originalPath: currentVideo.path,
-                decodedPath: decodeURIComponent(currentVideo.path || ''),
-                fileExtension: currentVideo.name?.split('.').pop(),
-                isValidUrl: currentVideo.path?.startsWith('/videos/')
-            });
         }
 
         this.showFallbackForVideo();
@@ -805,12 +750,10 @@ class VideoInfoDisplay {
         // Mark this video as failed and remove it from rotation
         const failedVideo = this.videos[this.currentVideoIndex];
         if (failedVideo) {
-            console.warn(`🚫 Removing failed video from rotation: ${failedVideo.name}`);
             this.videos.splice(this.currentVideoIndex, 1);
 
             // If no videos left, show fallback display
             if (this.videos.length === 0) {
-                console.error('❌ No videos remaining after removing failed ones');
                 this.showFallbackDisplay('All videos failed to load');
                 return;
             }
@@ -844,7 +787,6 @@ class VideoInfoDisplay {
                 playPromise.catch((e) => {
                     // Ignore aborts caused by rapid pause/switch
                     if (e && e.name !== 'AbortError') {
-                        console.warn('Play request failed:', e);
                     }
                 });
             }
@@ -895,7 +837,6 @@ class VideoInfoDisplay {
 
         if (!document.fullscreenElement) {
             container.requestFullscreen().catch(err => {
-                console.warn('Fullscreen failed:', err);
             });
         } else {
             document.exitFullscreen();
@@ -958,7 +899,6 @@ class VideoInfoDisplay {
         // Add bottom news (stats/metrics)
         this.updateBottomNews();
 
-        console.log('📰 News display updated');
     }
 
     /**
@@ -1050,7 +990,6 @@ class VideoInfoDisplay {
             this.nextVideo();
         }, this.options.rotationInterval * 1000);
 
-        console.log(`⏰ Video rotation started: every ${this.options.rotationInterval} seconds`);
     }
 
     /**
@@ -1127,14 +1066,12 @@ class VideoInfoDisplay {
             </div>
         `;
 
-        console.log('Stats display updated');
     }
 
     /**
      * Show fallback display when system fails
      */
     showFallbackDisplay(reason) {
-        console.warn('⚠️ Showing fallback display:', reason);
 
         if (!this.container) return;
 
@@ -1174,7 +1111,6 @@ class VideoInfoDisplay {
      * Destroy the display system
      */
     destroy() {
-        console.log('🗑️ Destroying Video Information Display System');
 
         // Stop timers
         this.stopVideoRotation();
@@ -1196,7 +1132,6 @@ class VideoInfoDisplay {
         }
 
         this.isInitialized = false;
-        console.log('✅ Display system destroyed');
     }
 
     /**
@@ -1234,7 +1169,6 @@ if (typeof document !== 'undefined') {
 
             const display = new VideoInfoDisplay(options);
             display.init().catch(error => {
-                console.error('Failed to initialize VideoInfoDisplay:', error);
             });
 
             // Make instance available globally

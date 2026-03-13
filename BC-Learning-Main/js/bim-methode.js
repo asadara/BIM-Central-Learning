@@ -38,7 +38,6 @@ class BIMGallery {
     }
 
     init() {
-        console.log('🎬 Initializing BIM Methode Gallery...');
 
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
@@ -251,7 +250,6 @@ class BIMGallery {
             if (categoryItem) {
                 e.preventDefault();
                 const categoryId = categoryItem.dataset.category;
-                console.log('🎯 Category clicked:', categoryId, 'Element:', categoryItem);
                 this.selectCategory(categoryId);
             }
         });
@@ -408,7 +406,6 @@ class BIMGallery {
                 const role = String(localUser.role).toLowerCase();
                 if (role.includes('admin') || role.includes('super')) {
                     isAdmin = true;
-                    console.log('✅ Admin access detected (Local JWT):', role);
                 }
             }
 
@@ -430,7 +427,6 @@ class BIMGallery {
                     const sessionData = await this.fetchJsonWithFallback('/api/admin/session', { credentials: 'include' });
                     
                     if (!sessionData || !sessionData.authenticated) {
-                        console.log('🔄 Local admin found but server session missing. Attempting bridge...');
                         if (token) {
                             // Panggil endpoint bridge untuk menukar JWT dengan Session Cookie
                             const bridgeResponse = await fetch(this.getApiUrl('/api/admin/session/bridge'), {
@@ -442,16 +438,10 @@ class BIMGallery {
                                 credentials: 'include' // Penting: agar cookie connect.sid tersimpan
                             });
                             
-                            if (bridgeResponse.ok) {
-                                console.log('✅ Server session established via bridge');
-                            } else {
-                                console.warn('⚠️ Failed to bridge session:', bridgeResponse.status);
-                            }
+                            
                         }
                     }
-                } catch (e) {
-                    console.warn('⚠️ Session check/bridge failed (non-fatal):', e);
-                }
+                } catch (e) {}
             }
 
             // 3. Cek server session (Cookie) jika belum terdeteksi sebagai admin lokal
@@ -461,11 +451,8 @@ class BIMGallery {
                     const data = await this.fetchJsonWithFallback('/api/admin/session', { credentials: 'include' });
                     if (data && data.authenticated) {
                         isAdmin = true;
-                        console.log('✅ Admin access detected (Server Session)');
                     }
-                } catch (sessionErr) {
-                    console.warn('⚠️ Server session check failed (non-fatal if local admin exists):', sessionErr);
-                }
+                } catch (sessionErr) {}
             }
 
             controls.forEach(control => {
@@ -512,7 +499,6 @@ class BIMGallery {
         this.startSlowLoadingTimers('category', 'Memuat kategori... mohon tunggu.');
 
         try {
-            console.log('📂 Loading categories...');
             const data = await this.fetchJsonWithFallback('/api/bim-methode/categories');
 
             if (data.success) {
@@ -551,7 +537,6 @@ class BIMGallery {
                 throw new Error(data.message || 'Failed to load categories');
             }
         } catch (error) {
-            console.error('❌ Error loading categories:', error);
             this.showError('Gagal memuat kategori: ' + error.message);
             this.updateStatus('category-status', {
                 message: 'Gagal memuat kategori. Silakan refresh halaman.',
@@ -578,7 +563,6 @@ class BIMGallery {
         this.startSlowLoadingTimers('media', 'Memuat media... mohon tunggu.');
 
         try {
-            console.log(`📄 Loading media for category: ${category}, page: ${page}`);
             if (shouldClearGrid) {
                 this.showLoading();
             }
@@ -597,18 +581,11 @@ class BIMGallery {
             if (queryString) {
                 url += `?${queryString}`;
             }
-            console.log(`🔍 Fetching URL: ${url}`);
 
             const data = await this.fetchJsonWithFallback(url);
-            console.log(`📊 Media API response for category "${category}":`, {
-                success: data.success,
-                totalCount: data.totalCount,
-                mediaCount: data.media ? data.media.length : 0
-            });
 
             if (data.success) {
                 this.mediaData = data.media || [];
-                console.log(`✅ Loaded ${this.mediaData.length} media items for category "${category}"`);
                 this.applyFilters();
 
                 if (data.refreshing) {
@@ -637,7 +614,6 @@ class BIMGallery {
                 throw new Error(data.message || 'Failed to load media');
             }
         } catch (error) {
-            console.error('❌ Error loading media:', error);
             this.showError('Gagal memuat media: ' + error.message);
             this.updateStatus('media-status', {
                 message: 'Gagal memuat media. Silakan refresh halaman.',
@@ -653,7 +629,6 @@ class BIMGallery {
         if (this.retryTimer) {
             clearTimeout(this.retryTimer);
         }
-        console.warn(`⏳ Cache refresh in progress, retrying ${label} in ${this.retryDelayMs}ms...`);
         this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
             action();
@@ -713,7 +688,6 @@ class BIMGallery {
     }
 
     selectCategory(categoryId) {
-        console.log(`🎯 Selecting category: ${categoryId}`);
         if (!categoryId) return;
         this.currentCategory = categoryId;
         this.currentPage = 1;
@@ -778,7 +752,6 @@ class BIMGallery {
         const mediaGrid = document.getElementById('media-grid');
         if (!mediaGrid) return;
 
-        console.log(`🎨 Rendering media grid: ${this.filteredData.length} items from ${this.mediaData.length} total media`);
 
         if (this.filteredData.length === 0) {
             const hasMediaData = this.mediaData.length > 0;
@@ -1066,7 +1039,6 @@ class BIMGallery {
         const uploadCategory = document.getElementById('upload-category');
         if (!uploadCategory) return;
 
-        console.log('📋 Updating upload categories with data:', this.categories);
 
         let html = '<option value="">Pilih kategori...</option>';
         
@@ -1084,13 +1056,11 @@ class BIMGallery {
             const displayText = category.name ? `${category.number || ''}${category.number ? '. ' : ''}${category.name}`.trim() : category.id;
             const value = category.id; // This should be like "1. PAGAR PROYEK"
 
-            console.log(`📍 Category option: "${displayText}" -> value: "${value}"`);
 
             html += `<option value="${value}">${displayText}</option>`;
         });
 
         uploadCategory.innerHTML = html;
-        console.log('✅ Upload categories updated');
     }
 
     validateFiles(files) {
@@ -1163,7 +1133,6 @@ class BIMGallery {
             // Construct Delete URL (using ID)
             const deleteUrl = this.getApiUrl(`/api/bim-methode/file?id=${encodeURIComponent(mediaId)}`);
 
-            console.log('🗑️ Deleting media:', deleteUrl);
 
             const response = await fetch(deleteUrl, {
                 method: 'DELETE',
@@ -1201,7 +1170,6 @@ class BIMGallery {
             }
 
         } catch (error) {
-            console.error('❌ Delete error:', error);
             this.showError(`Gagal menghapus file: ${error.message}`);
         }
     }
@@ -1211,14 +1179,9 @@ class BIMGallery {
         const files = formData.getAll('files');
         const category = formData.get('category');
 
-        console.log('🚀 BIM Methode Upload Debug:');
-        console.log('  - Category from form:', category);
-        console.log('  - Files count:', files.length);
-        console.log('  - Files details:', files.map(f => `${f.name} (${f.size} bytes)`));
 
         // Check admin session first
         try {
-            console.log('🔍 Checking admin session...');
             let isAdmin = false;
 
             // 1. Cek local user (JWT) - Robust check
@@ -1240,7 +1203,6 @@ class BIMGallery {
                 const role = String(localUser.role).toLowerCase();
                 if (role.includes('admin') || role.includes('super')) {
                     isAdmin = true;
-                    console.log('✅ Admin access validated (Local JWT):', role);
                 }
             }
 
@@ -1252,7 +1214,6 @@ class BIMGallery {
                 try {
                     const sessionData = await this.fetchJsonWithFallback('/api/admin/session', { credentials: 'include' });
                     if (!sessionData || !sessionData.authenticated) {
-                        console.log('🔄 Bridging session for upload...');
                         if (token) {
                             await fetch(this.getApiUrl('/api/admin/session/bridge'), {
                                 method: 'POST',
@@ -1261,9 +1222,7 @@ class BIMGallery {
                             });
                         }
                     }
-                } catch (e) {
-                    console.warn('⚠️ Session bridge warning:', e);
-                }
+                } catch (e) {}
             }
 
             // 3. Cek server session (fallback jika lokal gagal)
@@ -1273,11 +1232,8 @@ class BIMGallery {
                     const sessionData = await this.fetchJsonWithFallback('/api/admin/session', { credentials: 'include' });
                     if (sessionData && sessionData.authenticated) {
                         isAdmin = true;
-                        console.log('✅ Admin access validated (Server Session)');
                     }
-                } catch (e) {
-                    console.warn('⚠️ Server session check failed:', e);
-                }
+                } catch (e) {}
             }
 
             if (!isAdmin) {
@@ -1285,7 +1241,6 @@ class BIMGallery {
                 return;
             }
         } catch (error) {
-            console.error('❌ Session validation error:', error);
             this.showError('❌ ERROR: Gagal memvalidasi sesi admin.\n\nSilakan coba lagi atau login ulang.');
             return;
         }
@@ -1302,11 +1257,9 @@ class BIMGallery {
 
         const validFiles = this.validateFiles(files);
         if (validFiles.length === 0) {
-            console.error('❌ No valid files after validation');
             return;
         }
 
-        console.log('✅ Pre-upload validation passed, starting upload...');
 
         try {
             this.showUploadProgress();
@@ -1315,26 +1268,18 @@ class BIMGallery {
             validFiles.forEach(file => uploadFormData.append('files', file));
             uploadFormData.append('category', category.trim());
 
-            console.log('📤 Sending upload request to /api/bim-methode/upload');
-            console.log('📋 Upload FormData contents:');
             for (let [key, value] of uploadFormData.entries()) {
                 if (key === 'files') {
-                    console.log(`  - ${key}: ${value.name} (${value.size} bytes, ${value.type})`);
                 } else {
-                    console.log(`  - ${key}: "${value}"`);
                 }
             }
 
-            console.log('🚀 SENDING REQUEST TO: /api/bim-methode/upload');
-            console.log('📡 Request method: POST');
-            console.log('🔑 Credentials: include');
 
             // Tambahkan Authorization header jika ada token (untuk support JWT auth)
             const headers = {};
             const token = localStorage.getItem('token');
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
-                console.log('🔐 Adding Authorization header');
             }
 
             // Tambahkan category ke header dan URL sebagai fallback (agar terbaca sebelum multer)
@@ -1348,41 +1293,30 @@ class BIMGallery {
                 credentials: 'include' // Gunakan include agar cookie terkirim cross-port/origin jika perlu
             });
 
-            console.log('📨 RESPONSE RECEIVED:');
-            console.log('  Status:', response.status);
-            console.log('  StatusText:', response.statusText);
-            console.log('  OK:', response.ok);
-            console.log('  URL:', response.url);
 
             if (!response.ok) {
                 // Try to get detailed error message
                 let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
                 try {
                     const errorData = await response.json();
-                    console.error('❌ Server error details:', errorData);
                     errorMessage += ` - ${errorData.error || errorData.message || 'Unknown error'}`;
                     if (errorData.details) {
                         errorMessage += ` (${errorData.details})`;
                     }
                 } catch (parseError) {
-                    console.error('❌ Could not parse error response');
                     // Try to get text response
                     try {
                         const textResponse = await response.text();
-                        console.error('❌ Raw error response:', textResponse);
                         if (textResponse) {
                             errorMessage += ` - ${textResponse.substring(0, 200)}`;
                         }
-                    } catch (textError) {
-                        console.error('❌ Could not get text error response either');
-                    }
+                    } catch (textError) {}
                 }
 
                 throw new Error(errorMessage);
             }
 
             const data = await response.json();
-            console.log('✅ Upload response data:', data);
 
             if (data.success) {
                 const successMessage = data.message || `Upload berhasil! ${data.totalFiles || validFiles.length} file telah ditambahkan ke kategori ${data.categoryName || category}.`;
@@ -1394,7 +1328,6 @@ class BIMGallery {
                 throw new Error(data.message || data.error || 'Upload gagal - response tidak valid');
             }
         } catch (error) {
-            console.error('❌ Upload error:', error);
             this.showError('❌ UPLOAD GAGAL:\n\n' + error.message + '\n\nPeriksa log browser untuk detail lebih lanjut.');
         } finally {
             this.hideUploadProgress();
@@ -1752,7 +1685,6 @@ class BIMGallery {
             this.updatePreviewNavigationState();
             return true;
         } catch (error) {
-            console.error('❌ Error loading media viewer:', error);
             document.getElementById('media-viewer').innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -1971,9 +1903,7 @@ class BIMGallery {
                     document.body.classList.remove('modal-open');
                     document.body.style.overflow = '';
                     document.body.style.paddingRight = '';
-                } catch (e) {
-                    console.warn('Modal cleanup warning:', e);
-                }
+                } catch (e) {}
             }, 100); // Small delay to let Bootstrap finish
         });
 

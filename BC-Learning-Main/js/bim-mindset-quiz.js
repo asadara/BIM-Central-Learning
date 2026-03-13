@@ -57,7 +57,6 @@ class BIMMindsetQuiz {
                 throw new Error('Invalid question bank format');
             }
 
-            console.log(`Loaded ${this.questions.length} questions from bank`);
         } catch (error) {
             console.error('Error loading questions:', error);
             throw error;
@@ -392,8 +391,6 @@ class BIMMindsetQuiz {
                     userEmail: userData.email || null
                 };
 
-                console.log('Submitting quiz result to backend:', quizResult);
-
                 const response = await fetch('/api/elearning/quiz/submit', {
                     method: 'POST',
                     headers: {
@@ -404,8 +401,7 @@ class BIMMindsetQuiz {
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Quiz result saved to backend:', result);
+                    await response.json();
 
                     // Show success message
                     this.showNotification('Quiz result saved successfully!', 'success');
@@ -418,7 +414,6 @@ class BIMMindsetQuiz {
                 this.showNotification('Network error - quiz result not saved to dashboard', 'warning');
             }
         } else {
-            console.warn('⚠️ No user data found - quiz result not saved to backend');
             this.showNotification('Please log in to save quiz results to your dashboard', 'info');
         }
     }

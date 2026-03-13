@@ -156,7 +156,6 @@ function syncSidebarUserInfo() {
     const sidebarProfile = document.getElementById('sidebar-user-profile');
 
     if (!sidebarImg || !sidebarName || !sidebarRoleLevel) {
-        console.log('Sidebar elements not ready yet, retrying in 100ms...');
         setTimeout(syncSidebarUserInfo, 100);
         return;
     }
@@ -183,7 +182,6 @@ function syncSidebarUserInfo() {
     updateSidebarActiveState();
     restoreSidebarScrollPosition();
     scheduleEnsureActiveSidebarItemVisible();
-    console.log('Sidebar user info synced successfully:', { username, role, level, img, isGuest });
 }
 
 function initializeExistingSidebar() {
@@ -206,18 +204,14 @@ async function loadSidebar() {
         const existingPersistentSidebar = document.querySelector('.side-bar[data-persistent="true"]');
 
         if (existingPersistentSidebar) {
-            console.log('Persistent sidebar detected - skipping standalone load');
             initializeExistingSidebar();
             return;
         }
 
         if (sidebarLoaded && sidebarElement && document.contains(sidebarElement)) {
-            console.log('Sidebar already loaded via global flags - skipping');
             initializeExistingSidebar();
             return;
         }
-
-        console.log('Loading sidebar component (first time only)...');
 
         const response = await fetch('/elearning-assets/components/sidebar.html');
         if (!response.ok) {
@@ -248,8 +242,6 @@ async function loadSidebar() {
             syncSidebarUserInfo();
             restoreSidebarScrollPosition();
         }, 100);
-
-        console.log('Sidebar loaded with persistence');
     } catch (error) {
         console.error('Failed to load sidebar component:', error);
     }
@@ -258,7 +250,6 @@ async function loadSidebar() {
 document.addEventListener('DOMContentLoaded', function () {
     const existingPersistentSidebar = document.querySelector('.side-bar[data-persistent="true"]');
     if (existingPersistentSidebar) {
-        console.log('Persistent sidebar already loaded by component loader');
         initializeExistingSidebar();
         return;
     }

@@ -26,7 +26,6 @@ function getUserData() {
 
       // Check token expiration
       if (parsed.token && isTokenExpired(parsed.token)) {
-         console.log('🔴 Token expired in e-learning, clearing auth data');
          // Clear all user-related localStorage items
          localStorage.removeItem("user");
          localStorage.removeItem("username");
@@ -71,20 +70,27 @@ function setUserData(data) {
       localStorage.setItem("role", normalizedData.role);
       localStorage.setItem("userimg", normalizedData.photo);
       localStorage.setItem("token", normalizedData.token);
+      localStorage.removeItem("bcl_progress_sync_disabled");
       window.currentUser = normalizedData;
 
-      console.log('✅ E-Learning user data saved:', {
-         name: normalizedData.name,
-         email: normalizedData.email,
-         role: normalizedData.role,
-         photo: normalizedData.photo
-      });
    } catch (error) {
       console.error('❌ Error saving user data in e-learning:', error);
    }
 }
 
 // ✅ Fixed: Improved UI update function for E-Learning header component
+function clearStoredUserAuth() {
+   localStorage.removeItem("user");
+   localStorage.removeItem("username");
+   localStorage.removeItem("email");
+   localStorage.removeItem("role");
+   localStorage.removeItem("userimg");
+   localStorage.removeItem("token");
+   localStorage.removeItem("bcl_progress_sync_hash");
+   localStorage.removeItem("bcl_progress_sync_time");
+   window.currentUser = null;
+}
+
 function updateUserUI() {
    const user = getUserData();
 
@@ -115,7 +121,6 @@ function updateUserUI() {
       if (logoutLink) logoutLink.style.display = "none";
       if (registerLink) registerLink.style.display = "block";
 
-      console.log('👤 User UI updated: Guest mode');
       return;
    }
 
@@ -136,7 +141,6 @@ function updateUserUI() {
       setupLogoutHandler(user);
       window.currentUser = user;
 
-      console.log('👤 User UI updated:', user.name, '-', user.role);
    } catch (error) {
       console.error('❌ Error updating user UI:', error);
    }
@@ -196,7 +200,6 @@ function setupLogoutHandler(user) {
 
 function handleLogout() {
    try {
-      console.log("🔴 Logging out...");
       localStorage.clear();
       window.currentUser = null;
 
@@ -288,7 +291,6 @@ function setupLoginForm() {
             const authRedirectPage = localStorage.getItem("authRedirectPage");
             if (authRedirectPage) {
                localStorage.removeItem("authRedirectPage"); // Clear it after use
-               console.log('🔄 Redirecting to auth redirect page:', authRedirectPage);
                alert("✅ Login berhasil!");
                window.location.href = authRedirectPage;
             } else {
@@ -334,7 +336,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       updateUserUI();
       setupLoginForm();
-      console.log('✅ User system initialized');
    } catch (error) {
       console.error('❌ Error initializing user system:', error);
    }
@@ -417,10 +418,29 @@ function bclHasAnyProgress(snapshot) {
    );
 }
 
+function bclGetProgressSyncToken() {
+   const user = getUserData();
+   if (!user || user.isAdmin) return null;
+
+   const token = String(user.token || localStorage.getItem("token") || "").trim();
+   if (!token) return null;
+
+   if (isTokenExpired(token)) {
+      clearStoredUserAuth();
+      return null;
+   }
+
+   if (user.token && user.token !== token) {
+      return null;
+   }
+
+   return token;
+}
+
 async function bclSyncProgressToServer(force = false) {
    try {
-      const token = localStorage.getItem("token");
-      if (!token || isTokenExpired(token)) return;
+      const token = bclGetProgressSyncToken();
+      if (!token) return;
 
       const snapshot = bclCollectProgressSnapshot();
       if (!bclHasAnyProgress(snapshot) && !force) return;
@@ -445,17 +465,29 @@ async function bclSyncProgressToServer(force = false) {
          body: JSON.stringify(snapshot)
       });
 
+      if (response.status === 401 || response.status === 403) {
+         clearStoredUserAuth();
+         localStorage.setItem("bcl_progress_sync_disabled", "1");
+         if (typeof updateUserUI === "function") {
+            updateUserUI();
+         }
+         return;
+      }
+
       if (response.ok) {
          localStorage.setItem(hashKey, hash);
          localStorage.setItem(timeKey, String(now));
+         localStorage.removeItem("bcl_progress_sync_disabled");
+         return;
       }
+
+      throw new Error(`Progress sync failed (${response.status})`);
    } catch (error) {
-      console.warn("Progress sync skipped:", error.message);
    }
 }
 
 function bclInitializeProgressSync() {
-   const token = localStorage.getItem("token");
+   const token = bclGetProgressSyncToken();
    if (!token) return;
 
    setTimeout(() => {

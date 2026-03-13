@@ -1,4 +1,21 @@
 // Enhanced Component Loader with Persistent Sidebar System
+(function suppressElearningDebugConsole() {
+    if (window.BCL_ENABLE_DEBUG_LOGS === true || window.__bclElearningConsoleQuietApplied) {
+        return;
+    }
+
+    window.__bclElearningConsoleQuietApplied = true;
+    window.__bclOriginalConsole = window.__bclOriginalConsole || {
+        log: console.log.bind(console),
+        info: console.info.bind(console),
+        debug: console.debug.bind(console)
+    };
+
+    console.log = () => {};
+    console.info = () => {};
+    console.debug = () => {};
+})();
+
 class ComponentLoader {
 
     constructor() {
@@ -26,12 +43,6 @@ class ComponentLoader {
         this.setupSidebarEventHandlers();
 
         // Debug localStorage setelah components dimuat
-        console.log('🔍 Component Loader Debug - localStorage data:');
-        console.log('username:', localStorage.getItem('username'));
-        console.log('role:', localStorage.getItem('role'));
-        console.log('userimg:', localStorage.getItem('userimg'));
-        console.log('userData:', localStorage.getItem('userData'));
-        console.log('user:', localStorage.getItem('user'));
 
         // Sync user info setelah semua components loaded
         this.syncHeaderUserInfo();
@@ -46,11 +57,9 @@ class ComponentLoader {
 
     // Initialize global content management functions for sidebar access
     initializeContentManagementFunctions() {
-        console.log('Initializing global content management functions...');
 
         // Content Management Functions (global scope for sidebar access)
         window.openContentManager = function () {
-            console.log('openContentManager called globally');
 
             // Create modal if it doesn't exist
             if (!document.getElementById('admin-modal')) {
@@ -77,12 +86,10 @@ class ComponentLoader {
                     </div>
                 `;
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
-                console.log('Global modal created');
             }
 
             // Load Bootstrap if not loaded
             if (typeof bootstrap === 'undefined') {
-                console.log('Loading Bootstrap globally...');
                 const bootstrapCSS = document.createElement('link');
                 bootstrapCSS.rel = 'stylesheet';
                 bootstrapCSS.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
@@ -97,14 +104,12 @@ class ComponentLoader {
             setTimeout(() => {
                 const modal = new bootstrap.Modal(document.getElementById('admin-modal'));
                 modal.show();
-                console.log('Global modal shown');
             }, 200);
 
             alert('Content Manager opened! (Global function working)');
         };
 
         window.openExamManager = function () {
-            console.log('openExamManager called globally');
 
             if (!document.getElementById('admin-modal')) {
                 const modalHTML = `
@@ -130,11 +135,9 @@ class ComponentLoader {
                     </div>
                 `;
                 document.body.insertAdjacentHTML('beforeend', modalHTML);
-                console.log('Global exam modal created');
             }
 
             if (typeof bootstrap === 'undefined') {
-                console.log('Loading Bootstrap for exam modal...');
                 const bootstrapCSS = document.createElement('link');
                 bootstrapCSS.rel = 'stylesheet';
                 bootstrapCSS.href = 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
@@ -148,15 +151,11 @@ class ComponentLoader {
             setTimeout(() => {
                 const modal = new bootstrap.Modal(document.getElementById('admin-modal'));
                 modal.show();
-                console.log('Global exam modal shown');
             }, 200);
 
             alert('Exam Manager opened! (Global function working)');
         };
 
-        console.log('Global content management functions initialized');
-        console.log('openContentManager available:', typeof window.openContentManager);
-        console.log('openExamManager available:', typeof window.openExamManager);
     }
 
     // Load header component
@@ -199,7 +198,6 @@ class ComponentLoader {
 
             // If ANY persistent sidebar exists, do NOTHING - not even sync
             if (existingPersistentSidebar) {
-                console.log('🚫 Component Loader: Persistent sidebar detected - absolutely no action taken');
                 // Only sync user info if needed, but don't touch DOM
                 this.syncSidebarUserInfo();
                 return;
@@ -207,14 +205,12 @@ class ComponentLoader {
 
             // Also check global sidebar loader flags
             if (window.sidebarLoaded && window.sidebarElement && document.contains(window.sidebarElement)) {
-                console.log('🚫 Component Loader: Global sidebar flags indicate already loaded');
                 // Only sync user info if needed
                 this.syncSidebarUserInfo();
                 return;
             }
 
             // Only proceed if we've confirmed no sidebar exists anywhere
-            console.log('📦 Component Loader: Loading sidebar component (absolute first time)...');
 
             const response = await fetch('/elearning-assets/components/sidebar.html');
             if (!response.ok) {
@@ -239,7 +235,6 @@ class ComponentLoader {
             // ONLY insert if no sidebar exists anywhere
             const anySidebar = document.querySelector('.side-bar');
             if (anySidebar) {
-                console.log('⚠️ Replacing existing non-persistent sidebar');
                 anySidebar.replaceWith(sidebarElement);
             } else {
                 sidebarContainer.insertBefore(sidebarElement, sidebarContainer.firstChild);
@@ -256,7 +251,6 @@ class ComponentLoader {
                 this.syncSidebarUserInfo();
             }, 200);
 
-            console.log('✅ Component Loader: Sidebar loaded with absolute persistence');
 
         } catch (error) {
             console.warn('Component Loader: Failed to load sidebar:', error);
@@ -295,16 +289,13 @@ class ComponentLoader {
     // Load navbar for e-learning pages
     async loadNavbarForElearning() {
         try {
-            console.log('🧭 Loading navbar for e-learning page...');
 
             // Import the navbar loading function from loadComponents.js
             if (typeof loadNavbar === 'function') {
                 await loadNavbar();
-                console.log('✅ Navbar loaded successfully for e-learning page');
             } else {
                 // Fallback: load navbar directly
                 const navbarPath = '/elearning-assets/components/navbar.html';
-                console.log('📂 Using navbar path:', navbarPath);
 
                 const response = await fetch(navbarPath);
                 if (!response.ok) {
@@ -325,7 +316,6 @@ class ComponentLoader {
                         document.body.appendChild(newScript);
                     });
 
-                    console.log('✅ Navbar loaded and scripts executed for e-learning page from:', navbarPath);
                 } else {
                     console.warn('❌ Navbar container not found in header component');
                 }
@@ -376,11 +366,9 @@ class ComponentLoader {
     // Load authentication guard for e-learning pages
     async loadAuthGuard() {
         try {
-            console.log('🔍 Checking if auth guard is needed for path:', window.location.pathname);
 
             // Only load auth guard on e-learning pages
             if (!window.location.pathname.startsWith('/elearning-assets/')) {
-                console.log('🔓 Auth guard not needed for non-e-learning pages');
                 return;
             }
 
@@ -389,17 +377,14 @@ class ComponentLoader {
                 document.body?.dataset?.publicLearningPage === 'true';
 
             if (publicLearningPage) {
-                console.log('Public learning page detected - auth guard skipped');
                 return;
             }
 
             // Check if auth guard script already exists
             if (document.querySelector('script[src*="auth-guard.js"]')) {
-                console.log('🔐 Auth guard script already loaded');
                 return;
             }
 
-            console.log('🔐 Loading authentication guard for e-learning page...');
 
             // Load the auth guard script
             const script = document.createElement('script');
@@ -409,7 +394,6 @@ class ComponentLoader {
             // Create a promise to wait for the script to load
             await new Promise((resolve, reject) => {
                 script.onload = () => {
-                    console.log('✅ Auth guard script loaded successfully');
                     resolve();
                 };
                 script.onerror = () => {
@@ -422,7 +406,6 @@ class ComponentLoader {
             // Wait a bit for the auth guard to initialize
             await new Promise(resolve => setTimeout(resolve, 200));
 
-            console.log('🔐 Auth guard initialization completed');
 
         } catch (error) {
             console.warn('Failed to load auth guard:', error);
@@ -446,7 +429,6 @@ class ComponentLoader {
         const finalRole = role || user.role || userData.role || 'student';
         const finalImage = userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg';
 
-        console.log('Syncing header user info:', { finalUsername, finalRole, finalImage });
 
         // Update header elements
         const headerUserName = document.getElementById('header-user-name');
@@ -500,7 +482,7 @@ class ComponentLoader {
     }
 
     ensureFavicon() {
-        const faviconHref = '/img/icons/icon_bcl.ico?v=20260312b';
+        const faviconHref = '/img/icons/icon_bcl.ico?v=20260313c';
         const iconRels = ['icon', 'shortcut icon', 'apple-touch-icon'];
 
         document
@@ -518,7 +500,6 @@ class ComponentLoader {
 
     // Handle logout functionality
     handleLogout() {
-        console.log('🚪 Logging out user...');
 
         // Clear all possible user data formats
         localStorage.removeItem('username');
@@ -529,7 +510,6 @@ class ComponentLoader {
         localStorage.removeItem('email');
         localStorage.removeItem('token');
 
-        console.log('✅ User data cleared from localStorage');
 
         // Redirect to main page or login page
         window.location.href = '../index.html';
@@ -664,7 +644,6 @@ class ComponentLoader {
         }
 
         const state = this.applySidebarUserState(document);
-        console.log('Syncing sidebar user info:', state);
 
         // Ambil data user dari localStorage (support both formats)
         const username = localStorage.getItem('username');
@@ -680,7 +659,6 @@ class ComponentLoader {
         const finalRole = role || user.role || userData.role || 'student';
         const finalImage = userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg';
 
-        console.log('Syncing sidebar user info:', { finalUsername, finalRole, finalImage });
 
         // Update sidebar elements dengan struktur baru
         const sidebarUserName = document.getElementById('sidebar-user-name');
@@ -735,7 +713,6 @@ class ComponentLoader {
                 // Combine role and level in single element
                 const roleDisplay = finalRole || 'visitor';
                 sidebarUserRoleLevel.textContent = `${roleDisplay} • ${userLevel}`;
-                console.log('Updated sidebar user role-level to:', `${roleDisplay} • ${userLevel}`);
             }
 
             // Update profile button for logged-in user
@@ -771,13 +748,11 @@ class ComponentLoader {
             // Use CSS class instead of inline style for smoother transitions
             if (isAdmin) {
                 adminContentSection.classList.add('show');
-                console.log('🔧 Admin content management section enabled for:', finalUsername);
             } else {
                 adminContentSection.classList.remove('show');
             }
         }
 
-        console.log('✅ Sidebar user info synced successfully');
     }
 
     // Setup event handlers untuk sidebar component
@@ -805,7 +780,6 @@ class ComponentLoader {
 
     // Handle navigation ke main page dengan menyimpan user data
     handleMainPageNavigation() {
-        console.log('🏠 Navigating to main page...');
 
         // Pastikan user data tersimpan dengan format yang benar
         const username = localStorage.getItem('username');
@@ -813,7 +787,6 @@ class ComponentLoader {
         const userimg = localStorage.getItem('userimg');
         const user = localStorage.getItem('user');
 
-        console.log('User data before navigation:', { username, role, userimg, user });
 
         // Jika ada user data, pastikan tersimpan dalam format yang kompatible dengan halaman utama
         if (username) {
@@ -827,7 +800,6 @@ class ComponentLoader {
 
             // Simpan dalam format JSON juga untuk backup
             localStorage.setItem('user', JSON.stringify(userData));
-            console.log('✅ User data synchronized for main page');
         }
 
         // Navigate to main page - gunakan path absolut agar lebih reliable
@@ -845,7 +817,6 @@ class ComponentLoader {
             targetPath = '/index.html';
         }
 
-        console.log('Navigating from:', currentPath, 'to:', targetPath);
         window.location.href = targetPath;
     }
 }

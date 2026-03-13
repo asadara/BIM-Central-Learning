@@ -1,6 +1,23 @@
 // Authentication Guard for E-Learning Pages
 // This script ensures users are authenticated before accessing e-learning content
 
+(function suppressElearningDebugConsole() {
+    if (window.BCL_ENABLE_DEBUG_LOGS === true || window.__bclElearningConsoleQuietApplied) {
+        return;
+    }
+
+    window.__bclElearningConsoleQuietApplied = true;
+    window.__bclOriginalConsole = window.__bclOriginalConsole || {
+        log: console.log.bind(console),
+        info: console.info.bind(console),
+        debug: console.debug.bind(console)
+    };
+
+    console.log = () => {};
+    console.info = () => {};
+    console.debug = () => {};
+})();
+
 class AuthGuard {
     constructor() {
         this.isAuthenticated = false;
@@ -37,7 +54,6 @@ class AuthGuard {
             let user = localStorage.getItem('user');
             let username = localStorage.getItem('username');
 
-            console.log('🔍 Checking authentication across all sections');
 
             // Method 1: Check consolidated user object (e-learning & main site)
             if (user) {
@@ -45,10 +61,9 @@ class AuthGuard {
                     const userData = JSON.parse(user);
                     if (userData && userData.token) {
                         token = userData.token; // Use token from user object
-                        console.log('✅ Found user data with token');
                     }
                 } catch (e) {
-                    console.warn('Could not parse user data:', e);
+                    
                 }
             }
 
@@ -60,12 +75,12 @@ class AuthGuard {
                 username = localStorage.getItem('username');
             }
 
-            console.log('🔍 Auth status - Token:', !!token, 'Username:', !!username);
 
             if (!token || (!user && !username)) {
-                const adminSessionAuthenticated = await this.checkAdminSession();
+                const adminSessionAuthenticated = this.shouldCheckAdminSession()
+                    ? await this.checkAdminSession()
+                    : false;
                 if (!adminSessionAuthenticated) {
-                    console.log('❌ No valid authentication found - not authenticated');
                     this.isAuthenticated = false;
                 }
                 return;
@@ -77,14 +92,12 @@ class AuthGuard {
                 const currentTime = Date.now() / 1000;
 
                 if (payload.exp && payload.exp < currentTime) {
-                    console.warn('Token expired, clearing authentication');
                     this.clearAuthentication();
                     this.isAuthenticated = false;
                     return;
                 }
             } catch (e) {
                 // Token might not be JWT, continue
-                console.log('Token format not JWT, continuing...');
             }
 
             // If we have valid authentication data
@@ -104,7 +117,6 @@ class AuthGuard {
                 };
             }
 
-            console.log('✅ User authenticated:', window.currentUser?.name || 'Unknown');
             this.syncAuthUI();
 
         } catch (error) {
@@ -112,6 +124,11 @@ class AuthGuard {
             this.clearAuthentication();
             this.isAuthenticated = false;
         }
+    }
+
+    shouldCheckAdminSession() {
+        const path = (window.location.pathname || '').toLowerCase();
+        return path.includes('/pages/sub/admin');
     }
 
     async checkAdminSession() {
@@ -144,11 +161,9 @@ class AuthGuard {
             localStorage.setItem('role', adminUser.role || 'System Administrator');
             localStorage.setItem('userimg', adminUser.photo || '/img/user-default.png');
 
-            console.log('✅ Admin session authenticated:', adminUser.name);
             this.syncAuthUI();
             return true;
         } catch (error) {
-            console.warn('Admin session check failed:', error);
             return false;
         }
     }
@@ -181,7 +196,6 @@ class AuthGuard {
     showAuthModal() {
         // Store current page for redirection after login
         localStorage.setItem('authRedirectPage', window.location.href);
-        console.log('📍 Stored redirect page:', window.location.href);
 
         // Prevent interaction with page content
         document.body.style.pointerEvents = 'none';
@@ -463,7 +477,6 @@ if (window.location.pathname.startsWith('/elearning-assets/') &&
     !window.location.pathname.includes('/login.html') &&
     !window.location.pathname.includes('/register.html')) {
     window.authGuard = new AuthGuard();
-    console.log('🔐 Auth guard initialized for e-learning pages');
 }
 
 // Also initialize when DOM is ready (fallback)
@@ -474,7 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
         !window.location.pathname.includes('/register.html') &&
         !window.authGuard) {
         window.authGuard = new AuthGuard();
-        console.log('🔐 Auth guard initialized for e-learning pages (fallback)');
     }
 });
 

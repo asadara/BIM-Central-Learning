@@ -132,14 +132,17 @@
         justify-content: space-between;
         gap: 12px;
         padding-inline: 12px;
+        min-height: 82px;
         overflow: visible;
     }
 
     .bcl-main-navbar .navbar-brand {
         min-width: 0;
-        flex: 1 1 auto;
+        flex: 0 0 auto;
         margin-right: 0;
-        max-width: min(430px, calc(100% - 72px));
+        max-width: none;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
     }
 
     .bcl-main-navbar .bcl-brand-logos {
@@ -173,6 +176,36 @@
     .bcl-main-navbar .navbar-toggler {
         flex: 0 0 auto;
         margin: 0 0 0 auto !important;
+    }
+
+    .bcl-main-navbar .navbar-collapse {
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: flex-end;
+    }
+
+    .bcl-main-navbar .navbar-nav {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0;
+        margin-left: auto !important;
+        padding: 0 !important;
+    }
+
+    .bcl-main-navbar .navbar-nav .nav-item {
+        flex: 0 0 auto;
+    }
+
+    .bcl-main-navbar .navbar-nav .nav-link {
+        display: flex;
+        align-items: center;
+        min-height: 82px;
+        padding: 0 8px;
+        font-size: 15px;
+        font-weight: 600;
+        white-space: nowrap;
+        text-align: center;
     }
 
     .nav-mobile .bcl-main-navbar,
@@ -286,12 +319,12 @@
     @media (max-width: 1024px) {
         .bcl-main-navbar {
             padding-inline: 10px;
+            min-height: 74px;
         }
 
         .bcl-main-navbar .navbar-brand {
             padding-left: 0 !important;
             padding-right: 0 !important;
-            max-width: calc(100% - 64px);
         }
 
         .bcl-main-navbar .bcl-brand-logos {
@@ -304,8 +337,31 @@
             height: 34px !important;
         }
 
+        .bcl-main-navbar .navbar-nav .nav-link {
+            min-height: 74px;
+            padding: 0 7px;
+            font-size: 14px;
+        }
+
         .nav-mobile .bcl-main-navbar .navbar-nav {
             padding: 10px;
+        }
+    }
+
+    @media (min-width: 992px) and (max-width: 1280px) {
+        .bcl-main-navbar .bcl-brand-logos {
+            gap: 8px;
+        }
+
+        .bcl-main-navbar .bcl-brand-logo-nke,
+        .bcl-main-navbar .bcl-brand-logo-bim,
+        .bcl-main-navbar .bcl-brand-logo-bcl {
+            height: 38px;
+        }
+
+        .bcl-main-navbar .navbar-nav .nav-link {
+            padding: 0 6px;
+            font-size: 14px;
         }
     }
 </style>
@@ -339,8 +395,10 @@
             return;
         }
 
+        const brandLink = navbar.querySelector('.navbar-brand');
         const navbarToggler = navbar.querySelector('.navbar-toggler');
         const navbarCollapse = navbar.querySelector('.navbar-collapse');
+        const navbarNav = navbar.querySelector('.navbar-nav');
         const dropdowns = Array.from(navbar.querySelectorAll('.dropdown'));
 
         function closeNavbar() {
@@ -456,11 +514,20 @@
         }
 
         function updateNavMode() {
-            const isSmallScreen = window.matchMedia('(max-width: 1024px)').matches;
-            const isTouchDevice = window.matchMedia('(pointer: coarse)').matches
-                || window.matchMedia('(hover: none)').matches
-                || ('ontouchstart' in window);
-            const isMobileMode = isSmallScreen && isTouchDevice;
+            const viewportForceCollapsed = window.innerWidth <= 1280;
+            const navbarStyle = window.getComputedStyle(navbar);
+            const horizontalPadding =
+                (parseFloat(navbarStyle.paddingLeft) || 0) +
+                (parseFloat(navbarStyle.paddingRight) || 0);
+            const availableWidth = navbar.clientWidth - horizontalPadding;
+            const brandWidth = brandLink ? Math.ceil(brandLink.getBoundingClientRect().width) : 0;
+            const navWidth = navbarNav ? Math.ceil(navbarNav.scrollWidth) : 0;
+            const togglerWidth = navbarToggler
+                ? Math.ceil(navbarToggler.getBoundingClientRect().width || 52)
+                : 52;
+            const requiresCollapsedLayout =
+                viewportForceCollapsed || (brandWidth + navWidth + togglerWidth + 40 > availableWidth);
+            const isMobileMode = requiresCollapsedLayout;
 
             rootElement.classList.toggle('nav-mobile', isMobileMode);
 
@@ -475,7 +542,7 @@
             const isMobileMode = rootElement.classList.contains('nav-mobile');
 
             if (navbarToggler) {
-                navbarToggler.style.display = isMobileMode ? 'flex' : '';
+                navbarToggler.style.display = isMobileMode ? 'flex' : 'none';
             }
 
             if (!isMobileMode) {

@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     const container = document.getElementById("plugin-container");
+    const FALLBACK_PLUGIN_IMAGE = "/img/fallback-thumb.png";
 
     if (!container) {
         console.error("❌ Plugin container not found!");
@@ -14,8 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function loadPlugins() {
         try {
-            console.log("🔌 Loading plugins from backend...");
-
             // Fetch plugins from backend API
             const response = await fetch(`/api/plugins`);
 
@@ -24,8 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             const pluginsData = await response.json();
-            console.log("✅ Plugins data received:", pluginsData.length, "plugins");
-
             if (!Array.isArray(pluginsData)) {
                 throw new Error("Invalid plugins data format");
             }
@@ -37,6 +34,23 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("❌ Error loading plugins:", error);
             showErrorState(error.message);
         }
+    }
+
+    function getPluginLogoUrl(plugin) {
+        const logo = typeof plugin?.logo === "string" ? plugin.logo.trim() : "";
+        if (!logo) {
+            return FALLBACK_PLUGIN_IMAGE;
+        }
+
+        if (/^(https?:|data:)/i.test(logo)) {
+            return logo;
+        }
+
+        if (logo.startsWith("/")) {
+            return logo;
+        }
+
+        return `/${logo.replace(/^\.?\/+/, "")}`;
     }
 
     function displayPlugins(plugins) {
@@ -60,15 +74,16 @@ document.addEventListener("DOMContentLoaded", function () {
         plugins.forEach(plugin => {
             const card = document.createElement("div");
             card.classList.add("col-lg-3", "col-sm-6");
+            const logoUrl = getPluginLogoUrl(plugin);
 
             card.innerHTML = `
                 <div class="service-item text-center pt-3 shadow">
                     <div class="p-4">
-                        <img src="${plugin.logo || '../img/plugin-default.png'}"
+                        <img src="${logoUrl}"
                              alt="${plugin.name}"
                              width="150px"
                              class="mb-4"
-                             onerror="this.src='../img/fallback-plugin.png'"
+                             onerror="this.onerror=null;this.src='${FALLBACK_PLUGIN_IMAGE}'"
                              style="max-width: 150px; height: auto;">
                         <h5 class="mb-3">${plugin.name}</h5>
                         <p class="text-muted small mb-3" style="font-size: 0.9rem; line-height: 1.4;">

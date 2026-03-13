@@ -25,10 +25,59 @@ function createProjectCatalogService({
     ].filter(Boolean);
     const FFPROBE_BIN = findBinary(FFPROBE_CANDIDATES);
     const videoDurationCache = new Map();
+    const PROJECT_MEDIA_JSON_CACHE_DIR = path.resolve(__dirname, '..', '..', 'data', 'projects-explorer-cache', 'media');
     let ffprobeAvailable = !!FFPROBE_BIN;
+
+    try {
+        fs.mkdirSync(PROJECT_MEDIA_JSON_CACHE_DIR, { recursive: true });
+    } catch (error) {
+        // Ignore cache directory init failures.
+    }
 
     function getEnabledSources() {
         return projectSources.filter(source => source && source.enabled);
+    }
+
+    function getEnabledSourcesForScan(sourceId = null) {
+        const enabledSources = getEnabledSources();
+        if (!sourceId) {
+            return enabledSources;
+        }
+
+        return enabledSources.filter(source => source.id === sourceId);
+    }
+
+    function buildProjectMediaCacheFileName(year, sourceId, projectName) {
+        const safe = (value) => encodeURIComponent(String(value || '').trim()).replace(/%/g, '_');
+        return `${safe(year)}__${safe(sourceId || 'unknown')}__${safe(projectName)}.json`;
+    }
+
+    function getProjectMediaCacheFilePath(year, sourceId, projectName) {
+        return path.join(PROJECT_MEDIA_JSON_CACHE_DIR, buildProjectMediaCacheFileName(year, sourceId, projectName));
+    }
+
+    function readProjectMediaCache(year, sourceId, projectName) {
+        const cachePath = getProjectMediaCacheFilePath(year, sourceId, projectName);
+        try {
+            if (!fs.existsSync(cachePath)) {
+                return null;
+            }
+
+            const raw = fs.readFileSync(cachePath, 'utf8');
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function writeProjectMediaCache(year, sourceId, projectName, payload) {
+        const cachePath = getProjectMediaCacheFilePath(year, sourceId, projectName);
+        try {
+            fs.writeFileSync(cachePath, JSON.stringify(payload, null, 2), 'utf8');
+        } catch (error) {
+            // Cache write failure should not block primary response.
+        }
     }
 
     function getProjectScanConfig(source) {
@@ -329,13 +378,13 @@ function createProjectCatalogService({
         };
     }
 
-    async function getProjectsFromMultipleSources(year) {
+    async function getProjectsFromMultipleSources(year, sourceId = null) {
         const allProjects = new Map();
         const hiddenProjects = [];
         const LANMountManager = require('../utils/lanMountManager');
         const lanManager = new LANMountManager();
 
-        for (const source of getEnabledSources()) {
+        for (const source of getEnabledSourcesForScan(sourceId)) {
             try {
                 const mount = source.mountId ? lanManager.getMountById(source.mountId) : null;
                 const sourcePath = await resolveSourcePath(source, lanManager, { timeoutMs: 5000 });
@@ -418,6 +467,11 @@ function createProjectCatalogService({
     }
 
     async function getProjectMedia(year, project, sourceId) {
+        const cached = readProjectMediaCache(year, sourceId, project);
+        if (cached) {
+            return cached;
+        }
+
         let projectPath = null;
         let foundSource = null;
         let foundSourcePath = null;
@@ -492,7 +546,7 @@ function createProjectCatalogService({
             console.warn('⚠️ Error building media details:', error.message);
         }
 
-        return {
+        const payload = {
             year,
             project,
             media,
@@ -503,6 +557,9 @@ function createProjectCatalogService({
             sourceName: foundSource.name,
             message: foundSource.rootScan ? 'Root scan project - scanned all folders' : 'Project folder scan complete'
         };
+
+        writeProjectMediaCache(year, foundSource.id, project, payload);
+        return payload;
     }
 
     function getDurationCacheKey(filePath, stat) {

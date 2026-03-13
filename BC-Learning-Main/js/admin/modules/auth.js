@@ -14,7 +14,6 @@ class AuthModule {
      * Initialize the auth module
      */
     initialize() {
-        console.log('ðŸ” Initializing Auth Module');
         this.setupEventListeners();
     }
 
@@ -57,8 +56,6 @@ class AuthModule {
             return;
         }
 
-        console.log('ðŸ” Attempting admin login:', { email: email ? 'present' : 'empty' });
-
         try {
             // Show loading state
             this.setLoginFormState(true);
@@ -72,11 +69,8 @@ class AuthModule {
                 body: JSON.stringify({ email, password })
             });
 
-            console.log('ðŸ“¡ Admin login response:', response.status, response.statusText);
-
             if (response.ok) {
                 const data = await response.json();
-                console.log('âœ… Admin login successful:', data);
 
                 // Reset login attempts on success
                 this.resetLoginAttempts();
@@ -101,8 +95,6 @@ class AuthModule {
 
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                console.error('âŒ Admin login failed:', errorData);
-
                 // Handle different error types
                 this.handleLoginError(response.status, errorData);
 
@@ -171,23 +163,18 @@ class AuthModule {
      */
     async checkSession() {
         try {
-            console.log('ðŸ” Checking admin session...');
             const response = await fetch('/api/admin/session', { credentials: 'include' });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('ðŸ“¡ Session check response:', data);
 
                 if (data.authenticated && data.user) {
-                    console.log('âœ… Admin session valid for:', data.user.username);
                     this.adminPanel.adminUser = data.user;
                     this.adminPanel.isAdminLoggedIn = true;
                     document.getElementById('auth-section').classList.add('d-none');
                     document.getElementById('admin-interface').classList.remove('d-none');
                     this.adminPanel.loadDashboardStats();
                     return true;
-                } else {
-                    console.log('âŒ Admin session not authenticated');
                 }
             } else {
                 console.error('âŒ Session check failed with status:', response.status);
@@ -201,7 +188,6 @@ class AuthModule {
             return this.checkSession();
         }
 
-        console.log('ðŸ”’ No valid admin session - showing auth section');
         this.ensureAuthSectionVisible();
         return false;
     }
@@ -223,8 +209,6 @@ class AuthModule {
         }
 
         try {
-            console.log('ðŸšª Admin logout initiated');
-
             const response = await fetch('/api/admin/logout', {
                 method: 'POST',
                 headers: {
@@ -233,8 +217,6 @@ class AuthModule {
             });
 
             if (response.ok) {
-                console.log('âœ… Admin logout successful');
-
                 // Log logout event
                 this.logAuthEvent('logout', {
                     userId: this.adminPanel.adminUser?.id,
@@ -269,8 +251,6 @@ class AuthModule {
      * Force local logout when server is unreachable
      */
     forceLocalLogout() {
-        console.log('ðŸ”’ Forcing local logout due to server unavailability');
-
         this.adminPanel.adminUser = null;
         this.adminPanel.isAdminLoggedIn = false;
 
@@ -286,7 +266,6 @@ class AuthModule {
     clearSessionData() {
         // Clear any session-specific data if needed
         // For now, this is a placeholder for future enhancements
-        console.log('ðŸ§¹ Session data cleared');
     }
 
     /**
@@ -317,12 +296,6 @@ class AuthModule {
     recordFailedAttempt() {
         this.loginAttempts++;
         this.lastFailedAttempt = Date.now();
-
-        console.log(`âŒ Failed login attempt #${this.loginAttempts}`);
-
-        if (this.loginAttempts >= this.maxLoginAttempts) {
-            console.log(`ðŸš« Account locked for ${this.lockoutTime / 1000 / 60} minutes due to too many failed attempts`);
-        }
     }
 
     /**
@@ -331,25 +304,14 @@ class AuthModule {
     resetLoginAttempts() {
         this.loginAttempts = 0;
         this.lastFailedAttempt = null;
-        console.log('ðŸ”„ Login attempts reset');
     }
 
     /**
      * Log authentication events
      */
     logAuthEvent(eventType, details) {
-        const logEntry = {
-            timestamp: new Date().toISOString(),
-            event: eventType,
-            details: details,
-            userAgent: navigator.userAgent,
-            ip: 'client-side' // Would be logged server-side
-        };
-
-        console.log('ðŸ“ Auth event logged:', logEntry);
-
-        // In a production system, this would be sent to a logging service
-        // For now, we just log to console
+        void eventType;
+        void details;
     }
 
     /**
@@ -387,8 +349,6 @@ class AuthModule {
 
 // Initialize and register the auth module immediately when script loads
 (function() {
-    console.log('ðŸ” Initializing Auth Module...');
-
     // Ensure adminPanel exists
     if (!window.adminPanel) {
         console.error('âŒ window.adminPanel not found - auth module cannot initialize');
@@ -418,7 +378,6 @@ class AuthModule {
         // Start session validation
         authModule.startSessionValidation();
 
-        console.log('âœ… Auth module initialized and registered successfully');
     } catch (error) {
         console.error('âŒ Failed to initialize auth module:', error);
     }

@@ -207,14 +207,14 @@ if not exist "backend\server.js" (
     echo [OK] Backend directory found
 )
 
-:: Check Docker
-docker --version >nul 2>nul
-if errorlevel 1 (
-    echo [ERROR] Docker not found!
+:: Check native PostgreSQL service availability
+call :detect_native_postgres_service
+if not defined NATIVE_PG_SERVICE (
+    echo [ERROR] Native PostgreSQL service not found!
     set ERROR_FLAG=1
     goto :error_exit
 ) else (
-    for /f "tokens=*" %%i in ('docker --version 2^>nul') do echo [OK] Docker: %%i
+    echo [OK] Native PostgreSQL service detected: !NATIVE_PG_SERVICE!
 )
 
 echo.
@@ -255,111 +255,11 @@ call :detect_native_postgres_service
 if defined NATIVE_PG_SERVICE (
     set "POSTGRES_RUNTIME=native"
     echo [INFO] Native PostgreSQL service detected: !NATIVE_PG_SERVICE!
-    echo [INFO] Skipping Docker dependency checks in native PostgreSQL mode
+    echo [INFO] Native PostgreSQL mode enabled
     goto :runtime_ready
 ) else (
-    :: Check Docker (REQUIRED only when PostgreSQL still uses Docker runtime)
-    echo [INFO] Checking Docker...
-    call :normalize_docker_cli_config
-    call :prefer_docker_desktop_context
-
-    :: Check Docker availability (auto-start Docker Desktop if needed)
-    echo [INFO] Testing docker command...
-    call :ensure_docker_running
-    if errorlevel 1 (
-        goto :docker_not_found
-    ) else (
-        goto :docker_found
-    )
+    goto :native_postgres_missing
 )
-
-:ensure_docker_running
-set "DOCKER_OK=0"
-call :docker_ping
-if not errorlevel 1 set "DOCKER_OK=1"
-if "!DOCKER_OK!"=="1" exit /b 0
-
-:: Try to start Docker Windows service first (best effort)
-sc query com.docker.service >nul 2>&1
-if not errorlevel 1 (
-    echo [INFO] Attempting to start Docker service...
-    net start com.docker.service >nul 2>&1
-    call :sleep 3
-    call :docker_ping
-    if not errorlevel 1 exit /b 0
-)
-
-if "%RUN_AS_SYSTEM%"=="1" (
-    echo [INFO] Docker Engine is not ready in SYSTEM context.
-    echo [INFO] Skipping Docker Desktop launch from Session 0; user logon fallback will handle it.
-    exit /b 1
-)
-
-echo [INFO] Docker Engine not ready - attempting to start Docker Desktop...
-set "DOCKER_DESKTOP_EXE=%ProgramFiles%\Docker\Docker\Docker Desktop.exe"
-if not exist "!DOCKER_DESKTOP_EXE!" set "DOCKER_DESKTOP_EXE=%ProgramFiles(x86)%\Docker\Docker\Docker Desktop.exe"
-if exist "!DOCKER_DESKTOP_EXE!" (
-    if "%HIDDEN_MODE%"=="1" (
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -WindowStyle Hidden -FilePath '!DOCKER_DESKTOP_EXE!'"
-    ) else (
-        start "" "!DOCKER_DESKTOP_EXE!"
-    )
-) else (
-    echo [WARNING] Docker Desktop executable not found in Program Files
-    exit /b 1
-)
-
-echo [INFO] Waiting for Docker Engine to be ready (up to 180 seconds)...
-for /l %%i in (1,1,90) do (
-    call :docker_ping
-    if not errorlevel 1 set "DOCKER_OK=1"
-    if "!DOCKER_OK!"=="1" exit /b 0
-    if %%i==30 (
-        if exist "!DOCKER_DESKTOP_EXE!" (
-            echo [INFO] Docker still not ready - retrying Docker Desktop launch...
-            if "%HIDDEN_MODE%"=="1" (
-                powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -WindowStyle Hidden -FilePath '!DOCKER_DESKTOP_EXE!'"
-            ) else (
-                start "" "!DOCKER_DESKTOP_EXE!"
-            )
-        )
-    )
-    call :sleep 2
-)
-echo [ERROR] Docker Engine did not become ready in time
-exit /b 1
-
-:normalize_docker_cli_config
-set "DOCKER_CONFIG_FILE=%USERPROFILE%\.docker\config.json"
-if not exist "%DOCKER_CONFIG_FILE%" exit /b 0
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$p='%DOCKER_CONFIG_FILE%'; try { $b=[System.IO.File]::ReadAllBytes($p); if($b.Length -ge 3 -and $b[0]-eq 239 -and $b[1]-eq 187 -and $b[2]-eq 191){ $t=[System.IO.File]::ReadAllText($p,[System.Text.Encoding]::UTF8); [System.IO.File]::WriteAllText($p,$t,(New-Object System.Text.UTF8Encoding($false))) } } catch { exit 1 }"
-if errorlevel 1 echo [WARNING] Could not normalize Docker CLI config encoding
-exit /b 0
-
-:prefer_docker_desktop_context
-docker context inspect desktop-linux >nul 2>&1
-if errorlevel 1 exit /b 0
-docker context use desktop-linux >nul 2>&1
-if errorlevel 1 echo [WARNING] Could not switch Docker context to desktop-linux
-exit /b 0
-
-:ensure_docker_desktop_session
-if "%RUN_AS_SYSTEM%"=="1" exit /b 0
-set "DOCKER_DESKTOP_EXE=%ProgramFiles%\Docker\Docker\Docker Desktop.exe"
-if not exist "!DOCKER_DESKTOP_EXE!" set "DOCKER_DESKTOP_EXE=%ProgramFiles(x86)%\Docker\Docker\Docker Desktop.exe"
-if not exist "!DOCKER_DESKTOP_EXE!" exit /b 0
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-Process 'Docker Desktop' -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }" >nul 2>&1
-if not errorlevel 1 exit /b 0
-
-echo [INFO] Docker Desktop user app is not running - launching it...
-if "%HIDDEN_MODE%"=="1" (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -WindowStyle Hidden -FilePath '!DOCKER_DESKTOP_EXE!'" >nul 2>&1
-) else (
-    start "" "!DOCKER_DESKTOP_EXE!"
-)
-call :sleep 15
-exit /b 0
 
 :detect_native_postgres_service
 set "NATIVE_PG_SERVICE="
@@ -389,33 +289,6 @@ node "%~dp0backend\scripts\db-ping.js" >nul 2>nul
 if errorlevel 1 exit /b 1
 exit /b 0
 
-:docker_ping
-set "ORIG_DOCKER_HOST=%DOCKER_HOST%"
-call :docker_ping_once
-if not errorlevel 1 exit /b 0
-
-set "DOCKER_HOST=npipe:////./pipe/dockerDesktopLinuxEngine"
-call :docker_ping_once
-if not errorlevel 1 (
-    set "DOCKER_HOST=%ORIG_DOCKER_HOST%"
-    exit /b 0
-)
-
-set "DOCKER_HOST=npipe:////./pipe/docker_engine"
-call :docker_ping_once
-set "PING_RESULT=%errorlevel%"
-set "DOCKER_HOST=%ORIG_DOCKER_HOST%"
-if "%PING_RESULT%"=="0" exit /b 0
-exit /b 1
-
-:docker_ping_once
-:: Run only a bounded docker probe here.
-:: Additional unbounded CLI calls such as `docker ps` can hang during boot,
-:: especially when the task runs as SYSTEM before Docker Desktop is fully ready.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0docker-ping.ps1"
-if errorlevel 1 exit /b 1
-exit /b 0
-
 :sleep
 set "SLEEP_SECS=%~1"
 if not defined SLEEP_SECS set "SLEEP_SECS=1"
@@ -425,70 +298,6 @@ if errorlevel 1 (
     ping 127.0.0.1 -n !SLEEP_PINGS! >nul
 )
 exit /b 0
-
-:docker_not_found
-    echo.
-    echo ================================================================================
-    echo            ??? CRITICAL ERROR: Docker Engine Not Ready
-    echo ================================================================================
-    echo.
-    echo [ERROR] Docker CLI is present, but Docker Engine is not responding.
-    echo [REQUIRED] Docker is ESSENTIAL for PostgreSQL database operation.
-    echo [REASON] BCL requires all components to be fully operational.
-    if "%RUN_AS_SYSTEM%"=="1" (
-        echo [INFO] Current context: SYSTEM / Session 0
-        echo [INFO] Docker Desktop cannot be launched reliably from this context.
-        echo [INFO] Recovery will continue from the user logon fallback task.
-    )
-    echo.
-    echo ================================================================================
-    echo                      ???? HOW TO FIX DOCKER ENGINE
-    echo ================================================================================
-    echo.
-    echo STEP 1 - Restart Docker Desktop cleanly:
-    echo ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-    echo 1. Quit Docker Desktop completely
-    echo 2. Run: wsl --shutdown
-    echo 3. Start Docker Desktop again and wait until engine is Running
-    echo.
-    echo STEP 2 - If still stuck in "starting":
-    echo ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-    echo 1. Restart Windows
-    echo 2. Reopen Docker Desktop first, then run this script again
-    echo.
-    echo STEP 3 - Verify manually:
-    echo ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-    echo docker info
-    echo.
-    echo [INFO] If docker info hangs or fails, BCL startup will fail by design.
-    echo [INFO] Docker logs: %LOCALAPPDATA%\Docker\log\host\com.docker.backend.exe.log
-    echo.
-    echo ================================================================================
-    echo.
-    echo [INFO] After Docker Engine is ready, run this script again.
-    echo [INFO] The system REQUIRES all components to be working.
-    echo.
-    set ERROR_FLAG=1
-    goto :error_exit
-
-:docker_found
-    for /f "tokens=*" %%i in ('docker --version 2^>nul') do echo [OK] Docker: %%i
-    set "DOCKER_AVAILABLE=1"
-
-    :: Detect Docker Compose command (v1 vs v2)
-    set DOCKER_COMPOSE_CMD=docker-compose
-    docker compose version >nul 2>&1
-    if not errorlevel 1 (
-        set DOCKER_COMPOSE_CMD=docker compose
-        echo [INFO] Using Docker Compose v2
-    ) else (
-        docker-compose version >nul 2>&1
-        if not errorlevel 1 (
-            echo [INFO] Using Docker Compose v1
-        ) else (
-            echo [WARNING] Docker Compose not available, will attempt to continue
-        )
-    )
 
 :runtime_ready
 :: ??? UPDATED: Direct project nginx detection (simplified and robust)
@@ -648,7 +457,7 @@ echo ===========================================
 call :detect_native_postgres_service
 if defined NATIVE_PG_SERVICE (
     echo [INFO] Native PostgreSQL service detected: !NATIVE_PG_SERVICE!
-    echo [INFO] Preferring native PostgreSQL runtime over Docker containers...
+    echo [INFO] Preferring native PostgreSQL runtime...
     call :postgres_probe
     if not errorlevel 1 (
         set "POSTGRES_RUNTIME=native"
@@ -663,71 +472,7 @@ if defined NATIVE_PG_SERVICE (
     goto :postgres_check_done
 )
 
-echo [INFO] Native PostgreSQL service not found - using Docker PostgreSQL runtime...
-echo [INFO] Starting PostgreSQL and pgAdmin containers...
-
-:: Re-validate Docker Engine right before compose actions to avoid race conditions.
-echo [INFO] Re-validating Docker Engine readiness...
-call :ensure_docker_running
-if errorlevel 1 (
-    echo [ERROR] Docker Engine is not ready for compose operations
-    goto :postgres_start_failed
-)
-
-:: Ensure .env file exists for Docker
-if not exist ".env" (
-    echo [ERROR] .env file not found. Docker PostgreSQL startup requires explicit credentials.
-    echo [ACTION] Copy .env.example to .env and set DB_PASSWORD plus PGADMIN_DEFAULT_PASSWORD first.
-    goto :postgres_start_failed
-)
-
-findstr /R "^DB_PASSWORD=" ".env" >nul
-if errorlevel 1 (
-    echo [ERROR] .env is missing DB_PASSWORD.
-    echo [ACTION] Set DB_PASSWORD in .env before starting Docker PostgreSQL.
-    goto :postgres_start_failed
-)
-
-findstr /R "^PGADMIN_DEFAULT_PASSWORD=" ".env" >nul
-if errorlevel 1 (
-    echo [ERROR] .env is missing PGADMIN_DEFAULT_PASSWORD.
-    echo [ACTION] Set PGADMIN_DEFAULT_PASSWORD in .env before starting Docker PostgreSQL.
-    goto :postgres_start_failed
-)
-
-:: Check if PostgreSQL containers are already running
-echo [INFO] Checking for existing PostgreSQL containers...
-docker ps --filter "name=bcl-postgres" --format "{{.Names}}" 2>nul | findstr "bcl-postgres" >nul
-if %errorlevel% equ 0 (
-    set "POSTGRES_RUNTIME=docker"
-    echo [OK] PostgreSQL container already running
-    goto :postgres_validation
-)
-
-:: Start PostgreSQL containers
-echo [INFO] Starting PostgreSQL containers with docker-compose...
-set "POSTGRES_UP_OK=0"
-for /l %%i in (1,1,5) do (
-    call :ensure_docker_desktop_session
-    echo [INFO] Compose startup attempt %%i/5...
-    %DOCKER_COMPOSE_CMD% -f docker-compose.postgres.yml up -d
-    if not errorlevel 1 (
-        set "POSTGRES_RUNTIME=docker"
-        set "POSTGRES_UP_OK=1"
-        goto :postgres_up_done
-    )
-    echo [WARNING] Compose attempt %%i failed - rechecking Docker Engine...
-    call :ensure_docker_running
-    call :sleep 8
-)
-if "%POSTGRES_UP_OK%"=="0" goto :postgres_start_failed
-
-:postgres_up_done
-
-:: Wait for PostgreSQL to initialize
-echo [INFO] Waiting for PostgreSQL to initialize (this may take up to 30 seconds)...
-call :sleep 20
-goto :postgres_validation
+goto :native_postgres_missing
 
 :native_postgres_failed
 echo.
@@ -746,52 +491,19 @@ echo.
 set ERROR_FLAG=1
 goto :error_exit
 
-:postgres_start_failed
+:native_postgres_missing
 echo.
 echo ================================================================================
-echo                ??? CRITICAL ERROR: PostgreSQL Startup Failed
+echo             ??? CRITICAL ERROR: Native PostgreSQL Service Missing
 echo ================================================================================
 echo.
-echo [ERROR] Failed to start PostgreSQL containers!
+echo [ERROR] Native PostgreSQL service could not be detected.
 echo [REQUIRED] PostgreSQL is ESSENTIAL for BCL database operations.
 echo [REASON] System requires all components to be fully operational.
 echo.
-echo [POSSIBLE CAUSES]
-echo ??? Docker Desktop is not running
-echo ??? Docker daemon is not accessible
-echo ??? Port conflicts with existing containers
-echo ??? Insufficient disk space or resources
-echo ??? docker-compose.postgres.yml file corrupted
-echo.
-echo ================================================================================
-echo                      ???? HOW TO FIX POSTGRESQL ISSUES
-echo ================================================================================
-echo.
-echo STEP 1 - Ensure Docker Desktop is running:
-echo ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-echo ??? Open Docker Desktop application
-echo ??? Wait for "Docker Desktop is running" message
-echo ??? Check system tray icon is green
-echo.
-echo STEP 2 - Clean up existing containers if needed:
-echo ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-echo ??? docker stop bcl-postgres bcl-pgadmin
-echo ??? docker rm bcl-postgres bcl-pgadmin
-echo ??? docker volume prune -f
-echo.
-echo STEP 3 - Check available resources:
-echo ?????????????????????????????????????????????????????????????????????????????????????????????????????????
-echo ??? Ensure at least 2GB free RAM
-echo ??? Ensure at least 5GB free disk space
-echo ??? Close other resource-intensive applications
-echo.
-echo STEP 4 - Restart Docker Desktop:
-echo ????????????????????????????????????????????????????????????????????????????????????????????????
-echo ??? Quit Docker Desktop completely
-echo ??? Wait 10 seconds
-echo ??? Restart Docker Desktop
-echo ??? Wait for full initialization
-echo.
+echo [ACTION] Check Windows Services for a PostgreSQL service named like postgresql-x64-*.
+echo [ACTION] Ensure PostgreSQL Server 15 is installed and configured on port 5432.
+echo [ACTION] Run install-native-postgres-service.bat or restore-native-postgres.ps1 if recovery is needed.
 echo ================================================================================
 echo.
 set ERROR_FLAG=1
@@ -815,28 +527,20 @@ echo ===========================================================================
 echo                ??? CRITICAL ERROR: PostgreSQL Not Ready
 echo ================================================================================
 echo.
-echo [ERROR] PostgreSQL container is running but not accepting connections!
+echo [ERROR] Native PostgreSQL service is running but not accepting connections!
 echo [REQUIRED] PostgreSQL must be fully operational for BCL to function.
 echo.
 echo [POSSIBLE CAUSES]
 echo ??? PostgreSQL still initializing (try waiting longer)
 echo ??? Database credentials incorrect
-echo ??? Native service or container health issues
+echo ??? Native service health issues
 echo ??? Port 5432 connectivity problems
 echo.
-if /I "%POSTGRES_RUNTIME%"=="docker" (
-    echo [ACTION] Check PostgreSQL container logs:
-    echo        docker logs bcl-postgres
-    echo.
-    echo [ACTION] Test manual connection:
-    echo        docker exec -it bcl-postgres psql -U bcl_user -d bcl_database
-) else (
-    echo [ACTION] Check Windows Service status and native PostgreSQL logs.
-    echo [ACTION] Test manual connection:
-    echo        psql -h 127.0.0.1 -p 5432 -U bcl_user -d bcl_database
-)
+echo [ACTION] Check Windows Service status and native PostgreSQL logs.
+echo [ACTION] Test manual connection:
+echo        psql -h 127.0.0.1 -p 5432 -U bcl_user -d bcl_database
 echo.
-echo [SOLUTION] If issues persist, try container cleanup and restart.
+echo [SOLUTION] If issues persist, restore the native PostgreSQL service and BCL credentials.
 echo.
 set ERROR_FLAG=1
 goto :error_exit
@@ -852,14 +556,7 @@ if "%BOOT_DELAY%"=="1" (
 :: Reset mode: perform targeted cleanup if requested
 if "%RESET_MODE%"=="1" (
     echo [INFO] Reset mode activated - performing targeted cleanup...
-
-    if /I "%POSTGRES_RUNTIME%"=="docker" (
-        echo [INFO] Resetting PostgreSQL containers...
-        %DOCKER_COMPOSE_CMD% -f docker-compose.postgres.yml down
-        call :sleep 2
-    ) else (
-        echo [INFO] Native PostgreSQL runtime detected - skipping database reset
-    )
+    echo [INFO] Native PostgreSQL runtime detected - skipping database reset
 
     :: Reset backend server (targeted PID kill on configured backend port)
     echo [INFO] Resetting backend server...
@@ -1175,54 +872,33 @@ if errorlevel 1 (
 )
 
 :: ??? STRICT: PostgreSQL validation - REQUIRED for operation
-if /I "%POSTGRES_RUNTIME%"=="native" (
-    if not defined NATIVE_PG_SERVICE call :detect_native_postgres_service
-    if not defined NATIVE_PG_SERVICE (
-        echo.
-        echo ================================================================================
-        echo                 ??? CRITICAL ERROR: PostgreSQL Service Not Found
-        echo ================================================================================
-        echo.
-        echo [ERROR] Native PostgreSQL service could not be detected!
-        echo [REQUIRED] PostgreSQL is ESSENTIAL for BCL database operations.
-        echo [REASON] System cannot function without database.
-        echo.
-        set ERROR_FLAG=1
-    ) else (
-        sc query "!NATIVE_PG_SERVICE!" | findstr /I "RUNNING" >nul
-        if errorlevel 1 (
-            echo.
-            echo ================================================================================
-            echo               ??? CRITICAL ERROR: PostgreSQL Service Not Running
-            echo ================================================================================
-            echo.
-            echo [ERROR] Native PostgreSQL service !NATIVE_PG_SERVICE! is not running!
-            echo [REQUIRED] PostgreSQL is ESSENTIAL for BCL database operations.
-            echo [REASON] System cannot function without database.
-            echo.
-            set ERROR_FLAG=1
-        ) else (
-            echo [OK] Native PostgreSQL service is running: !NATIVE_PG_SERVICE!
-        )
-    )
+if not defined NATIVE_PG_SERVICE call :detect_native_postgres_service
+if not defined NATIVE_PG_SERVICE (
+    echo.
+    echo ================================================================================
+    echo                 ??? CRITICAL ERROR: PostgreSQL Service Not Found
+    echo ================================================================================
+    echo.
+    echo [ERROR] Native PostgreSQL service could not be detected!
+    echo [REQUIRED] PostgreSQL is ESSENTIAL for BCL database operations.
+    echo [REASON] System cannot function without database.
+    echo.
+    set ERROR_FLAG=1
 ) else (
-    docker ps --filter "name=bcl-postgres" --format "{{.Names}}" 2>nul | findstr "bcl-postgres" >nul
+    sc query "!NATIVE_PG_SERVICE!" | findstr /I "RUNNING" >nul
     if errorlevel 1 (
         echo.
         echo ================================================================================
-        echo                ??? CRITICAL ERROR: PostgreSQL Container Not Running
+        echo               ??? CRITICAL ERROR: PostgreSQL Service Not Running
         echo ================================================================================
         echo.
-        echo [ERROR] PostgreSQL container is not running!
+        echo [ERROR] Native PostgreSQL service !NATIVE_PG_SERVICE! is not running!
         echo [REQUIRED] PostgreSQL is ESSENTIAL for BCL database operations.
         echo [REASON] System cannot function without database.
         echo.
-        echo [ACTION] Check previous error messages for container startup failures.
-        echo [ACTION] Ensure Docker is running and containers can be started.
-        echo.
         set ERROR_FLAG=1
     ) else (
-        echo [OK] PostgreSQL database container is running
+        echo [OK] Native PostgreSQL service is running: !NATIVE_PG_SERVICE!
     )
 )
 
@@ -1281,7 +957,7 @@ if "%ERROR_FLAG%"=="0" (
     echo.
     echo SYSTEM STATUS:
     echo ==============
-    echo ??? PostgreSQL Database: Running in Docker
+    echo ??? PostgreSQL Database: Running as native Windows service ^(!NATIVE_PG_SERVICE!^)
     echo ??? Backend Server: Running on port %BACKEND_PORT%
     echo ??? Nginx Reverse Proxy: Running on port 80
     echo ??? Web Interface: Available and fully operational

@@ -76,10 +76,23 @@ function setUserData(data) {
       localStorage.setItem("role", normalizedData.role);
       localStorage.setItem("userimg", normalizedData.photo);
       localStorage.setItem("token", normalizedData.token);
+      localStorage.removeItem("bcl_progress_sync_disabled");
       window.currentUser = normalizedData;
    } catch (error) {
 
    }
+}
+
+function clearStoredUserAuth() {
+   localStorage.removeItem("user");
+   localStorage.removeItem("username");
+   localStorage.removeItem("email");
+   localStorage.removeItem("role");
+   localStorage.removeItem("userimg");
+   localStorage.removeItem("token");
+   localStorage.removeItem("bcl_progress_sync_hash");
+   localStorage.removeItem("bcl_progress_sync_time");
+   window.currentUser = null;
 }
 
 // ✅ Fixed: Improved UI update function with better error handling
@@ -91,13 +104,13 @@ async function updateUserUI() {
    if (!user) {
       // Hindari probe session admin untuk guest murni agar tidak memunculkan 401 di console.
       const token = localStorage.getItem('token');
+      const skipGlobalAdminProbe = window.BCL_SKIP_GLOBAL_ADMIN_SESSION_UI_PROBE === true;
       const isAdminPage =
          window.location.pathname.includes('/pages/sub/adminbcl') ||
          window.location.pathname.includes('/pages/sub/mapping-kompetensi');
 
-      if (token || isAdminPage) {
+      if (!skipGlobalAdminProbe && (token || isAdminPage)) {
          try {
-            console.log('🔍 Checking for admin session...');
             const adminResponse = await fetch('/api/admin/session', {
                credentials: 'include' // Include session cookies
             });
@@ -105,7 +118,6 @@ async function updateUserUI() {
             if (adminResponse.ok) {
                const adminData = await adminResponse.json();
                if (adminData.authenticated && adminData.user) {
-                  console.log('✅ Found admin session:', adminData.user.username);
                   // Convert admin session to user-like object for UI compatibility
                   user = {
                      name: adminData.user.username || adminData.user.email,
@@ -118,7 +130,6 @@ async function updateUserUI() {
                }
             }
          } catch (adminError) {
-            console.warn('⚠️ Admin session check failed:', adminError.message);
             // Continue with null user (guest mode)
          }
       }
@@ -170,7 +181,6 @@ async function updateUserUI() {
       setupLogoutHandler(user);
       window.currentUser = user;
 
-      console.log('✅ User UI updated for:', user.name, user.isAdmin ? '(Admin)' : '');
    } catch (error) {
       console.error('❌ Error updating user UI:', error);
    }
@@ -226,15 +236,12 @@ document.addEventListener('click', (e) => {
     const logoutBtn = e.target.closest('#logout-link');
     if (logoutBtn) {
         e.preventDefault();
-        console.log('🚪 Logout clicked via global handler');
         handleLogout();
     }
 });
 
 async function handleLogout() {
    try {
-      console.log('🚪 Processing logout...');
-      
       // 1. Clear local storage (Client-side JWT logout)
       localStorage.clear();
       window.currentUser = null;
@@ -246,10 +253,8 @@ async function handleLogout() {
               method: 'POST',
               credentials: 'include'
           });
-          console.log('✅ Server session destroyed');
-      } catch (serverErr) {
-          console.warn('⚠️ Server logout failed (non-fatal):', serverErr);
-      }
+       } catch (serverErr) {
+       }
 
       // 3. Redirect to login page or refresh
       if (window.location.pathname !== "/pages/login.html") {
@@ -292,8 +297,6 @@ function setupLoginForm() {
          // Use relative URL for API calls (works with reverse proxy)
          let apiUrl = `/api/login`;
 
-         console.log('🔐 Attempting login to:', apiUrl);
-
          let response = await fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -306,8 +309,6 @@ function setupLoginForm() {
          const result = await response.json();
 
          if (response.ok && (result.success || result.token)) {
-            console.log('✅ Login successful:', result);
-
             const user = {
                name: result.name || result.username,
                email: result.email || email,
@@ -323,7 +324,6 @@ function setupLoginForm() {
             alert("✅ Login berhasil!");
             window.location.href = lastPage;
          } else {
-            console.error('❌ Login failed:', result);
             alert("❌ Login gagal: " + (result.error || result.message || 'Unknown error'));
          }
       } catch (err) {
@@ -354,7 +354,6 @@ function setupLoginForm() {
 // ✅ Fixed: Improved initialization with error handling
 document.addEventListener("DOMContentLoaded", () => {
    try {
-      console.log('🔧 user.js: Initializing user management system...');
       window.currentUser = getUserData();
 
       updateUserUI();
@@ -362,11 +361,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Listen for component loading completion (for e-learning pages)
       document.addEventListener('componentsLoaded', () => {
-         console.log('🔄 Components loaded, updating user UI again...');
          updateUserUI();
       });
-
-      console.log('✅ user.js: User management system initialized successfully');
    } catch (error) {
       console.error('❌ user.js: Failed to initialize user management system:', error);
    }
@@ -375,7 +371,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // ✅ NEW: Listen for storage changes to sync auth state across sections
 window.addEventListener('storage', (e) => {
    if (e.key === 'user' || e.key === 'token' || e.key === 'username') {
-      console.log('🔄 Storage changed, updating user UI:', e.key);
       // Re-check user data and update UI
       window.currentUser = getUserData();
       updateUserUI();
@@ -459,10 +454,29 @@ function bclMainHasAnyProgress(snapshot) {
    );
 }
 
+function bclMainGetProgressSyncToken() {
+   const user = getUserData();
+   if (!user || user.isAdmin) return null;
+
+   const token = String(user.token || localStorage.getItem("token") || "").trim();
+   if (!token) return null;
+
+   if (isTokenExpired(token)) {
+      clearStoredUserAuth();
+      return null;
+   }
+
+   if (user.token && user.token !== token) {
+      return null;
+   }
+
+   return token;
+}
+
 async function bclMainSyncProgressToServer(force = false) {
    try {
-      const token = localStorage.getItem("token");
-      if (!token || isTokenExpired(token)) return;
+      const token = bclMainGetProgressSyncToken();
+      if (!token) return;
 
       const snapshot = bclMainCollectProgressSnapshot();
       if (!bclMainHasAnyProgress(snapshot) && !force) return;
@@ -487,17 +501,29 @@ async function bclMainSyncProgressToServer(force = false) {
          body: JSON.stringify(snapshot)
       });
 
+      if (response.status === 401 || response.status === 403) {
+         clearStoredUserAuth();
+         localStorage.setItem("bcl_progress_sync_disabled", "1");
+         if (typeof updateUserUI === "function") {
+            await updateUserUI();
+         }
+         return;
+      }
+
       if (response.ok) {
          localStorage.setItem(hashKey, hash);
          localStorage.setItem(timeKey, String(now));
+         localStorage.removeItem("bcl_progress_sync_disabled");
+         return;
       }
+
+      throw new Error(`Progress sync failed (${response.status})`);
    } catch (error) {
-      console.warn("Main progress sync skipped:", error.message);
    }
 }
 
 function bclMainInitializeProgressSync() {
-   const token = localStorage.getItem("token");
+   const token = bclMainGetProgressSyncToken();
    if (!token) return;
 
    setTimeout(() => {

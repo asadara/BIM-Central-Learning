@@ -21,17 +21,20 @@
 
 ### Infrastructure Stack:
 ```
-User Browser ──HTTP──► Nginx Proxy (Port 80)
-                        │
-                        └──► Node.js Backend (Port 5051)
-                            │
-                            └──► PostgreSQL (Docker Container)
+User Browser ──HTTP/HTTPS──► Nginx Proxy (Port 80 / 443)
+                              │
+                              └──► Node.js Backend (Port 5052)
+                                  │
+                                  ├──► PostgreSQL Windows Service (localhost:5432)
+                                  │
+                                  └──► Legacy Port Proxy (5051 -> 5052, compatibility only)
 ```
 
 ### Komponen Utama:
-- **Nginx (Port 80)**: Reverse proxy, serve static files
-- **Node.js (Port 5051)**: Backend API, business logic
-- **PostgreSQL**: Database utama (Docker)
+- **Nginx (Port 80/443)**: Reverse proxy, serve static files
+- **Node.js (Port 5052)**: Backend API, business logic
+- **PostgreSQL Windows Service**: Database utama native di host
+- **Port 5051**: Compatibility proxy sementara ke `5052`, bukan backend utama
 - **JSON Files**: Legacy/local data artifacts; jangan dijadikan fallback bila DB down (production wajib DB)
 
 ---
@@ -142,7 +145,7 @@ location.href = '/pages/tutorial.html' // ✓ Nginx serve langsung
 ### HINDARI (Hard-coded Host):
 ```javascript
 // JANGAN PAKAI INI!
-fetch('http://localhost:5051/api/tutorials')     // ❌ Langsung ke backend
+fetch('http://localhost:5052/api/tutorials')     // ❌ Langsung ke backend
 fetch('http://localhost/api/tutorials')          // NOTE host hard-coded, bermasalah untuk IP/domain lain
 ```
 
@@ -156,7 +159,7 @@ fetch('http://localhost/api/tutorials')          // NOTE host hard-coded, bermas
 **Solusi:**
 ```javascript
 // Ganti ini:
-fetch('http://localhost:5051/api/tutorials')
+fetch('http://localhost:5052/api/tutorials')
 
 // Menjadi:
 fetch('/api/tutorials')
@@ -172,7 +175,7 @@ const thumbnailUrl = video.thumbnail; // Sudah relative dari backend
 ```
 
 ### 3. ❌ API Connection Refused
-**Gejala:** `ERR_CONNECTION_REFUSED`, port 5051 tidak accessible
+**Gejala:** `ERR_CONNECTION_REFUSED`, port 5052 tidak accessible
 **Penyebab:** Backend tidak running atau port conflict
 **Solusi:**
 ```bash
@@ -186,13 +189,13 @@ C:\BCL\nginx\nginx-1.28.0\nginx.exe -s reload -p C:\BCL\nginx\nginx-1.28.0
 ./start-bcl-http.bat
 ```
 
-### 4. ❌ Port 80/5051 Sudah Digunakan
+### 4. ❌ Port 80/5052 Sudah Digunakan
 **Gejala:** Server gagal start, port in use
 **Penyebab:** Process lain menggunakan port
 **Solusi:**
 ```bash
 netstat -ano | findstr ":80"
-netstat -ano | findstr ":5051"
+netstat -ano | findstr ":5052"
 taskkill /pid <PID_NUMBER> /f
 ```
 
@@ -210,18 +213,18 @@ taskkill /pid <PID_NUMBER> /f
 ✅ Main: http://localhost
 ✅ API: http://localhost/api/tutorials
 ✅ Admin: http://localhost/admin.html
-❌ Wrong: http://localhost:5051 (langsung ke backend)
+❌ Wrong: http://localhost:5052 (langsung ke backend)
 ```
 
 ### 3. JavaScript Rules
 - ✅ **SELALU** gunakan relative URLs: `/api/*`
-- ✅ **JANGAN** gunakan absolute URLs: `http://localhost:5051/api/*`
+- ✅ **JANGAN** gunakan absolute URLs: `http://localhost:5052/api/*`
 - ✅ Test dengan production entry point
 
 ### 4. File Structure Penting
 ```bash
 start-bcl-http.bat          # ← ENTRY POINT UTAMA
-backend/server.js           # ← BACKEND (port 5051)
+backend/server.js           # ← BACKEND (port 5052)
 nginx/nginx-1.28.0/nginx.exe # ← NGINX (port 80) - LOKASI BARU!
 BC-Learning-Main/           # ← FRONTEND (serve by Nginx)
 konteks.md                  # ← FILE INI - BACA DULU!
@@ -230,7 +233,7 @@ konteks.md                  # ← FILE INI - BACA DULU!
 ## 🔧 NGINX CONFIGURATION FIXES (2026-01-21)
 
 ### Issue Resolved: Domain Access Broken
-**Problem:** Users could NOT access BCL via `http://bcl.nke.net` but COULD access via `http://10.0.0.90:5051`
+**Problem:** Users could NOT access BCL via `http://bcl.nke.net` but COULD access via backend port langsung.
 
 ### Root Cause: Windows NGINX Master Context Mismatch
 - Relative paths in nginx.conf didn't resolve correctly
@@ -253,7 +256,7 @@ konteks.md                  # ← FILE INI - BACA DULU!
 ### Verification:
 - ✅ `http://bcl.nke.net/ping` → **HTTP 200 OK**
 - ✅ `http://bcl.nke.net/api/courses` → **HTTP 200 OK** (with data)
-- ✅ `http://10.0.0.90:5051` → **WORKING** (direct backend access)
+- ✅ direct backend access hanya untuk troubleshooting lokal, bukan pola runtime browser
 
 ### NGINX Management Rules:
 ```bash
@@ -354,12 +357,18 @@ curl http://localhost/api/tutorials
 ### Critical Rules:
 1. **Entry point**: `./start-bcl-http.bat`
 2. **URL pattern**: Relative URLs only (`/api/*`)
-3. **Architecture**: Nginx (80) → Node.js (5051)
+3. **Architecture**: Nginx (80/443) → Node.js (5052) → PostgreSQL native
 4. **Test first**: Selalu test dengan production setup
 
 ---
 
 ## 📝 CHANGE LOG
+
+### v1.4 - Native PostgreSQL + Runtime/UI Consolidation
+- Runtime produksi BCL sekarang mengandalkan PostgreSQL Windows Service native, bukan Docker Desktop.
+- Backend utama didokumentasikan sebagai `5052`; `5051` hanya proxy kompatibilitas sementara.
+- Tambahkan catatan bahwa direct backend access bukan jalur browser normal.
+- Perbarui quick reference agar sesuai dengan arsitektur live saat ini.
 
 ### v1.3 - Path Guidance Clarifications
 - Clarify absolute path behavior for root domain vs subpath.
@@ -388,4 +397,4 @@ curl http://localhost/api/tutorials
 
 **🚨 INGAT: Baca file ini SEBELUM melakukan apapun pada sistem BCL! 🚨**
 
-*Last updated: 2026-01-22*
+*Last updated: 2026-03-13*

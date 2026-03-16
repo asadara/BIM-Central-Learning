@@ -14,6 +14,7 @@ const session = require("express-session");
 const { exec, spawn } = require("child_process");
 const os = require("os");
 const { Pool } = require("pg");
+const { getPreferredServerIPv4 } = require("./utils/networkIdentity");
 const {
     createPgConfig,
     getDefaultAdminPassword,
@@ -341,15 +342,7 @@ app.use(express.static(BASE_DIR));
 
 // âœ… Fixed: Utility functions moved to top after constants
 const getLocalIP = () => {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            if (iface.family === 'IPv4' && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-    return 'localhost';
+    return getPreferredServerIPv4(os.networkInterfaces());
 };
 
 // âœ… Fixed: Ensure directories exist with proper error handling

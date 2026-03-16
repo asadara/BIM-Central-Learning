@@ -538,6 +538,7 @@
             <div>
                 <strong>HTTPS Warning?</strong>
                 <div class="small">Jika ada peringatan HTTPS, unduh dan jalankan installer sertifikat BCL (Run as Administrator).</div>
+                <div class="small d-none" id="direct-ip-hint"></div>
             </div>
             <div class="text-md-end d-flex gap-2 flex-wrap justify-content-md-end">
                 <a class="btn btn-warning btn-sm" href="/cert.bat" download="cert.bat" id="cert-download">
@@ -1323,6 +1324,34 @@
                     downloadText(fallbackContent, filename);
                 }
             });
+        })();
+    </script>
+    <script>
+        (function () {
+            const hint = document.getElementById('direct-ip-hint');
+            if (!hint) {
+                return;
+            }
+
+            const setHint = (ip) => {
+                const cleanIp = String(ip || '').trim();
+                if (!cleanIp || cleanIp === 'localhost') {
+                    return;
+                }
+
+                hint.innerHTML = `Jika domain lokal bermasalah di Wi-Fi, coba buka via IP server: <a href="http://${cleanIp}">http://${cleanIp}</a>`;
+                hint.classList.remove('d-none');
+            };
+
+            fetch('/api/network-info', { cache: 'no-store' })
+                .then((response) => response.ok ? response.json() : Promise.reject(new Error('network-info-unavailable')))
+                .then((info) => {
+                    const fallbackIp = Array.isArray(info.serverIPs) ? info.serverIPs[0] : '';
+                    setHint(info.preferredServerIP || fallbackIp);
+                })
+                .catch(() => {
+                    // Keep the hint hidden if network info is unavailable.
+                });
         })();
     </script>
 

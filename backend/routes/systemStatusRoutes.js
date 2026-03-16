@@ -1,5 +1,6 @@
 const express = require("express");
 const os = require("os");
+const { collectServerIPv4s, getPreferredServerIPv4 } = require("../utils/networkIdentity");
 
 function createSystemStatusRoutes({ getLocalIP, phase4Components }) {
     const router = express.Router();
@@ -11,18 +12,17 @@ function createSystemStatusRoutes({ getLocalIP, phase4Components }) {
 
     router.get("/api/network-info", (req, res) => {
         const interfaces = os.networkInterfaces();
-        const serverIPs = [];
-
-        for (const name of Object.keys(interfaces)) {
-            for (const iface of interfaces[name] || []) {
-                if (iface.family === "IPv4" && !iface.internal) {
-                    serverIPs.push(iface.address);
-                }
-            }
-        }
+        const serverIPs = collectServerIPv4s(interfaces);
+        const preferredServerIP = getPreferredServerIPv4(interfaces);
 
         const userIP = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-        res.json({ serverIPs, userIP });
+        res.json({
+            serverIPs,
+            preferredServerIP,
+            httpUrl: preferredServerIP === "localhost" ? "http://localhost" : `http://${preferredServerIP}`,
+            httpsUrl: preferredServerIP === "localhost" ? "https://localhost" : `https://${preferredServerIP}`,
+            userIP
+        });
     });
 
     router.get("/ping", (req, res) => {

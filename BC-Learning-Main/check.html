@@ -36,22 +36,96 @@
 <body>
   <h2>Mendeteksi server aktif...</h2>
   <div class="spinner"></div>
-  <p>Mohon tunggu, Anda akan diarahkan secara otomatis.</p>
+  <p id="status-text">Mohon tunggu, Anda akan diarahkan secara otomatis.</p>
+  <p id="attempt-text" style="color:#666; font-size:14px;"></p>
 
   <script>
-    const address = "https://bcl.nke.net";
+    const statusText = document.getElementById("status-text");
+    const attemptText = document.getElementById("attempt-text");
 
-    fetch(`${address}/ping`, { method: "GET" })
-      .then(() => {
-        window.location.href = address;
-      })
-      .catch(() => {
-        document.body.innerHTML = `
-          <h2>Gagal menghubungi server</h2>
-          <p>Pastikan server BCL menyala dan dapat diakses dari jaringan Anda.</p>
-          <p>Jika masalah berlanjut, periksa koneksi dan sertifikat HTTPS.</p>
-        `;
-      });
+    function normalizeBase(value) {
+      return String(value || "").trim().replace(/\/+$/, "");
+    }
+
+    function updateAttempt(base) {
+      if (attemptText) {
+        attemptText.textContent = `Mencoba: ${base}`;
+      }
+    }
+
+    async function getCandidates() {
+      const candidates = new Set();
+      const hostname = window.location.hostname || "";
+      const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+
+      const addCandidate = (value) => {
+        const normalized = normalizeBase(value);
+        if (normalized) {
+          candidates.add(normalized);
+        }
+      };
+
+      addCandidate(window.location.origin);
+
+      if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1") {
+        addCandidate(`${protocol}//${hostname}`);
+        addCandidate(`http://${hostname}`);
+      }
+
+      try {
+        const response = await fetch("/api/network-info", { cache: "no-store" });
+        if (response.ok) {
+          const info = await response.json();
+          addCandidate(info.httpUrl);
+          addCandidate(info.httpsUrl);
+
+          if (Array.isArray(info.serverIPs)) {
+            info.serverIPs.forEach((ip) => {
+              addCandidate(`http://${ip}`);
+            });
+          }
+        }
+      } catch (error) {
+        // Fallback to legacy defaults below.
+      }
+
+      addCandidate("http://10.0.0.90");
+      addCandidate("https://bcl.nke.net");
+      addCandidate("http://bcl.nke.net");
+
+      return Array.from(candidates);
+    }
+
+    async function probe(base) {
+      updateAttempt(base);
+      const response = await fetch(`${base}/ping`, { method: "GET", cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return base;
+    }
+
+    (async () => {
+      const candidates = await getCandidates();
+
+      for (const base of candidates) {
+        try {
+          const activeBase = await probe(base);
+          window.location.href = activeBase;
+          return;
+        } catch (error) {
+          // Continue probing the next candidate.
+        }
+      }
+
+      document.body.innerHTML = `
+        <h2>Gagal menghubungi server</h2>
+        <p>Pastikan server BCL menyala dan perangkat Wi-Fi bisa menjangkau jaringan server.</p>
+        <p>Coba buka langsung salah satu alamat berikut:</p>
+        <p><strong>http://10.0.0.90</strong></p>
+        <p><strong>http://bcl.nke.net</strong></p>
+      `;
+    })();
   </script>
 </body>
 

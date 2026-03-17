@@ -126,7 +126,11 @@ function createAdminSessionRoutes({
                     return res.status(500).json({ error: "Logout failed" });
                 }
 
-                res.clearCookie("connect.sid");
+                res.clearCookie("connect.sid", {
+                    path: "/",
+                    httpOnly: true,
+                    secure: false
+                });
                 res.json({ success: true, message: "Admin logged out successfully" });
             });
         } catch (error) {

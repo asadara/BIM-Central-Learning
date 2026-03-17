@@ -16,6 +16,28 @@
     console.debug = () => {};
 })();
 
+function safeReadStoredJson(key) {
+    try {
+        const rawValue = localStorage.getItem(key);
+        return rawValue ? JSON.parse(rawValue) : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function isStoredTokenExpired(token) {
+    if (!token) {
+        return false;
+    }
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp < Date.now() / 1000;
+    } catch (error) {
+        return false;
+    }
+}
+
 class ComponentLoader {
 
     constructor() {
@@ -267,16 +289,14 @@ class ComponentLoader {
             const footerContainer = document.querySelector('.footer-container') ||
                 document.body;
 
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = footerHTML;
-            const footerElement = tempDiv.firstElementChild;
-
             // Replace existing footer atau append to body
             const existingFooter = document.querySelector('.footer');
-            if (existingFooter) {
-                existingFooter.replaceWith(footerElement);
+            if (footerContainer.classList && footerContainer.classList.contains('footer-container')) {
+                footerContainer.innerHTML = footerHTML;
+            } else if (existingFooter) {
+                existingFooter.outerHTML = footerHTML;
             } else {
-                footerContainer.appendChild(footerElement);
+                footerContainer.insertAdjacentHTML('beforeend', footerHTML);
             }
 
         } catch (error) {
@@ -295,7 +315,7 @@ class ComponentLoader {
                 await loadNavbar();
             } else {
                 // Fallback: load navbar directly
-                const navbarPath = '/elearning-assets/components/navbar.html';
+                const navbarPath = '/components/navbar.html';
 
                 const response = await fetch(navbarPath);
                 if (!response.ok) {
@@ -306,7 +326,10 @@ class ComponentLoader {
                 const navbarContainer = document.getElementById('navbar-container');
 
                 if (navbarContainer) {
-                    navbarContainer.innerHTML = navbarHTML;
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = navbarHTML;
+                    this.applyStoredNavbarAuthState(tempDiv);
+                    navbarContainer.innerHTML = tempDiv.innerHTML;
 
                     // Execute navbar scripts
                     const scripts = navbarContainer.querySelectorAll('script');
@@ -324,6 +347,57 @@ class ComponentLoader {
             this.syncPublicLearningNavbarLayout();
         } catch (error) {
             console.warn('❌ Failed to load navbar for e-learning page:', error);
+        }
+    }
+
+    applyStoredNavbarAuthState(rootElement) {
+        if (!rootElement) {
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+
+        if (isStoredTokenExpired(token)) {
+            [
+                'user',
+                'userData',
+                'username',
+                'email',
+                'role',
+                'userimg',
+                'token'
+            ].forEach((key) => localStorage.removeItem(key));
+        }
+
+        const storedUser = safeReadStoredJson('user');
+        const storedUserData = safeReadStoredJson('userData');
+        const displayName = (
+            localStorage.getItem('username') ||
+            storedUser.name ||
+            storedUser.username ||
+            storedUserData.name ||
+            ''
+        ).trim();
+        const isLoggedIn = displayName.length > 0;
+        const accountName = rootElement.querySelector('#account-name');
+        const loginLink = rootElement.querySelector('#login-link');
+        const logoutLink = rootElement.querySelector('#logout-link');
+        const registerLink = rootElement.querySelector('#register-link');
+
+        if (accountName) {
+            accountName.textContent = isLoggedIn ? displayName : 'Account';
+        }
+
+        if (loginLink) {
+            loginLink.style.display = isLoggedIn ? 'none' : 'block';
+        }
+
+        if (logoutLink) {
+            logoutLink.style.display = isLoggedIn ? 'block' : 'none';
+        }
+
+        if (registerLink) {
+            registerLink.style.display = isLoggedIn ? 'none' : 'block';
         }
     }
 
@@ -465,6 +539,13 @@ class ComponentLoader {
                     e.preventDefault();
                     this.handleLogout();
                 };
+            }
+            if (logoutLink && !logoutLink.dataset.bound) {
+                logoutLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleLogout();
+                });
+                logoutLink.dataset.bound = 'true';
             }
             if (accountName) accountName.textContent = finalUsername;
             if (loginLink) loginLink.style.display = 'none';
@@ -827,18 +908,19 @@ const componentLoader = new ComponentLoader();
 // Expose ke window object agar bisa diakses dari sidebar fallback
 window.componentLoader = componentLoader;
 
-// Auto-load components when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
-    await componentLoader.loadAllComponents();
-});
+async function initializeElearningComponents() {
+    if (window.__bclElearningComponentsInitialized) {
+        return;
+    }
 
-// Juga load jika sudah ready (fallback)
+    window.__bclElearningComponentsInitialized = true;
+    await componentLoader.loadAllComponents();
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', async () => {
-        await componentLoader.loadAllComponents();
-    });
+    document.addEventListener('DOMContentLoaded', initializeElearningComponents, { once: true });
 } else {
-    componentLoader.loadAllComponents();
+    initializeElearningComponents();
 }
 
 

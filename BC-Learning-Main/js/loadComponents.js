@@ -1,6 +1,89 @@
 // loadComponents.js - Sinkronisasi Global User + Navbar
 
 // loadComponents.js
+function safeReadStoredJson(key) {
+    try {
+        const rawValue = localStorage.getItem(key);
+        return rawValue ? JSON.parse(rawValue) : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function isStoredTokenExpired(token) {
+    if (!token) {
+        return false;
+    }
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp < Date.now() / 1000;
+    } catch (error) {
+        return false;
+    }
+}
+
+function readStoredNavbarAuthState() {
+    const token = localStorage.getItem('token');
+
+    if (isStoredTokenExpired(token)) {
+        [
+            'user',
+            'userData',
+            'username',
+            'email',
+            'role',
+            'userimg',
+            'token'
+        ].forEach((key) => localStorage.removeItem(key));
+
+        return { isLoggedIn: false, displayName: '' };
+    }
+
+    const storedUser = safeReadStoredJson('user');
+    const storedUserData = safeReadStoredJson('userData');
+    const displayName = (
+        localStorage.getItem('username') ||
+        storedUser.name ||
+        storedUser.username ||
+        storedUserData.name ||
+        ''
+    ).trim();
+
+    return {
+        isLoggedIn: displayName.length > 0,
+        displayName
+    };
+}
+
+function hydrateNavbarAuthState(rootElement) {
+    if (!rootElement) {
+        return;
+    }
+
+    const { isLoggedIn, displayName } = readStoredNavbarAuthState();
+    const accountName = rootElement.querySelector('#account-name');
+    const loginLink = rootElement.querySelector('#login-link');
+    const logoutLink = rootElement.querySelector('#logout-link');
+    const registerLink = rootElement.querySelector('#register-link');
+
+    if (accountName) {
+        accountName.textContent = isLoggedIn ? displayName : 'Account';
+    }
+
+    if (loginLink) {
+        loginLink.style.display = isLoggedIn ? 'none' : 'block';
+    }
+
+    if (logoutLink) {
+        logoutLink.style.display = isLoggedIn ? 'block' : 'none';
+    }
+
+    if (registerLink) {
+        registerLink.style.display = isLoggedIn ? 'none' : 'block';
+    }
+}
+
 function loadNavbar() {
     // Adjust path based on current location
     const currentPath = window.location.pathname;
@@ -12,7 +95,10 @@ function loadNavbar() {
         .then(html => {
             const container = document.getElementById('navbar-container');
             if (container) {
-                container.innerHTML = html;
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                hydrateNavbarAuthState(tempDiv);
+                container.innerHTML = tempDiv.innerHTML;
 
                 // Eksekusi ulang semua <script> di dalam navbar (jika ada)
                 const scripts = container.querySelectorAll('script');
@@ -34,15 +120,15 @@ function loadNavbar() {
                     }
                 };
 
-                // Initial update
-                setTimeout(updateUIWithRetry, 100);
+                // Initial update without delay so the account label does not flash as guest first
+                updateUIWithRetry();
 
                 // Additional update after longer delay to handle cross-section navigation
                 setTimeout(() => {
                     if (typeof updateUserUI === 'function') {
                         updateUserUI();
                     }
-                }, 500);
+                }, 300);
 
                 // Setup event listener for dropdown to adjust links on click
                 setupDropdownListener();

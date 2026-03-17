@@ -1,4 +1,58 @@
 // Navbar component loader untuk halaman utama
+function safeReadStoredJson(key) {
+    try {
+        const rawValue = localStorage.getItem(key);
+        return rawValue ? JSON.parse(rawValue) : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function readStoredNavbarAuthState() {
+    const storedUser = safeReadStoredJson('user');
+    const storedUserData = safeReadStoredJson('userData');
+    const displayName = (
+        localStorage.getItem('username') ||
+        storedUser.name ||
+        storedUser.username ||
+        storedUserData.name ||
+        ''
+    ).trim();
+
+    return {
+        isLoggedIn: displayName.length > 0,
+        displayName
+    };
+}
+
+function hydrateNavbarAuthState(rootElement) {
+    if (!rootElement) {
+        return;
+    }
+
+    const { isLoggedIn, displayName } = readStoredNavbarAuthState();
+    const accountName = rootElement.querySelector('#account-name');
+    const loginLink = rootElement.querySelector('#login-link');
+    const logoutLink = rootElement.querySelector('#logout-link');
+    const registerLink = rootElement.querySelector('#register-link');
+
+    if (accountName) {
+        accountName.textContent = isLoggedIn ? displayName : 'Account';
+    }
+
+    if (loginLink) {
+        loginLink.style.display = isLoggedIn ? 'none' : 'block';
+    }
+
+    if (logoutLink) {
+        logoutLink.style.display = isLoggedIn ? 'block' : 'none';
+    }
+
+    if (registerLink) {
+        registerLink.style.display = isLoggedIn ? 'none' : 'block';
+    }
+}
+
 async function loadNavbar() {
     try {
         const response = await fetch('../components/navbar.html');
@@ -10,14 +64,19 @@ async function loadNavbar() {
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = navbarHTML;
-        const navbarElement = tempDiv.firstElementChild;
+        hydrateNavbarAuthState(tempDiv);
+        const fragment = document.createDocumentFragment();
+
+        while (tempDiv.firstChild) {
+            fragment.appendChild(tempDiv.firstChild);
+        }
 
         // Replace existing navbar atau insert sebagai first child
         const existingNavbar = document.querySelector('.navbar');
         if (existingNavbar) {
-            existingNavbar.replaceWith(navbarElement);
+            existingNavbar.replaceWith(fragment);
         } else {
-            navbarContainer.insertBefore(navbarElement, navbarContainer.firstChild);
+            navbarContainer.insertBefore(fragment, navbarContainer.firstChild);
         }
 
         // Trigger custom event untuk notify bahwa navbar sudah loaded

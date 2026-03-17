@@ -37,12 +37,19 @@
             min-height: 70vh;
             background: #000;
             overflow: hidden;
+            border-radius: 28px;
+            box-shadow: 0 22px 55px rgba(15, 23, 42, 0.18);
         }
 
         .video-info-layout {
             position: relative;
             min-height: 70vh;
             width: 100%;
+        }
+
+        .hero-video-shell {
+            padding-left: clamp(12px, 2vw, 24px);
+            padding-right: clamp(12px, 2vw, 24px);
         }
 
         /* Video Section (Full Width) */
@@ -59,6 +66,7 @@
             min-height: 400px;
             max-height: 600px;
             overflow: hidden;
+            border-radius: inherit;
         }
 
         .display-video {
@@ -378,6 +386,15 @@
         }
 
         @media (max-width: 768px) {
+            .hero-video-shell {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .video-info-display-container {
+                border-radius: 20px;
+            }
+
             .video-wrapper {
                 height: 40vh;
                 min-height: 250px;
@@ -413,6 +430,11 @@
 
             .video-title {
                 font-size: 14px;
+            }
+
+            .trainer-promo-shell {
+                padding: 20px;
+                border-radius: 20px;
             }
         }
 
@@ -454,6 +476,28 @@
 
         .animate-slide-up {
             animation: slideUp 0.5s ease-out;
+        }
+
+        .trainer-promo-shell {
+            position: relative;
+            overflow: hidden;
+            padding: clamp(24px, 4vw, 48px);
+            border-radius: 28px;
+            background: url('./img/banner-3.jpg') center center / cover no-repeat;
+            box-shadow: 0 20px 48px rgba(15, 23, 42, 0.16);
+        }
+
+        .trainer-promo-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.9) 45%, rgba(255, 255, 255, 0.72) 100%);
+            pointer-events: none;
+        }
+
+        .trainer-promo-shell .row {
+            position: relative;
+            z-index: 1;
         }
 
         @keyframes fadeIn {
@@ -552,7 +596,7 @@
     </div>
 
     <!-- Video Information Display System Start -->
-    <div class="container-fluid p-0 mb-4">
+    <div class="container-xxl hero-video-shell mb-4">
         <div id="video-info-display" class="video-info-display-container" data-video-info-display>
             <!-- Video Information Display will be loaded here by JavaScript -->
             <div class="fallback-carousel">
@@ -888,10 +932,9 @@
     <!-- Courses End -->
 
     <!-- Banner-2 Start -->
-    <section class="pb-5"
-        style="background: url('./img/banner-3.jpg') center center no-repeat; background-size: cover;">
-        <div class="container-xxl mt-5">
-            <div class="container">
+    <section class="pb-5">
+        <div class="container-xxl px-3 px-lg-4 mt-5">
+            <div class="trainer-promo-shell">
                 <div class="row g-5 align-items-center min-vh-50">
 
                     <div class="col-lg-6 order-lg-2 wow fadeInRight" data-wow-delay="0.1s">
@@ -1576,7 +1619,3 @@
 </body>
 
 </html>
-
-</html>
-</body>
-function toggleMenu() {

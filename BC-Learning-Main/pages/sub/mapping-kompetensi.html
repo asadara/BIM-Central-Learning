@@ -469,6 +469,147 @@
             border-top: 1px solid #e5e7eb;
             margin: 1rem 0;
         }
+
+        .analytics-summary-card,
+        .authority-summary-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem;
+            height: 100%;
+        }
+
+        .analytics-summary-card .label,
+        .authority-summary-card .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+            margin-bottom: 0.35rem;
+        }
+
+        .analytics-summary-card .value,
+        .authority-summary-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .report-preview-block {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #f8fafc;
+        }
+
+        .report-preview-block h6 {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            color: #374151;
+        }
+
+        .report-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .report-preview-kv {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+
+        .report-preview-kv .label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .report-preview-kv .value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .report-preview-table td,
+        .report-preview-table th {
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+
+        .empty-state-box {
+            text-align: center;
+            padding: 2rem 1rem;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+
+        .analytics-chart-frame {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            min-height: 320px;
+        }
+
+        .analytics-chart-frame.compact {
+            height: 260px;
+            min-height: 260px;
+        }
+
+        .analytics-chart-frame canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        @media (max-width: 767.98px) {
+            .analytics-chart-frame {
+                height: 260px;
+                min-height: 260px;
+            }
+
+            .analytics-chart-frame.compact {
+                height: 220px;
+                min-height: 220px;
+            }
+        }
+
+        .authority-role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .authority-role-badge.manager {
+            background: rgba(59, 130, 246, 0.12);
+            color: #1d4ed8;
+        }
+
+        .authority-role-badge.authority {
+            background: rgba(245, 158, 11, 0.14);
+            color: #b45309;
+        }
+
+        .authority-role-badge.mapping-access {
+            background: rgba(16, 185, 129, 0.12);
+            color: #047857;
+        }
+
+        .dashboard-inline-note {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 
@@ -477,7 +618,7 @@
     <div id="navbar-container"></div>
 
     <!-- Main Competency Interface -->
-    <div id="competencyInterface" class="container-fluid" style="margin-top: 76px;">
+    <div id="competencyInterface" class="container-fluid d-none" style="margin-top: 76px;">
         <div class="row">
             <!-- Sidebar -->
             <div id="competencySidebar" class="col-md-2">
@@ -487,6 +628,7 @@
                         <h5 class="mb-2 text-primary">
                             <i class="fas fa-project-diagram me-2"></i>Mapping Kompetensi BCL
                         </h5>
+                        <div id="authorityBadge"></div>
                     </div>
 
                     <h6 class="sidebar-title">
@@ -878,8 +1020,11 @@
                                 <i class="fas fa-chart-bar me-2"></i>Competency Analytics
                             </h5>
                         </div>
-                        <div class="card-body">
-                            <canvas id="analyticsChart" width="400" height="200"></canvas>
+                        <div class="card-body" id="analyticsContent">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-chart-line fa-2x mb-3"></i>
+                                <p class="mb-0">Analytics akan dimuat saat tab dibuka.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -899,6 +1044,23 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="modal fade" id="competencyDetailModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="competencyDetailModalTitle">Detail</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" id="competencyDetailModalBody"></div>
+                            <div class="modal-footer" id="competencyDetailModalFooter">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toast-container position-fixed top-0 end-0 p-3" id="competencyToastContainer" style="z-index: 1080;"></div>
             </div>
         </div>
     </div>
@@ -929,6 +1091,9 @@
         let userAuthority = null;
         let competencyData = null;
         let chartInstances = {};
+        let reportsCache = [];
+        let analyticsTrendMode = 'organization';
+        let dashboardFiltersBound = false;
 
         function getAuthHeaders(extraHeaders = {}) {
             const headers = { ...extraHeaders };
@@ -946,6 +1111,555 @@
                 headers,
                 credentials: 'include'
             });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatDateTime(value) {
+            if (!value) return '-';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '-';
+            return date.toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatDateOnly(value) {
+            if (!value) return '-';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '-';
+            return date.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function formatReportType(type) {
+            const labels = {
+                individual: 'Individual',
+                organization: 'Organization',
+                summary: 'Summary'
+            };
+            return labels[type] || (type ? String(type) : '-');
+        }
+
+        function formatRoleLabel(role) {
+            const labels = {
+                manager: 'Manager Kompetensi',
+                authority: 'Otoritas Legal',
+                mapping_access: 'Akses Mapping',
+                admin: 'Administrator'
+            };
+            return labels[role] || role || 'Tanpa Peran';
+        }
+
+        function normalizeRoleKey(role) {
+            return String(role || '')
+                .trim()
+                .toUpperCase()
+                .replace(/[^A-Z0-9]+/g, '_');
+        }
+
+        function buildSimpleBadge(text, variant = 'secondary') {
+            return `<span class="badge bg-${variant}">${escapeHtml(text)}</span>`;
+        }
+
+        function showToast(message, variant = 'primary') {
+            const container = document.getElementById('competencyToastContainer');
+            if (!container || !window.bootstrap || !bootstrap.Toast) return;
+
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${escapeHtml(message)}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+
+            container.appendChild(toastEl);
+            const instance = new bootstrap.Toast(toastEl, { delay: 3000 });
+            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+            instance.show();
+        }
+
+        function openDetailModal({ title, body, footer }) {
+            const modalEl = document.getElementById('competencyDetailModal');
+            if (!modalEl || !window.bootstrap || !bootstrap.Modal) return;
+
+            document.getElementById('competencyDetailModalTitle').innerHTML = title;
+            document.getElementById('competencyDetailModalBody').innerHTML = body;
+            document.getElementById('competencyDetailModalFooter').innerHTML = footer || `
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            `;
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+
+        function getCompetencyUsers() {
+            return Array.isArray(competencyData && competencyData.users) ? competencyData.users : [];
+        }
+
+        function isCurrentUserAdmin() {
+            return isAdminLikeRole(currentUser);
+        }
+
+        function redirectToLogin() {
+            const currentPath = window.location.pathname + window.location.search + window.location.hash;
+            window.location.replace(`/pages/login.html?redirect=${encodeURIComponent(currentPath)}`);
+        }
+
+        function getRoleConfig(role) {
+            return COMPETENCY_ROLES[normalizeRoleKey(role)] || COMPETENCY_ROLES.MAPPING_ACCESS;
+        }
+
+        function buildAuthorityRoleBadge(role) {
+            const roleKey = String(role || 'mapping_access').toLowerCase().replace(/_/g, '-');
+            return `<span class="authority-role-badge ${escapeHtml(roleKey)}"><i class="fas fa-user-shield"></i>${escapeHtml(formatRoleLabel(role))}</span>`;
+        }
+
+        function hasPermission(permission) {
+            if (isCurrentUserAdmin()) return true;
+            if (!userAuthority) return false;
+            const roleConfig = getRoleConfig(userAuthority.role);
+            return Array.isArray(roleConfig.permissions) && roleConfig.permissions.includes(permission);
+        }
+
+        function getSelectedDashboardFilters() {
+            const organizationSelect = document.getElementById('organizationFilter');
+            const levelSelect = document.getElementById('levelFilter');
+            return {
+                organization: organizationSelect ? organizationSelect.value : '',
+                level: levelSelect ? levelSelect.value : ''
+            };
+        }
+
+        function buildLevelDistributionFromUsers(users) {
+            const levels = {
+                novice: 0,
+                beginner: 0,
+                intermediate: 0,
+                advanced: 0,
+                expert: 0
+            };
+
+            (users || []).forEach(user => {
+                const levelKey = String(user.competencyLevel || '').toLowerCase();
+                if (Object.prototype.hasOwnProperty.call(levels, levelKey)) {
+                    levels[levelKey] += 1;
+                }
+            });
+
+            return levels;
+        }
+
+        function getFilteredDashboardUsers() {
+            const users = getCompetencyUsers();
+            const filters = getSelectedDashboardFilters();
+
+            return users.filter(user => {
+                const organizationMatch = !filters.organization || (user.organization || '') === filters.organization;
+                const levelMatch = !filters.level || String(user.competencyLevel || '').toLowerCase() === filters.level;
+                return organizationMatch && levelMatch;
+            });
+        }
+
+        function updateDashboardFilterNote(users) {
+            let note = document.getElementById('dashboardFilterNote');
+            if (!note) {
+                const filterBar = document.querySelector('#dashboard-section .bg-light.p-3.rounded');
+                if (!filterBar || !filterBar.parentElement) return;
+                note = document.createElement('div');
+                note.id = 'dashboardFilterNote';
+                note.className = 'dashboard-inline-note d-none';
+                filterBar.parentElement.appendChild(note);
+            }
+
+            const totalUsers = getCompetencyUsers().length;
+            const filters = getSelectedDashboardFilters();
+            if (!filters.organization && !filters.level) {
+                note.classList.add('d-none');
+                note.innerHTML = '';
+                return;
+            }
+
+            const activeFilters = [];
+            if (filters.organization) activeFilters.push(`organisasi: <strong>${escapeHtml(filters.organization)}</strong>`);
+            if (filters.level) activeFilters.push(`level: <strong>${escapeHtml(filters.level)}</strong>`);
+
+            note.classList.remove('d-none');
+            note.innerHTML = `
+                Menampilkan <strong>${users.length}</strong> dari <strong>${totalUsers}</strong> user
+                dengan filter ${activeFilters.join(' dan ')}.
+            `;
+        }
+
+        function populateDashboardOrganizationFilter(users) {
+            const select = document.getElementById('organizationFilter');
+            if (!select) return;
+
+            const currentValue = select.value;
+            const options = [...new Set((users || []).map(user => user.organization).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            select.innerHTML = '<option value="">All Organizations</option>' + options
+                .map(org => `<option value="${escapeHtml(org)}">${escapeHtml(org)}</option>`)
+                .join('');
+            select.value = options.includes(currentValue) ? currentValue : '';
+        }
+
+        function applyDashboardFilters() {
+            const filteredUsers = getFilteredDashboardUsers();
+            loadCompetencyChart(buildLevelDistributionFromUsers(filteredUsers));
+            loadTopPerformers(filteredUsers);
+            loadOrganizationSummary(filteredUsers);
+            updateDashboardFilterNote(filteredUsers);
+        }
+
+        function initializeDashboardFilters() {
+            if (dashboardFiltersBound) return;
+
+            const organizationFilter = document.getElementById('organizationFilter');
+            const levelFilter = document.getElementById('levelFilter');
+
+            [organizationFilter, levelFilter].forEach(element => {
+                if (!element) return;
+                element.addEventListener('change', applyDashboardFilters);
+            });
+
+            dashboardFiltersBound = true;
+        }
+
+        async function fetchReports(force = false) {
+            if (!force && reportsCache.length > 0) {
+                return reportsCache;
+            }
+
+            const response = await authFetch('/api/competency-reports');
+            if (!response.ok) {
+                throw new Error(`REPORTS_${response.status}`);
+            }
+
+            const reports = await response.json();
+            reportsCache = Array.isArray(reports)
+                ? reports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                : [];
+
+            return reportsCache;
+        }
+
+        async function getReportById(reportId) {
+            const reports = await fetchReports();
+            return reports.find(report => String(report.id) === String(reportId)) || null;
+        }
+
+        function renderProgressRows(progress) {
+            const safeProgress = progress || {};
+            return `
+                <table class="table table-sm report-preview-table mb-0">
+                    <tbody>
+                        <tr><th>Courses Completed</th><td>${Number(safeProgress.coursesCompleted || 0)}</td></tr>
+                        <tr><th>Exams Passed</th><td>${Number(safeProgress.examsPassed || 0)}</td></tr>
+                        <tr><th>Certificates Earned</th><td>${Number(safeProgress.certificatesEarned || 0)}</td></tr>
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderLevelDistributionTable(levelDistribution) {
+            const entries = Object.entries(levelDistribution || {});
+            if (entries.length === 0) {
+                return '<div class="text-muted small">Belum ada distribusi level.</div>';
+            }
+
+            return `
+                <table class="table table-sm report-preview-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${entries.map(([level, total]) => `
+                            <tr>
+                                <td>${escapeHtml(level)}</td>
+                                <td>${Number(total || 0)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderTopPerformerTable(users) {
+            if (!Array.isArray(users) || users.length === 0) {
+                return '<div class="text-muted small">Belum ada data performer.</div>';
+            }
+
+            return `
+                <table class="table table-sm report-preview-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Organization</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>${escapeHtml(user.username || user.name || '-')}</td>
+                                <td>${escapeHtml(user.organization || '-')}</td>
+                                <td>${Number(user.score || user.competencyScore || 0)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderOrganizationBreakdownTable(organizationBreakdown) {
+            const entries = Object.entries(organizationBreakdown || {});
+            if (entries.length === 0) {
+                return '<div class="text-muted small">Belum ada data organisasi.</div>';
+            }
+
+            return `
+                <table class="table table-sm report-preview-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Total User</th>
+                            <th>Average Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${entries.map(([organization, data]) => `
+                            <tr>
+                                <td>${escapeHtml(organization)}</td>
+                                <td>${Number(data.count || 0)}</td>
+                                <td>${Number(data.averageScore || 0)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function buildReportPreviewMarkup(report, printable = false) {
+            const content = report.content || {};
+            const wrapperTag = printable ? 'section' : 'div';
+            const metaHtml = `
+                <div class="report-preview-grid meta">
+                    <div class="report-preview-kv meta-item">
+                        <div class="label">Title</div>
+                        <div class="value">${escapeHtml(report.title || '-')}</div>
+                    </div>
+                    <div class="report-preview-kv meta-item">
+                        <div class="label">Type</div>
+                        <div class="value">${escapeHtml(formatReportType(report.type))}</div>
+                    </div>
+                    <div class="report-preview-kv meta-item">
+                        <div class="label">Status</div>
+                        <div class="value">${escapeHtml(report.status || 'draft')}</div>
+                    </div>
+                    <div class="report-preview-kv meta-item">
+                        <div class="label">Created</div>
+                        <div class="value">${escapeHtml(formatDateTime(report.created_at))}</div>
+                    </div>
+                </div>
+            `;
+
+            const notesBlock = report.notes ? `
+                <div class="report-preview-block section">
+                    <h6>Notes</h6>
+                    <p class="mb-0">${escapeHtml(report.notes)}</p>
+                </div>
+            ` : '';
+
+            let detailBlock = `
+                <div class="report-preview-block section">
+                    <h6>Ringkasan</h6>
+                    <p class="text-muted mb-0">Format konten laporan belum dikenali.</p>
+                </div>
+            `;
+
+            if (report.type === 'individual') {
+                detailBlock = `
+                    <div class="report-preview-block section">
+                        <h6>User Profile</h6>
+                        <div class="report-preview-grid">
+                            <div class="report-preview-kv">
+                                <div class="label">Nama</div>
+                                <div class="value">${escapeHtml(content.userInfo && content.userInfo.name)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Email</div>
+                                <div class="value">${escapeHtml(content.userInfo && content.userInfo.email)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Organization</div>
+                                <div class="value">${escapeHtml(content.userInfo && content.userInfo.organization)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">BIM Level</div>
+                                <div class="value">${escapeHtml(content.userInfo && content.userInfo.bimLevel)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Competency Score</div>
+                                <div class="value">${Number(content.competencyScore || 0)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Competency Level</div>
+                                <div class="value">${escapeHtml(content.competencyLevel || '-')}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-preview-block section">
+                        <h6>Progress Snapshot</h6>
+                        ${renderProgressRows(content.progress)}
+                    </div>
+                `;
+            } else if (report.type === 'organization') {
+                detailBlock = `
+                    <div class="report-preview-block section">
+                        <h6>Organization Overview</h6>
+                        <div class="report-preview-grid">
+                            <div class="report-preview-kv">
+                                <div class="label">Organization</div>
+                                <div class="value">${escapeHtml(content.organization || '-')}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Total Users</div>
+                                <div class="value">${Number(content.totalUsers || 0)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Average Score</div>
+                                <div class="value">${Number(content.averageScore || 0)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Generated At</div>
+                                <div class="value">${escapeHtml(formatDateTime(content.generatedAt))}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-preview-block section">
+                        <h6>Level Distribution</h6>
+                        ${renderLevelDistributionTable(content.levelDistribution)}
+                    </div>
+                    <div class="report-preview-block section">
+                        <h6>Top Performers</h6>
+                        ${renderTopPerformerTable(content.topPerformers)}
+                    </div>
+                `;
+            } else if (report.type === 'summary') {
+                detailBlock = `
+                    <div class="report-preview-block section">
+                        <h6>Summary Overview</h6>
+                        <div class="report-preview-grid">
+                            <div class="report-preview-kv">
+                                <div class="label">Total Users</div>
+                                <div class="value">${Number(content.totalUsers || 0)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Average Score</div>
+                                <div class="value">${Number(content.averageScore || 0)}</div>
+                            </div>
+                            <div class="report-preview-kv">
+                                <div class="label">Generated At</div>
+                                <div class="value">${escapeHtml(formatDateTime(content.generatedAt))}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-preview-block section">
+                        <h6>Level Distribution</h6>
+                        ${renderLevelDistributionTable(content.levelDistribution)}
+                    </div>
+                    <div class="report-preview-block section">
+                        <h6>Organization Breakdown</h6>
+                        ${renderOrganizationBreakdownTable(content.organizationBreakdown)}
+                    </div>
+                    <div class="report-preview-block section">
+                        <h6>Top Performers</h6>
+                        ${renderTopPerformerTable(content.topPerformers)}
+                    </div>
+                `;
+            }
+
+            const approvalBlock = `
+                <div class="report-preview-block section">
+                    <h6>Approval Trail</h6>
+                    <div class="report-preview-grid">
+                        <div class="report-preview-kv">
+                            <div class="label">Approved By</div>
+                            <div class="value">${escapeHtml(report.approved_by || '-')}</div>
+                        </div>
+                        <div class="report-preview-kv">
+                            <div class="label">Approved At</div>
+                            <div class="value">${escapeHtml(formatDateTime(report.approved_at))}</div>
+                        </div>
+                        <div class="report-preview-kv">
+                            <div class="label">Approval Comments</div>
+                            <div class="value">${escapeHtml(report.approval_comments || '-')}</div>
+                        </div>
+                        <div class="report-preview-kv">
+                            <div class="label">Rejection Reason</div>
+                            <div class="value">${escapeHtml(report.rejection_reason || '-')}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return `
+                <${wrapperTag} class="competency-report">
+                    <h3>${escapeHtml(report.title || 'Competency Report')}</h3>
+                    ${metaHtml}
+                    ${detailBlock}
+                    ${notesBlock}
+                    ${approvalBlock}
+                </${wrapperTag}>
+            `;
+        }
+
+        function buildPrintableReportHtml(report) {
+            const title = escapeHtml(report.title || 'Competency Report');
+            return `
+                <!DOCTYPE html>
+                <html lang="id">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${title}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 32px; color: #0f172a; }
+                        h1, h2, h3, h4, h5, h6 { margin: 0 0 12px; }
+                        .meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+                        .meta-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+                        .meta-item .label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+                        .meta-item .value { font-weight: 700; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+                        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; font-size: 14px; }
+                        .section { margin-top: 24px; }
+                    </style>
+                </head>
+                <body>
+                    ${buildReportPreviewMarkup(report, true)}
+                </body>
+                </html>
+            `;
         }
 
         function getLocalUser() {
@@ -984,6 +1698,12 @@
 
         // Competency Roles Definition
         const COMPETENCY_ROLES = {
+            MAPPING_ACCESS: {
+                level: 0,
+                name: 'Akses Mapping',
+                permissions: ['view_reports', 'generate_reports', 'export_reports'],
+                badge: '<span class="badge bg-success"><i class="fas fa-door-open me-1"></i>Akses Mapping</span>'
+            },
             MANAGER: {
                 level: 1,
                 name: 'Manager Kompetensi',
@@ -1064,36 +1784,35 @@
                     }
                 }
 
-                if (!currentUser) {
-                    if (localUser) {
-                        currentUser = {
-                            id: localUser.id,
-                            username: localUser.name || localUser.username || localUser.email,
-                            email: localUser.email,
-                            role: localUser.role,
-                            isAdmin: !!localUser.isAdmin
-                        };
-                        console.log('User loaded from local storage:', currentUser.username || currentUser.email);
-                    }
+                if (!currentUser && localUser && localToken) {
+                    currentUser = {
+                        id: localUser.id,
+                        username: localUser.name || localUser.username || localUser.email,
+                        email: localUser.email,
+                        role: localUser.role,
+                        isAdmin: !!localUser.isAdmin
+                    };
+                    console.log('User loaded from local storage:', currentUser.username || currentUser.email);
                 }
 
                 if (!currentUser) {
                     console.log('No authenticated user found');
+                    redirectToLogin();
                     return;
                 }
 
-                const isAdminLike = isAdminLikeRole(currentUser);
                 const mappingAccessResponse = await authFetch('/api/users/check-mapping-access');
                 if (!mappingAccessResponse.ok) {
-                    if (isAdminLike) {
-                        console.log('Mapping access check skipped because user has admin role');
-                    } else {
-                        console.log('Could not check mapping kompetensi access');
+                    if (mappingAccessResponse.status === 401) {
+                        console.log('Mapping access check returned 401, redirecting to login');
+                        redirectToLogin();
                         return;
                     }
+                    console.log('Could not check mapping kompetensi access');
+                    return;
                 } else {
                     const mappingAccessData = await mappingAccessResponse.json();
-                    if (!mappingAccessData.hasAccess && !isAdminLike) {
+                    if (!mappingAccessData.hasAccess) {
                         console.log('User does not have mapping kompetensi access');
                         return;
                     }
@@ -1127,6 +1846,11 @@
         }
         // Show Access Denied
         function showAccessDenied() {
+            const interfaceContainer = document.getElementById('competencyInterface');
+            if (interfaceContainer) {
+                interfaceContainer.classList.remove('d-none');
+            }
+
             document.getElementById('accessDenied').classList.remove('d-none');
 
             const sidebar = document.getElementById('competencySidebar');
@@ -1155,6 +1879,8 @@
 
             // Initialize report type selection
             initializeReportTypeSelection();
+            initializeDashboardFilters();
+            displayAuthorityBadge();
 
             // Show main interface
             document.getElementById('competencyInterface').classList.remove('d-none');
@@ -1166,7 +1892,7 @@
             if (!badgeContainer) return;
 
             if (userAuthority) {
-                const role = COMPETENCY_ROLES[userAuthority.role.toUpperCase()];
+                const role = getRoleConfig(userAuthority.role);
                 if (role) {
                     badgeContainer.innerHTML = role.badge;
                 }
@@ -1194,7 +1920,9 @@
             }
 
             // Add active class to clicked nav link
-            const activeLink = triggerEl || (typeof event !== 'undefined' ? event.currentTarget : null);
+            const activeLink = triggerEl
+                || document.querySelector(`.sidebar-link[href="#${sectionName}"]`)
+                || (typeof event !== 'undefined' ? event.currentTarget : null);
             if (activeLink) {
                 activeLink.classList.add('active');
             }
@@ -1236,10 +1964,9 @@
                 document.getElementById('pendingApprovals').textContent = competencyData.pendingApprovals || 0;
 
                 // Load charts and additional data
-                loadCompetencyChart(competencyData.competencyLevels);
+                populateDashboardOrganizationFilter(getCompetencyUsers());
+                applyDashboardFilters();
                 loadRecentReports(competencyData.recentReports);
-                loadTopPerformers(competencyData.users);
-                loadOrganizationSummary(competencyData.users);
                 loadCompetencyInsights(competencyData);
 
                 console.log('âœ… Dashboard data loaded successfully');
@@ -1310,8 +2037,8 @@
                 html += `
                     <div class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-1">${report.title}</h6>
-                            <small class="text-muted">${new Date(report.created_at).toLocaleDateString('id-ID')}</small>
+                            <h6 class="mb-1">${escapeHtml(report.title)}</h6>
+                            <small class="text-muted">${escapeHtml(formatDateOnly(report.created_at))}</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             ${statusBadge}
@@ -1401,18 +2128,21 @@
         // Load Users List
         async function loadUsersList() {
             try {
-                const response = await authFetch('/api/users/get-all');
+                let users = [];
+                const response = await authFetch('/api/competency/users');
                 if (response.ok) {
-                    const users = await response.json();
-                    const select = document.getElementById('selectedUser');
-
-                    let options = '<option value="">Choose user...</option>';
-                    users.forEach(user => {
-                        options += `<option value="${user.id}">${user.username} - ${user.organization || 'N/A'}</option>`;
-                    });
-
-                    select.innerHTML = options;
+                    users = await response.json();
+                } else {
+                    users = getCompetencyUsers();
                 }
+
+                const select = document.getElementById('selectedUser');
+                let options = '<option value="">Choose user...</option>';
+                (users || []).forEach(user => {
+                    options += `<option value="${escapeHtml(user.id)}">${escapeHtml(user.username || user.name || 'User')} - ${escapeHtml(user.organization || 'N/A')}</option>`;
+                });
+
+                select.innerHTML = options;
             } catch (error) {
                 console.error('Error loading users list:', error);
             }
@@ -1428,7 +2158,10 @@
 
                     let options = '<option value="">Choose organization...</option>';
                     organizations.forEach(org => {
-                        options += `<option value="${org.id}">${org.name}</option>`;
+                        const value = typeof org === 'string' ? org : (org && (org.id || org.name));
+                        const label = typeof org === 'string' ? org : (org && (org.name || org.id));
+                        if (!value) return;
+                        options += `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
                     });
 
                     select.innerHTML = options;
@@ -1460,8 +2193,9 @@
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    alert('âœ… Report generated successfully!');
+                    await response.json();
+                    reportsCache = [];
+                    showToast('Report berhasil dibuat.', 'success');
 
                     // Clear form and navigate to reports
                     clearReportForm();
@@ -1471,12 +2205,12 @@
                     loadCompetencyDashboard();
                 } else {
                     const error = await response.json();
-                    alert('âŒ Failed to generate report: ' + (error.error || 'Unknown error'));
+                    showToast(`Gagal membuat report: ${error.error || 'Unknown error'}`, 'danger');
                 }
 
             } catch (error) {
                 console.error('Error generating report:', error);
-                alert('âŒ Error generating report: ' + error.message);
+                showToast(`Error generating report: ${error.message}`, 'danger');
             } finally {
                 hideLoading();
             }
@@ -1494,13 +2228,16 @@
         // Load Reports List
         async function loadReportsList() {
             try {
-                const response = await authFetch('/api/competency-reports');
-                if (response.ok) {
-                    const reports = await response.json();
-                    displayReportsList(reports);
-                }
+                const reports = await fetchReports(true);
+                displayReportsList(reports);
             } catch (error) {
                 console.error('Error loading reports list:', error);
+                document.getElementById('reportsList').innerHTML = `
+                    <div class="empty-state-box">
+                        <i class="fas fa-triangle-exclamation fa-2x text-warning mb-3"></i>
+                        <p class="mb-0">Reports tidak dapat dimuat saat ini.</p>
+                    </div>
+                `;
             }
         }
 
@@ -1539,10 +2276,10 @@
                 const statusBadge = getReportStatusBadge(report.status);
                 html += `
                     <tr>
-                        <td>${report.title}</td>
-                        <td><span class="badge bg-secondary">${report.type}</span></td>
+                        <td>${escapeHtml(report.title)}</td>
+                        <td><span class="badge bg-secondary">${escapeHtml(formatReportType(report.type))}</span></td>
                         <td>${statusBadge}</td>
-                        <td>${new Date(report.created_at).toLocaleDateString('id-ID')}</td>
+                        <td>${escapeHtml(formatDateOnly(report.created_at))}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <button class="btn btn-outline-info" onclick="viewReport(${report.id})" title="View">
@@ -1597,7 +2334,7 @@
             }
 
             // Sort users by competency score and get top 3
-            const topPerformers = users
+            const topPerformers = [...users]
                 .sort((a, b) => (b.competencyScore || 0) - (a.competencyScore || 0))
                 .slice(0, 3);
 
@@ -1612,13 +2349,13 @@
                         <div class="d-flex align-items-center">
                             <i class="fas ${medalIcon} me-2"></i>
                             <div>
-                                <div class="fw-bold small">${user.username}</div>
-                                <div class="text-muted small">${user.organization || 'N/A'}</div>
+                                <div class="fw-bold small">${escapeHtml(user.username)}</div>
+                                <div class="text-muted small">${escapeHtml(user.organization || 'N/A')}</div>
                             </div>
                         </div>
                         <div class="text-end">
                             <div class="fw-bold small">${user.competencyScore || 0}</div>
-                            <div class="text-muted small">${user.competencyLevel || 'Novice'}</div>
+                            <div class="text-muted small">${escapeHtml(user.competencyLevel || 'Novice')}</div>
                         </div>
                     </div>
                 `;
@@ -1664,7 +2401,7 @@
                 html += `
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <div>
-                            <div class="fw-bold small">${org.name}</div>
+                            <div class="fw-bold small">${escapeHtml(org.name)}</div>
                             <div class="text-muted small">${org.count} users</div>
                         </div>
                         <div class="text-end">
@@ -1703,62 +2440,775 @@
         }
 
         // Analytics section implementation
-        function loadAnalyticsData() {
+        async function loadAnalyticsData() {
             console.log('Loading analytics data...');
-            // For now, just show a placeholder
-            const container = document.getElementById('analytics-section').querySelector('.card-body');
+            const container = document.getElementById('analyticsContent');
+            if (!container) return;
+
             container.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-chart-bar fa-3x text-info mb-3"></i>
-                    <h5>Advanced Analytics</h5>
-                    <p class="text-muted">Detailed competency analytics and trends will be displayed here.</p>
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <canvas id="trendChart" width="300" height="200"></canvas>
-                        </div>
-                        <div class="col-md-6">
-                            <canvas id="distributionChart" width="300" height="200"></canvas>
-                        </div>
-                    </div>
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="mb-0">Menyiapkan analytics...</p>
                 </div>
             `;
+
+            try {
+                const users = getCompetencyUsers();
+                const reports = await fetchReports();
+                const organizations = [...new Set(users.map(user => user.organization).filter(Boolean))];
+                const averageCourses = users.length
+                    ? Math.round(users.reduce((sum, user) => sum + Number((user.progress && user.progress.coursesCompleted) || 0), 0) / users.length)
+                    : 0;
+                const approvalRate = reports.length
+                    ? Math.round((reports.filter(report => report.status === 'approved').length / reports.length) * 100)
+                    : 0;
+                const dominantLevelEntry = Object.entries(buildLevelDistributionFromUsers(users))
+                    .sort((a, b) => b[1] - a[1])[0];
+
+                container.innerHTML = `
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="competency-card p-3 h-100">
+                                <div class="text-muted small mb-2">Organizations</div>
+                                <div class="fs-3 fw-bold">${organizations.length}</div>
+                                <div class="small text-muted">Total organisasi aktif</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="competency-card p-3 h-100">
+                                <div class="text-muted small mb-2">Dominant Level</div>
+                                <div class="fs-3 fw-bold">${escapeHtml(dominantLevelEntry ? dominantLevelEntry[0] : '-')}</div>
+                                <div class="small text-muted">${dominantLevelEntry ? dominantLevelEntry[1] : 0} user</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="competency-card p-3 h-100">
+                                <div class="text-muted small mb-2">Approval Rate</div>
+                                <div class="fs-3 fw-bold">${approvalRate}%</div>
+                                <div class="small text-muted">Report yang sudah approved</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="competency-card p-3 h-100">
+                                <div class="text-muted small mb-2">Avg Courses</div>
+                                <div class="fs-3 fw-bold">${averageCourses}</div>
+                                <div class="small text-muted">Rata-rata course selesai</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-lg-8">
+                            <div class="competency-card p-3 h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h6 class="mb-1">Performance Trend View</h6>
+                                        <div class="small text-muted">Mode aktif: ${escapeHtml(analyticsTrendMode)}</div>
+                                    </div>
+                                </div>
+                                <div class="analytics-chart-frame">
+                                    <canvas id="analyticsPrimaryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="competency-card p-3 h-100">
+                                <h6 class="mb-3">Report Status Mix</h6>
+                                <div class="analytics-chart-frame compact">
+                                    <canvas id="analyticsStatusChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-4 mt-1">
+                        <div class="col-lg-6">
+                            <div class="competency-card p-3 h-100">
+                                <h6 class="mb-3">Lowest Performing Organizations</h6>
+                                <div id="analyticsGapList"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="competency-card p-3 h-100">
+                                <h6 class="mb-3">Operational Highlights</h6>
+                                <div id="analyticsOperationalHighlights"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                renderAnalyticsCharts(users, reports);
+                renderAnalyticsGaps(users);
+                renderAnalyticsHighlights(users, reports);
+            } catch (error) {
+                console.error('Error loading analytics data:', error);
+                container.innerHTML = `
+                    <div class="empty-state-box">
+                        <i class="fas fa-triangle-exclamation fa-2x text-warning mb-3"></i>
+                        <p class="mb-0">Analytics belum bisa dimuat. Silakan coba lagi.</p>
+                    </div>
+                `;
+            }
         }
 
         // Authority management implementation
-        function loadAuthorityManagement() {
+        async function loadAuthorityManagement() {
             console.log('Loading authority management...');
             const container = document.getElementById('authorityManagementContent');
+            if (!container) return;
+
             container.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-user-shield fa-3x text-warning mb-3"></i>
-                    <h5>Authority Management</h5>
-                    <p class="text-muted">Manage competency authorities and permissions.</p>
-                    <div class="mt-4">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Current user has "Otoritas Legal" authority for approving competency reports.
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="mb-0">Memuat data authority...</p>
+                </div>
+            `;
+
+            if (!isCurrentUserAdmin()) {
+                const roleConfig = getRoleConfig(userAuthority && userAuthority.role);
+                container.innerHTML = `
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Halaman ini hanya editable oleh admin. Ringkasan authority aktif Anda tetap ditampilkan.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="competency-card p-3 h-100">
+                                <div class="small text-muted mb-2">Role</div>
+                                <div class="mb-2">${buildAuthorityRoleBadge(userAuthority && userAuthority.role)}</div>
+                                <div class="small text-muted">Status: ${escapeHtml((userAuthority && userAuthority.status) || 'approved')}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="competency-card p-3 h-100">
+                                <div class="small text-muted mb-2">Permissions</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${(roleConfig.permissions || []).map(permission => buildSimpleBadge(permission, 'light')).join('')}
+                                </div>
+                            </div>
                         </div>
                     </div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await authFetch('/api/competency/admin/authorities');
+                if (!response.ok) {
+                    throw new Error(`AUTH_${response.status}`);
+                }
+
+                const authorities = await response.json();
+                const pending = authorities.filter(item => item.status === 'pending');
+                const approved = authorities.filter(item => item.status === 'approved');
+                const rejected = authorities.filter(item => item.status === 'rejected');
+
+                container.innerHTML = `
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="competency-card p-3 h-100">
+                                <div class="small text-muted mb-2">Pending Request</div>
+                                <div class="fs-3 fw-bold">${pending.length}</div>
+                                <div class="small text-muted">Menunggu keputusan admin</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="competency-card p-3 h-100">
+                                <div class="small text-muted mb-2">Active Authority</div>
+                                <div class="fs-3 fw-bold">${approved.filter(item => item.is_active).length}</div>
+                                <div class="small text-muted">Authority aktif saat ini</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="competency-card p-3 h-100">
+                                <div class="small text-muted mb-2">Rejected</div>
+                                <div class="fs-3 fw-bold">${rejected.length}</div>
+                                <div class="small text-muted">Permintaan ditolak</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="competency-card p-3 mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Pending Approval Queue</h6>
+                            <div class="small text-muted">${authorities.length} total request</div>
+                        </div>
+                        ${pending.length ? `
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Role</th>
+                                            <th>Requested</th>
+                                            <th>Reason</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${pending.map(item => `
+                                            <tr>
+                                                <td>${escapeHtml(item.username || item.user_id || '-')}</td>
+                                                <td>${buildAuthorityRoleBadge(item.role)}</td>
+                                                <td>${escapeHtml(formatDateTime(item.requested_at))}</td>
+                                                <td>${escapeHtml(item.reason || '-')}</td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-success" onclick="approveAuthorityRequest(${item.id})">
+                                                            <i class="fas fa-check me-1"></i>Approve
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" onclick="rejectAuthorityRequest(${item.id})">
+                                                            <i class="fas fa-times me-1"></i>Reject
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : `
+                            <div class="empty-state-box">
+                                <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                <p class="mb-0">Tidak ada authority request yang menunggu approval.</p>
+                            </div>
+                        `}
+                    </div>
+                    <div class="competency-card p-3">
+                        <h6 class="mb-3">Authority Registry</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Granted / Processed</th>
+                                        <th>Updated By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${authorities.map(item => `
+                                        <tr>
+                                            <td>${escapeHtml(item.username || item.user_id || '-')}</td>
+                                            <td>${buildAuthorityRoleBadge(item.role)}</td>
+                                            <td>${buildSimpleBadge(item.status || 'pending', item.status === 'approved' ? 'success' : item.status === 'rejected' ? 'danger' : 'warning')}</td>
+                                            <td>${escapeHtml(formatDateTime(item.granted_at || item.processed_at || item.requested_at))}</td>
+                                            <td>${escapeHtml(item.granted_by || item.processed_by || '-')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading authority management:', error);
+                container.innerHTML = `
+                    <div class="empty-state-box">
+                        <i class="fas fa-triangle-exclamation fa-2x text-warning mb-3"></i>
+                        <p class="mb-0">Data authority tidak dapat dimuat saat ini.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Report viewing implementation
+        async function viewReport(reportId) {
+            console.log('Viewing report:', reportId);
+            try {
+                const report = await getReportById(reportId);
+                if (!report) {
+                    showToast('Report tidak ditemukan.', 'warning');
+                    return;
+                }
+
+                let footerHtml = `
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="downloadReport(${report.id})">
+                        <i class="fas fa-download me-1"></i>Download
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="printReport(${report.id})">
+                        <i class="fas fa-print me-1"></i>Print
+                    </button>
+                `;
+
+                if (report.status === 'pending_approval' && hasPermission('approve_reports')) {
+                    footerHtml += `
+                        <button type="button" class="btn btn-success" onclick="approveReport(${report.id})">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="rejectReport(${report.id})">
+                            <i class="fas fa-times me-1"></i>Reject
+                        </button>
+                    `;
+                }
+
+                openDetailModal({
+                    title: `<i class="fas fa-file-alt me-2"></i>${escapeHtml(report.title || 'Report Detail')}`,
+                    body: buildReportPreviewMarkup(report),
+                    footer: footerHtml
+                });
+            } catch (error) {
+                console.error('Error viewing report:', error);
+                showToast('Gagal membuka report.', 'danger');
+            }
+        }
+
+        // Report download implementation
+        async function downloadReport(reportId) {
+            console.log('Downloading report:', reportId);
+            try {
+                const report = await getReportById(reportId);
+                if (!report) {
+                    showToast('Report tidak ditemukan.', 'warning');
+                    return;
+                }
+
+                const blob = new Blob([buildPrintableReportHtml(report)], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${String(report.title || 'competency-report').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}.html`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                showToast('Report berhasil diunduh.', 'success');
+            } catch (error) {
+                console.error('Error downloading report:', error);
+                showToast('Gagal mengunduh report.', 'danger');
+            }
+        }
+
+        // Report print implementation
+        async function printReport(reportId) {
+            console.log('Printing report:', reportId);
+            try {
+                const report = await getReportById(reportId);
+                if (!report) {
+                    showToast('Report tidak ditemukan.', 'warning');
+                    return;
+                }
+
+                const printWindow = window.open('', '_blank', 'width=1024,height=768');
+                if (!printWindow) {
+                    showToast('Popup diblokir browser.', 'warning');
+                    return;
+                }
+
+                printWindow.document.open();
+                printWindow.document.write(buildPrintableReportHtml(report));
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+            } catch (error) {
+                console.error('Error printing report:', error);
+                showToast('Gagal menyiapkan print.', 'danger');
+            }
+        }
+
+        function buildAnalyticsPrimaryDataset(users) {
+            if (analyticsTrendMode === 'level') {
+                const distribution = buildLevelDistributionFromUsers(users);
+                return {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(distribution).map(label => label.charAt(0).toUpperCase() + label.slice(1)),
+                        datasets: [{
+                            label: 'User Count',
+                            data: Object.values(distribution),
+                            backgroundColor: ['#94a3b8', '#22c55e', '#f59e0b', '#dc2626', '#7c3aed']
+                        }]
+                    }
+                };
+            }
+
+            if (analyticsTrendMode === 'activity') {
+                const topUsers = [...users]
+                    .sort((a, b) => Number((b.progress && b.progress.coursesCompleted) || 0) - Number((a.progress && a.progress.coursesCompleted) || 0))
+                    .slice(0, 5);
+
+                return {
+                    type: 'bar',
+                    data: {
+                        labels: topUsers.map(user => user.username || user.name || 'User'),
+                        datasets: [{
+                            label: 'Courses Completed',
+                            data: topUsers.map(user => Number((user.progress && user.progress.coursesCompleted) || 0)),
+                            backgroundColor: '#06b6d4'
+                        }]
+                    }
+                };
+            }
+
+            const orgMap = {};
+            users.forEach(user => {
+                const org = user.organization || 'Unspecified';
+                if (!orgMap[org]) {
+                    orgMap[org] = { total: 0, count: 0 };
+                }
+                orgMap[org].total += Number(user.competencyScore || 0);
+                orgMap[org].count += 1;
+            });
+
+            const organizationSeries = Object.entries(orgMap)
+                .map(([org, data]) => ({
+                    label: org,
+                    value: data.count ? Math.round(data.total / data.count) : 0
+                }))
+                .sort((a, b) => b.value - a.value);
+
+            return {
+                type: 'bar',
+                data: {
+                    labels: organizationSeries.map(item => item.label),
+                    datasets: [{
+                        label: 'Average Score',
+                        data: organizationSeries.map(item => item.value),
+                        backgroundColor: '#6366f1'
+                    }]
+                }
+            };
+        }
+
+        function renderAnalyticsCharts(users, reports) {
+            const primaryCanvas = document.getElementById('analyticsPrimaryChart');
+            const statusCanvas = document.getElementById('analyticsStatusChart');
+            if (!primaryCanvas || !statusCanvas) return;
+
+            if (chartInstances.analyticsChart) {
+                chartInstances.analyticsChart.destroy();
+            }
+            if (chartInstances.analyticsStatusChart) {
+                chartInstances.analyticsStatusChart.destroy();
+            }
+
+            const primaryDataset = buildAnalyticsPrimaryDataset(users);
+            chartInstances.analyticsChart = new Chart(primaryCanvas.getContext('2d'), {
+                type: primaryDataset.type,
+                data: primaryDataset.data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: primaryDataset.type !== 'bar'
+                        }
+                    },
+                    scales: primaryDataset.type === 'bar'
+                        ? {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                        : {}
+                }
+            });
+
+            const statusDistribution = {
+                draft: 0,
+                pending_approval: 0,
+                approved: 0,
+                rejected: 0
+            };
+            reports.forEach(report => {
+                const key = report.status || 'draft';
+                if (Object.prototype.hasOwnProperty.call(statusDistribution, key)) {
+                    statusDistribution[key] += 1;
+                }
+            });
+
+            chartInstances.analyticsStatusChart = new Chart(statusCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Draft', 'Pending', 'Approved', 'Rejected'],
+                    datasets: [{
+                        data: [
+                            statusDistribution.draft,
+                            statusDistribution.pending_approval,
+                            statusDistribution.approved,
+                            statusDistribution.rejected
+                        ],
+                        backgroundColor: ['#94a3b8', '#f59e0b', '#22c55e', '#dc2626']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderAnalyticsGaps(users) {
+            const container = document.getElementById('analyticsGapList');
+            if (!container) return;
+
+            const orgMap = {};
+            users.forEach(user => {
+                const org = user.organization || 'Unspecified';
+                if (!orgMap[org]) {
+                    orgMap[org] = { total: 0, count: 0 };
+                }
+                orgMap[org].total += Number(user.competencyScore || 0);
+                orgMap[org].count += 1;
+            });
+
+            const weakest = Object.entries(orgMap)
+                .map(([name, data]) => ({
+                    name,
+                    score: data.count ? Math.round(data.total / data.count) : 0,
+                    count: data.count
+                }))
+                .sort((a, b) => a.score - b.score)
+                .slice(0, 3);
+
+            if (!weakest.length) {
+                container.innerHTML = '<div class="text-muted small">Belum ada gap yang bisa dihitung.</div>';
+                return;
+            }
+
+            container.innerHTML = weakest.map(item => `
+                <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-2">
+                    <div>
+                        <div class="fw-semibold">${escapeHtml(item.name)}</div>
+                        <div class="small text-muted">${item.count} user</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">${item.score}</div>
+                        <div class="small text-muted">avg score</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAnalyticsHighlights(users, reports) {
+            const container = document.getElementById('analyticsOperationalHighlights');
+            if (!container) return;
+
+            const noviceCount = users.filter(user => String(user.competencyLevel || '').toLowerCase() === 'novice').length;
+            const beginnerCount = users.filter(user => String(user.competencyLevel || '').toLowerCase() === 'beginner').length;
+            const pendingCount = reports.filter(report => report.status === 'pending_approval').length;
+            const latestReport = reports[0];
+
+            container.innerHTML = `
+                <div class="border rounded p-3 mb-2">
+                    <div class="fw-semibold mb-1">Entry-level concentration</div>
+                    <div class="small text-muted">${noviceCount + beginnerCount} user masih di level novice/beginner.</div>
+                </div>
+                <div class="border rounded p-3 mb-2">
+                    <div class="fw-semibold mb-1">Pending approval queue</div>
+                    <div class="small text-muted">${pendingCount} report masih menunggu approval.</div>
+                </div>
+                <div class="border rounded p-3">
+                    <div class="fw-semibold mb-1">Latest report activity</div>
+                    <div class="small text-muted">${latestReport ? `${escapeHtml(latestReport.title)} pada ${escapeHtml(formatDateTime(latestReport.created_at))}` : 'Belum ada report terbaru.'}</div>
                 </div>
             `;
         }
 
-        // Report viewing implementation
-        function viewReport(reportId) {
-            console.log('Viewing report:', reportId);
-            alert(`Report viewing functionality will be implemented.\nReport ID: ${reportId}`);
+        async function approveReport(reportId) {
+            try {
+                showLoading();
+                const comments = prompt('Komentar approval (opsional):', '') || '';
+                const response = await authFetch(`/api/competency-reports/${reportId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comments })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || 'Approval failed');
+                }
+
+                reportsCache = [];
+                await loadReportsList();
+                await loadCompetencyDashboard();
+                if (!document.getElementById('analytics-section').classList.contains('d-none')) {
+                    await loadAnalyticsData();
+                }
+                await viewReport(reportId);
+                showToast('Report berhasil di-approve.', 'success');
+            } catch (error) {
+                console.error('Error approving report:', error);
+                showToast(`Approval gagal: ${error.message}`, 'danger');
+            } finally {
+                hideLoading();
+            }
         }
 
-        // Report download implementation
-        function downloadReport(reportId) {
-            console.log('Downloading report:', reportId);
-            alert(`Report download functionality will be implemented.\nReport ID: ${reportId}`);
+        async function rejectReport(reportId) {
+            const reason = prompt('Masukkan alasan penolakan report:');
+            if (reason === null) return;
+
+            try {
+                showLoading();
+                const response = await authFetch(`/api/competency-reports/${reportId}/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || 'Rejection failed');
+                }
+
+                reportsCache = [];
+                await loadReportsList();
+                await loadCompetencyDashboard();
+                if (!document.getElementById('analytics-section').classList.contains('d-none')) {
+                    await loadAnalyticsData();
+                }
+                await viewReport(reportId);
+                showToast('Report berhasil ditolak.', 'warning');
+            } catch (error) {
+                console.error('Error rejecting report:', error);
+                showToast(`Reject gagal: ${error.message}`, 'danger');
+            } finally {
+                hideLoading();
+            }
         }
 
-        // Report print implementation
-        function printReport(reportId) {
-            console.log('Printing report:', reportId);
-            alert(`Report printing functionality will be implemented.\nReport ID: ${reportId}`);
+        async function approveAuthorityRequest(requestId) {
+            try {
+                showLoading();
+                const response = await authFetch(`/api/competency/admin/authorities/${requestId}/approve`, {
+                    method: 'PUT'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || 'Approve failed');
+                }
+
+                await loadAuthorityManagement();
+                showToast('Authority request berhasil di-approve.', 'success');
+            } catch (error) {
+                console.error('Error approving authority request:', error);
+                showToast(`Approve authority gagal: ${error.message}`, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function rejectAuthorityRequest(requestId) {
+            const reason = prompt('Masukkan alasan penolakan authority request:', '') || '';
+            try {
+                showLoading();
+                const response = await authFetch(`/api/competency/admin/authorities/${requestId}/reject`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.error || 'Reject failed');
+                }
+
+                await loadAuthorityManagement();
+                showToast('Authority request berhasil ditolak.', 'warning');
+            } catch (error) {
+                console.error('Error rejecting authority request:', error);
+                showToast(`Reject authority gagal: ${error.message}`, 'danger');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function exportDashboard() {
+            const users = getFilteredDashboardUsers();
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                filters: getSelectedDashboardFilters(),
+                summary: {
+                    totalUsers: users.length,
+                    averageCompetency: users.length
+                        ? Math.round(users.reduce((sum, user) => sum + Number(user.competencyScore || 0), 0) / users.length)
+                        : 0,
+                    levelDistribution: buildLevelDistributionFromUsers(users)
+                },
+                users
+            };
+
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'competency-dashboard-export.json';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            showToast('Dashboard export berhasil dibuat.', 'success');
+        }
+
+        function toggleTrendView() {
+            const modes = ['organization', 'level', 'activity'];
+            const currentIndex = modes.indexOf(analyticsTrendMode);
+            analyticsTrendMode = modes[(currentIndex + 1) % modes.length];
+            showToast(`Mode analytics diubah ke ${analyticsTrendMode}.`, 'info');
+
+            if (!document.getElementById('analytics-section').classList.contains('d-none')) {
+                loadAnalyticsData();
+            }
+        }
+
+        async function showRecommendations() {
+            try {
+                const users = getCompetencyUsers();
+                const reports = await fetchReports();
+                const recommendations = [];
+
+                const lowScoreUsers = users.filter(user => Number(user.competencyScore || 0) < 500).length;
+                if (lowScoreUsers > 0) {
+                    recommendations.push(`Prioritaskan coaching untuk ${lowScoreUsers} user dengan score di bawah 500.`);
+                }
+
+                const pendingReports = reports.filter(report => report.status === 'pending_approval').length;
+                if (pendingReports > 0) {
+                    recommendations.push(`Selesaikan approval ${pendingReports} report agar pipeline evaluasi tidak tertahan.`);
+                }
+
+                const weakestOrg = Object.entries(users.reduce((acc, user) => {
+                    const org = user.organization || 'Unspecified';
+                    if (!acc[org]) acc[org] = { total: 0, count: 0 };
+                    acc[org].total += Number(user.competencyScore || 0);
+                    acc[org].count += 1;
+                    return acc;
+                }, {}))
+                    .map(([name, data]) => ({ name, avg: Math.round(data.total / data.count) }))
+                    .sort((a, b) => a.avg - b.avg)[0];
+
+                if (weakestOrg) {
+                    recommendations.push(`Fokuskan intervensi pada ${weakestOrg.name} yang masih memiliki rata-rata score ${weakestOrg.avg}.`);
+                }
+
+                if (!recommendations.length) {
+                    recommendations.push('Distribusi kompetensi sudah stabil. Pertahankan ritme assessment berkala.');
+                }
+
+                openDetailModal({
+                    title: '<i class="fas fa-lightbulb me-2"></i>AI Insights',
+                    body: `
+                        <div class="report-preview-block">
+                            <h6>Recommended next actions</h6>
+                            <ul class="mb-0">
+                                ${recommendations.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `
+                });
+            } catch (error) {
+                console.error('Error generating recommendations:', error);
+                showToast('Insight belum bisa dibuat.', 'danger');
+            }
         }
 
         console.log('ðŸŽ¯ Competency Mapping System script loaded');

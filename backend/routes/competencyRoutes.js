@@ -331,15 +331,6 @@ async function requireCompetencyAuthority(req, res, next) {
     }
 
     try {
-        if (authUser.isAdmin) {
-            req.user = {
-                userId: authUser.id || authUser.email || 'admin',
-                username: authUser.username || authUser.email || 'admin',
-                role: 'admin'
-            };
-            return next();
-        }
-
         let hasAccess = null;
         try {
             hasAccess = await fetchMappingAccessFromDb(authUser.id, authUser.email);
@@ -356,9 +347,9 @@ async function requireCompetencyAuthority(req, res, next) {
         }
 
         req.user = {
-            userId: authUser.id,
+            userId: authUser.id || authUser.email || authUser.username,
             username: authUser.username || authUser.email || 'user',
-            role: authUser.role || 'user'
+            role: authUser.role || (authUser.isAdmin ? 'admin' : 'user')
         };
         next();
     } catch (error) {

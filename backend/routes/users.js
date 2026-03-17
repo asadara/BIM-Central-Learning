@@ -96,10 +96,6 @@ async function requireUserDirectoryAccess(req, res, next) {
 router.get('/check-mapping-access', requireAuthenticated, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
-        if (authUser && authUser.isAdmin) {
-            return res.json({ hasAccess: true, reason: 'admin-bypass' });
-        }
-
         try {
             const dbAccess = await fetchMappingAccessFromDb(authUser.id, authUser.email);
             if (dbAccess !== null) {

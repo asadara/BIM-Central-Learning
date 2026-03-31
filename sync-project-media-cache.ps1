@@ -39,6 +39,19 @@ function Get-MediaUrl([string]$mediaRoute, [string]$baseDir, [string]$fullPath) 
     return '{0}/{1}' -f $mediaRoute.TrimEnd('/'), [uri]::EscapeUriString($relative)
 }
 
+function Get-MediaDisplayUrl([string]$mediaUrl) {
+    if ($mediaUrl -like '/media-bim02-2026/*') {
+        return $mediaUrl -replace '^/media-bim02-2026/', '/data/pc-bim02-cache/PROJECT BIM 2026/'
+    }
+
+    if ($mediaUrl -like '/media-bim02/*') {
+        return $mediaUrl -replace '^/media-bim02/', '/data/pc-bim02-cache/PROJECT BIM 2025/'
+    }
+
+    $encodedUrl = [uri]::EscapeDataString($mediaUrl)
+    return "/api/media-proxy?url=$encodedUrl"
+}
+
 function Scan-MediaFiles([string]$projectPath, [string]$baseDir, [string]$mediaRoute, [string]$sourceId) {
     $results = New-Object System.Collections.Generic.List[object]
     $stack = New-Object System.Collections.Generic.Stack[string]
@@ -64,7 +77,7 @@ function Scan-MediaFiles([string]$projectPath, [string]$baseDir, [string]$mediaR
             $mediaUrl = Get-MediaUrl $mediaRoute $baseDir $entry.FullName
             $results.Add([pscustomobject]@{
                 url = $mediaUrl
-                displayUrl = $mediaUrl
+                displayUrl = Get-MediaDisplayUrl $mediaUrl
                 sizeBytes = [int64]$entry.Length
                 durationSeconds = $null
             })

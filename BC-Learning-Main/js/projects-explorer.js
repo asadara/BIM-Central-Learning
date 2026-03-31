@@ -26,6 +26,7 @@
         this.mediaCacheBasePath = `${this.cacheBasePath}/media`;
         this.previewLoadTimeoutMs = 12000;
         this.previewRenderToken = 0;
+        this.isRefreshingProjects = false;
 
         this.init();
     }
@@ -110,6 +111,69 @@
         return `${safe(year)}__${safe(sourceId || 'unknown')}__${safe(projectName)}.json`;
     }
 
+    buildMediaProxyUrl(mediaUrl) {
+        const cleanUrl = String(mediaUrl || '').trim();
+        if (!cleanUrl) return '';
+
+        let base = this.apiBase || window.location.origin || '';
+        if (base === 'null') {
+            base = '';
+        }
+        base = base.replace(/\/$/, '');
+        return `${base}/api/media-proxy?url=${encodeURIComponent(cleanUrl)}`;
+    }
+
+    buildPcBim02MirrorUrl(mediaUrl) {
+        const cleanUrl = String(mediaUrl || '').trim();
+        if (!cleanUrl) return '';
+
+        const routeMappings = [
+            {
+                prefix: '/media-bim02-2026/',
+                target: '/data/pc-bim02-cache/PROJECT BIM 2026/'
+            },
+            {
+                prefix: '/media-bim02/',
+                target: '/data/pc-bim02-cache/PROJECT BIM 2025/'
+            }
+        ];
+
+        const mapping = routeMappings.find((item) => cleanUrl.startsWith(item.prefix));
+        if (!mapping) {
+            return '';
+        }
+
+        return `${mapping.target}${cleanUrl.slice(mapping.prefix.length)}`;
+    }
+
+    getBestDisplayUrl(displayUrl, sourceUrl) {
+        const preferredUrl = String(displayUrl || '').trim();
+        const rawUrl = String(sourceUrl || '').trim();
+        const candidateUrl = preferredUrl || rawUrl;
+
+        if (!candidateUrl) {
+            return '';
+        }
+
+        if (/\/api\/media-proxy\?/i.test(candidateUrl)) {
+            const mirroredUrl = this.buildPcBim02MirrorUrl(rawUrl);
+            if (mirroredUrl) {
+                return mirroredUrl;
+            }
+            return candidateUrl;
+        }
+
+        if (/^\/media(?:-bim02(?:-2026)?|-bim1-\d{4})?\//i.test(candidateUrl)) {
+            const mirroredUrl = this.buildPcBim02MirrorUrl(rawUrl || candidateUrl);
+            if (mirroredUrl) {
+                return mirroredUrl;
+            }
+            return this.buildMediaProxyUrl(rawUrl || candidateUrl);
+        }
+
+        return candidateUrl;
+    }
+
     isTokenExpired(token) {
         if (!token) return true;
         try {
@@ -153,6 +217,143 @@
         }
     }
 
+    getAuthToken() {
+        const currentUser = window.currentUser;
+        if (currentUser && typeof currentUser.token === 'string' && currentUser.token.trim()) {
+            return currentUser.token.trim();
+        }
+
+        const storedUserRaw = localStorage.getItem('user');
+        if (storedUserRaw) {
+            try {
+                const storedUser = JSON.parse(storedUserRaw);
+                if (storedUser && typeof storedUser.token === 'string' && storedUser.token.trim()) {
+                    return storedUser.token.trim();
+                }
+            } catch (error) {
+                // Ignore malformed local user data.
+            }
+        }
+
+        const token = localStorage.getItem('token');
+        return typeof token === 'string' ? token.trim() : '';
+    }
+
+    setRefreshStatus(message, tone = 'muted') {
+        const statusEl = document.getElementById('refresh-projects-status');
+        if (!statusEl) return;
+
+        const toneClassMap = {
+            muted: 'text-muted',
+            info: 'text-info',
+            success: 'text-success',
+            danger: 'text-danger',
+            warning: 'text-warning'
+        };
+
+        statusEl.className = `small mt-2 ${toneClassMap[tone] || toneClassMap.muted}`;
+        statusEl.textContent = message || '';
+    }
+
+    setRefreshButtonState(isBusy) {
+        const button = document.getElementById('refresh-projects-btn');
+        if (!button) return;
+
+        button.disabled = !!isBusy;
+        button.innerHTML = isBusy
+            ? '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Menyinkronkan...'
+            : '<i class="fas fa-rotate-right me-2"></i>Refresh';
+    }
+
+    async reloadProjectsView() {
+        const previousYear = this.selectedYear;
+        const previousSourceId = this.selectedSourceId;
+        const previousProject = this.selectedProject;
+
+        await this.loadYears();
+
+        if (!previousYear) {
+            return;
+        }
+
+        const yearsForSource = previousSourceId ? this.getUniqueSortedYearsForSource(previousSourceId) : this.years;
+        const yearStillExists = Array.isArray(yearsForSource) && yearsForSource.includes(previousYear);
+        if (!yearStillExists) {
+            return;
+        }
+
+        await this.selectYear(previousYear, previousSourceId || null);
+
+        if (!previousProject) {
+            return;
+        }
+
+        const matchingProject = this.projects.find((project) =>
+            project.name === previousProject && (project.sourceId || null) === (previousSourceId || null)
+        );
+        if (matchingProject) {
+            await this.selectProject(matchingProject.name, matchingProject.sourceId || null);
+        }
+    }
+
+    async refreshProjectsCache() {
+        if (this.isRefreshingProjects) {
+            return;
+        }
+
+        const token = this.getAuthToken();
+        const hasValidToken = !!token && !this.isTokenExpired(token);
+
+        this.isRefreshingProjects = true;
+        this.setRefreshButtonState(true);
+        this.setRefreshStatus(hasValidToken
+            ? 'Sinkronisasi data project sedang berjalan...'
+            : 'Memuat ulang data project dari cache terbaru...', 'info');
+
+        try {
+            if (!hasValidToken) {
+                await this.reloadProjectsView();
+                this.setRefreshStatus('Data project dimuat ulang dari cache terbaru yang tersedia.', 'success');
+                return;
+            }
+
+            const response = await fetch('/api/projects/refresh-cache', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.detail || result.error || `HTTP ${response.status}`);
+            }
+
+            this.setRefreshStatus('Sinkronisasi selesai. Memuat ulang data project...', 'success');
+            await this.reloadProjectsView();
+
+            this.setRefreshStatus('Sinkronisasi manual selesai.', 'success');
+        } catch (error) {
+            const endpointMissing = /404/.test(String(error.message || ''));
+            if (endpointMissing) {
+                try {
+                    await this.reloadProjectsView();
+                    this.setRefreshStatus('Endpoint sinkronisasi server belum aktif. Data halaman dimuat ulang dari cache terbaru.', 'warning');
+                    return;
+                } catch (reloadError) {
+                    this.setRefreshStatus(`Refresh gagal: ${reloadError.message}`, 'danger');
+                    return;
+                }
+            }
+            this.setRefreshStatus(`Sinkronisasi gagal: ${error.message}`, 'danger');
+        } finally {
+            this.isRefreshingProjects = false;
+            this.setRefreshButtonState(false);
+        }
+    }
+
     setupEventListeners() {
         const searchInput = document.getElementById('search-input');
         if (searchInput) {
@@ -184,6 +385,11 @@
                 this.sortBy = e.target.value;
                 this.applyFilters();
             });
+        }
+
+        const refreshButton = document.getElementById('refresh-projects-btn');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => this.refreshProjectsCache());
         }
 
         const prevBtn = document.getElementById('preview-prev-btn');
@@ -562,9 +768,10 @@
 
     buildMediaItem(url, details = null) {
         const cleanUrl = url || '';
-        const displayUrl = details && typeof details.displayUrl === 'string'
+        const displayUrlRaw = details && typeof details.displayUrl === 'string'
             ? details.displayUrl
             : cleanUrl;
+        const displayUrl = this.getBestDisplayUrl(displayUrlRaw, cleanUrl);
         const filenameRaw = cleanUrl.split('/').pop() || 'media';
         let filename = filenameRaw;
         try {

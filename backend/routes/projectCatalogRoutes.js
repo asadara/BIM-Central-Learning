@@ -1,9 +1,69 @@
 const express = require("express");
+const path = require("path");
+const { requireAuthenticated } = require("../utils/auth");
 
 function createProjectCatalogRoutes({
-    projectCatalogService
+    backendDir,
+    projectCatalogService,
+    spawn
 }) {
     const router = express.Router();
+    let activeSync = null;
+
+    function runProjectsExplorerSync() {
+        if (activeSync) {
+            return activeSync;
+        }
+
+        const bclRoot = path.resolve(backendDir, "..");
+        const syncScriptPath = path.join(bclRoot, "sync-projects-explorer-cache.ps1");
+
+        activeSync = new Promise((resolve, reject) => {
+            const child = spawn("powershell.exe", [
+                "-NoProfile",
+                "-ExecutionPolicy", "Bypass",
+                "-File", syncScriptPath
+            ], {
+                cwd: bclRoot,
+                windowsHide: true
+            });
+
+            let stdout = "";
+            let stderr = "";
+
+            child.stdout.on("data", (chunk) => {
+                stdout += chunk.toString();
+            });
+
+            child.stderr.on("data", (chunk) => {
+                stderr += chunk.toString();
+            });
+
+            child.on("error", (error) => {
+                reject(error);
+            });
+
+            child.on("close", (code) => {
+                if (code === 0) {
+                    resolve({
+                        stdout: stdout.trim(),
+                        stderr: stderr.trim()
+                    });
+                    return;
+                }
+
+                const error = new Error(`Projects explorer sync failed with exit code ${code}`);
+                error.code = code;
+                error.stdout = stdout.trim();
+                error.stderr = stderr.trim();
+                reject(error);
+            });
+        }).finally(() => {
+            activeSync = null;
+        });
+
+        return activeSync;
+    }
 
     router.get('/api/years', async (req, res) => {
         try {
@@ -75,6 +135,31 @@ function createProjectCatalogRoutes({
         }
 
         res.json(result);
+    });
+
+    router.post('/api/projects/refresh-cache', requireAuthenticated, async (req, res) => {
+        try {
+            const authUser = req.authUser || req.user || {};
+            const result = await runProjectsExplorerSync();
+
+            res.json({
+                success: true,
+                message: 'Projects explorer cache refreshed.',
+                requestedBy: authUser.username || authUser.email || 'user',
+                output: result.stdout || null,
+                warnings: result.stderr || null,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Failed to refresh projects explorer cache:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to refresh projects explorer cache',
+                detail: error.message,
+                output: error.stdout || null,
+                warnings: error.stderr || null
+            });
+        }
     });
 
     return router;

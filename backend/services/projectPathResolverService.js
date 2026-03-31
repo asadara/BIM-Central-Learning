@@ -101,8 +101,21 @@ function createProjectPathResolverService({
             const LANMountManager = require('../utils/lanMountManager');
             const staticMountManager = new LANMountManager();
             const mount = staticMountManager.getMountById(mountId);
-            if (mount && mount.remotePath) {
-                return mount.remotePath;
+            if (mount) {
+                if (mount.localMountPoint) {
+                    try {
+                        const localStats = fs.statSync(mount.localMountPoint);
+                        if (localStats.isDirectory()) {
+                            return mount.localMountPoint;
+                        }
+                    } catch (error) {
+                        // Ignore inaccessible local mount point and continue.
+                    }
+                }
+
+                if (mount.remotePath) {
+                    return mount.remotePath;
+                }
             }
         } catch (error) {
             // Ignore and use fallback.

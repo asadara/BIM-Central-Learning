@@ -752,6 +752,8 @@ app.use(createProjectMediaUtilityRoutes({
 }));
 
 app.use(createProjectCatalogRoutes({
+    backendDir: __dirname,
+    spawn,
     projectCatalogService
 }));
 

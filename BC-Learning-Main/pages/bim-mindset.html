@@ -137,6 +137,166 @@
             text-align: left !important;
             justify-content: flex-start !important;
         }
+
+        .dimension-spectrum {
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 14px;
+        }
+
+        .dimension-spectrum h2,
+        .dimension-spectrum h3 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+        }
+
+        .dimension-intro {
+            background: rgba(251, 135, 63, 0.08);
+            border-left: 4px solid #fb873f;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .dimension-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1.25rem;
+        }
+
+        .dimension-card {
+            background: #fff;
+            border: 1px solid rgba(24, 29, 56, 0.08);
+            border-radius: 12px;
+            padding: 1.1rem;
+            box-shadow: 0 8px 18px rgba(24, 29, 56, 0.06);
+            height: 100%;
+        }
+
+        .dimension-head {
+            text-align: center;
+            margin-bottom: 0.9rem;
+        }
+
+        .dimension-orb {
+            width: 132px;
+            height: 132px;
+            border-radius: 50%;
+            margin: 0 auto 0.9rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 0.2rem;
+            padding: 0.9rem;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 10px 22px rgba(24, 29, 56, 0.08);
+        }
+
+        .dimension-orb.d3 {
+            background: radial-gradient(circle at top, #fff3eb 0%, #ffe4d2 100%);
+            color: #f97316;
+        }
+
+        .dimension-orb.d4 {
+            background: radial-gradient(circle at top, #fff4ea 0%, #ffd9bf 100%);
+            color: #ea580c;
+        }
+
+        .dimension-orb.d5 {
+            background: radial-gradient(circle at top, #eefaf7 0%, #cceee2 100%);
+            color: #059669;
+        }
+
+        .dimension-orb.d6 {
+            background: radial-gradient(circle at top, #eef6ff 0%, #d6e8ff 100%);
+            color: #2563eb;
+        }
+
+        .dimension-orb.d7 {
+            background: radial-gradient(circle at top, #f5f2ff 0%, #e3dbff 100%);
+            color: #7c3aed;
+        }
+
+        .dimension-orb.d8 {
+            background: radial-gradient(circle at top, #eefbf4 0%, #d4f2df 100%);
+            color: #16a34a;
+        }
+
+        .dimension-orb.d9 {
+            background: radial-gradient(circle at top, #fff5f5 0%, #ffdcdc 100%);
+            color: #dc2626;
+        }
+
+        .dimension-orb.d10 {
+            background: radial-gradient(circle at top, #f7f7ff 0%, #e4e7ff 100%);
+            color: #4f46e5;
+        }
+
+        .dimension-level {
+            font-size: 1.35rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .dimension-icon {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .dimension-axis {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1.2;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .dimension-card h4 {
+            font-size: 1.05rem;
+            margin-bottom: 0.65rem;
+            color: #181d38;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .dimension-card p {
+            text-align: justify;
+        }
+
+        .dimension-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .dimension-note {
+            margin-top: 1.25rem;
+            padding: 1rem 1.25rem;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid rgba(24, 29, 56, 0.08);
+        }
+
+        .dimension-note p:last-child,
+        .dimension-references ul {
+            margin-bottom: 0;
+        }
+
+        .dimension-references {
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .dimension-references a {
+            color: #fb873f;
+            text-decoration: none;
+        }
+
+        .dimension-references a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -171,61 +331,178 @@
                             <li>BIM bukan visualisasi</li>
                             <li>BIM bukan pengganti engineer</li>
                             <li>BIM adalah sistem pengelolaan informasi proyek</li>
-                            <li>Jika BIM Anda berhenti di software, maka Anda belum masuk ke BIM.</li>
+                            <li>Jika BIM masih dipahami hanya sebagai software, maka pemahaman tentang BIM belum utuh.</li>
                         </ul>
 
                         <h2>Masalah Proyek yang Sering Disalahpahami</h2>
                         <ul>
                             <li>rework</li>
-                            <li>salah pesan material</li>
-                            <li>revisi berulang</li>
-                            <li>keputusan berubah-ubah</li>
+                            <li>kesalahan pemesanan material</li>
+                            <li>revisi yang berulang</li>
+                            <li>keputusan yang tidak konsisten</li>
                             <li>Masalah proyek sering bukan salah orang, tetapi salah informasi yang dipakai di waktu
                                 yang salah.</li>
                         </ul>
 
                         <h2>BIM sebagai Sistem Informasi Proyek</h2>
                         <ul>
-                            <li>informasi punya status</li>
-                            <li>informasi punya alur</li>
-                            <li>informasi punya penanggung jawab</li>
-                            <li>informasi punya konsekuensi</li>
-                            <li>Dalam BIM, pertanyaan utama bukan 'siapa yang menggambar', tetapi 'apakah informasi ini
-                                sudah boleh dipakai?'</li>
+                            <li>informasi memiliki status</li>
+                            <li>informasi memiliki alur</li>
+                            <li>informasi memiliki penanggung jawab</li>
+                            <li>informasi memiliki konsekuensi</li>
+                            <li>Dalam BIM, fokus utamanya bukan pada siapa yang memproduksi informasi, tetapi pada
+                                apakah informasi tersebut sudah dapat digunakan.</li>
                         </ul>
 
                         <h2>Konvensional vs BIM (Tanpa Merendahkan)</h2>
                         <p><strong>Konvensional:</strong></p>
                         <ul>
-                            <li>bergantung pada pengalaman</li>
-                            <li>banyak asumsi tidak tertulis</li>
+                            <li>lebih bergantung pada pengalaman individu</li>
+                            <li>masih banyak asumsi yang tidak terdokumentasi</li>
                         </ul>
                         <p><strong>BIM:</strong></p>
                         <ul>
-                            <li>aturan eksplisit</li>
-                            <li>keputusan dapat ditelusuri</li>
+                            <li>aturan dinyatakan secara jelas</li>
+                            <li>dasar keputusan dapat ditelusuri</li>
                             <li>BIM tidak dibuat karena engineer tidak kompeten, tetapi karena proyek terlalu kompleks
                                 untuk bergantung pada ingatan manusia.</li>
                         </ul>
 
                         <h2>Kesalahpahaman Umum tentang BIM</h2>
                         <ul>
-                            <li>"BIM bikin kerjaan nambah" &rarr; Yang nambah adalah disiplin</li>
-                            <li>"BIM ribet" &rarr; Yang mahal adalah dampak kesalahan informasi</li>
-                            <li>"Tanpa BIM proyek jalan" &rarr; Proyek jalan &ne; proyek terkendali</li>
+                            <li>"BIM menambah beban kerja" &rarr; Yang bertambah sebenarnya adalah disiplin pengelolaan informasi.</li>
+                            <li>"BIM terlalu rumit" &rarr; Yang sering lebih mahal justru dampak dari kesalahan informasi.</li>
+                            <li>"Tanpa BIM proyek tetap bisa berjalan" &rarr; Proyek yang berjalan belum tentu dikelola secara terkendali.</li>
                             <li>Proyek bisa selesai tanpa BIM, tetapi biaya kesalahan sering tidak pernah dicatat
                                 sebagai kegagalan.</li>
                         </ul>
 
                         <h2>Kenapa BIM Penting untuk Kontraktor</h2>
                         <ul>
-                            <li>waktu</li>
-                            <li>biaya</li>
-                            <li>mutu</li>
-                            <li>klaim</li>
-                            <li>reputasi</li>
+                            <li>pengendalian waktu</li>
+                            <li>pengendalian biaya</li>
+                            <li>pengendalian mutu</li>
+                            <li>pengelolaan klaim</li>
+                            <li>reputasi perusahaan</li>
                             <li>Semakin besar proyek, semakin mahal satu kesalahan informasi.</li>
                         </ul>
+                    </section>
+
+                    <section class="dimension-spectrum">
+                        <h2>Memahami Dimensi BIM dengan Cara yang Mudah</h2>
+                        <div class="dimension-intro">
+                            <p><strong>Cara paling mudah memahami dimensi BIM adalah dengan mengubahnya menjadi pertanyaan.</strong></p>
+                            <p class="mb-0">3D bukan sekadar model, tetapi jawaban atas apa yang dibangun. Setelah itu, setiap dimensi menambahkan lapisan informasi baru: kapan dibangun, berapa biayanya, seberapa baik performanya, sampai bagaimana aset itu dikelola setelah selesai.</p>
+                        </div>
+
+                        <div class="dimension-grid">
+                            <article class="dimension-card">
+                                <div class="dimension-head">
+                                    <div class="dimension-orb d3">
+                                        <span class="dimension-level">3D</span>
+                                        <i class="fas fa-cube dimension-icon" aria-hidden="true"></i>
+                                        <span class="dimension-axis">WHAT</span>
+                                    </div>
+                                </div>
+                                <h4>Apa yang dibangun</h4>
+                                <p>3D menjelaskan bentuk, lokasi, dan hubungan geometrik elemen proyek. Ini adalah gambaran visual dan spasial dari obyek yang akan dibangun.</p>
+                            </article>
+                            <article class="dimension-card">
+                                <div class="dimension-head">
+                                    <div class="dimension-orb d4">
+                                        <span class="dimension-level">4D</span>
+                                        <i class="fas fa-calendar-alt dimension-icon" aria-hidden="true"></i>
+                                        <span class="dimension-axis">WHEN</span>
+                                    </div>
+                                </div>
+                                <h4>Kapan dibangun</h4>
+                                <p>4D menambahkan waktu ke dalam model: urutan kerja, jadwal, tahapan pelaksanaan, dan simulasi progres konstruksi.</p>
+                            </article>
+                            <article class="dimension-card">
+                                <div class="dimension-head">
+                                    <div class="dimension-orb d5">
+                                        <span class="dimension-level">5D</span>
+                                        <i class="fas fa-calculator dimension-icon" aria-hidden="true"></i>
+                                        <span class="dimension-axis">HOW MUCH</span>
+                                    </div>
+                                </div>
+                                <h4>Berapa biayanya</h4>
+                                <p>5D menghubungkan model dengan kuantitas, harga, dan perubahan biaya agar dampak keputusan desain bisa terlihat lebih cepat.</p>
+                            </article>
+                            <article class="dimension-card">
+                                <div class="dimension-head">
+                                    <div class="dimension-orb d6">
+                                        <span class="dimension-level">6D</span>
+                                        <i class="fas fa-tachometer-alt dimension-icon" aria-hidden="true"></i>
+                                        <span class="dimension-axis">HOW GOOD</span>
+                                    </div>
+                                </div>
+                                <h4>Seberapa bagus performanya</h4>
+                                <p>6D membantu membaca kualitas performa bangunan, misalnya efisiensi energi, keberlanjutan, dan kualitas kinerja aset selama siklus hidupnya.</p>
+                            </article>
+                            <article class="dimension-card">
+                                <div class="dimension-head">
+                                    <div class="dimension-orb d7">
+                                        <span class="dimension-level">7D</span>
+                                        <i class="fas fa-tools dimension-icon" aria-hidden="true"></i>
+                                        <span class="dimension-axis">HOW TO</span>
+                                    </div>
+                                </div>
+                                <h4>Bagaimana mengelolanya setelah jadi</h4>
+                                <p>7D terkait operasi dan facility management: data aset, perawatan, inspeksi, warranty, dan informasi yang dipakai setelah proyek selesai dibangun.</p>
+                            </article>
+                            <article class="dimension-card">
+                                <div class="dimension-head">
+                                    <div class="dimension-orb d8">
+                                        <span class="dimension-level">8D</span>
+                                        <i class="fas fa-globe-asia dimension-icon" aria-hidden="true"></i>
+                                        <span class="dimension-axis">HOW FAR</span>
+                                    </div>
+                                </div>
+                                <h4>Seberapa jauh dampaknya ke lingkungan sekitar</h4>
+                                <p>8D di halaman ini dipakai sebagai cara membaca dampak bangunan yang lebih luas, misalnya pengaruh lingkungan, sosial, dan jejak keberlanjutan di sekitarnya.</p>
+                            </article>
+                        </div>
+
+                        <div class="dimension-note">
+                            <h3>Spektrum Lanjutan: 9D dan 10D</h3>
+                            <p>Dalam praktik industri, definisi 8D, 9D, dan 10D belum selalu seragam antar negara, organisasi, dan vendor. Karena itu, cara paling aman adalah menganggap 3D-7D sebagai dimensi yang lebih umum dipakai, sedangkan 8D ke atas sebagai <strong>spektrum tambahan untuk membantu cara berpikir</strong>.</p>
+                            <div class="dimension-grid">
+                                <article class="dimension-card">
+                                    <div class="dimension-head">
+                                        <div class="dimension-orb d9">
+                                            <span class="dimension-level">9D</span>
+                                            <i class="fas fa-hard-hat dimension-icon" aria-hidden="true"></i>
+                                            <span class="dimension-axis">HOW SAFE</span>
+                                        </div>
+                                    </div>
+                                    <h4>Seberapa aman proses dan asetnya</h4>
+                                    <p>9D dapat dibaca sebagai lapisan informasi keselamatan dan risiko: keamanan pelaksanaan, keselamatan operasional, dan pengurangan potensi bahaya.</p>
+                                </article>
+                                <article class="dimension-card">
+                                    <div class="dimension-head">
+                                        <div class="dimension-orb d10">
+                                            <span class="dimension-level">10D</span>
+                                            <i class="fas fa-compass dimension-icon" aria-hidden="true"></i>
+                                            <span class="dimension-axis">HOW READY</span>
+                                        </div>
+                                    </div>
+                                    <h4>Seberapa siap aset menghadapi masa depan</h4>
+                                    <p>10D dapat dibaca sebagai kesiapan jangka panjang: adaptabilitas, ketahanan terhadap perubahan, dan kemampuan aset untuk tetap relevan sepanjang umur layan.</p>
+                                </article>
+                            </div>
+                            <p class="mt-3 mb-0">Untuk halaman mindset ini, yang paling penting bukan menghafal labelnya, tetapi memahami bahwa setiap dimensi BIM menambah satu pertanyaan manajemen yang harus dijawab dengan informasi yang benar.</p>
+                        </div>
+
+                        <div class="dimension-references">
+                            <h3>Catatan Rujukan</h3>
+                            <ul>
+                                <li><a href="https://www.autodesk.com/de/design-make/articles/what-is-bim" target="_blank" rel="noopener noreferrer">Autodesk: What is BIM? Digitales Planen einfach erklart</a> - menjelaskan spektrum 3D-8D dan mendefinisikan 3D-7D.</li>
+                                <li><a href="https://www.autodesk.com/solutions/5d-bim" target="_blank" rel="noopener noreferrer">Autodesk: What is 5D BIM?</a> - menegaskan 5D sebagai integrasi biaya ke model.</li>
+                                <li><a href="https://www.autodesk.com/content/autodesk/global/en/solutions/bim-facility-management.html" target="_blank" rel="noopener noreferrer">Autodesk: What is BIM for Facilities Management?</a> - memperkuat konteks 7D untuk operasi dan pengelolaan aset.</li>
+                                <li><a href="https://www.autodesk.com/solutions/aec/bim/benefits-of-bim" target="_blank" rel="noopener noreferrer">Autodesk: BIM Benefits</a> - menunjukkan kaitan BIM dengan sustainability, operations, dan lifecycle management.</li>
+                            </ul>
+                        </div>
                     </section>
 
                     <p class="aha-statement">

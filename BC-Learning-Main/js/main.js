@@ -17,14 +17,8 @@
     new WOW().init();
 
 
-    // Sticky Navbar
-    $(window).scroll(function () {
-        if ($(this).scrollTop() > 300) {
-            $('.sticky-top').css('top', '0px');
-        } else {
-            $('.sticky-top').css('top', '-100px');
-        }
-    });
+    // Keep the shared fixed navbar stable instead of auto-hiding it on scroll.
+    $('.sticky-top').css('top', '0px');
 
 
     // Dropdown on mouse hover
@@ -58,9 +52,9 @@
     // Back to top button
     $(window).scroll(function () {
         if ($(this).scrollTop() > 300) {
-            $('.back-to-top').fadeIn('slow');
+            $('.back-to-top').stop(true, true).fadeIn('slow');
         } else {
-            $('.back-to-top').fadeOut('slow');
+            $('.back-to-top').stop(true, true).fadeOut('slow');
         }
     });
     $('.back-to-top').click(function () {

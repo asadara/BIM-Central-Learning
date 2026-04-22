@@ -102,13 +102,13 @@
             </div>
             <div class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fas fa-user"></i> <span id="account-name">Account</span>
+                    <i class="fas fa-user-circle me-2"></i><span id="account-name">Account</span>
                 </a>
                 <div class="dropdown-menu fade-down m-0">
-                    <a href="/pages/login.html" class="dropdown-item" id="login-link"><i class="fa-solid fa-sign-in-alt"></i> Log in</a>
-                    <a href="/pages/signup.html" class="dropdown-item" id="register-link"><i class="fa-solid fa-user-plus"></i> Sign up</a>
-                    <a href="/elearning-assets/profile.html" class="dropdown-item" id="profile-link"><i class="fa-solid fa-id-card"></i> My Profile</a>
-                    <a href="#" class="dropdown-item" id="logout-link" style="display: none;"><i class="fa-solid fa-sign-out-alt"></i> Log out</a>
+                    <a href="/pages/login.html" class="dropdown-item account-dropdown-item" id="login-link"><i class="fas fa-sign-in-alt"></i><span>Log in</span></a>
+                    <a href="/pages/signup.html" class="dropdown-item account-dropdown-item" id="register-link"><i class="fas fa-user-plus"></i><span>Sign up</span></a>
+                    <a href="/elearning-assets/profile.html" class="dropdown-item account-dropdown-item" id="profile-link" hidden><i class="fas fa-user-circle"></i><span>My Profile</span></a>
+                    <a href="#" class="dropdown-item account-dropdown-item" id="logout-link" hidden><i class="fas fa-sign-out-alt"></i><span>Log out</span></a>
                 </div>
             </div>
         </div>
@@ -209,6 +209,19 @@
         font-weight: 600;
         white-space: nowrap;
         text-align: center;
+    }
+
+    .bcl-main-navbar .account-dropdown-item {
+        display: flex !important;
+        align-items: center;
+        gap: 0.7rem;
+    }
+
+    .bcl-main-navbar .account-dropdown-item i {
+        width: 1.1rem;
+        flex: 0 0 1.1rem;
+        text-align: center;
+        color: #2f3d63;
     }
 
     .nav-mobile .bcl-main-navbar,
@@ -319,7 +332,7 @@
         float: none !important;
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 991.98px) {
         .bcl-main-navbar {
             padding-inline: 10px;
             min-height: 74px;
@@ -354,29 +367,6 @@
 
         .nav-mobile .bcl-main-navbar .navbar-nav {
             padding: 10px;
-        }
-    }
-
-    @media (min-width: 992px) and (max-width: 1280px) {
-        .bcl-main-navbar .bcl-brand-logos {
-            gap: 8px;
-        }
-
-        .bcl-main-navbar .bcl-brand-logo-nke {
-            height: 22px;
-        }
-
-        .bcl-main-navbar .bcl-brand-logo-bim {
-            height: 24px;
-        }
-
-        .bcl-main-navbar .bcl-brand-logo-bcl {
-            height: 38px;
-        }
-
-        .bcl-main-navbar .navbar-nav .nav-link {
-            padding: 0 6px;
-            font-size: 14px;
         }
     }
 </style>
@@ -529,7 +519,7 @@
         }
 
         function updateNavMode() {
-            const viewportForceCollapsed = window.innerWidth <= 1280;
+            const desktopBreakpoint = 992;
             const navbarStyle = window.getComputedStyle(navbar);
             const horizontalPadding =
                 (parseFloat(navbarStyle.paddingLeft) || 0) +
@@ -541,7 +531,7 @@
                 ? Math.ceil(navbarToggler.getBoundingClientRect().width || 52)
                 : 52;
             const requiresCollapsedLayout =
-                viewportForceCollapsed || (brandWidth + navWidth + togglerWidth + 40 > availableWidth);
+                window.innerWidth < desktopBreakpoint || (brandWidth + navWidth + togglerWidth + 56 > availableWidth);
             const isMobileMode = requiresCollapsedLayout;
 
             rootElement.classList.toggle('nav-mobile', isMobileMode);

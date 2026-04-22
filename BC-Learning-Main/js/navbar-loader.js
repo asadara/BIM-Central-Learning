@@ -35,21 +35,26 @@ function hydrateNavbarAuthState(rootElement) {
     const loginLink = rootElement.querySelector('#login-link');
     const logoutLink = rootElement.querySelector('#logout-link');
     const registerLink = rootElement.querySelector('#register-link');
+    const profileLink = rootElement.querySelector('#profile-link');
 
     if (accountName) {
         accountName.textContent = isLoggedIn ? displayName : 'Account';
     }
 
     if (loginLink) {
-        loginLink.style.display = isLoggedIn ? 'none' : 'block';
+        loginLink.hidden = isLoggedIn;
     }
 
     if (logoutLink) {
-        logoutLink.style.display = isLoggedIn ? 'block' : 'none';
+        logoutLink.hidden = !isLoggedIn;
     }
 
     if (registerLink) {
-        registerLink.style.display = isLoggedIn ? 'none' : 'block';
+        registerLink.hidden = isLoggedIn;
+    }
+
+    if (profileLink) {
+        profileLink.hidden = !isLoggedIn;
     }
 }
 
@@ -143,6 +148,8 @@ function syncNavbarUserInfo() {
     const accountName = document.getElementById("account-name");
     const loginLink = document.getElementById("login-link");
     const logoutLink = document.getElementById("logout-link");
+    const registerLink = document.getElementById("register-link");
+    const profileLink = document.getElementById("profile-link");
 
     if (accountName && finalUsername) {
         accountName.textContent = finalUsername;
@@ -150,8 +157,10 @@ function syncNavbarUserInfo() {
 
     // Handle login/logout buttons visibility
     if (finalUsername && loginLink && logoutLink) {
-        loginLink.style.display = "none";
-        logoutLink.style.display = "block";
+        loginLink.hidden = true;
+        logoutLink.hidden = false;
+        if (registerLink) registerLink.hidden = true;
+        if (profileLink) profileLink.hidden = false;
 
         // Setup logout handler
         logoutLink.addEventListener("click", function (e) {
@@ -167,8 +176,10 @@ function syncNavbarUserInfo() {
             window.location.href = "../index.html";
         });
     } else if (loginLink && logoutLink) {
-        loginLink.style.display = "block";
-        logoutLink.style.display = "none";
+        loginLink.hidden = false;
+        logoutLink.hidden = true;
+        if (registerLink) registerLink.hidden = false;
+        if (profileLink) profileLink.hidden = true;
     }
 }
 

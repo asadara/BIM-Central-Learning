@@ -106,6 +106,7 @@ function updateUserUI() {
    const loginLink = document.getElementById("login-link");
    const logoutLink = document.getElementById("logout-link");
    const registerLink = document.getElementById("register-link");
+   const profileLink = document.getElementById("profile-link");
 
    if (!user) {
       // Not logged in - show guest options
@@ -117,9 +118,10 @@ function updateUserUI() {
 
       // Main navbar compatibility
       if (accountName) accountName.textContent = "Account";
-      if (loginLink) loginLink.style.display = "block";
-      if (logoutLink) logoutLink.style.display = "none";
-      if (registerLink) registerLink.style.display = "block";
+      if (loginLink) loginLink.hidden = false;
+      if (logoutLink) logoutLink.hidden = true;
+      if (registerLink) registerLink.hidden = false;
+      if (profileLink) profileLink.hidden = true;
 
       return;
    }
@@ -134,9 +136,10 @@ function updateUserUI() {
 
       // Main navbar compatibility
       if (accountName) accountName.textContent = user.name || "Account";
-      if (loginLink) loginLink.style.display = "none";
-      if (logoutLink) logoutLink.style.display = "block";
-      if (registerLink) registerLink.style.display = "none";
+      if (loginLink) loginLink.hidden = true;
+      if (logoutLink) logoutLink.hidden = false;
+      if (registerLink) registerLink.hidden = true;
+      if (profileLink) profileLink.hidden = false;
 
       setupLogoutHandler(user);
       window.currentUser = user;
@@ -164,20 +167,24 @@ function hideAuthButtons() {
    const loginLink = document.getElementById("login-link");
    const registerLink = document.getElementById("register-link");
    const logoutLink = document.getElementById("logout-link");
+   const profileLink = document.getElementById("profile-link");
 
-   if (loginLink) loginLink.style.display = "none";
-   if (registerLink) registerLink.style.display = "none";
-   if (logoutLink) logoutLink.style.display = "inline-block";
+   if (loginLink) loginLink.hidden = true;
+   if (registerLink) registerLink.hidden = true;
+   if (logoutLink) logoutLink.hidden = false;
+   if (profileLink) profileLink.hidden = false;
 }
 
 function showAuthButtons() {
    const loginLink = document.getElementById("login-link");
    const registerLink = document.getElementById("register-link");
    const logoutLink = document.getElementById("logout-link");
+   const profileLink = document.getElementById("profile-link");
 
-   if (loginLink) loginLink.style.display = "inline-block";
-   if (registerLink) registerLink.style.display = "inline-block";
-   if (logoutLink) logoutLink.style.display = "none";
+   if (loginLink) loginLink.hidden = false;
+   if (registerLink) registerLink.hidden = false;
+   if (logoutLink) logoutLink.hidden = true;
+   if (profileLink) profileLink.hidden = true;
 }
 
 function setupLogoutHandler(user) {

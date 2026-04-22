@@ -72,6 +72,7 @@
                     <a href="/pages/bim.html" class="dropdown-item">Apa itu BIM?</a>
                     <a href="/pages/sdb.html" class="dropdown-item">Sumber Daya BIM</a>
                     <a href="/pages/standards.html" class="dropdown-item">BIM Standards</a>
+                    <a href="/pages/manual-books.html" class="dropdown-item">Manual Book</a>
                     <a href="/pages/plugins.html" class="dropdown-item">BIM Plugins & Tools</a>
                     <a href="/pages/updates.html" class="dropdown-item">BIM News & Updates</a>
                 </div>
@@ -102,13 +103,13 @@
             </div>
             <div class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fas fa-user"></i> <span id="account-name">Account</span>
+                    <i class="fas fa-user-circle bcl-inline-icon-md"></i><span id="account-name">Account</span>
                 </a>
                 <div class="dropdown-menu fade-down m-0">
-                    <a href="/pages/login.html" class="dropdown-item" id="login-link"><i class="fa-solid fa-sign-in-alt"></i> Log in</a>
-                    <a href="/pages/signup.html" class="dropdown-item" id="register-link"><i class="fa-solid fa-user-plus"></i> Sign up</a>
-                    <a href="/elearning-assets/profile.html" class="dropdown-item" id="profile-link"><i class="fa-solid fa-id-card"></i> My Profile</a>
-                    <a href="#" class="dropdown-item" id="logout-link" style="display: none;"><i class="fa-solid fa-sign-out-alt"></i> Log out</a>
+                    <a href="/pages/login.html" class="dropdown-item account-dropdown-item" id="login-link"><i class="fas fa-sign-in-alt"></i><span>Log in</span></a>
+                    <a href="/pages/signup.html" class="dropdown-item account-dropdown-item" id="register-link"><i class="fas fa-user-plus"></i><span>Sign up</span></a>
+                    <a href="/elearning-assets/profile.html" class="dropdown-item account-dropdown-item" id="profile-link" hidden><i class="fas fa-user-circle"></i><span>My Profile</span></a>
+                    <a href="#" class="dropdown-item account-dropdown-item" id="logout-link" hidden><i class="fas fa-sign-out-alt"></i><span>Log out</span></a>
                 </div>
             </div>
         </div>
@@ -261,6 +262,19 @@
         letter-spacing: 0.01em !important;
     }
 
+    .bcl-main-navbar .account-dropdown-item {
+        display: flex !important;
+        align-items: center;
+        gap: 0.7rem;
+    }
+
+    .bcl-main-navbar .account-dropdown-item i {
+        width: 1.1rem;
+        flex: 0 0 1.1rem;
+        text-align: center;
+        color: #2f3d63;
+    }
+
     .bcl-main-navbar .navbar-nav .nav-link:hover,
     .bcl-main-navbar .navbar-nav .nav-link.active {
         color: #fb873f !important;
@@ -315,18 +329,18 @@
     }
 
     .nav-compact .bcl-main-navbar {
-        --bcl-nav-min-height: 72px;
-        --bcl-nav-horizontal-padding: 8px;
-        --bcl-nav-link-font-size: 12px;
+        --bcl-nav-min-height: 80px;
+        --bcl-nav-horizontal-padding: 12px;
+        --bcl-nav-link-font-size: 16px;
         --bcl-nav-link-font-weight: 600;
-        --bcl-nav-link-padding-x: 2px;
-        --bcl-brand-gap: 6px;
-        --bcl-brand-logo-height-nke: 18px;
-        --bcl-brand-logo-height-bim: 20px;
-        --bcl-brand-logo-height-bcl: 30px;
+        --bcl-nav-link-padding-x: 8px;
+        --bcl-brand-gap: 8px;
+        --bcl-brand-logo-height-nke: 22px;
+        --bcl-brand-logo-height-bim: 24px;
+        --bcl-brand-logo-height-bcl: 38px;
         --bcl-dropdown-radius: 12px;
-        --bcl-brand-padding-inline: 16px;
-        --bcl-nav-margin-inline-end: 12px;
+        --bcl-brand-padding-inline: 18px;
+        --bcl-nav-margin-inline-end: 14px;
     }
 
     .nav-compact .bcl-main-navbar .navbar-brand {
@@ -343,13 +357,13 @@
     }
 
     .nav-compact .bcl-main-navbar .dropdown-toggle::after {
-        margin-left: 5px;
-        font-size: 11px;
+        margin-left: 6px;
+        font-size: 12px;
     }
 
     .nav-compact .bcl-main-navbar #account-name {
         display: inline-block;
-        max-width: 72px;
+        max-width: 108px;
         overflow: hidden;
         text-overflow: ellipsis;
         vertical-align: middle;
@@ -463,7 +477,7 @@
         float: none !important;
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 991.98px) {
         .bcl-main-navbar {
             --bcl-nav-horizontal-padding: 10px;
             --bcl-nav-min-height: 74px;
@@ -487,18 +501,6 @@
 
         .nav-mobile .bcl-main-navbar .navbar-nav {
             padding: 10px;
-        }
-    }
-
-    @media (min-width: 992px) and (max-width: 1280px) {
-        .nav-compact .bcl-main-navbar {
-            --bcl-brand-logo-height-nke: 17px;
-            --bcl-brand-logo-height-bim: 19px;
-            --bcl-brand-logo-height-bcl: 28px;
-            --bcl-nav-link-font-size: 12px;
-            --bcl-nav-link-padding-x: 2px;
-            --bcl-brand-padding-inline: 14px;
-            --bcl-nav-margin-inline-end: 10px;
         }
     }
 </style>
@@ -652,14 +654,13 @@
 
         function updateNavMode() {
             const desktopBreakpoint = 992;
-
-            function setNavMode(mode) {
-                rootElement.classList.toggle('nav-mobile', mode === 'mobile');
-                rootElement.classList.toggle('nav-compact', mode === 'compact');
+            function setNavMode(isMobileMode) {
+                rootElement.classList.toggle('nav-mobile', isMobileMode);
+                rootElement.classList.remove('nav-compact');
             }
 
-            function measureDesktopFit(useCompactMode) {
-                setNavMode(useCompactMode ? 'compact' : 'desktop');
+            function measureDesktopFit() {
+                setNavMode(false);
 
                 if (navbarCollapse) {
                     navbarCollapse.classList.remove('show');
@@ -685,25 +686,16 @@
                 };
             }
 
-            let navMode = 'mobile';
+            let isMobileMode = true;
 
             if (window.innerWidth >= desktopBreakpoint) {
-                const desktopMeasurement = measureDesktopFit(false);
-                navMode = desktopMeasurement.requiredWidth <= desktopMeasurement.availableWidth
-                    ? 'desktop'
-                    : 'compact';
-
-                if (navMode === 'compact') {
-                    const compactMeasurement = measureDesktopFit(true);
-                    if (compactMeasurement.requiredWidth > compactMeasurement.availableWidth) {
-                        navMode = 'mobile';
-                    }
-                }
+                const desktopMeasurement = measureDesktopFit();
+                isMobileMode = desktopMeasurement.requiredWidth > desktopMeasurement.availableWidth;
             }
 
-            setNavMode(navMode);
+            setNavMode(isMobileMode);
 
-            if (navMode !== 'mobile') {
+            if (!isMobileMode) {
                 closeAllDropdowns();
             }
 

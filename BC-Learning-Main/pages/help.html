@@ -34,6 +34,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
+        .help-page-header {
+            text-align: center;
+            margin: 0;
+            padding: clamp(1rem, 2.6vw, 1.45rem) 1rem 0.55rem;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .help-page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .help-page-header p {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
         .help-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 10px;
@@ -177,23 +207,9 @@
     <div id="navbar-container"></div>
 
     <!-- Header Start -->
-    <div class="container-fluid bg-primary py-5 mb-5 page-header">
-        <div class="container py-5">
-            <div class="row justify-content-center">
-                <div class="col-lg-10 text-center">
-                    <h1 class="display-3 text-white animated slideInDown">
-                        <i class="fas fa-question-circle me-3"></i>
-                        Panduan Pengguna BCL
-                    </h1>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb justify-content-center">
-                            <li class="breadcrumb-item"><a class="text-white" href="../index.html">Home</a></li>
-                            <li class="breadcrumb-item text-white active" aria-current="page">Bantuan</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
-        </div>
+    <div class="help-page-header">
+        <h1><i class="fas fa-question-circle me-3"></i>Panduan Pengguna BCL</h1>
+        <p>Pusat bantuan untuk memahami navigasi, training, dan akses platform BCL</p>
     </div>
     <!-- Header End -->
 

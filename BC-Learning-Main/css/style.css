@@ -196,6 +196,28 @@ body {
     overflow-x: hidden;
 }
 
+/* Keep WOW fade-in reveals from temporarily extending document height. */
+@keyframes bcl-wow-fade-in-up {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 32px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.wow {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.wow.fadeInUp {
+    animation-name: bcl-wow-fade-in-up;
+}
+
 img,
 svg,
 video,
@@ -258,6 +280,56 @@ iframe {
     font-weight: 900;
     vertical-align: middle;
     margin-left: 8px;
+}
+
+/* Shared lightweight page header used across content pages. */
+.page-title-header,
+.help-page-header,
+.manajemen-info-header,
+.regulasi-header {
+    text-align: center;
+    margin: 0 !important;
+    padding: clamp(1rem, 2.6vw, 1.45rem) 1rem 0.55rem !important;
+    color: #333 !important;
+    border-radius: 0 !important;
+    background: #f8f9fa !important;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%) !important;
+    position: relative;
+    top: 0;
+}
+
+.page-title-header h1,
+.help-page-header h1,
+.manajemen-info-header h1,
+.regulasi-header h1 {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.35rem !important;
+    color: #333 !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+.page-title-header p,
+.help-page-header p,
+.manajemen-info-header p,
+.regulasi-header p {
+    font-size: 0.95rem !important;
+    color: #666 !important;
+    margin-bottom: 0 !important;
+    text-align: center;
+}
+
+@media (max-width: 767.98px) {
+    .page-title-header h1,
+    .help-page-header h1,
+    .manajemen-info-header h1,
+    .regulasi-header h1 {
+        font-size: 1.55rem !important;
+        letter-spacing: 1px;
+    }
 }
 
 .navbar-light .navbar-nav .nav-link {
@@ -1214,18 +1286,6 @@ thead {
 
 #user-dropdown .dropdown-item {
     color: #333;
-}
-
-#login-link {
-    display: block !important;
-    font-weight: bold;
-    color: black;
-}
-
-#logout-link {
-    display: block !important;
-    font-weight: bold;
-    color: black;
 }
 
 .d-flex .btn,

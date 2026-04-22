@@ -383,21 +383,26 @@ class ComponentLoader {
         const loginLink = rootElement.querySelector('#login-link');
         const logoutLink = rootElement.querySelector('#logout-link');
         const registerLink = rootElement.querySelector('#register-link');
+        const profileLink = rootElement.querySelector('#profile-link');
 
         if (accountName) {
             accountName.textContent = isLoggedIn ? displayName : 'Account';
         }
 
         if (loginLink) {
-            loginLink.style.display = isLoggedIn ? 'none' : 'block';
+            loginLink.hidden = isLoggedIn;
         }
 
         if (logoutLink) {
-            logoutLink.style.display = isLoggedIn ? 'block' : 'none';
+            logoutLink.hidden = !isLoggedIn;
         }
 
         if (registerLink) {
-            registerLink.style.display = isLoggedIn ? 'none' : 'block';
+            registerLink.hidden = isLoggedIn;
+        }
+
+        if (profileLink) {
+            profileLink.hidden = !isLoggedIn;
         }
     }
 
@@ -515,6 +520,7 @@ class ComponentLoader {
         const loginLink = document.getElementById('login-link');
         const logoutLink = document.getElementById('logout-link');
         const registerLink = document.getElementById('register-link');
+        const profileLink = document.getElementById('profile-link');
 
         // Update user info
         if (headerUserName) {
@@ -548,17 +554,19 @@ class ComponentLoader {
                 logoutLink.dataset.bound = 'true';
             }
             if (accountName) accountName.textContent = finalUsername;
-            if (loginLink) loginLink.style.display = 'none';
-            if (registerLink) registerLink.style.display = 'none';
-            if (logoutLink) logoutLink.style.display = 'block';
+            if (loginLink) loginLink.hidden = true;
+            if (registerLink) registerLink.hidden = true;
+            if (profileLink) profileLink.hidden = false;
+            if (logoutLink) logoutLink.hidden = false;
         } else {
             // User belum login
             if (loggedInOptions) loggedInOptions.style.display = 'none';
             if (guestOptions) guestOptions.style.display = 'block';
             if (accountName) accountName.textContent = 'Account';
-            if (loginLink) loginLink.style.display = 'block';
-            if (registerLink) registerLink.style.display = 'block';
-            if (logoutLink) logoutLink.style.display = 'none';
+            if (loginLink) loginLink.hidden = false;
+            if (registerLink) registerLink.hidden = false;
+            if (profileLink) profileLink.hidden = true;
+            if (logoutLink) logoutLink.hidden = true;
         }
     }
 

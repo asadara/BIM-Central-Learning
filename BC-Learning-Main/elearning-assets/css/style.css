@@ -37,6 +37,28 @@ body {
     overflow-x: hidden;
 }
 
+/* Keep WOW fade-in reveals from temporarily extending document height. */
+@keyframes bcl-wow-fade-in-up {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 32px, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.wow {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.wow.fadeInUp {
+    animation-name: bcl-wow-fade-in-up;
+}
+
 img,
 svg,
 video,

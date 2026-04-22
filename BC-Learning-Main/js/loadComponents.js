@@ -66,21 +66,26 @@ function hydrateNavbarAuthState(rootElement) {
     const loginLink = rootElement.querySelector('#login-link');
     const logoutLink = rootElement.querySelector('#logout-link');
     const registerLink = rootElement.querySelector('#register-link');
+    const profileLink = rootElement.querySelector('#profile-link');
 
     if (accountName) {
         accountName.textContent = isLoggedIn ? displayName : 'Account';
     }
 
     if (loginLink) {
-        loginLink.style.display = isLoggedIn ? 'none' : 'block';
+        loginLink.hidden = isLoggedIn;
     }
 
     if (logoutLink) {
-        logoutLink.style.display = isLoggedIn ? 'block' : 'none';
+        logoutLink.hidden = !isLoggedIn;
     }
 
     if (registerLink) {
-        registerLink.style.display = isLoggedIn ? 'none' : 'block';
+        registerLink.hidden = isLoggedIn;
+    }
+
+    if (profileLink) {
+        profileLink.hidden = !isLoggedIn;
     }
 }
 

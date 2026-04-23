@@ -4,6 +4,17 @@ let _allGroups = {};
 let _allFiles = [];
 let _currentFilter = 'all';
 let _currentSort = 'name';
+let _libraryAccessState = {
+    checked: false,
+    canDownload: false,
+    isAdmin: false,
+    isAuthenticated: false
+};
+let _libraryRequestState = {
+    checked: false,
+    pending: false,
+    requestId: ''
+};
 
 // Debounced search function
 let searchTimeout;
@@ -18,6 +29,7 @@ const debouncedSearch = () => {
 window.debouncedSearch = debouncedSearch;
 window.performSearch = performSearch;
 window.sortFiles = sortFiles;
+window.requestLibraryDownloadAccess = requestLibraryDownloadAccess;
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeLibrary();
@@ -27,11 +39,220 @@ function initializeLibrary() {
     // Set up filter buttons
     setupFilterButtons();
 
+    // Resolve current user download access
+    fetchCurrentLibraryAccess();
+    fetchLibraryRequestState();
+
     // Fetch library files
     fetchGroupedLibraryFiles();
 
     // Set up event listeners
     setupEventListeners();
+}
+
+function getAuthHeaders() {
+    const headers = {};
+    const token = localStorage.getItem('token');
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+    return headers;
+}
+
+async function fetchCurrentLibraryAccess() {
+    try {
+        const response = await fetch('/api/users/me/access', {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            _libraryAccessState = {
+                checked: true,
+                canDownload: false,
+                isAdmin: false,
+                isAuthenticated: false
+            };
+            updateLibraryDownloadAccessNote();
+            rerenderLibraryAfterAccessUpdate();
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        _libraryAccessState = {
+            checked: true,
+            canDownload: !!data.libraryDownloadAccess,
+            isAdmin: !!data.isAdmin,
+            isAuthenticated: true
+        };
+    } catch (error) {
+        _libraryAccessState = {
+            checked: true,
+            canDownload: false,
+            isAdmin: false,
+            isAuthenticated: false
+        };
+    }
+
+    updateLibraryDownloadAccessNote();
+    rerenderLibraryAfterAccessUpdate();
+}
+
+async function fetchLibraryRequestState() {
+    try {
+        const response = await fetch('/api/access-requests/mine', {
+            headers: getAuthHeaders(),
+            credentials: 'include'
+        });
+
+        if (response.status === 401) {
+            _libraryRequestState = {
+                checked: true,
+                pending: false,
+                requestId: ''
+            };
+            updateLibraryDownloadAccessNote();
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const requests = await response.json();
+        const pendingRequest = Array.isArray(requests)
+            ? requests.find((item) => item.type === 'library_download' && item.status === 'pending')
+            : null;
+
+        _libraryRequestState = {
+            checked: true,
+            pending: !!pendingRequest,
+            requestId: pendingRequest ? pendingRequest.id : ''
+        };
+    } catch (error) {
+        _libraryRequestState = {
+            checked: true,
+            pending: false,
+            requestId: ''
+        };
+    }
+
+    updateLibraryDownloadAccessNote();
+}
+
+function rerenderLibraryAfterAccessUpdate() {
+    if (_allGroups && Object.keys(_allGroups).length > 0) {
+        renderLibraryListFiltered(document.getElementById('library-search-input')?.value || '');
+    }
+}
+
+function hasLibraryDownloadAccess() {
+    return !!(_libraryAccessState.canDownload || _libraryAccessState.isAdmin);
+}
+
+function updateLibraryDownloadAccessNote() {
+    const note = document.getElementById('library-download-access-note');
+    if (!note) return;
+
+    if (!_libraryAccessState.checked) {
+        note.style.display = 'none';
+        note.innerHTML = '';
+        return;
+    }
+
+    if (hasLibraryDownloadAccess()) {
+        note.className = 'mt-3 alert alert-success';
+        note.innerHTML = '<i class="fas fa-check-circle me-2"></i>Download BIM Library aktif untuk akun Anda.';
+        note.style.display = 'block';
+        return;
+    }
+
+    if (_libraryAccessState.isAuthenticated) {
+        if (_libraryRequestState.pending) {
+            note.className = 'mt-3 alert alert-info';
+            note.innerHTML = '<i class="fas fa-hourglass-half me-2"></i>Permintaan akses download BIM Library Anda sedang diproses admin.';
+            note.style.display = 'block';
+            return;
+        }
+
+        note.className = 'mt-3 alert alert-warning';
+        note.innerHTML = `
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div><i class="fas fa-lock me-2"></i>Download BIM Library belum diaktifkan untuk akun Anda.</div>
+                <button type="button" class="btn btn-sm btn-primary" onclick="requestLibraryDownloadAccess()">
+                    <i class="fas fa-paper-plane me-1"></i>Minta Akses
+                </button>
+            </div>
+        `;
+        note.style.display = 'block';
+        return;
+    }
+
+    note.className = 'mt-3 alert alert-info';
+    note.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Login terlebih dahulu dan minta admin mengaktifkan akses download BIM Library.';
+    note.style.display = 'block';
+}
+
+async function requestLibraryDownloadAccess() {
+    if (!_libraryAccessState.isAuthenticated) {
+        alert('Login terlebih dahulu sebelum meminta akses download BIM Library.');
+        return;
+    }
+
+    if (_libraryRequestState.pending) {
+        alert('Permintaan akses Anda sudah tercatat dan sedang diproses admin.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/access-requests', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                type: 'library_download',
+                subject: 'Permintaan akses download BIM Library',
+                message: 'Mohon aktifkan akses download BIM Library untuk akun saya.',
+                sourcePage: '/pages/library.html'
+            })
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.error || `HTTP ${response.status}`);
+        }
+
+        _libraryRequestState = {
+            checked: true,
+            pending: true,
+            requestId: result.request && result.request.id ? result.request.id : ''
+        };
+        updateLibraryDownloadAccessNote();
+        alert('Permintaan akses BIM Library berhasil dikirim ke admin.');
+    } catch (error) {
+        console.error('Failed to request BIM Library access:', error);
+        alert(`Gagal mengirim permintaan akses: ${error.message}`);
+    }
+}
+
+function getLibraryDownloadMarkup(file, className = 'file-download-btn') {
+    if (hasLibraryDownloadAccess()) {
+        const downloadUrl = `/api/files/library-download?path=${encodeURIComponent(file.relPath)}`;
+        return `<a href="${downloadUrl}" class="${className}">
+            <i class="fas fa-download me-1"></i>Download
+        </a>`;
+    }
+
+    return `<button type="button" class="${className} disabled" disabled title="Akses download belum diaktifkan">
+        <i class="fas fa-lock me-1"></i>Terkunci
+    </button>`;
 }
 
 function setupFilterButtons() {
@@ -167,7 +388,7 @@ function renderLibraryListFiltered(searchTerm) {
                 html += `<div class="bim-book-item">
                     ${iconHtml}
                     <div class="bim-book-title">${file.name}</div>
-                    <a href="/uploads/${file.relPath}" class="btn btn-primary bim-book-download" target="_blank">Download</a>
+                    ${getLibraryDownloadMarkup(file, 'btn btn-primary bim-book-download')}
                 </div>`;
             });
             html += '</div></div>';
@@ -389,16 +610,12 @@ function renderFormatSection(ext, files) {
 
     visibleFiles.forEach(file => {
         const fileSize = formatFileSize(file.size);
-        const downloadUrl = `/uploads/${file.relPath}`;
-
         html += `
             <div class="file-item">
                 ${getFileIcon(ext)}
                 <div class="file-name">${file.name.replace(/\.[^/.]+$/, "")}</div>
                 <div class="file-size">${fileSize}</div>
-                <a href="${downloadUrl}" class="file-download-btn" target="_blank">
-                    <i class="fas fa-download me-1"></i>Download
-                </a>
+                ${getLibraryDownloadMarkup(file)}
             </div>
         `;
     });
@@ -510,17 +727,13 @@ function showMoreFiles(button) {
 
         remainingFiles.forEach(file => {
             const fileSize = formatFileSize(file.size);
-            const downloadUrl = `/uploads/${file.relPath}`;
-
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
             fileItem.innerHTML = `
                 ${getFileIcon(format)}
                 <div class="file-name">${file.name.replace(/\.[^/.]+$/, "")}</div>
                 <div class="file-size">${fileSize}</div>
-                <a href="${downloadUrl}" class="file-download-btn" target="_blank">
-                    <i class="fas fa-download me-1"></i>Download
-                </a>
+                ${getLibraryDownloadMarkup(file)}
             `;
 
             fileGrid.appendChild(fileItem);

@@ -212,15 +212,54 @@
     }
 
     function buildReaderUrl(file) {
-        const relativePath = String(file.relativePath || '').replace(/\\/g, '/');
+        const mediaUrl = resolveManualBookMediaUrl(file);
+        const pdfUrl = `${window.location.origin}/api/media-proxy?url=${encodeURIComponent(mediaUrl)}`;
+
+        return `/public/reader.html?file=${encodeURIComponent(pdfUrl)}&return=/pages/manual-books.html`;
+    }
+
+    function resolveManualBookMediaUrl(file) {
+        if (file && typeof file.mediaUrl === 'string' && file.mediaUrl.trim()) {
+            return file.mediaUrl.trim();
+        }
+
+        let relativePath = safeDecodePath(String(file && file.relativePath ? file.relativePath : ''))
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '');
+
+        if (!relativePath) {
+            return '/media/BIM%20CENTRAL%20LEARNING';
+        }
+
+        if (!/^BIM CENTRAL LEARNING\//i.test(relativePath)) {
+            if (!/^6\. Manual Books\//i.test(relativePath)) {
+                relativePath = `6. Manual Books/${relativePath}`;
+            }
+            relativePath = `BIM CENTRAL LEARNING/${relativePath}`;
+        }
+
         const encodedSegments = relativePath
             .split('/')
             .map((segment) => encodeURIComponent(segment))
             .join('/');
-        const mediaUrl = `/media/BIM CENTRAL LEARNING/${encodedSegments}`;
-        const pdfUrl = `${window.location.origin}/api/media-proxy?url=${encodeURIComponent(mediaUrl)}`;
 
-        return `/public/reader.html?file=${encodeURIComponent(pdfUrl)}&return=/pages/manual-books.html`;
+        return `/media/${encodedSegments}`;
+    }
+
+    function safeDecodePath(value, rounds = 3) {
+        let output = String(value || '');
+        for (let index = 0; index < rounds; index += 1) {
+            try {
+                const decoded = decodeURIComponent(output);
+                if (decoded === output) {
+                    break;
+                }
+                output = decoded;
+            } catch (error) {
+                break;
+            }
+        }
+        return output;
     }
 
     function renderErrorState(detail) {

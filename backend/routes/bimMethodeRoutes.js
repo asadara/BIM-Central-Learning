@@ -4,7 +4,8 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const LANMountManager = require('../utils/lanMountManager');
-const { requireAdmin } = require('../utils/auth');
+const { requireAdmin, getRequestUser } = require('../utils/auth');
+const { resolveAccessProfile } = require('../utils/userAccess');
 let sharp = null;
 try {
     sharp = require('sharp');
@@ -873,6 +874,19 @@ router.get('/file', async (req, res) => {
 
     const download = req.query.download === '1' || req.query.download === 'true';
     const typeInfo = getTypeInfo(decodedPath);
+    const requiresOriginalDownloadAccess = download && typeInfo && (typeInfo.type === 'image' || typeInfo.type === 'video');
+
+    if (requiresOriginalDownloadAccess) {
+        const authUser = getRequestUser(req);
+        if (!authUser) {
+            return res.status(401).json({ error: 'Authentication required for original download' });
+        }
+
+        const accessProfile = await resolveAccessProfile(authUser);
+        if (!authUser.isAdmin && !accessProfile.watermarkFreeDownloadAccess) {
+            return res.status(403).json({ error: 'Original download without watermark is not enabled for this account' });
+        }
+    }
 
     if (sourceStat && sourceStat.isFile()) {
         refreshStableFileCache(decodedPath, sourceStat, stableFileCachePath);

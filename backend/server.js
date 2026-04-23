@@ -392,6 +392,7 @@ const createAdminPreviewRoutes = require('./routes/adminPreviewRoutes');
 const createTestUtilityRoutes = require('./routes/testUtilityRoutes');
 const createUserAuthRoutes = require('./routes/userAuthRoutes');
 const createLegacyContentRoutes = require('./routes/legacyContentRoutes');
+const createAccessRequestRoutes = require('./routes/accessRequests');
 const createProjectCatalogRoutes = require('./routes/projectCatalogRoutes');
 const createProjectMediaMountRoutes = require('./routes/projectMediaMountRoutes');
 const createProjectMediaUtilityRoutes = require('./routes/projectMediaUtilityRoutes');
@@ -546,12 +547,16 @@ app.use(createAdminSessionRoutes({
     findUserInJsonByIdentity: userAuthService.findUserInJsonByIdentity,
     findUserInPostgresByEmail: userAuthService.findUserInPostgresByEmail,
     findUserInPostgresByIdentity: userAuthService.findUserInPostgresByIdentity,
+    hashPassword,
     incrementUserLoginInJson: userAuthService.incrementUserLoginInJson,
     incrementUserLoginInPostgres: userAuthService.incrementUserLoginInPostgres,
     isPostgresConnectionError: userAuthService.isPostgresConnectionError,
     jwt,
+    pgPool,
+    readUsers,
     secretKey: SECRET_KEY,
-    verifyPassword
+    verifyPassword,
+    writeUsers
 }));
 
 app.use(createSystemStatusRoutes({
@@ -840,6 +845,14 @@ app.use(createLegacyContentRoutes({
     refreshVideoCache: videoCatalogService.refreshVideoCache,
     thumbnailDir: THUMBNAIL_DIR,
     videoCache: videoCatalogService.videoCache
+}));
+
+app.use('/api/access-requests', createAccessRequestRoutes({
+    backendDir: __dirname,
+    ensureDirectoryExists,
+    pgPool,
+    readUsers,
+    writeUsers
 }));
 
 // ðŸ”§ SERVER STARTUP

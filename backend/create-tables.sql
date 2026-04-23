@@ -37,7 +37,33 @@ CREATE TABLE IF NOT EXISTS users (
     preferences JSONB DEFAULT '{"theme":"light","notifications":true,"language":"id"}'::jsonb,
     metadata JSONB DEFAULT '{}'::jsonb,
     progress JSONB DEFAULT '{}'::jsonb,
-    mapping_kompetensi_access BOOLEAN DEFAULT false
+    mapping_kompetensi_access BOOLEAN DEFAULT false,
+    library_download_access BOOLEAN DEFAULT false,
+    watermark_free_download_access BOOLEAN DEFAULT false
+);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mapping_kompetensi_access BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS library_download_access BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS watermark_free_download_access BOOLEAN DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS access_requests (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    source_page TEXT,
+    subject TEXT,
+    message TEXT,
+    requester_user_id TEXT,
+    requester_username TEXT,
+    requester_email TEXT,
+    contact_name TEXT,
+    contact_email TEXT,
+    admin_note TEXT,
+    resolution_applied BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reviewed_by TEXT,
+    reviewed_at TIMESTAMP
 );
 
 DROP TRIGGER IF EXISTS users_set_updated_at ON users;

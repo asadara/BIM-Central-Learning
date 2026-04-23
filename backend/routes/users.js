@@ -5,6 +5,13 @@ const { Pool } = require('pg');
 const router = express.Router();
 const { requireAuthenticated, requireAdmin } = require('../utils/auth');
 const { createPgConfig } = require('../config/runtimeConfig');
+const {
+    ensureAccessColumns,
+    fetchAccessProfileFromDb,
+    fetchAccessProfileFromJson,
+    normalizeAccessProfile,
+    resolveAccessProfile
+} = require('../utils/userAccess');
 
 // PostgreSQL connection configuration
 const dbConfig = createPgConfig({
@@ -35,28 +42,15 @@ const readUsers = () => {
 };
 
 async function fetchMappingAccessFromDb(userId, email) {
-    const result = await pool.query(
-        `SELECT mapping_kompetensi_access
-         FROM users
-         WHERE ($1::text IS NOT NULL AND id::text = $1::text)
-            OR ($2::text IS NOT NULL AND email = $2)
-         LIMIT 1`,
-        [userId ? String(userId) : null, email || null]
-    );
-
-    if (result.rows.length === 0) return null;
-    return !!result.rows[0].mapping_kompetensi_access;
+    const profile = await fetchAccessProfileFromDb(userId, email);
+    if (!profile) return null;
+    return !!profile.mappingKompetensiAccess;
 }
 
 function fetchMappingAccessFromJson(userId, email) {
-    const users = readUsers();
-    const user = users.find(u =>
-        (userId && (u.id === userId || u.id == userId)) ||
-        (email && u.email === email)
-    );
-
-    if (!user) return null;
-    return !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
+    const profile = fetchAccessProfileFromJson(userId, email);
+    if (!profile) return null;
+    return !!profile.mappingKompetensiAccess;
 }
 
 async function requireUserDirectoryAccess(req, res, next) {
@@ -70,16 +64,8 @@ async function requireUserDirectoryAccess(req, res, next) {
             return next();
         }
 
-        let hasAccess = null;
-        try {
-            hasAccess = await fetchMappingAccessFromDb(authUser.id, authUser.email);
-        } catch (dbError) {
-            console.warn('WARN: PostgreSQL not available for mapping access, falling back to JSON:', dbError.message);
-        }
-
-        if (hasAccess === null) {
-            hasAccess = fetchMappingAccessFromJson(authUser.id, authUser.email);
-        }
+        const accessProfile = await resolveAccessProfile(authUser);
+        const hasAccess = !!accessProfile.mappingKompetensiAccess;
 
         if (!hasAccess) {
             return res.status(403).json({ error: 'Insufficient privileges' });
@@ -96,22 +82,29 @@ async function requireUserDirectoryAccess(req, res, next) {
 router.get('/check-mapping-access', requireAuthenticated, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
-        try {
-            const dbAccess = await fetchMappingAccessFromDb(authUser.id, authUser.email);
-            if (dbAccess !== null) {
-                return res.json({ hasAccess: dbAccess });
-            }
-        } catch (dbError) {
-            console.warn('WARN: PostgreSQL not available for mapping access, falling back to JSON:', dbError.message);
-        }
-
-        const jsonAccess = fetchMappingAccessFromJson(authUser.id, authUser.email);
-        return res.json({ hasAccess: !!jsonAccess });
+        const accessProfile = await resolveAccessProfile(authUser);
+        return res.json({ hasAccess: !!accessProfile.mappingKompetensiAccess });
     } catch (error) {
         console.error('ERROR: Error checking mapping access:', error);
         res.status(500).json({
             hasAccess: false,
             error: 'Failed to check mapping access'
+        });
+    }
+});
+
+router.get('/me/access', requireAuthenticated, async (req, res) => {
+    try {
+        const authUser = req.authUser || req.user;
+        const accessProfile = await resolveAccessProfile(authUser);
+        return res.json({
+            isAdmin: !!authUser.isAdmin,
+            ...accessProfile
+        });
+    } catch (error) {
+        console.error('ERROR: Error checking user access profile:', error);
+        res.status(500).json({
+            error: 'Failed to check user access profile'
         });
     }
 });
@@ -123,10 +116,12 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
 
         // Try PostgreSQL first
         try {
+            await ensureAccessColumns(pool);
             const query = `
                 SELECT id, username, email, bim_level, job_role, organization,
                        registration_date, last_login, login_count, is_active,
-                       mapping_kompetensi_access
+                       mapping_kompetensi_access, library_download_access,
+                       watermark_free_download_access
                 FROM users
                 ORDER BY registration_date DESC
             `;
@@ -146,7 +141,9 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 lastLogin: user.last_login,
                 loginCount: user.login_count || 0,
                 isActive: user.is_active,
-                mappingKompetensiAccess: user.mapping_kompetensi_access || false
+                mappingKompetensiAccess: user.mapping_kompetensi_access || false,
+                libraryDownloadAccess: user.library_download_access || false,
+                watermarkFreeDownloadAccess: user.watermark_free_download_access || false
             }));
 
             return res.json(safeUsers);
@@ -168,7 +165,9 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 lastLogin: user.lastLogin || user.last_login,
                 loginCount: user.loginCount || user.login_count || 0,
                 isActive: user.isActive !== undefined ? user.isActive : true,
-                mappingKompetensiAccess: user.mappingKompetensiAccess || false
+                mappingKompetensiAccess: user.mappingKompetensiAccess || false,
+                libraryDownloadAccess: user.libraryDownloadAccess || user.library_download_access || false,
+                watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false
             }));
 
             console.log(`📄 Returned ${safeUsers.length} users from JSON fallback`);
@@ -179,6 +178,92 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
         console.error('❌ Error getting users:', error);
         res.status(500).json({
             error: 'Failed to retrieve users',
+            details: error.message
+        });
+    }
+});
+
+router.get('/verify/:id', requireAuthenticated, requireUserDirectoryAccess, async (req, res) => {
+    const requestedId = String(req.params.id || '').trim();
+
+    if (!requestedId) {
+        return res.status(400).json({
+            exists: false,
+            error: 'User ID is required'
+        });
+    }
+
+    try {
+        try {
+            await ensureAccessColumns(pool);
+            const query = `
+                SELECT id, username, email, bim_level, job_role, organization, is_active
+                FROM users
+                WHERE id::text = $1 OR username = $1 OR email = $1
+                LIMIT 1
+            `;
+            const result = await pool.query(query, [requestedId]);
+            const matchedUser = result.rows[0];
+
+            if (matchedUser) {
+                return res.json({
+                    exists: true,
+                    message: 'User found in PostgreSQL',
+                    details: {
+                        source: 'postgres',
+                        id: matchedUser.id,
+                        username: matchedUser.username,
+                        email: matchedUser.email,
+                        bimLevel: matchedUser.bim_level,
+                        jobRole: matchedUser.job_role,
+                        organization: matchedUser.organization,
+                        isActive: matchedUser.is_active
+                    }
+                });
+            }
+        } catch (dbError) {
+            console.warn('WARN: PostgreSQL not available for user verification:', dbError.message);
+        }
+
+        const users = readUsers();
+        const matchedUser = users.find((user) => {
+            const candidateIds = [
+                user.id,
+                user.user_id,
+                user.username,
+                user.email
+            ].filter(Boolean).map((value) => String(value).trim());
+
+            return candidateIds.includes(requestedId);
+        });
+
+        if (!matchedUser) {
+            return res.json({
+                exists: false,
+                message: 'User not found in PostgreSQL or JSON storage',
+                details: null
+            });
+        }
+
+        return res.json({
+            exists: true,
+            message: 'User found in JSON storage',
+            details: {
+                source: 'json',
+                id: matchedUser.id || matchedUser.user_id || matchedUser.username,
+                username: matchedUser.username,
+                email: matchedUser.email,
+                bimLevel: matchedUser.bimLevel || matchedUser.bim_level || null,
+                jobRole: matchedUser.jobRole || matchedUser.job_role || null,
+                organization: matchedUser.organization || null,
+                isActive: matchedUser.isActive !== undefined ? matchedUser.isActive : matchedUser.is_active !== false
+            }
+        });
+    } catch (error) {
+        console.error('ERROR: Failed to verify user:', error);
+        return res.status(500).json({
+            exists: false,
+            error: 'Failed to verify user',
             details: error.message
         });
     }
@@ -257,6 +342,7 @@ router.post('/create', requireAdmin, async (req, res) => {
 
         // Try PostgreSQL first
         try {
+            await ensureAccessColumns(pool);
             // Check if user already exists
             const checkQuery = 'SELECT id FROM users WHERE email = $1 OR username = $2';
             const checkResult = await pool.query(checkQuery, [email, username]);
@@ -300,7 +386,9 @@ router.post('/create', requireAdmin, async (req, res) => {
                 organization: newUser.organization,
                 registrationDate: newUser.registration_date,
                 isActive: newUser.is_active,
-                mappingKompetensiAccess: false
+                mappingKompetensiAccess: false,
+                libraryDownloadAccess: false,
+                watermarkFreeDownloadAccess: false
             };
 
             return res.status(201).json({
@@ -338,7 +426,12 @@ router.post('/create', requireAdmin, async (req, res) => {
                 lastLogin: null,
                 loginCount: 0,
                 isActive: true,
-                mappingKompetensiAccess: false
+                mappingKompetensiAccess: false,
+                mapping_kompetensi_access: false,
+                libraryDownloadAccess: false,
+                library_download_access: false,
+                watermarkFreeDownloadAccess: false,
+                watermark_free_download_access: false
             };
 
             users.push(newUser);
@@ -373,6 +466,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
         // Try PostgreSQL first
         try {
+            await ensureAccessColumns(pool);
             // Build dynamic update query based on provided fields
             const updateFields = [];
             const values = [];
@@ -386,7 +480,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 jobRole: 'job_role',
                 organization: 'organization',
                 isActive: 'is_active',
-                mappingKompetensiAccess: 'mapping_kompetensi_access'
+                mappingKompetensiAccess: 'mapping_kompetensi_access',
+                libraryDownloadAccess: 'library_download_access',
+                watermarkFreeDownloadAccess: 'watermark_free_download_access'
             };
 
             // Build SET clause and values array
@@ -412,7 +508,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 WHERE id = $${paramIndex}
                 RETURNING id, username, email, bim_level, job_role, organization,
                          registration_date, last_login, login_count, is_active,
-                         mapping_kompetensi_access
+                         mapping_kompetensi_access, library_download_access,
+                         watermark_free_download_access
             `;
 
             const result = await pool.query(updateQuery, values);
@@ -436,7 +533,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 lastLogin: updatedUser.last_login,
                 loginCount: updatedUser.login_count || 0,
                 isActive: updatedUser.is_active,
-                mappingKompetensiAccess: updatedUser.mapping_kompetensi_access || false
+                mappingKompetensiAccess: updatedUser.mapping_kompetensi_access || false,
+                libraryDownloadAccess: updatedUser.library_download_access || false,
+                watermarkFreeDownloadAccess: updatedUser.watermark_free_download_access || false
             };
 
             return res.json({
@@ -459,7 +558,27 @@ router.put('/:id', requireAdmin, async (req, res) => {
             const safeUpdates = { ...updates };
             delete safeUpdates.password; // Don't allow password updates via this endpoint
 
+            const accessUpdates = normalizeAccessProfile(safeUpdates);
+            const hasMappingUpdate = Object.prototype.hasOwnProperty.call(safeUpdates, 'mappingKompetensiAccess');
+            const hasLibraryUpdate = Object.prototype.hasOwnProperty.call(safeUpdates, 'libraryDownloadAccess');
+            const hasWatermarkUpdate = Object.prototype.hasOwnProperty.call(safeUpdates, 'watermarkFreeDownloadAccess');
+
             users[userIndex] = { ...users[userIndex], ...safeUpdates };
+
+            if (hasMappingUpdate) {
+                users[userIndex].mappingKompetensiAccess = accessUpdates.mappingKompetensiAccess;
+                users[userIndex].mapping_kompetensi_access = accessUpdates.mappingKompetensiAccess;
+            }
+
+            if (hasLibraryUpdate) {
+                users[userIndex].libraryDownloadAccess = accessUpdates.libraryDownloadAccess;
+                users[userIndex].library_download_access = accessUpdates.libraryDownloadAccess;
+            }
+
+            if (hasWatermarkUpdate) {
+                users[userIndex].watermarkFreeDownloadAccess = accessUpdates.watermarkFreeDownloadAccess;
+                users[userIndex].watermark_free_download_access = accessUpdates.watermarkFreeDownloadAccess;
+            }
 
             // Save users
             fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));

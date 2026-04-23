@@ -5,12 +5,16 @@ function createAdminSessionRoutes({
     findUserInJsonByIdentity,
     findUserInPostgresByEmail,
     findUserInPostgresByIdentity,
+    hashPassword,
     incrementUserLoginInJson,
     incrementUserLoginInPostgres,
     isPostgresConnectionError,
     jwt,
+    pgPool,
+    readUsers,
     secretKey,
-    verifyPassword
+    verifyPassword,
+    writeUsers
 }) {
     const router = express.Router();
 
@@ -227,6 +231,127 @@ function createAdminSessionRoutes({
             authenticated: false,
             error: "No active admin session"
         });
+    });
+
+    router.post("/api/admin/change-password", async (req, res) => {
+        try {
+            const sessionUser = req.session && req.session.adminUser;
+            if (!sessionUser || !sessionUser.isAdmin) {
+                return res.status(401).json({
+                    success: false,
+                    error: "Admin authentication required"
+                });
+            }
+
+            const currentPassword = String(req.body.currentPassword || "");
+            const newPassword = String(req.body.newPassword || "");
+            const confirmPassword = String(req.body.confirmPassword || "");
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                return res.status(400).json({
+                    success: false,
+                    error: "All password fields are required"
+                });
+            }
+
+            if (newPassword !== confirmPassword) {
+                return res.status(400).json({
+                    success: false,
+                    error: "New password and confirmation do not match"
+                });
+            }
+
+            if (newPassword.length < 8) {
+                return res.status(400).json({
+                    success: false,
+                    error: "New password must be at least 8 characters long"
+                });
+            }
+
+            let user = null;
+            let storageType = "postgresql";
+            let postgresLookupFailed = false;
+
+            try {
+                user = await findUserInPostgresByIdentity(sessionUser.email, sessionUser.id, true);
+            } catch (dbError) {
+                postgresLookupFailed = isPostgresConnectionError(dbError);
+                console.warn(
+                    postgresLookupFailed
+                        ? "PostgreSQL unavailable during admin password change, falling back to JSON:"
+                        : "PostgreSQL lookup failed during admin password change:",
+                    dbError.message
+                );
+
+                if (!postgresLookupFailed) {
+                    throw dbError;
+                }
+            }
+
+            if (!user) {
+                user = findUserInJsonByIdentity(sessionUser.email, sessionUser.id, true, false);
+                storageType = user ? "json" : storageType;
+            }
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    error: "Admin account not found"
+                });
+            }
+
+            const isValidPassword = await verifyPassword(currentPassword, user.password);
+            if (!isValidPassword) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Current password is incorrect"
+                });
+            }
+
+            const nextPasswordHash = await hashPassword(newPassword);
+
+            if (storageType === "postgresql" && pgPool) {
+                await pgPool.query(
+                    `UPDATE users
+                     SET password = $1,
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $2`,
+                    [nextPasswordHash, user.id]
+                );
+            } else {
+                const users = readUsers();
+                const userIndex = users.findIndex((entry) => (
+                    (sessionUser.id && (entry.id === sessionUser.id || entry.id == sessionUser.id)) ||
+                    (sessionUser.email && String(entry.email || "").toLowerCase() === String(sessionUser.email).toLowerCase())
+                ));
+
+                if (userIndex === -1) {
+                    return res.status(404).json({
+                        success: false,
+                        error: "Admin account not found in JSON storage"
+                    });
+                }
+
+                users[userIndex] = {
+                    ...users[userIndex],
+                    password: nextPasswordHash,
+                    updatedAt: new Date().toISOString()
+                };
+                writeUsers(users);
+            }
+
+            console.log(`Admin password updated successfully for ${sessionUser.email || sessionUser.username}`);
+            return res.json({
+                success: true,
+                message: "Password changed successfully"
+            });
+        } catch (error) {
+            console.error("Admin change password error:", error);
+            return res.status(500).json({
+                success: false,
+                error: "Failed to change password"
+            });
+        }
     });
 
     return router;

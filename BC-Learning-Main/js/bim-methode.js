@@ -16,6 +16,17 @@ class BIMGallery {
         this.mediaData = [];
         this.filteredData = [];
         this.isAdmin = false; // Status admin untuk UI
+        this.userAccess = {
+            loaded: false,
+            isAuthenticated: false,
+            isAdmin: false,
+            watermarkFreeDownloadAccess: false
+        };
+        this.accessRequestState = {
+            loaded: false,
+            watermarkFreePending: false,
+            requestId: ''
+        };
         this.retryTimer = null;
         this.retryDelayMs = 5000;
         this.apiBaseCandidates = this.getApiBaseCandidates();
@@ -45,6 +56,9 @@ class BIMGallery {
         } else {
             this.setupEventListeners();
         }
+
+        this.refreshUserAccessState();
+        this.refreshAccessRequestState();
 
         // Load initial data
         this.loadCategories({ preloadSelectedOnly: true });
@@ -125,6 +139,15 @@ class BIMGallery {
         return base ? `${base}${path}` : path;
     }
 
+    getAuthHeaders() {
+        const headers = {};
+        const token = localStorage.getItem('token');
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+        return headers;
+    }
+
     isTokenUsable(token) {
         if (!token || typeof token !== 'string') {
             return false;
@@ -169,6 +192,201 @@ class BIMGallery {
         }
 
         throw lastError || new Error('Network request failed');
+    }
+
+    async refreshUserAccessState() {
+        const candidates = this.getApiBaseCandidates();
+
+        for (const base of candidates) {
+            try {
+                const response = await fetch(`${base}/api/users/me/access`, {
+                    headers: this.getAuthHeaders(),
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                this.userAccess = {
+                    loaded: true,
+                    isAuthenticated: false,
+                    isAdmin: false,
+                    watermarkFreeDownloadAccess: false
+                };
+                this.updateDownloadAccessStatus();
+                return;
+            }
+
+                if (!response.ok) {
+                    continue;
+                }
+
+                const data = await response.json();
+                this.apiBase = base;
+                this.userAccess = {
+                    loaded: true,
+                    isAuthenticated: true,
+                    isAdmin: !!data.isAdmin,
+                    watermarkFreeDownloadAccess: !!data.watermarkFreeDownloadAccess
+                };
+
+                if (this.mediaData.length > 0) {
+                    this.applyFilters();
+                }
+                this.updateDownloadAccessStatus();
+                return;
+            } catch (error) {
+                // Try next candidate
+            }
+        }
+
+        this.userAccess = {
+            loaded: true,
+            isAuthenticated: false,
+            isAdmin: false,
+            watermarkFreeDownloadAccess: false
+        };
+        this.updateDownloadAccessStatus();
+    }
+
+    async refreshAccessRequestState() {
+        const candidates = this.getApiBaseCandidates();
+
+        for (const base of candidates) {
+            try {
+                const response = await fetch(`${base}/api/access-requests/mine`, {
+                    headers: this.getAuthHeaders(),
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    this.accessRequestState = {
+                        loaded: true,
+                        watermarkFreePending: false,
+                        requestId: ''
+                    };
+                    this.updateDownloadAccessStatus();
+                    return;
+                }
+
+                if (!response.ok) {
+                    continue;
+                }
+
+                const requests = await response.json();
+                const pendingRequest = Array.isArray(requests)
+                    ? requests.find((item) => item.type === 'watermark_free_download' && item.status === 'pending')
+                    : null;
+
+                this.apiBase = base;
+                this.accessRequestState = {
+                    loaded: true,
+                    watermarkFreePending: !!pendingRequest,
+                    requestId: pendingRequest ? pendingRequest.id : ''
+                };
+                this.updateDownloadAccessStatus();
+                return;
+            } catch (error) {
+                // Try next candidate
+            }
+        }
+
+        this.accessRequestState = {
+            loaded: true,
+            watermarkFreePending: false,
+            requestId: ''
+        };
+        this.updateDownloadAccessStatus();
+    }
+
+    updateDownloadAccessStatus() {
+        const statusEl = document.getElementById('download-access-status');
+        if (!statusEl) return;
+
+        if (!this.userAccess.loaded) {
+            statusEl.innerHTML = '';
+            return;
+        }
+
+        if (this.userAccess.isAdmin || this.userAccess.watermarkFreeDownloadAccess) {
+            statusEl.innerHTML = `
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Download original tanpa watermark aktif untuk akun Anda.
+                </div>
+            `;
+            return;
+        }
+
+        if (!this.userAccess.isAuthenticated) {
+            statusEl.innerHTML = `
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login terlebih dahulu jika ingin meminta akses download original tanpa watermark.
+                </div>
+            `;
+            return;
+        }
+
+        if (this.accessRequestState.watermarkFreePending) {
+            statusEl.innerHTML = `
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-hourglass-half me-2"></i>Permintaan download original tanpa watermark Anda sedang diproses admin.
+                </div>
+            `;
+            return;
+        }
+
+        statusEl.innerHTML = `
+            <div class="alert alert-warning mb-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div><i class="fas fa-lock me-2"></i>Download original tanpa watermark belum diaktifkan untuk akun Anda.</div>
+                <button type="button" class="btn btn-sm btn-primary" onclick="window.bimGallery.requestWatermarkFreeAccess()">
+                    <i class="fas fa-paper-plane me-1"></i>Minta Akses
+                </button>
+            </div>
+        `;
+    }
+
+    async requestWatermarkFreeAccess() {
+        if (!this.userAccess.isAuthenticated) {
+            alert('Login terlebih dahulu sebelum meminta akses download original tanpa watermark.');
+            return;
+        }
+
+        if (this.accessRequestState.watermarkFreePending) {
+            alert('Permintaan akses Anda sudah tercatat dan sedang diproses admin.');
+            return;
+        }
+
+        try {
+            const response = await fetch(this.getApiUrl('/api/access-requests'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...this.getAuthHeaders()
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    type: 'watermark_free_download',
+                    subject: 'Permintaan download original tanpa watermark',
+                    message: 'Mohon aktifkan akses download original tanpa watermark untuk akun saya.',
+                    sourcePage: '/pages/bim-methode.html'
+                })
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.error || `HTTP ${response.status}`);
+            }
+
+            this.accessRequestState = {
+                loaded: true,
+                watermarkFreePending: true,
+                requestId: result.request && result.request.id ? result.request.id : ''
+            };
+            this.updateDownloadAccessStatus();
+            this.updatePreviewRequestButton();
+            alert('Permintaan akses download original tanpa watermark berhasil dikirim ke admin.');
+        } catch (error) {
+            console.error('Failed to request watermark-free access:', error);
+            alert(`Gagal mengirim permintaan akses: ${error.message}`);
+        }
     }
 
     updateStatus(targetId, { message = '', tone = 'muted', spinner = false } = {}) {
@@ -342,6 +560,7 @@ class BIMGallery {
             mediaModal.addEventListener('hidden.bs.modal', () => {
                 const viewer = document.getElementById('media-viewer');
                 const downloadBtn = document.getElementById('download-btn');
+                const requestAccessBtn = document.getElementById('request-download-access-btn');
                 const modalTitle = document.getElementById('mediaModalLabel');
                 const modalCounter = document.getElementById('mediaModalCounter');
                 // Reset delete button
@@ -355,6 +574,9 @@ class BIMGallery {
                     downloadBtn.href = '#';
                     downloadBtn.removeAttribute('download');
                     downloadBtn.removeAttribute('target');
+                }
+                if (requestAccessBtn) {
+                    requestAccessBtn.style.display = 'none';
                 }
                 if (modalTitle) modalTitle.textContent = 'Preview Media';
                 if (modalCounter) modalCounter.textContent = '';
@@ -953,8 +1175,20 @@ class BIMGallery {
         return `${baseName}-wm.${outputExt}`;
     }
 
+    canDownloadOriginalWithoutWatermark(item) {
+        if (!this.isWatermarkSupported(item)) {
+            return true;
+        }
+
+        if (this.isAdmin) {
+            return true;
+        }
+
+        return !!(this.userAccess && (this.userAccess.isAdmin || this.userAccess.watermarkFreeDownloadAccess));
+    }
+
     getDownloadInfo(item) {
-        if (this.isWatermarkSupported(item)) {
+        if (this.isWatermarkSupported(item) && !this.canDownloadOriginalWithoutWatermark(item)) {
             return {
                 url: this.getWatermarkUrl(item),
                 filename: this.getWatermarkFilename(item)
@@ -964,6 +1198,31 @@ class BIMGallery {
             url: this.getMediaUrl(item, { download: true }),
             filename: item && item.name ? item.name : null
         };
+    }
+
+    shouldShowWatermarkRequestButton(item) {
+        return !!(
+            item &&
+            this.isWatermarkSupported(item) &&
+            this.userAccess &&
+            this.userAccess.isAuthenticated &&
+            !this.canDownloadOriginalWithoutWatermark(item) &&
+            !(this.accessRequestState && this.accessRequestState.watermarkFreePending)
+        );
+    }
+
+    updatePreviewRequestButton(media) {
+        const requestButton = document.getElementById('request-download-access-btn');
+        if (!requestButton) return;
+
+        if (!this.shouldShowWatermarkRequestButton(media)) {
+            requestButton.style.display = 'none';
+            requestButton.onclick = null;
+            return;
+        }
+
+        requestButton.style.display = 'inline-block';
+        requestButton.onclick = () => this.requestWatermarkFreeAccess();
     }
 
     getFileIcon(type) {
@@ -1556,6 +1815,7 @@ class BIMGallery {
             const viewer = document.getElementById('media-viewer');
             const downloadBtn = document.getElementById('download-btn');
             const deleteBtn = document.getElementById('delete-btn'); // Admin delete button
+            const requestAccessBtn = document.getElementById('request-download-access-btn');
             const modalTitle = document.getElementById('mediaModalLabel');
             const modalCounter = document.getElementById('mediaModalCounter');
             const mediaUrl = this.getMediaUrl(media);
@@ -1582,6 +1842,9 @@ class BIMGallery {
                 downloadBtn.setAttribute('download', downloadInfo.filename);
             } else {
                 downloadBtn.removeAttribute('download');
+            }
+            if (requestAccessBtn) {
+                this.updatePreviewRequestButton(media);
             }
 
             // Show/Hide Delete Button

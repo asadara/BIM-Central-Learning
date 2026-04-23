@@ -97,6 +97,15 @@ BC-Learning-Main/img/
 backend/public/img/
 public/*.png
 BC-Learning-Main/img/waste old/
+!BC-Learning-Main/img/
+BC-Learning-Main/img/*
+!BC-Learning-Main/img/icons/
+BC-Learning-Main/img/icons/*
+!BC-Learning-Main/img/icons/trimmed/
+BC-Learning-Main/img/icons/trimmed/*
+!BC-Learning-Main/img/icons/trimmed/logo_nke_trim.png
+!BC-Learning-Main/img/icons/trimmed/bim_nke_trim.png
+!BC-Learning-Main/img/icons/trimmed/main_logo_BCL_trim.png
 
 # OS junk
 Thumbs.db

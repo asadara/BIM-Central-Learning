@@ -2,6 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { getRequestUser } = require('../utils/auth');
+const { resolveAccessProfile } = require('../utils/userAccess');
 
 const router = express.Router();
 
@@ -45,6 +47,56 @@ router.get('/library-groups', (req, res) => {
     }
 });
 const folderPath = "G:\\BIM CENTRAL LEARNING"; // Perbaiki path
+
+function normalizePathValue(targetPath) {
+    return path.resolve(targetPath).replace(/\\/g, '/').toLowerCase();
+}
+
+function resolveLibraryFilePath(relativePath) {
+    const safeRelativePath = String(relativePath || '').replace(/^[/\\]+/, '');
+    if (!safeRelativePath) {
+        return null;
+    }
+
+    const resolvedPath = path.resolve(folderPath, safeRelativePath);
+    const rootNormalized = normalizePathValue(folderPath);
+    const resolvedNormalized = normalizePathValue(resolvedPath);
+
+    if (!resolvedNormalized.startsWith(rootNormalized)) {
+        return null;
+    }
+
+    return resolvedPath;
+}
+
+router.get('/library-download', async (req, res) => {
+    try {
+        const requestedPath = String(req.query.path || '').trim();
+        if (!requestedPath) {
+            return res.status(400).json({ error: 'path parameter is required' });
+        }
+
+        const filePath = resolveLibraryFilePath(requestedPath);
+        if (!filePath || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+            return res.status(404).json({ error: 'Library file not found' });
+        }
+
+        const authUser = getRequestUser(req);
+        if (!authUser) {
+            return res.status(401).json({ error: 'Authentication required for library download' });
+        }
+
+        const accessProfile = await resolveAccessProfile(authUser);
+        if (!authUser.isAdmin && !accessProfile.libraryDownloadAccess) {
+            return res.status(403).json({ error: 'Library download access is not enabled for this account' });
+        }
+
+        return res.download(filePath, path.basename(filePath));
+    } catch (error) {
+        console.error('Error serving protected library download:', error);
+        return res.status(500).json({ error: 'Failed to download library file' });
+    }
+});
 
 
 // Fungsi untuk membaca folder dan subfolder

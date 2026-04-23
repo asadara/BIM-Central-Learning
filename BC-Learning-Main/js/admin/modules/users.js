@@ -66,7 +66,7 @@ class UsersModule {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="12" class="text-center py-4">
+                <td colspan="14" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                         <div class="spinner-border text-primary mb-2" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -127,7 +127,7 @@ class UsersModule {
                 console.error('❌ Users API failed:', response.status, errorText);
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="12" class="text-center py-4">
+                        <td colspan="14" class="text-center py-4">
                             <div class="alert alert-danger mb-0">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 Failed to load users: ${response.status} ${response.statusText}
@@ -139,7 +139,7 @@ class UsersModule {
             console.error('❌ Error loading users:', error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="12" class="text-center py-4">
+                    <td colspan="14" class="text-center py-4">
                         <div class="alert alert-danger mb-0">
                             <i class="fas fa-exclamation-circle me-2"></i>
                             Error loading users: ${error.message}
@@ -158,7 +158,7 @@ class UsersModule {
         if (users.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="12" class="text-center py-4">
+                    <td colspan="14" class="text-center py-4">
                         <div class="d-flex flex-column align-items-center">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                             <p class="text-muted mb-2">No users found</p>
@@ -209,6 +209,9 @@ class UsersModule {
             const jobRole = user.jobRole || user.job_role || 'N/A';
             const organization = user.organization || 'N/A';
             const isActive = user.is_active !== undefined ? user.is_active : (user.isActive !== undefined ? user.isActive : true);
+            const mappingAccess = !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
+            const libraryDownloadAccess = !!(user.libraryDownloadAccess || user.library_download_access);
+            const watermarkFreeDownloadAccess = !!(user.watermarkFreeDownloadAccess || user.watermark_free_download_access);
             const statusBadge = isActive ?
                 '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Active</span>' :
                 '<span class="badge bg-danger"><i class="fas fa-times me-1"></i>Inactive</span>';
@@ -262,9 +265,27 @@ class UsersModule {
                         <div class="form-check">
                             <input class="form-check-input mapping-access-checkbox" type="checkbox"
                                    id="mappingAccess_${userId}"
-                                   ${user.mappingKompetensiAccess ? 'checked' : ''}
+                                   ${mappingAccess ? 'checked' : ''}
                                    onchange="window.adminPanel.modules.get('users').instance.toggleMappingKompetensiAccess('${userId}', this.checked, this)">
                             <label class="form-check-label" for="mappingAccess_${userId}"></label>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check">
+                            <input class="form-check-input mapping-access-checkbox" type="checkbox"
+                                   id="libraryDownloadAccess_${userId}"
+                                   ${libraryDownloadAccess ? 'checked' : ''}
+                                   onchange="window.adminPanel.modules.get('users').instance.toggleLibraryDownloadAccess('${userId}', this.checked, this)">
+                            <label class="form-check-label" for="libraryDownloadAccess_${userId}"></label>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check">
+                            <input class="form-check-input mapping-access-checkbox" type="checkbox"
+                                   id="watermarkFreeAccess_${userId}"
+                                   ${watermarkFreeDownloadAccess ? 'checked' : ''}
+                                   onchange="window.adminPanel.modules.get('users').instance.toggleWatermarkFreeDownloadAccess('${userId}', this.checked, this)">
+                            <label class="form-check-label" for="watermarkFreeAccess_${userId}"></label>
                         </div>
                     </td>
                     <td>
@@ -925,6 +946,7 @@ class UsersModule {
      * Toggle mapping kompetensi access
      */
     async toggleMappingKompetensiAccess(userId, isChecked, checkboxElement) {
+        return this.updateBooleanAccess(userId, 'mappingKompetensiAccess', isChecked, checkboxElement, 'Mapping kompetensi access');
         try {
             console.log('🔄 Toggling mapping kompetensi access for user:', userId, 'to:', isChecked);
 
@@ -969,6 +991,51 @@ class UsersModule {
         }
     }
 
+    async toggleLibraryDownloadAccess(userId, isChecked, checkboxElement) {
+        return this.updateBooleanAccess(userId, 'libraryDownloadAccess', isChecked, checkboxElement, 'Library download access');
+    }
+
+    async toggleWatermarkFreeDownloadAccess(userId, isChecked, checkboxElement) {
+        return this.updateBooleanAccess(userId, 'watermarkFreeDownloadAccess', isChecked, checkboxElement, 'Watermark-free download access');
+    }
+
+    async updateBooleanAccess(userId, fieldName, isChecked, checkboxElement, label) {
+        try {
+            console.log('ðŸ”„ Toggling user access for user:', userId, fieldName, 'to:', isChecked);
+
+            const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [fieldName]: isChecked })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('âœ… User access updated successfully:', result);
+
+                const userIndex = this.allUsers.findIndex(u => (u.id || u.user_id) == userId);
+                if (userIndex !== -1) {
+                    this.allUsers[userIndex][fieldName] = isChecked;
+                }
+
+                const originalClass = checkboxElement.className;
+                checkboxElement.className = 'form-check-input mapping-access-checkbox bg-success';
+                setTimeout(() => {
+                    checkboxElement.className = originalClass;
+                }, 1000);
+            } else {
+                const error = await response.json();
+                console.error('âŒ Failed to update user access:', error);
+                alert(`âŒ Failed to update ${label.toLowerCase()}: ` + (error.error || 'Unknown error'));
+                checkboxElement.checked = !isChecked;
+            }
+        } catch (error) {
+            console.error('âŒ Error updating user access:', error);
+            alert(`âŒ Error updating ${label.toLowerCase()}: ` + error.message);
+            checkboxElement.checked = !isChecked;
+        }
+    }
+
     /**
      * Export users to CSV
      */
@@ -979,7 +1046,7 @@ class UsersModule {
         }
 
         // Create CSV content
-        const headers = ['ID', 'Username', 'Email', 'BIM Level', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access'];
+        const headers = ['ID', 'Username', 'Email', 'BIM Level', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Library Download Access', 'Watermark-Free Download Access'];
         const csvContent = [
             headers.join(','),
             ...this.allUsers.map(user => [
@@ -991,7 +1058,9 @@ class UsersModule {
                 user.organization,
                 (user.is_active !== undefined ? user.is_active : user.isActive !== undefined ? user.isActive : true) ? 'Active' : 'Inactive',
                 user.registrationDate || user.registration_date || user.created_at,
-                user.mappingKompetensiAccess ? 'Yes' : 'No'
+                (user.mappingKompetensiAccess || user.mapping_kompetensi_access) ? 'Yes' : 'No',
+                (user.libraryDownloadAccess || user.library_download_access) ? 'Yes' : 'No',
+                (user.watermarkFreeDownloadAccess || user.watermark_free_download_access) ? 'Yes' : 'No'
             ].map(field => `"${field || ''}"`).join(','))
         ].join('\n');
 

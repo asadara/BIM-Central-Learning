@@ -5,6 +5,7 @@ class LibraryModule {
     constructor(adminPanel) {
         this.adminPanel = adminPanel;
         this.libraryData = [];
+        this.accessRequests = [];
         this.currentPage = 1;
         this.itemsPerPage = 20;
         this.currentPath = '/';
@@ -55,6 +56,21 @@ class LibraryModule {
                     <button class="btn btn-modern-primary" onclick="safeCall('library', 'showUploadModal')">
                         <i class="fas fa-upload me-2"></i>Upload Files
                     </button>
+                </div>
+            </div>
+
+            <div class="border rounded p-3 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-0">Request Akses Download</h6>
+                        <small class="text-muted">Inbox permintaan BIM Library, original tanpa watermark, dan pesan umum.</small>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="safeCall('library', 'refreshAccessRequests')">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh Request
+                    </button>
+                </div>
+                <div id="accessRequestsContent">
+                    <div class="text-center py-3 text-muted">Memuat request akses...</div>
                 </div>
             </div>
 
@@ -141,8 +157,163 @@ class LibraryModule {
             </nav>
         `;
 
-        // Load sample library data
+        await this.refreshAccessRequests();
         await this.refreshLibrary();
+    }
+
+    async refreshAccessRequests() {
+        const container = document.getElementById('accessRequestsContent');
+        if (!container) return;
+
+        container.innerHTML = '<div class="text-center py-3 text-muted">Memuat request akses...</div>';
+
+        try {
+            const response = await fetch('/api/access-requests/admin', {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            this.accessRequests = Array.isArray(data) ? data : [];
+            this.renderAccessRequests();
+        } catch (error) {
+            console.error('Failed to load access requests:', error);
+            container.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Gagal memuat request akses.
+                </div>
+            `;
+        }
+    }
+
+    renderAccessRequests() {
+        const container = document.getElementById('accessRequestsContent');
+        if (!container) return;
+
+        if (!this.accessRequests.length) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">Belum ada request akses atau pesan masuk.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const typeLabels = {
+            library_download: 'BIM Library',
+            watermark_free_download: 'Tanpa Watermark',
+            general_message: 'Pesan Umum'
+        };
+
+        const statusBadgeClass = {
+            pending: 'warning',
+            approved: 'success',
+            denied: 'danger',
+            reviewed: 'info',
+            closed: 'secondary'
+        };
+
+        const rows = this.accessRequests.map((request) => {
+            const typeLabel = typeLabels[request.type] || request.type;
+            const statusClass = statusBadgeClass[request.status] || 'secondary';
+            const requesterName = request.requester?.username || request.contact?.name || '-';
+            const requesterEmail = request.requester?.email || request.contact?.email || '-';
+            const subject = request.subject || '-';
+            const message = request.message || '-';
+            const createdAt = request.createdAt ? new Date(request.createdAt).toLocaleString('id-ID') : '-';
+            const canApprove = request.status === 'pending' && request.type !== 'general_message';
+            const canDeny = request.status === 'pending';
+            const canReview = request.type === 'general_message' && request.status === 'pending';
+
+            return `
+                <tr>
+                    <td>${typeLabel}</td>
+                    <td>
+                        <div class="fw-semibold">${requesterName}</div>
+                        <small class="text-muted">${requesterEmail}</small>
+                    </td>
+                    <td>
+                        <div class="fw-semibold">${subject}</div>
+                        <small class="text-muted">${message}</small>
+                    </td>
+                    <td><small>${request.sourcePage || '-'}</small></td>
+                    <td><small>${createdAt}</small></td>
+                    <td><span class="badge bg-${statusClass} text-uppercase">${request.status}</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            ${canApprove ? `
+                                <button class="btn btn-outline-success" onclick="safeCall('library', 'updateAccessRequestStatus', '${request.id}', 'approved')" title="Approve">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            ` : ''}
+                            ${canDeny ? `
+                                <button class="btn btn-outline-danger" onclick="safeCall('library', 'updateAccessRequestStatus', '${request.id}', 'denied')" title="Deny">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
+                            ${canReview ? `
+                                <button class="btn btn-outline-primary" onclick="safeCall('library', 'updateAccessRequestStatus', '${request.id}', 'reviewed')" title="Mark Reviewed">
+                                    <i class="fas fa-envelope-open-text"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tipe</th>
+                            <th>Pengirim</th>
+                            <th>Isi</th>
+                            <th>Sumber</th>
+                            <th>Dibuat</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async updateAccessRequestStatus(requestId, status) {
+        try {
+            const response = await fetch(`/api/access-requests/admin/${encodeURIComponent(requestId)}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ status })
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.error || `HTTP ${response.status}`);
+            }
+
+            await this.refreshAccessRequests();
+
+            if (status === 'approved') {
+                const usersModule = window.adminPanel?.modules?.get('users');
+                if (usersModule && usersModule.instance && typeof usersModule.instance.loadUsers === 'function') {
+                    usersModule.instance.loadUsers();
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update access request:', error);
+            alert(`Gagal memproses request: ${error.message}`);
+        }
     }
 
     /**

@@ -485,7 +485,7 @@
             };
 
             // Loop untuk setiap baris checklist
-            document.querySelectorAll('.checklist tbody tr').forEach(row => {
+            document.querySelectorAll('.checklist-table tbody tr').forEach(row => {
                 data.items.push({
                     item: row.cells[1].textContent.trim(),
                     ada: row.querySelector('[name^="ada_"]').checked,
@@ -499,7 +499,20 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
-            });
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Gagal menyimpan form BIM");
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    alert("Form BIM berhasil disimpan.");
+                })
+                .catch((error) => {
+                    console.error(error);
+                    alert("Form BIM gagal disimpan.");
+                });
         }
     </script>
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { execFile } = require("child_process");
 const { requireAdmin } = require('../utils/auth');
 
 const router = express.Router();
@@ -8,6 +9,60 @@ const TAGS_FILE = path.join(__dirname, "../tags.json");
 const LEARNING_MATERIALS_FILE = path.join(__dirname, "../learning-materials.json");
 const BIM_MEDIA_FILE = path.join(__dirname, "../bim-media.json");
 const USERS_FILE = path.join(__dirname, "../users.json");
+const BASE_DIR = process.env.BASE_DIR || "G:/BIM CENTRAL LEARNING/";
+const THUMBNAIL_DIR = path.join(__dirname, "../public/thumbnails");
+const VIDEO_EXTENSIONS = new Set([".mp4", ".avi", ".webm", ".mov", ".mkv", ".wmv"]);
+
+function sanitizeFilenameForThumbnail(filename) {
+    return path.parse(String(filename || "")).name
+        .replace(/[^a-zA-Z0-9_\-]/g, "_")
+        .replace(/_+/g, "_")
+        .toLowerCase();
+}
+
+function ensureThumbnailDir() {
+    if (!fs.existsSync(THUMBNAIL_DIR)) {
+        fs.mkdirSync(THUMBNAIL_DIR, { recursive: true });
+    }
+}
+
+function collectVideoFiles(directoryPath, bucket = []) {
+    const entries = fs.readdirSync(directoryPath, { withFileTypes: true });
+
+    entries.forEach((entry) => {
+        const fullPath = path.join(directoryPath, entry.name);
+        if (entry.isDirectory()) {
+            collectVideoFiles(fullPath, bucket);
+            return;
+        }
+
+        if (VIDEO_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+            bucket.push(fullPath);
+        }
+    });
+
+    return bucket;
+}
+
+function generateThumbnail(videoPath, thumbnailPath, timeoutMs = 20000) {
+    return new Promise((resolve, reject) => {
+        const args = [
+            "-y",
+            "-ss", "00:00:05",
+            "-i", videoPath,
+            "-vframes", "1",
+            "-q:v", "2",
+            thumbnailPath
+        ];
+
+        execFile("ffmpeg", args, { timeout: timeoutMs }, (error) => {
+            if (error) {
+                return reject(error);
+            }
+            return resolve(thumbnailPath);
+        });
+    });
+}
 
 // GET /api/admin/tags - Mendapatkan semua tagline
 router.get("/tags", requireAdmin, (req, res) => {
@@ -238,6 +293,51 @@ router.post("/categories", requireAdmin, (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to create category"
+        });
+    }
+});
+
+router.post("/thumbnails/regenerate", requireAdmin, async (req, res) => {
+    try {
+        if (!fs.existsSync(BASE_DIR)) {
+            return res.status(404).json({
+                success: false,
+                error: "Base video directory not found"
+            });
+        }
+
+        ensureThumbnailDir();
+        const videoFiles = collectVideoFiles(BASE_DIR);
+        let generated = 0;
+        let failed = 0;
+
+        for (const videoPath of videoFiles) {
+            const thumbnailPath = path.join(
+                THUMBNAIL_DIR,
+                `${sanitizeFilenameForThumbnail(path.basename(videoPath))}.jpg`
+            );
+
+            try {
+                await generateThumbnail(videoPath, thumbnailPath);
+                generated += 1;
+            } catch (error) {
+                failed += 1;
+                console.warn("Failed generating thumbnail:", videoPath, error.message);
+            }
+        }
+
+        return res.json({
+            success: true,
+            message: "Thumbnail regeneration completed",
+            totalVideos: videoFiles.length,
+            generated,
+            failed
+        });
+    } catch (error) {
+        console.error("Error regenerating thumbnails:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to regenerate thumbnails"
         });
     }
 });

@@ -27,7 +27,7 @@ class BIMGallery {
             watermarkFreePending: false,
             requestId: ''
         };
-        this.retryTimer = null;
+        this.retryTimers = { media: null, categories: null };
         this.retryDelayMs = 5000;
         this.apiBaseCandidates = this.getApiBaseCandidates();
         this.apiBase = this.apiBaseCandidates[0] || '';
@@ -748,12 +748,10 @@ class BIMGallery {
                             spinner: true
                         });
                     }
-                } else {
-                    this.updateStatus('category-status', { message: '' });
-                }
-
-                if (data.refreshing && this.categories.length === 0) {
                     this.scheduleRetry(() => this.loadCategories(options), 'categories');
+                } else {
+                    this.clearRetry('categories');
+                    this.updateStatus('category-status', { message: '' });
                 }
             } else {
                 throw new Error(data.message || 'Failed to load categories');
@@ -825,12 +823,10 @@ class BIMGallery {
                             spinner: true
                         });
                     }
-                } else {
-                    this.updateStatus('media-status', { message: '' });
-                }
-
-                if (data.refreshing && this.mediaData.length === 0) {
                     this.scheduleRetry(() => this.loadMedia(category, page), 'media');
+                } else {
+                    this.clearRetry('media');
+                    this.updateStatus('media-status', { message: '' });
                 }
             } else {
                 throw new Error(data.message || 'Failed to load media');
@@ -848,13 +844,22 @@ class BIMGallery {
     }
 
     scheduleRetry(action, label) {
-        if (this.retryTimer) {
-            clearTimeout(this.retryTimer);
+        const retryLabel = label || 'media';
+        if (this.retryTimers[retryLabel]) {
+            clearTimeout(this.retryTimers[retryLabel]);
         }
-        this.retryTimer = setTimeout(() => {
-            this.retryTimer = null;
+        this.retryTimers[retryLabel] = setTimeout(() => {
+            this.retryTimers[retryLabel] = null;
             action();
         }, this.retryDelayMs);
+    }
+
+    clearRetry(label) {
+        const retryLabel = label || 'media';
+        if (this.retryTimers[retryLabel]) {
+            clearTimeout(this.retryTimers[retryLabel]);
+            this.retryTimers[retryLabel] = null;
+        }
     }
 
     normalizeFilterType(value) {
@@ -1068,14 +1073,21 @@ class BIMGallery {
         `;
     }
 
+    getThumbnailVersion(item) {
+        const modified = item && item.modified ? Date.parse(item.modified) : 0;
+        const size = item && Number.isFinite(Number(item.size)) ? Number(item.size) : 0;
+        return `${Number.isFinite(modified) ? modified : 0}-${size}`;
+    }
+
     getThumbnail(item) {
         if (item.type === 'image') {
-            const remoteThumbUrl = this.getApiUrl(`/api/bim-methode/thumbnail/${item.id}?w=480&q=65`);
-            const cachedThumbUrl = this.getCachedThumbnail(item.id);
+            const thumbVersion = this.getThumbnailVersion(item);
+            const remoteThumbUrl = this.getApiUrl(`/api/bim-methode/thumbnail/${item.id}?w=480&q=65&v=${encodeURIComponent(thumbVersion)}`);
+            const cachedThumbUrl = this.getCachedThumbnail(item.id, thumbVersion);
             const initialThumbUrl = cachedThumbUrl || remoteThumbUrl;
             return `
                 <img class="bim-thumb" src="${initialThumbUrl}" alt="${item.name}" loading="lazy"
-                    data-thumb-id="${item.id}" data-thumb-remote="${remoteThumbUrl}"
+                    data-thumb-id="${item.id}" data-thumb-version="${thumbVersion}" data-thumb-remote="${remoteThumbUrl}"
                     onerror="if(this.dataset.thumbRemote && this.src !== this.dataset.thumbRemote){ this.src = this.dataset.thumbRemote; return; } this.style.display='none'; this.nextElementSibling.classList.remove('is-hidden');">
                 ${this.buildFileThumb(item, { hidden: true })}
             `;
@@ -1681,18 +1693,52 @@ class BIMGallery {
         return kept;
     }
 
-    getCachedThumbnail(mediaId) {
+    getCachedThumbnail(mediaId, versionToken) {
         if (!mediaId) return null;
 
         const key = this.getThumbStorageKey(mediaId);
-        let value = null;
+        let rawValue = null;
         try {
-            value = localStorage.getItem(key);
+            rawValue = localStorage.getItem(key);
         } catch (error) {
             return null;
         }
 
-        if (!value || !value.startsWith('data:image/')) {
+        if (!rawValue) {
+            return null;
+        }
+
+        let value = '';
+        let cachedVersion = '';
+
+        if (rawValue.startsWith('data:image/')) {
+            try {
+                localStorage.removeItem(key);
+            } catch (error) {
+                // Ignore cache cleanup errors
+            }
+            return null;
+        }
+
+        try {
+            const parsed = JSON.parse(rawValue);
+            value = typeof parsed?.dataUrl === 'string' ? parsed.dataUrl : '';
+            cachedVersion = typeof parsed?.version === 'string' ? parsed.version : '';
+        } catch (error) {
+            try {
+                localStorage.removeItem(key);
+            } catch (removeError) {
+                // Ignore cache cleanup errors
+            }
+            return null;
+        }
+
+        if (!value.startsWith('data:image/') || (versionToken && cachedVersion !== versionToken)) {
+            try {
+                localStorage.removeItem(key);
+            } catch (error) {
+                // Ignore cache cleanup errors
+            }
             return null;
         }
 
@@ -1704,15 +1750,19 @@ class BIMGallery {
         return value;
     }
 
-    storeThumbnailInLocalCache(mediaId, dataUrl) {
+    storeThumbnailInLocalCache(mediaId, versionToken, dataUrl) {
         if (!mediaId || !dataUrl || !dataUrl.startsWith('data:image/')) return;
         if (dataUrl.length > this.thumbStorageMaxChars) return;
 
         const key = this.getThumbStorageKey(mediaId);
         let index = this.getThumbStorageIndex();
+        const payload = JSON.stringify({
+            version: versionToken || '',
+            dataUrl
+        });
 
         const saveData = () => {
-            localStorage.setItem(key, dataUrl);
+            localStorage.setItem(key, payload);
         };
 
         try {
@@ -1750,6 +1800,7 @@ class BIMGallery {
     handleThumbnailLoaded(imgElement) {
         if (!imgElement) return;
         const mediaId = imgElement.dataset.thumbId;
+        const versionToken = imgElement.dataset.thumbVersion || '';
         if (!mediaId) return;
 
         const currentSrc = imgElement.currentSrc || imgElement.src || '';
@@ -1757,10 +1808,10 @@ class BIMGallery {
             return;
         }
 
-        this.persistThumbnailFromImage(imgElement, mediaId);
+        this.persistThumbnailFromImage(imgElement, mediaId, versionToken);
     }
 
-    persistThumbnailFromImage(imgElement, mediaId) {
+    persistThumbnailFromImage(imgElement, mediaId, versionToken) {
         try {
             if (!imgElement.complete || !imgElement.naturalWidth || !imgElement.naturalHeight) {
                 return;
@@ -1788,7 +1839,7 @@ class BIMGallery {
                 dataUrl = canvas.toDataURL('image/jpeg', 0.68);
             }
 
-            this.storeThumbnailInLocalCache(mediaId, dataUrl);
+            this.storeThumbnailInLocalCache(mediaId, versionToken, dataUrl);
         } catch (error) {
             // Ignore canvas/security/localStorage issues.
         }

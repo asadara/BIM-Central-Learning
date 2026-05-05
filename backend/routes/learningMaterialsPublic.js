@@ -1,9 +1,17 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { LEARNING_MATERIALS_FILE, loadLearningMaterialsData, resolveMaterialFileSystemPath } = require("../services/learningMaterialsSource");
+const {
+    generatePDFThumbnailWithPdfJs,
+    generatePDFThumbnailWithPoppler,
+    generatePDFThumbnailWithImageMagick,
+    generatePDFThumbnailWithPuppeteer,
+    isLikelyInvalidThumbnail
+} = require("../scripts/generate-pdf-thumbnails");
 
 const router = express.Router();
-const LEARNING_MATERIALS_FILE = path.join(__dirname, "../learning-materials.json");
+const THUMBNAILS_DIR = path.join(__dirname, "../public/thumbnails/pdf");
 
 function writeJsonSafe(filePath, data) {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
@@ -14,22 +22,45 @@ function normalizePageCount(value) {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-// GET /api/learning-materials - Mendapatkan semua learning materials untuk student
-router.get("/", (req, res) => {
+function isActiveMaterial(material) {
+    return material && (material.status === "active" || material.status === undefined || material.status === null);
+}
+
+function matchesMaterialId(material, requestedId) {
+    return material && (
+        material.id == requestedId ||
+        material.id === Number.parseInt(requestedId, 10) ||
+        String(material.id) === String(requestedId)
+    );
+}
+
+function normalizeResponseMaterial(material) {
+    return {
+        ...material,
+        id: material && material.id != null ? String(material.id) : "",
+        pageCount: material.pageCount || material.pages || null,
+        filePath: material.filePath || material.file_path || null
+    };
+}
+
+async function getMaterialsData() {
+    return loadLearningMaterialsData();
+}
+
+router.get("/", async (req, res) => {
     try {
-        const materialsData = JSON.parse(fs.readFileSync(LEARNING_MATERIALS_FILE, "utf8"));
+        const materialsData = await getMaterialsData();
+        const activeMaterials = (materialsData.materials || [])
+            .filter(isActiveMaterial)
+            .map(normalizeResponseMaterial);
 
-        // Filter materials yang aktif (atau tidak memiliki status field - dianggap aktif)
-        const activeMaterials = (materialsData.materials || []).filter(m => 
-            m.status === 'active' || m.status === undefined || m.status === null
-        );
-
-        console.log(`📚 Learning materials API: Found ${activeMaterials.length} active materials`);
+        console.log(`Learning materials API: Found ${activeMaterials.length} active materials`);
 
         res.json({
             success: true,
             data: activeMaterials,
-            count: activeMaterials.length
+            count: activeMaterials.length,
+            source: materialsData.metadata?.source || "unknown"
         });
     } catch (error) {
         console.error("Error reading learning materials for students:", error);
@@ -40,64 +71,18 @@ router.get("/", (req, res) => {
     }
 });
 
-// GET /api/learning-materials/:id - Mendapatkan material spesifik untuk student
-router.get("/:id", (req, res) => {
+router.get("/categories/:category", async (req, res) => {
     try {
-        const materialsData = JSON.parse(fs.readFileSync(LEARNING_MATERIALS_FILE, "utf8"));
-        const requestedId = req.params.id;
-        
-        // Support both string and number ID comparison
-        const material = materialsData.materials.find(m => 
-            m.id == requestedId || m.id === parseInt(requestedId) || String(m.id) === requestedId
-        );
+        const materialsData = await getMaterialsData();
+        const category = String(req.params.category || "").toLowerCase();
 
-        // Check if material exists and is active (or has no status field)
-        if (!material) {
-            console.log(`📚 Material not found for ID: ${requestedId}`);
-            return res.status(404).json({
-                success: false,
-                error: "Learning material not found"
-            });
-        }
-
-        // Check status - allow active, undefined, or null status
-        const isActive = material.status === 'active' || material.status === undefined || material.status === null;
-        if (!isActive) {
-            console.log(`📚 Material ${requestedId} is not active (status: ${material.status})`);
-            return res.status(404).json({
-                success: false,
-                error: "Learning material not available"
-            });
-        }
-
-        console.log(`📚 Found material: ${material.title} (ID: ${material.id})`);
+        const filteredMaterials = (materialsData.materials || [])
+            .filter((material) => isActiveMaterial(material) && String(material.category || "").toLowerCase() === category)
+            .map(normalizeResponseMaterial);
 
         res.json({
             success: true,
-            data: material
-        });
-    } catch (error) {
-        console.error("Error reading learning material for students:", error);
-        res.status(500).json({
-            success: false,
-            error: "Failed to load learning material"
-        });
-    }
-});
-
-// GET /api/learning-materials/categories/:category - Get materials by category for students
-router.get("/categories/:category", (req, res) => {
-    try {
-        const materialsData = JSON.parse(fs.readFileSync(LEARNING_MATERIALS_FILE, "utf8"));
-        const category = req.params.category;
-
-        const filteredMaterials = materialsData.materials.filter(m =>
-            m.category.toLowerCase() === category.toLowerCase() && m.status === 'active'
-        );
-
-        res.json({
-            success: true,
-            category: category,
+            category,
             count: filteredMaterials.length,
             data: filteredMaterials
         });
@@ -110,19 +95,18 @@ router.get("/categories/:category", (req, res) => {
     }
 });
 
-// GET /api/learning-materials/courses/:courseId - Get materials by course ID
-router.get("/courses/:courseId", (req, res) => {
+router.get("/courses/:courseId", async (req, res) => {
     try {
-        const materialsData = JSON.parse(fs.readFileSync(LEARNING_MATERIALS_FILE, "utf8"));
-        const courseId = req.params.courseId;
+        const materialsData = await getMaterialsData();
+        const courseId = String(req.params.courseId || "");
 
-        const filteredMaterials = materialsData.materials.filter(m =>
-            m.courseId === courseId && m.status === 'active'
-        );
+        const filteredMaterials = (materialsData.materials || [])
+            .filter((material) => isActiveMaterial(material) && String(material.courseId || "") === courseId)
+            .map(normalizeResponseMaterial);
 
         res.json({
             success: true,
-            courseId: courseId,
+            courseId,
             count: filteredMaterials.length,
             data: filteredMaterials
         });
@@ -135,19 +119,18 @@ router.get("/courses/:courseId", (req, res) => {
     }
 });
 
-// GET /api/learning-materials/levels/:level - Get materials by level
-router.get("/levels/:level", (req, res) => {
+router.get("/levels/:level", async (req, res) => {
     try {
-        const materialsData = JSON.parse(fs.readFileSync(LEARNING_MATERIALS_FILE, "utf8"));
-        const level = req.params.level;
+        const materialsData = await getMaterialsData();
+        const level = String(req.params.level || "").toLowerCase();
 
-        const filteredMaterials = materialsData.materials.filter(m =>
-            m.level.toLowerCase() === level.toLowerCase() && m.status === 'active'
-        );
+        const filteredMaterials = (materialsData.materials || [])
+            .filter((material) => isActiveMaterial(material) && String(material.level || "").toLowerCase() === level)
+            .map(normalizeResponseMaterial);
 
         res.json({
             success: true,
-            level: level,
+            level,
             count: filteredMaterials.length,
             data: filteredMaterials
         });
@@ -160,42 +143,42 @@ router.get("/levels/:level", (req, res) => {
     }
 });
 
-// GET /api/learning-materials/search - Search materials
-router.get("/search", (req, res) => {
+router.get("/search", async (req, res) => {
     try {
         const { q, category, level, type } = req.query;
-        const materialsData = JSON.parse(fs.readFileSync(LEARNING_MATERIALS_FILE, "utf8"));
+        const materialsData = await getMaterialsData();
 
-        let filteredMaterials = materialsData.materials.filter(m => m.status === 'active');
+        let filteredMaterials = (materialsData.materials || []).filter(isActiveMaterial);
 
-        // Apply search query
         if (q) {
-            const searchTerm = q.toLowerCase();
-            filteredMaterials = filteredMaterials.filter(m =>
-                m.title.toLowerCase().includes(searchTerm) ||
-                m.description.toLowerCase().includes(searchTerm) ||
-                m.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+            const searchTerm = String(q).toLowerCase();
+            filteredMaterials = filteredMaterials.filter((material) =>
+                String(material.title || "").toLowerCase().includes(searchTerm) ||
+                String(material.description || "").toLowerCase().includes(searchTerm) ||
+                (Array.isArray(material.tags) ? material.tags : []).some((tag) =>
+                    String(tag || "").toLowerCase().includes(searchTerm)
+                )
             );
         }
 
-        // Apply category filter
         if (category) {
-            filteredMaterials = filteredMaterials.filter(m =>
-                m.category.toLowerCase() === category.toLowerCase()
+            const normalizedCategory = String(category).toLowerCase();
+            filteredMaterials = filteredMaterials.filter((material) =>
+                String(material.category || "").toLowerCase() === normalizedCategory
             );
         }
 
-        // Apply level filter
         if (level) {
-            filteredMaterials = filteredMaterials.filter(m =>
-                m.level.toLowerCase() === level.toLowerCase()
+            const normalizedLevel = String(level).toLowerCase();
+            filteredMaterials = filteredMaterials.filter((material) =>
+                String(material.level || "").toLowerCase() === normalizedLevel
             );
         }
 
-        // Apply type filter
         if (type) {
-            filteredMaterials = filteredMaterials.filter(m =>
-                m.type.toLowerCase() === type.toLowerCase()
+            const normalizedType = String(type).toLowerCase();
+            filteredMaterials = filteredMaterials.filter((material) =>
+                String(material.type || "").toLowerCase() === normalizedType
             );
         }
 
@@ -204,7 +187,7 @@ router.get("/search", (req, res) => {
             query: q,
             filters: { category, level, type },
             count: filteredMaterials.length,
-            data: filteredMaterials
+            data: filteredMaterials.map(normalizeResponseMaterial)
         });
     } catch (error) {
         console.error("Error searching materials for students:", error);
@@ -215,63 +198,26 @@ router.get("/search", (req, res) => {
     }
 });
 
-// GET /api/learning-materials/toc/:materialId - Get TOC for specific material
 router.get("/toc/:materialId", async (req, res) => {
     try {
         const { materialId } = req.params;
-        const PdfTocExtractor = require('../utils/pdfTocExtractor');
+        const PdfTocExtractor = require("../utils/pdfTocExtractor");
         const extractor = new PdfTocExtractor();
+        const materialsData = await getMaterialsData();
 
-        // Find the material to get its file path (support both string and number ID)
-        const materialsData = JSON.parse(fs.readFileSync(LEARNING_MATERIALS_FILE, "utf8"));
-        const material = materialsData.materials.find(m => 
-            m.id == materialId || m.id === parseInt(materialId) || String(m.id) === materialId
-        );
+        const material = (materialsData.materials || []).find((item) => matchesMaterialId(item, materialId));
 
         if (!material) {
-            console.log(`📖 TOC: Material not found for ID: ${materialId}`);
             return res.status(404).json({
                 success: false,
                 error: "Material not found"
             });
         }
 
-        console.log(`📖 TOC: Found material: ${material.title} (ID: ${material.id})`);
+        const fileSystemPath = resolveMaterialFileSystemPath(material);
+        const fallbackPageCount = normalizePageCount(material.pageCount || material.pages);
 
-        // Convert URL path to file system path
-        // material.filePath is like "/elearning-assets/materials/filename.pdf"
-        // Need to convert to actual file system path
-        let fileSystemPath;
-        const materialFilePath = material.filePath || '';
-
-        console.log(`📖 Processing filePath: "${materialFilePath}" for material ${materialId}`);
-        console.log(`📖 __dirname is: ${__dirname}`);
-
-        if (materialFilePath.startsWith('/elearning-assets/materials/')) {
-            // Remove the URL prefix and add the actual file system path
-            const filename = materialFilePath.replace('/elearning-assets/materials/', '');
-            fileSystemPath = path.join(__dirname, '../../BC-Learning-Main/elearning-assets/materials', filename);
-            console.log(`📁 New format detected. Filename: "${filename}"`);
-            console.log(`📁 Converted to filesystem path: ${fileSystemPath}`);
-        } else if (materialFilePath.startsWith('/BC-Learning-Main/')) {
-            // Old format - remove the /BC-Learning-Main prefix and resolve from backend directory
-            const relativePath = materialFilePath.replace('/BC-Learning-Main/', '');
-            fileSystemPath = path.join(__dirname, '../../BC-Learning-Main', relativePath);
-            console.log(`📁 Old format detected. Relative path: "${relativePath}"`);
-            console.log(`📁 Converted to filesystem path: ${fileSystemPath}`);
-        } else {
-            // Fallback for other paths
-            fileSystemPath = path.join(__dirname, '../', materialFilePath);
-            console.log(`📁 Unknown format, using fallback filesystem path: ${fileSystemPath}`);
-        }
-
-        console.log(`📖 Final filesystem path for TOC extraction: ${fileSystemPath}`);
-        console.log(`📖 File exists check: ${fs.existsSync(fileSystemPath) ? 'EXISTS' : 'NOT FOUND'}`);
-
-        // Check if file exists
-        if (!fs.existsSync(fileSystemPath)) {
-            const fallbackPageCount = normalizePageCount(material.pageCount);
-            console.warn(`⚠️ PDF file not found: ${fileSystemPath}`);
+        if (!fileSystemPath || !fs.existsSync(fileSystemPath)) {
             return res.json({
                 success: true,
                 materialId,
@@ -279,53 +225,31 @@ router.get("/toc/:materialId", async (req, res) => {
                     materialId,
                     chapters: [],
                     totalPages: fallbackPageCount || 1,
-                    method: fallbackPageCount ? 'file-not-found+metadata' : 'file-not-found',
+                    method: fallbackPageCount ? "file-not-found+metadata" : "file-not-found",
                     lastAnalyzed: new Date().toISOString(),
                     confidence: 0,
-                    error: 'PDF file not found'
-                }
-            });
-        }
-
-        // Get TOC data (from cache or extract)
-        console.log(`📖 Calling getTOC with materialId: ${materialId}, fileSystemPath: ${fileSystemPath}`);
-
-        if (!fileSystemPath) {
-            console.error(`❌ fileSystemPath is null/undefined for material ${materialId}`);
-            return res.json({
-                success: true,
-                materialId,
-                toc: {
-                    materialId,
-                    chapters: [],
-                    totalPages: 1,
-                    method: 'error-no-path',
-                    lastAnalyzed: new Date().toISOString(),
-                    confidence: 0,
-                    error: 'File system path could not be determined'
+                    error: "PDF file not found"
                 }
             });
         }
 
         const tocData = await extractor.getTOC(materialId, fileSystemPath);
-
-        const existingPageCount = normalizePageCount(material.pageCount);
-
-        // If extractor returns an invalid page count, fall back to stored metadata
-        if ((!tocData.totalPages || tocData.totalPages <= 1) && existingPageCount) {
-            tocData.totalPages = existingPageCount;
-            tocData.method = tocData.method ? `${tocData.method}+metadata` : 'metadata';
+        if ((!tocData.totalPages || tocData.totalPages <= 1) && fallbackPageCount) {
+            tocData.totalPages = fallbackPageCount;
+            tocData.method = tocData.method ? `${tocData.method}+metadata` : "metadata";
         }
 
         const resolvedPageCount = normalizePageCount(tocData.totalPages);
-        if (!existingPageCount && resolvedPageCount) {
+        if (!fallbackPageCount && resolvedPageCount) {
             material.pageCount = resolvedPageCount;
-            materialsData.materials = materialsData.materials.map(m =>
-                m.id == materialId || m.id === parseInt(materialId) || String(m.id) === materialId
-                    ? material
-                    : m
-            );
-            writeJsonSafe(LEARNING_MATERIALS_FILE, materialsData);
+            material.pages = resolvedPageCount;
+
+            if (materialsData.metadata?.source === "json" && fs.existsSync(LEARNING_MATERIALS_FILE)) {
+                materialsData.materials = (materialsData.materials || []).map((item) =>
+                    matchesMaterialId(item, materialId) ? material : item
+                );
+                writeJsonSafe(LEARNING_MATERIALS_FILE, materialsData);
+            }
         }
 
         res.json({
@@ -333,7 +257,6 @@ router.get("/toc/:materialId", async (req, res) => {
             materialId,
             toc: tocData
         });
-
     } catch (error) {
         console.error("Error getting TOC for material:", error);
         res.status(500).json({
@@ -344,10 +267,9 @@ router.get("/toc/:materialId", async (req, res) => {
     }
 });
 
-// GET /api/learning-materials/toc-stats - Get TOC extraction statistics
 router.get("/toc-stats", (req, res) => {
     try {
-        const PdfTocExtractor = require('../utils/pdfTocExtractor');
+        const PdfTocExtractor = require("../utils/pdfTocExtractor");
         const extractor = new PdfTocExtractor();
         const stats = extractor.getCacheStats();
 
@@ -360,6 +282,143 @@ router.get("/toc-stats", (req, res) => {
         res.status(500).json({
             success: false,
             error: "Failed to get TOC statistics"
+        });
+    }
+});
+
+router.get("/thumbnail/:materialId", async (req, res) => {
+    try {
+        const materialsData = await getMaterialsData();
+        const requestedId = req.params.materialId;
+
+        const material = (materialsData.materials || []).find((item) => matchesMaterialId(item, requestedId));
+        if (!material || !isActiveMaterial(material)) {
+            return res.status(404).json({
+                success: false,
+                error: "Learning material not found"
+            });
+        }
+
+        fs.mkdirSync(THUMBNAILS_DIR, { recursive: true });
+
+        const thumbnailFilename = `${String(material.id)}.jpg`;
+        const cachedThumbnailPath = path.join(THUMBNAILS_DIR, thumbnailFilename);
+
+        if (fs.existsSync(cachedThumbnailPath)) {
+            const invalidCachedThumbnail = await isLikelyInvalidThumbnail(cachedThumbnailPath);
+            if (!invalidCachedThumbnail) {
+                return res.sendFile(cachedThumbnailPath);
+            }
+
+            fs.rmSync(cachedThumbnailPath, { force: true });
+        }
+
+        if (material.thumbnailPath) {
+            const localThumbnailPath = path.join(__dirname, "../public", String(material.thumbnailPath).replace(/^\/+/, ""));
+            if (fs.existsSync(localThumbnailPath) && !(await isLikelyInvalidThumbnail(localThumbnailPath))) {
+                return res.sendFile(localThumbnailPath);
+            }
+        }
+
+        const fileSystemPath = resolveMaterialFileSystemPath(material);
+        if (!fileSystemPath || !fs.existsSync(fileSystemPath)) {
+            return res.status(404).json({
+                success: false,
+                error: "PDF file not found"
+            });
+        }
+
+        let success = await generatePDFThumbnailWithPdfJs(fileSystemPath, cachedThumbnailPath);
+        if (!success) {
+            success = await generatePDFThumbnailWithPoppler(fileSystemPath, cachedThumbnailPath);
+        }
+        if (!success) {
+            success = await generatePDFThumbnailWithImageMagick(fileSystemPath, cachedThumbnailPath);
+        }
+        if (success && await isLikelyInvalidThumbnail(cachedThumbnailPath)) {
+            success = false;
+            fs.rmSync(cachedThumbnailPath, { force: true });
+        }
+        if (!success) {
+            const readerUrl = `${req.protocol}://${req.get("host")}/public/reader.html?material=${encodeURIComponent(String(material.id))}`;
+            success = await generatePDFThumbnailWithPuppeteer(String(material.id), readerUrl, cachedThumbnailPath);
+        }
+
+        if (!success || !fs.existsSync(cachedThumbnailPath)) {
+            return res.status(404).json({
+                success: false,
+                error: "Thumbnail generation failed"
+            });
+        }
+
+        return res.sendFile(cachedThumbnailPath);
+    } catch (error) {
+        console.error("Error generating material thumbnail:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to generate learning material thumbnail"
+        });
+    }
+});
+
+router.get("/file/:materialId", async (req, res) => {
+    try {
+        const materialsData = await getMaterialsData();
+        const requestedId = req.params.materialId;
+
+        const material = (materialsData.materials || []).find((item) => matchesMaterialId(item, requestedId));
+
+        if (!material || !isActiveMaterial(material)) {
+            return res.status(404).json({
+                success: false,
+                error: "Learning material not found"
+            });
+        }
+
+        const fileSystemPath = resolveMaterialFileSystemPath(material);
+        if (!fileSystemPath || !fs.existsSync(fileSystemPath)) {
+            return res.status(404).json({
+                success: false,
+                error: "PDF file not found"
+            });
+        }
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `inline; filename="${path.basename(fileSystemPath)}"`);
+        res.setHeader("Cache-Control", "private, max-age=300");
+        return res.sendFile(fileSystemPath);
+    } catch (error) {
+        console.error("Error serving learning material PDF:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to serve learning material PDF"
+        });
+    }
+});
+
+router.get("/:id", async (req, res) => {
+    try {
+        const materialsData = await getMaterialsData();
+        const requestedId = req.params.id;
+
+        const material = (materialsData.materials || []).find((item) => matchesMaterialId(item, requestedId));
+
+        if (!material || !isActiveMaterial(material)) {
+            return res.status(404).json({
+                success: false,
+                error: "Learning material not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            data: normalizeResponseMaterial(material)
+        });
+    } catch (error) {
+        console.error("Error reading learning material for students:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to load learning material"
         });
     }
 });

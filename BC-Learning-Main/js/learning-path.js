@@ -7,15 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = data.map(mod => `
                         <div class="box">
                             <div class="tutor">
-                                <img src="/BC-Learning-Main/img/default.jpg" alt="Module Thumbnail">
+                                <img src="/BC-Learning-Main/img/default.jpg" alt="Thumbnail Modul">
                                 <div class="info">
-                                    <h3>${mod.author || 'BCL Team'}</h3>
+                                    <h3>${mod.author || 'Tim BCL'}</h3>
                                     <span>${mod.date || ''}</span>
                                 </div>
                             </div>
                             <div class="thumb">
                                 <img src="/BC-Learning-Main/img/course-1.jpg" alt="">
-                                <span>${mod.videos ? mod.videos.length + ' videos' : ''}</span>
+                                <span>${mod.videos ? mod.videos.length + ' video' : ''}</span>
                             </div>
                             <h3 class="title">${mod.title}</h3>
                             <p>${mod.description || ''}</p>
@@ -23,11 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     `).join('');
             } else {
-                container.textContent = 'No modules found.';
+                container.textContent = 'Belum ada modul yang tersedia.';
             }
         })
         .catch(() => {
-            document.getElementById('modules-list').textContent = 'Failed to load modules.';
+            document.getElementById('modules-list').textContent = 'Gagal memuat modul.';
         });
 
     // Optionally, load navbar if modular

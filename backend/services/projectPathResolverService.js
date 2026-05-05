@@ -5,7 +5,11 @@ function createProjectPathResolverService({
     backendDir
 }) {
     const LOCAL_PCBIM02_ROOT = path.resolve(backendDir, '..', 'PC-BIM02');
-    const LOCAL_PCBIM02_PROJECT_2025_ROOT = LOCAL_PCBIM02_ROOT;
+    const LOCAL_PCBIM02_PROJECT_2025_ROOT = path.resolve(backendDir, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2025');
+    const LOCAL_PCBIM02_PROJECT_2026_ROOT = path.resolve(backendDir, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2026');
+    const NETWORK_PCBIM02_PROJECT_2025_ROOT = '\\\\pc-bim02\\PROJECT BIM 2025';
+    const NETWORK_PCBIM02_PROJECT_2026_ROOT = '\\\\pc-bim02\\PROJECT BIM 2026';
+    const LOCAL_PCBIM1_ROOT = path.resolve('G:/');
 
     function escapeRegex(input = '') {
         return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -61,7 +65,7 @@ function createProjectPathResolverService({
                 return { name: match.name, path: path.join(sourcePath, match.name) };
             }
         } catch (error) {
-            console.warn(`⚠️ Error finding year folder for ${source.id}:`, error.message);
+            console.warn(`Error finding year folder for ${source.id}:`, error.message);
         }
 
         return null;
@@ -88,12 +92,34 @@ function createProjectPathResolverService({
     function getStaticMountPath(mountId, fallbackPath) {
         if (mountId === 'pc-bim02') {
             try {
-                const stats = fs.statSync(LOCAL_PCBIM02_PROJECT_2025_ROOT);
-                if (stats.isDirectory()) {
+                const localCacheStats = fs.statSync(LOCAL_PCBIM02_PROJECT_2025_ROOT);
+                if (localCacheStats.isDirectory()) {
                     return LOCAL_PCBIM02_PROJECT_2025_ROOT;
                 }
             } catch (error) {
-                // Ignore local override failures and continue.
+                // Ignore local cache failures and continue.
+            }
+        }
+
+        if (mountId === 'pc-bim02-2026') {
+            try {
+                const localCacheStats = fs.statSync(LOCAL_PCBIM02_PROJECT_2026_ROOT);
+                if (localCacheStats.isDirectory()) {
+                    return LOCAL_PCBIM02_PROJECT_2026_ROOT;
+                }
+            } catch (error) {
+                // Ignore local cache failures and continue.
+            }
+        }
+
+        if (String(mountId || '').startsWith('pc-bim1')) {
+            try {
+                const localPcBim1Stats = fs.statSync(LOCAL_PCBIM1_ROOT);
+                if (localPcBim1Stats.isDirectory()) {
+                    return LOCAL_PCBIM1_ROOT;
+                }
+            } catch (error) {
+                // Ignore local PC-BIM1 path failures and continue.
             }
         }
 
@@ -121,6 +147,28 @@ function createProjectPathResolverService({
             // Ignore and use fallback.
         }
 
+        if (mountId === 'pc-bim02') {
+            try {
+                const networkStats = fs.statSync(NETWORK_PCBIM02_PROJECT_2025_ROOT);
+                if (networkStats.isDirectory()) {
+                    return NETWORK_PCBIM02_PROJECT_2025_ROOT;
+                }
+            } catch (error) {
+                // Ignore direct UNC failures and continue.
+            }
+        }
+
+        if (mountId === 'pc-bim02-2026') {
+            try {
+                const networkStats = fs.statSync(NETWORK_PCBIM02_PROJECT_2026_ROOT);
+                if (networkStats.isDirectory()) {
+                    return NETWORK_PCBIM02_PROJECT_2026_ROOT;
+                }
+            } catch (error) {
+                // Ignore direct UNC failures and continue.
+            }
+        }
+
         return fallbackPath;
     }
 
@@ -129,25 +177,31 @@ function createProjectPathResolverService({
             return null;
         }
 
-        if (source.path) {
+        const resolveLocalFallbackPath = () => {
+            if (!source.path) {
+                return null;
+            }
+
             try {
                 const stats = fs.statSync(source.path);
                 if (stats.isDirectory()) {
                     return source.path;
                 }
             } catch (error) {
-                // Ignore local path fallback and continue to mount resolution.
+                // Ignore fallback path failures.
             }
-        }
+
+            return null;
+        };
 
         if (!source.mountId) {
-            return source ? source.path : null;
+            return resolveLocalFallbackPath();
         }
 
         const mount = lanManager.getMountById(source.mountId);
         if (!mount) {
-            console.warn(`⚠️ LAN mount configuration not found for ${source.id}: ${source.mountId}`);
-            return null;
+            console.warn(`LAN mount configuration not found for ${source.id}: ${source.mountId}`);
+            return resolveLocalFallbackPath();
         }
 
         const markConnectedAndReturn = (resolvedPath) => {
@@ -186,7 +240,7 @@ function createProjectPathResolverService({
                     }), timeoutMs))
                 ]);
             } catch (accessError) {
-                console.error(`❌ LAN mount ${source.id} access test error: ${accessError.message}`);
+                console.error(`LAN mount ${source.id} access test error: ${accessError.message}`);
                 return null;
             }
         };
@@ -226,7 +280,7 @@ function createProjectPathResolverService({
                     new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${connectTimeoutMs}ms`)), connectTimeoutMs))
                 ]);
             } catch (connectError) {
-                console.warn(`⚠️ LAN mount ${source.id} reconnect attempt failed: ${connectError.message}`);
+                console.warn(`LAN mount ${source.id} reconnect attempt failed: ${connectError.message}`);
             }
 
             if (isWindowsDriveRoot(mount.localMountPoint)) {
@@ -256,7 +310,13 @@ function createProjectPathResolverService({
         }
 
         if (accessResult) {
-            console.warn(`⚠️ LAN mount ${source.id} not accessible: ${accessResult.message}`);
+            console.warn(`LAN mount ${source.id} not accessible: ${accessResult.message}`);
+        }
+
+        const fallbackPath = resolveLocalFallbackPath();
+        if (fallbackPath) {
+            console.warn(`Falling back to local source.path for ${source.id}: ${fallbackPath}`);
+            return fallbackPath;
         }
 
         return null;

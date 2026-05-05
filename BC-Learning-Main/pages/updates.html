@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+﻿<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
   .hero-section {
@@ -283,8 +283,8 @@
   <!-- Navbar End -->
 
   <div class="page-title-header">
-    <h1><i class="fas fa-newspaper text-primary me-2"></i>BIM News & Updates</h1>
-    <p>Berita terkini dan perkembangan terbaru seputar dunia Building Information Modeling</p>
+    <h1><i class="fas fa-newspaper text-primary me-2"></i>Berita & Update BIM</h1>
+    <p>Berita terkini dan perkembangan terbaru seputar dunia BIM dan transformasi digital konstruksi.</p>
   </div>
 
   <!-- Filter and Search Section -->
@@ -292,13 +292,13 @@
     <div class="filter-section">
       <div class="row g-3 mb-3">
         <div class="col-md-6">
-          <input type="text" id="searchInput" class="form-control" placeholder="Search news articles..."
+          <input type="text" id="searchInput" class="form-control" placeholder="Cari artikel berita..."
             onkeyup="debouncedSearch()">
         </div>
         <div class="col-md-6">
           <div class="d-flex gap-2">
             <button class="btn btn-primary flex-fill" onclick="performSearch()">
-              <i class="fas fa-search me-1"></i>Search
+              <i class="fas fa-search me-1"></i>Cari
             </button>
             <button id="reset-btn" class="btn btn-outline-danger">
               <i class="fas fa-redo me-1"></i>Reset
@@ -308,14 +308,14 @@
       </div>
 
       <div class="filter-buttons">
-        <button class="filter-btn" data-filter="all">All News</button>
+        <button class="filter-btn" data-filter="all">Semua Berita</button>
         <button class="filter-btn" data-filter="bim">BIM</button>
-        <button class="filter-btn" data-filter="construction">Construction</button>
-        <button class="filter-btn" data-filter="technology">Technology</button>
-        <button class="filter-btn" data-filter="regulation">Regulation</button>
-        <button class="filter-btn" data-filter="infrastructure">Infrastructure</button>
-        <button class="filter-btn" data-filter="education">Education</button>
-        <button class="filter-btn" data-filter="international">International</button>
+        <button class="filter-btn" data-filter="construction">Konstruksi</button>
+        <button class="filter-btn" data-filter="technology">Teknologi</button>
+        <button class="filter-btn" data-filter="regulation">Regulasi</button>
+        <button class="filter-btn" data-filter="infrastructure">Infrastruktur</button>
+        <button class="filter-btn" data-filter="education">Edukasi</button>
+        <button class="filter-btn" data-filter="international">Internasional</button>
       </div>
 
       <div id="searchResults" class="mt-3"></div>
@@ -340,7 +340,7 @@
       <!-- Load More Button -->
       <div class="text-center mt-4" id="load-more-container">
         <button id="load-more-btn" class="btn btn-outline-primary btn-lg" style="display: none;">
-          <i class="fas fa-plus me-2"></i>Load More Articles
+          <i class="fas fa-plus me-2"></i>Muat Artikel Lainnya
         </button>
       </div>
 
@@ -353,8 +353,8 @@
     <div class="container">
       <div class="row">
         <div class="col-12 text-center mb-5">
-          <h2 class="section-title text-dark">Featured BIM News</h2>
-          <p class="lead">Highlighted news articles when live feed is unavailable</p>
+          <h2 class="section-title text-dark">Berita BIM Pilihan</h2>
+          <p class="lead">Artikel pilihan yang ditampilkan saat feed langsung tidak tersedia</p>
         </div>
       </div>
 
@@ -368,7 +368,7 @@
               </div>
               <div class="col-md-8">
                 <div class="p-4">
-                  <div class="news-badge mb-3">Regulation</div>
+                  <div class="news-badge mb-3">Regulasi</div>
                   <h3 class="news-title">Peraturan BIM Mendatang di Indonesia</h3>
                   <p class="news-description">Kementerian PUPR sedang menyusun regulasi baru terkait implementasi BIM di
                     semua proyek konstruksi skala besar. Regulasi ini akan mengharuskan perusahaan konstruksi
@@ -376,14 +376,14 @@
                   <div class="news-meta">
                     <i class="fas fa-calendar me-2"></i>15 Desember 2025 |
                     <i class="fas fa-user me-2"></i>Kementerian PUPR |
-                    <i class="fas fa-building me-2"></i>Infrastructure News
+                    <i class="fas fa-building me-2"></i>Berita Infrastruktur
                   </div>
                   <div class="news-actions mt-3">
                     <a href="https://pup.go.id" class="news-btn news-btn-primary" target="_blank">
-                      <i class="fas fa-external-link"></i> Read More
+                      <i class="fas fa-external-link"></i> Baca Selengkapnya
                     </a>
                     <span class="news-btn news-btn-secondary">
-                      <i class="fas fa-share"></i> Share
+                      <i class="fas fa-share"></i> Bagikan
                     </span>
                   </div>
                 </div>
@@ -396,16 +396,16 @@
         <div class="col-lg-4 col-md-6">
           <div class="news-card">
             <img src="../img/ready.jpg" alt="Teknologi BIM" class="news-image">
-            <div class="news-badge">Technology</div>
+            <div class="news-badge">Teknologi</div>
             <h5 class="news-title">Inovasi Teknologi BIM 2025</h5>
             <p class="news-description">Teknologi baru dalam BIM termasuk AI-powered modeling, real-time collaboration,
               dan blockchain untuk data integrity.</p>
             <div class="news-meta">
-              <i class="fas fa-calendar me-1"></i>12 Dec 2025
+              <i class="fas fa-calendar me-1"></i>12 Des 2025
             </div>
             <div class="news-actions">
               <a href="#" class="news-btn news-btn-secondary">
-                <i class="fas fa-bookmark"></i> Save
+                <i class="fas fa-bookmark"></i> Simpan
               </a>
             </div>
           </div>
@@ -414,16 +414,16 @@
         <div class="col-lg-4 col-md-6">
           <div class="news-card">
             <img src="../img/ready.jpg" alt="Pendidikan BIM" class="news-image">
-            <div class="news-badge">Education</div>
+            <div class="news-badge">Edukasi</div>
             <h5 class="news-title">Program Pendidikan BIM Baru</h5>
             <p class="news-description">Universitas Indonesia meluncurkan program magister BIM untuk mempersiapkan
               tenaga ahli dalam transformasi digital konstruksi.</p>
             <div class="news-meta">
-              <i class="fas fa-calendar me-1"></i>10 Dec 2025
+              <i class="fas fa-calendar me-1"></i>10 Des 2025
             </div>
             <div class="news-actions">
               <a href="https://ui.ac.id" class="news-btn news-btn-primary" target="_blank">
-                <i class="fas fa-external-link"></i> Visit UI
+                <i class="fas fa-external-link"></i> Kunjungi UI
               </a>
             </div>
           </div>
@@ -431,17 +431,17 @@
 
         <div class="col-lg-4 col-md-6">
           <div class="news-card">
-            <img src="../img/ready.jpg" alt="Success Story" class="news-image">
-            <div class="news-badge">Success Story</div>
+            <img src="../img/ready.jpg" alt="Kisah Sukses" class="news-image">
+            <div class="news-badge">Kisah Sukses</div>
             <h5 class="news-title">Kasus Sukses Implementasi BIM</h5>
             <p class="news-description">PT. Nusa Konstruksi berhasil menghemat 30% biaya dan 40% waktu pengerjaan dengan
               implementasi BIM yang efektif.</p>
             <div class="news-meta">
-              <i class="fas fa-calendar me-1"></i>8 Dec 2025
+              <i class="fas fa-calendar me-1"></i>8 Des 2025
             </div>
             <div class="news-actions">
               <span class="news-btn news-btn-secondary">
-                <i class="fas fa-share"></i> Share
+                <i class="fas fa-share"></i> Bagikan
               </span>
             </div>
           </div>
@@ -451,36 +451,36 @@
   </div>
   <!-- Fallback Content End -->
 
-  <!-- News Administration Section (Hidden by default) -->
+  <!-- Administrasi Berita Section (Hidden by default) -->
   <div class="admin-section" id="admin-section" style="display: none; background: #f8f9fa; padding: 40px 0;">
     <div class="container">
       <div class="row">
         <div class="col-12">
           <div class="text-center mb-4">
-            <h3><i class="fas fa-tools me-2"></i>News Administration</h3>
-            <small class="text-muted">Administrative tools for news management</small>
+            <h3><i class="fas fa-tools me-2"></i>Administrasi Berita</h3>
+            <small class="text-muted">Perangkat admin untuk mengelola berita</small>
           </div>
         </div>
         <div class="col-lg-6">
           <div class="library-card">
-            <h5 class="text-primary mb-3">Add Manual Article</h5>
+            <h5 class="text-primary mb-3">Tambah Artikel Manual</h5>
             <button class="btn btn-outline-primary btn-sm" onclick="showAddArticleModal()">
-              <i class="fas fa-plus me-1"></i>Add News Article
+              <i class="fas fa-plus me-1"></i>Tambah Artikel Berita
             </button>
           </div>
         </div>
         <div class="col-lg-6">
           <div class="library-card">
-            <h5 class="text-primary mb-3">API Status</h5>
+            <h5 class="text-primary mb-3">Status API</h5>
             <div id="api-status" class="alert alert-info">
-              <i class="fas fa-info-circle me-2"></i>Checking API status...
+              <i class="fas fa-info-circle me-2"></i>Memeriksa status API...
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <!-- News Administration End -->
+  <!-- Administrasi Berita End -->
 
 
 

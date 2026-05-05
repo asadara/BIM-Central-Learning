@@ -97,14 +97,14 @@ function mapCertificateRow(row) {
 
     return {
         id: row.id,
-        title: row.title || 'Certificate',
+        title: row.title || 'Sertifikat',
         issuer: row.issuer || 'BC Learning Academy',
         issueDate,
         expiryDate,
         status: new Date(expiryDate).getTime() >= Date.now() ? 'active' : 'expired',
         score: Number.isFinite(Number(row.score)) ? Number(row.score) : 0,
-        category: row.moduleId || row.quizId || 'Certification',
-        skills: skillSeed.length > 0 ? skillSeed.slice(0, 3) : ['BIM Competency'],
+        category: row.moduleId || row.quizId || 'Sertifikasi',
+        skills: skillSeed.length > 0 ? skillSeed.slice(0, 3) : ['Kompetensi BIM'],
         verificationUrl: row.url || row.certificateUrl || `${window.location.origin}/elearning-assets/certification.html?cert=${encodeURIComponent(row.id)}`,
         credlyUrl: null,
         image: '/img/user-default.png'
@@ -120,8 +120,8 @@ function buildBadges(quizStats, certCount) {
     if (totalAttempts >= 1) {
         badges.push({
             id: 'badge-starter',
-            name: 'Quiz Starter',
-            description: 'Completed your first quiz attempt',
+            name: 'Pemula Kuis',
+            description: 'Menyelesaikan percobaan kuis pertama',
             category: 'achievement',
             earnedDate: new Date().toISOString(),
             icon: 'fas fa-rocket',
@@ -133,8 +133,8 @@ function buildBadges(quizStats, certCount) {
     if (totalAttempts >= 10) {
         badges.push({
             id: 'badge-consistent',
-            name: 'Consistency',
-            description: 'Completed at least 10 quiz attempts',
+            name: 'Konsisten',
+            description: 'Menyelesaikan minimal 10 percobaan kuis',
             category: 'milestone',
             earnedDate: new Date().toISOString(),
             icon: 'fas fa-calendar-check',
@@ -146,8 +146,8 @@ function buildBadges(quizStats, certCount) {
     if (highestScore >= 90) {
         badges.push({
             id: 'badge-high-score',
-            name: 'High Scorer',
-            description: 'Reached 90%+ score',
+            name: 'Skor Tinggi',
+            description: 'Mencapai nilai 90% ke atas',
             category: 'skill',
             earnedDate: new Date().toISOString(),
             icon: 'fas fa-star',
@@ -159,8 +159,8 @@ function buildBadges(quizStats, certCount) {
     if (examsPassed >= 1) {
         badges.push({
             id: 'badge-exam-pass',
-            name: 'Exam Passer',
-            description: 'Passed at least one exam',
+            name: 'Lulus Ujian',
+            description: 'Lulus minimal satu ujian',
             category: 'achievement',
             earnedDate: new Date().toISOString(),
             icon: 'fas fa-clipboard-check',
@@ -172,8 +172,8 @@ function buildBadges(quizStats, certCount) {
     if (certCount >= 1) {
         badges.push({
             id: 'badge-certified',
-            name: 'Certified Learner',
-            description: 'Earned first certificate',
+            name: 'Pembelajar Bersertifikat',
+            description: 'Meraih sertifikat pertama',
             category: 'milestone',
             earnedDate: new Date().toISOString(),
             icon: 'fas fa-certificate',
@@ -193,24 +193,24 @@ function buildInProgress(quizStats, certCount, progress) {
     return [
         {
             id: 'progress-cert-3',
-            title: 'Certification Collector',
+            title: 'Kolektor Sertifikasi',
             progress: Math.min(100, Math.round((certCount / 3) * 100)),
             requirements: [
-                { name: 'Earn 1 certificate', completed: certCount >= 1 },
-                { name: 'Earn 2 certificates', completed: certCount >= 2 },
-                { name: 'Earn 3 certificates', completed: certCount >= 3 }
+                { name: 'Raih 1 sertifikat', completed: certCount >= 1 },
+                { name: 'Raih 2 sertifikat', completed: certCount >= 2 },
+                { name: 'Raih 3 sertifikat', completed: certCount >= 3 }
             ],
             estimatedCompletion: new Date(Date.now() + (1000 * 60 * 60 * 24 * 30)).toISOString(),
             category: 'certification'
         },
         {
             id: 'progress-learning-path',
-            title: 'Learning Path Mastery',
+            title: 'Penguasaan Jalur Belajar',
             progress: Math.min(100, Math.round(((coursesCompleted + examsPassed + attempts) / 20) * 100)),
             requirements: [
-                { name: 'Complete 5 courses', completed: coursesCompleted >= 5 },
-                { name: 'Pass 2 exams', completed: examsPassed >= 2 },
-                { name: 'Finish 10 quizzes/practice', completed: attempts >= 10 }
+                { name: 'Selesaikan 5 materi', completed: coursesCompleted >= 5 },
+                { name: 'Lulus 2 ujian', completed: examsPassed >= 2 },
+                { name: 'Selesaikan 10 kuis/latihan', completed: attempts >= 10 }
             ],
             estimatedCompletion: new Date(Date.now() + (1000 * 60 * 60 * 24 * 45)).toISOString(),
             category: 'badge'
@@ -276,7 +276,7 @@ function loadCertificates() {
     container.innerHTML = '';
 
     if (certificationsData.certificates.length === 0) {
-        container.innerHTML = '<div class="no-results">No certificates earned yet. Complete your first exam to earn a certificate!</div>';
+        container.innerHTML = '<div class="no-results">Belum ada sertifikat yang diperoleh. Selesaikan ujian pertama Anda untuk mendapatkan sertifikat.</div>';
         return;
     }
 
@@ -290,6 +290,7 @@ function createCertificateCard(cert) {
     card.className = 'certificate-card';
 
     const statusClass = cert.status === 'active' ? 'active' : 'expired';
+    const statusLabel = cert.status === 'active' ? 'AKTIF' : 'KEDALUWARSA';
     const daysUntilExpiry = Math.ceil((new Date(cert.expiryDate).getTime() - Date.now()) / 86400000);
 
     card.innerHTML = `
@@ -298,25 +299,25 @@ function createCertificateCard(cert) {
                 <i class="fas fa-certificate"></i>
             </div>
             <div class="cert-status">
-                <span class="status-text ${statusClass}">${cert.status.toUpperCase()}</span>
-                ${daysUntilExpiry > 0 && daysUntilExpiry < 90 ? `<span class="expiry-warning">Expires in ${daysUntilExpiry} days</span>` : ''}
+                <span class="status-text ${statusClass}">${statusLabel}</span>
+                ${daysUntilExpiry > 0 && daysUntilExpiry < 90 ? `<span class="expiry-warning">Berakhir dalam ${daysUntilExpiry} hari</span>` : ''}
             </div>
         </div>
         <div class="cert-content">
             <h3>${escapeHtml(cert.title)}</h3>
-            <p class="cert-issuer">Issued by ${escapeHtml(cert.issuer)}</p>
-            <p class="cert-date">Earned on ${formatDate(cert.issueDate)}</p>
+            <p class="cert-issuer">Diterbitkan oleh ${escapeHtml(cert.issuer)}</p>
+            <p class="cert-date">Diperoleh pada ${formatDate(cert.issueDate)}</p>
             <div class="cert-score">
-                <span>Score: <strong>${toInt(cert.score, 0)}%</strong></span>
+                <span>Nilai: <strong>${toInt(cert.score, 0)}%</strong></span>
             </div>
             <div class="cert-skills">
                 ${(cert.skills || []).slice(0, 3).map((skill) => `<span class="skill-tag">${escapeHtml(skill)}</span>`).join('')}
             </div>
         </div>
         <div class="cert-actions">
-            <button class="btn secondary" onclick="viewCertificate('${escapeHtml(cert.id)}')"><i class="fas fa-eye"></i> View</button>
-            <button class="btn secondary" onclick="downloadCertificate('${escapeHtml(cert.id)}')"><i class="fas fa-download"></i> Download</button>
-            <button class="btn" onclick="shareCertificate('${escapeHtml(cert.id)}')"><i class="fas fa-share"></i> Share</button>
+            <button class="btn secondary" onclick="viewCertificate('${escapeHtml(cert.id)}')"><i class="fas fa-eye"></i> Lihat</button>
+            <button class="btn secondary" onclick="downloadCertificate('${escapeHtml(cert.id)}')"><i class="fas fa-download"></i> Unduh</button>
+            <button class="btn" onclick="shareCertificate('${escapeHtml(cert.id)}')"><i class="fas fa-share"></i> Bagikan</button>
         </div>
     `;
 
@@ -335,7 +336,7 @@ function loadBadges() {
     }
 
     if (filteredBadges.length === 0) {
-        container.innerHTML = '<div class="no-results">No badges found for this category.</div>';
+        container.innerHTML = '<div class="no-results">Tidak ada badge untuk kategori ini.</div>';
         return;
     }
 
@@ -356,8 +357,8 @@ function createBadgeCard(badge) {
             <h4>${escapeHtml(badge.name)}</h4>
             <p>${escapeHtml(badge.description)}</p>
             <div class="badge-meta">
-                <span class="badge-date">Earned ${formatDate(badge.earnedDate)}</span>
-                <span class="badge-rarity ${badge.rarity}">${badge.rarity.toUpperCase()}</span>
+                <span class="badge-date">Diraih ${formatDate(badge.earnedDate)}</span>
+                <span class="badge-rarity ${badge.rarity}">${translateRarity(badge.rarity)}</span>
             </div>
         </div>
         <div class="badge-actions">
@@ -377,7 +378,7 @@ function loadInProgress() {
     container.innerHTML = '';
 
     if (certificationsData.inProgress.length === 0) {
-        container.innerHTML = '<div class="no-results">No certifications in progress. Start a new learning path!</div>';
+        container.innerHTML = '<div class="no-results">Belum ada sertifikasi dalam proses. Mulai jalur belajar baru.</div>';
         return;
     }
 
@@ -396,7 +397,7 @@ function loadInProgress() {
                 <div class="progress-fill" style="width: ${item.progress}%"></div>
             </div>
             <div class="progress-requirements">
-                <h4>Requirements (${completed}/${total} completed):</h4>
+                <h4>Persyaratan (${completed}/${total} selesai):</h4>
                 <ul>
                     ${item.requirements.map((req) => `
                         <li class="${req.completed ? 'completed' : 'pending'}">
@@ -406,8 +407,8 @@ function loadInProgress() {
                 </ul>
             </div>
             <div class="progress-footer">
-                <span class="estimated-completion"><i class="fas fa-calendar"></i>Estimated completion: ${formatDate(item.estimatedCompletion)}</span>
-                <button class="btn" onclick="continueProgress('${item.id}')">Continue Learning</button>
+                <span class="estimated-completion"><i class="fas fa-calendar"></i>Perkiraan selesai: ${formatDate(item.estimatedCompletion)}</span>
+                <button class="btn" onclick="continueProgress('${item.id}')">Lanjutkan Belajar</button>
             </div>
         `;
 
@@ -489,17 +490,17 @@ function viewCertificate(certId) {
             <div class="cert-border">
                 <div class="cert-header-template">
                     <h2>BC Learning Academy</h2>
-                    <h3>Certificate of Achievement</h3>
+                    <h3>Sertifikat Pencapaian</h3>
                 </div>
                 <div class="cert-body-template">
-                    <p>This is to certify that</p>
-                    <h1 class="recipient-name">${escapeHtml(getUserData()?.name || getUserData()?.username || 'Certificate Holder')}</h1>
-                    <p>has successfully completed</p>
+                    <p>Sertifikat ini diberikan kepada</p>
+                    <h1 class="recipient-name">${escapeHtml(getUserData()?.name || getUserData()?.username || 'Pemilik Sertifikat')}</h1>
+                    <p>atas keberhasilan menyelesaikan</p>
                     <h2 class="course-title">${escapeHtml(cert.title)}</h2>
-                    <p>with a score of <strong>${toInt(cert.score, 0)}%</strong></p>
+                    <p>dengan nilai <strong>${toInt(cert.score, 0)}%</strong></p>
                     <div class="cert-details-template">
-                        <div class="cert-date">Date: ${formatDate(cert.issueDate)}</div>
-                        <div class="cert-id">Certificate ID: ${escapeHtml(cert.id)}</div>
+                        <div class="cert-date">Tanggal: ${formatDate(cert.issueDate)}</div>
+                        <div class="cert-id">ID Sertifikat: ${escapeHtml(cert.id)}</div>
                     </div>
                 </div>
             </div>
@@ -508,16 +509,16 @@ function viewCertificate(certId) {
 
     details.innerHTML = `
         <div class="cert-info">
-            <h4>Certificate Information</h4>
+            <h4>Informasi Sertifikat</h4>
             <div class="info-grid">
-                <div class="info-item"><label>Certificate ID:</label><span>${escapeHtml(cert.id)}</span></div>
-                <div class="info-item"><label>Issue Date:</label><span>${formatDate(cert.issueDate)}</span></div>
-                <div class="info-item"><label>Expiry Date:</label><span>${formatDate(cert.expiryDate)}</span></div>
-                <div class="info-item"><label>Score Achieved:</label><span>${toInt(cert.score, 0)}%</span></div>
-                <div class="info-item"><label>Verification URL:</label><a href="${cert.verificationUrl}" target="_blank">${escapeHtml(cert.verificationUrl)}</a></div>
+                <div class="info-item"><label>ID Sertifikat:</label><span>${escapeHtml(cert.id)}</span></div>
+                <div class="info-item"><label>Tanggal Terbit:</label><span>${formatDate(cert.issueDate)}</span></div>
+                <div class="info-item"><label>Tanggal Berakhir:</label><span>${formatDate(cert.expiryDate)}</span></div>
+                <div class="info-item"><label>Nilai:</label><span>${toInt(cert.score, 0)}%</span></div>
+                <div class="info-item"><label>URL Verifikasi:</label><a href="${cert.verificationUrl}" target="_blank">${escapeHtml(cert.verificationUrl)}</a></div>
             </div>
             <div class="skills-covered">
-                <h5>Skills Covered:</h5>
+                <h5>Keahlian Tercakup:</h5>
                 <div class="skills-list">${(cert.skills || []).map((skill) => `<span class="skill-tag">${escapeHtml(skill)}</span>`).join('')}</div>
             </div>
         </div>
@@ -537,13 +538,13 @@ function viewBadge(badgeId) {
                 <div class="badge-icon-large" style="background-color: ${badge.color};"><i class="${badge.icon}"></i></div>
                 <div class="badge-rarity-indicator ${badge.rarity}">${badge.rarity.toUpperCase()}</div>
             </div>
-            <div class="badge-info">
+                <div class="badge-info">
                 <h3>${escapeHtml(badge.name)}</h3>
                 <p>${escapeHtml(badge.description)}</p>
                 <div class="badge-metadata">
-                    <div class="meta-item"><label>Category:</label><span>${escapeHtml(badge.category)}</span></div>
-                    <div class="meta-item"><label>Earned Date:</label><span>${formatDate(badge.earnedDate)}</span></div>
-                    <div class="meta-item"><label>Rarity:</label><span class="rarity-${badge.rarity}">${escapeHtml(badge.rarity)}</span></div>
+                    <div class="meta-item"><label>Kategori:</label><span>${translateBadgeCategory(badge.category)}</span></div>
+                    <div class="meta-item"><label>Tanggal Diraih:</label><span>${formatDate(badge.earnedDate)}</span></div>
+                    <div class="meta-item"><label>Tingkat:</label><span class="rarity-${badge.rarity}">${translateRarity(badge.rarity, true)}</span></div>
                 </div>
             </div>
         </div>
@@ -557,7 +558,7 @@ function verifyCertificate() {
     const resultDiv = document.getElementById('verification-result');
 
     if (!certId) {
-        resultDiv.innerHTML = '<div class="verification-error">Please enter a certificate ID.</div>';
+        resultDiv.innerHTML = '<div class="verification-error">Masukkan ID sertifikat terlebih dahulu.</div>';
         return;
     }
 
@@ -566,8 +567,8 @@ function verifyCertificate() {
         resultDiv.innerHTML = `
             <div class="verification-failed">
                 <i class="fas fa-times-circle"></i>
-                <h4>Certificate Not Found</h4>
-                <p>The certificate ID "${escapeHtml(certId)}" could not be verified.</p>
+                <h4>Sertifikat Tidak Ditemukan</h4>
+                <p>ID sertifikat "${escapeHtml(certId)}" tidak dapat diverifikasi.</p>
             </div>
         `;
         return;
@@ -576,12 +577,12 @@ function verifyCertificate() {
     resultDiv.innerHTML = `
         <div class="verification-success">
             <i class="fas fa-check-circle"></i>
-            <h4>Certificate Verified!</h4>
+            <h4>Sertifikat Terverifikasi</h4>
             <div class="verified-info">
-                <p><strong>Title:</strong> ${escapeHtml(cert.title)}</p>
-                <p><strong>Recipient:</strong> ${escapeHtml(getUserData()?.name || getUserData()?.username || 'Certificate Holder')}</p>
-                <p><strong>Issue Date:</strong> ${formatDate(cert.issueDate)}</p>
-                <p><strong>Status:</strong> ${cert.status.toUpperCase()}</p>
+                <p><strong>Judul:</strong> ${escapeHtml(cert.title)}</p>
+                <p><strong>Penerima:</strong> ${escapeHtml(getUserData()?.name || getUserData()?.username || 'Pemilik Sertifikat')}</p>
+                <p><strong>Tanggal Terbit:</strong> ${formatDate(cert.issueDate)}</p>
+                <p><strong>Status:</strong> ${cert.status === 'active' ? 'AKTIF' : 'KEDALUWARSA'}</p>
             </div>
         </div>
     `;
@@ -604,12 +605,12 @@ function shareCertificate(certId) {
     if (navigator.share) {
         navigator.share({
             title: cert.title,
-            text: `I just earned my ${cert.title} certificate!`,
+            text: `Saya baru saja meraih sertifikat ${cert.title}.`,
             url: shareUrl
         });
     } else if (navigator.clipboard) {
         navigator.clipboard.writeText(shareUrl);
-        alert('Certificate link copied to clipboard!');
+        alert('Tautan sertifikat berhasil disalin.');
     }
 }
 
@@ -627,12 +628,12 @@ function continueProgress(progressId) {
 function shareBadge(badgeId) {
     const badge = certificationsData.badges.find((item) => item.id === badgeId);
     if (!badge) return;
-    alert(`Badge shared: ${badge.name}`);
+    alert(`Badge dibagikan: ${badge.name}`);
 }
 
 function shareToLinkedIn() {
     const certCount = certificationsData.certificates.length;
-    const text = `I've earned ${certCount} professional certifications through BC Learning Academy!`;
+    const text = `Saya telah meraih ${certCount} sertifikasi profesional melalui BC Learning Academy.`;
     const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
 }
@@ -642,23 +643,43 @@ function copyProfileLink() {
     const profileUrl = `${window.location.origin}/profile/${user.id || user.username || 'user'}`;
     if (navigator.clipboard) {
         navigator.clipboard.writeText(profileUrl);
-        alert('Profile link copied to clipboard!');
+        alert('Tautan profil berhasil disalin.');
     }
 }
 
 function generateResume() {
-    alert('Resume generation feature is in preparation.');
+    alert('Fitur pembuatan resume sedang disiapkan.');
 }
 
 function formatDate(dateString) {
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) return '-';
 
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('id-ID', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
+}
+
+function translateRarity(rarity, titleCase = false) {
+    const map = {
+        common: 'umum',
+        uncommon: 'spesial',
+        rare: 'langka',
+        legendary: 'legendaris'
+    };
+    const value = map[String(rarity || '').toLowerCase()] || String(rarity || '-');
+    return titleCase ? value.charAt(0).toUpperCase() + value.slice(1) : value.toUpperCase();
+}
+
+function translateBadgeCategory(category) {
+    const map = {
+        achievement: 'Pencapaian',
+        skill: 'Keahlian',
+        milestone: 'Tonggak'
+    };
+    return map[String(category || '').toLowerCase()] || String(category || '-');
 }
 
 function toInt(value, fallback = 0) {

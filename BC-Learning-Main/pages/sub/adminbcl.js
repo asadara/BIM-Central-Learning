@@ -184,11 +184,11 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
         } else {
             const errorData = await response.json().catch(() => ({}));
             console.error('âŒ Admin login failed:', errorData);
-            alert('Login failed: ' + (errorData.error || 'Invalid credentials'));
+            alert('Login gagal: ' + (errorData.error || 'Kredensial tidak valid'));
         }
     } catch (error) {
         console.error('âŒ Admin login error:', error);
-        alert('Login error: ' + error.message);
+        alert('Terjadi kesalahan login: ' + error.message);
     }
 });
 
@@ -243,7 +243,7 @@ async function checkAdminSession() {
 
 // Admin logout
 function adminLogout() {
-    if (confirm('Are you sure you want to logout from admin panel?')) {
+    if (confirm('Yakin ingin keluar dari panel admin?')) {
         fetch('/api/admin/logout', { method: 'POST', credentials: 'include' })
             .then(() => {
                 adminUser = null;
@@ -1493,15 +1493,15 @@ async function loadBIMMedia() {
                             <div class="row g-3 align-items-end">
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">
-                                        <i class="fas fa-search me-2"></i>Search Videos
+                                        <i class="fas fa-search me-2"></i>Cari Video
                                     </label>
                                     <input type="text" class="form-control" id="videoSearchInput"
-                                           placeholder="Search by name, year, or location..."
+                                           placeholder="Cari berdasarkan nama, tahun, atau lokasi..."
                                            onkeyup="filterVideos()">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label fw-semibold">
-                                        <i class="fas fa-filter me-2"></i>Filter by Year
+                                        <i class="fas fa-filter me-2"></i>Filter Tahun
                                     </label>
                                     <select class="form-select" id="yearFilter" onchange="filterVideos()">
                                         <option value="">All Years</option>
@@ -1611,7 +1611,7 @@ async function loadPDFManagement() {
                         <div class="spinner-border text-primary mb-2" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="text-muted mb-0">Loading PDF materials...</p>
+                        <p class="text-muted mb-0">Memuat materi PDF...</p>
                     </div>
                 </td>
             </tr>`;
@@ -1688,7 +1688,7 @@ async function loadPDFManagement() {
                 <td colspan="9" class="text-center py-4">
                     <div class="alert alert-danger mb-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        Failed to load PDF materials: ${error.message}
+                        Gagal memuat materi PDF: ${error.message}
                     </div>
                 </td>
             </tr>`;
@@ -1706,7 +1706,7 @@ async function loadVideoDisplayManagement() {
                         <div class="spinner-border text-primary mb-2" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="text-muted mb-0">Loading video display management...</p>
+                        <p class="text-muted mb-0">Memuat pengaturan tampilan video...</p>
                     </div>
                 </td>
             </tr>`;
@@ -1731,28 +1731,28 @@ async function loadVideoDisplayManagement() {
 
 // Additional placeholder functions for sections that haven't been fully implemented yet
 function loadNews() {
-    document.getElementById('news-content').innerHTML = '<div class="text-center"><div class="spinner-border text-info" role="status"><span class="visually-hidden">Loading...</span></div><p>Loading news management...</p></div>';
+    document.getElementById('news-content').innerHTML = '<div class="text-center"><div class="spinner-border text-info" role="status"><span class="visually-hidden">Loading...</span></div><p>Memuat manajemen berita...</p></div>';
     setTimeout(() => {
         document.getElementById('news-content').innerHTML = '<div class="alert alert-info">News management functionality will be implemented here.</div>';
     }, 1000);
 }
 
 function loadPlugins() {
-    document.getElementById('plugins-content').innerHTML = '<div class="text-center"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div><p>Loading plugins...</p></div>';
+    document.getElementById('plugins-content').innerHTML = '<div class="text-center"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Loading...</span></div><p>Memuat plugin...</p></div>';
     setTimeout(() => {
         document.getElementById('plugins-content').innerHTML = '<div class="alert alert-info">Plugins management functionality will be implemented here.</div>';
     }, 1000);
 }
 
 function loadLibrary() {
-    document.getElementById('library-content').innerHTML = '<div class="text-center"><div class="spinner-border text-dark" role="status"><span class="visually-hidden">Loading...</span></div><p>Loading library files...</p></div>';
+    document.getElementById('library-content').innerHTML = '<div class="text-center"><div class="spinner-border text-dark" role="status"><span class="visually-hidden">Loading...</span></div><p>Memuat file pustaka...</p></div>';
     setTimeout(() => {
         document.getElementById('library-content').innerHTML = '<div class="alert alert-info">Library management functionality will be implemented here.</div>';
     }, 1000);
 }
 
 function loadSystem() {
-    document.getElementById('system-content').innerHTML = '<div class="text-center"><div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div><p>Loading system information...</p></div>';
+    document.getElementById('system-content').innerHTML = '<div class="text-center"><div class="spinner-border text-danger" role="status"><span class="visually-hidden">Loading...</span></div><p>Memuat informasi sistem...</p></div>';
     setTimeout(() => {
         document.getElementById('system-content').innerHTML = '<div class="alert alert-info">System information functionality will be implemented here.</div>';
     }, 1000);
@@ -1802,7 +1802,7 @@ function displayPDFManagementTable(pdfs) {
                         <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
                         <p class="text-muted mb-2">No PDF materials found</p>
                         <button class="btn btn-primary" onclick="showPDFUploadModal()">
-                            <i class="fas fa-plus me-2"></i>Add First PDF
+                            <i class="fas fa-plus me-2"></i>Tambah PDF Pertama
                         </button>
                     </div>
                 </td>
@@ -1850,13 +1850,13 @@ function displayPDFManagementTable(pdfs) {
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button class="btn btn-outline-info" onclick="previewPDFManagement('${pdfId}')" title="Preview PDF">
+                        <button class="btn btn-outline-info" onclick="previewPDFManagement('${pdfId}')" title="Pratinjau PDF">
                             <i class="fas fa-eye"></i>
                         </button>
                         <button class="btn btn-outline-primary" onclick="editPDFManagement('${pdfId}')" title="Edit PDF">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick="deletePDFManagement('${pdfId}', '${title.replace(/'/g, "\\'")}')" title="Delete PDF">
+                        <button class="btn btn-outline-danger" onclick="deletePDFManagement('${pdfId}', '${title.replace(/'/g, "\\'")}')" title="Hapus PDF">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1973,7 +1973,7 @@ function editPDFManagement(pdfId) {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
-                            <i class="fas fa-edit me-2"></i>Edit PDF Material
+                            <i class="fas fa-edit me-2"></i>Edit Materi PDF
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -2023,7 +2023,7 @@ function editPDFManagement(pdfId) {
                                         </div>
                                     ` : '<small class="text-muted d-block mb-2">No cover image uploaded</small>'}
                                     <input type="file" class="form-control" id="editPdfCoverImage" accept="image/png,image/jpeg,image/webp">
-                                    <small class="text-muted">Upload to replace the current cover (JPG/PNG/WEBP, max 10MB)</small>
+                                    <small class="text-muted">Unggah untuk mengganti sampul saat ini (JPG/PNG/WEBP, maks 10MB)</small>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-check">
@@ -2036,7 +2036,7 @@ function editPDFManagement(pdfId) {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Update PDF
                             </button>
@@ -2098,7 +2098,7 @@ async function handlePDFUpdate(e, pdfId) {
             loadPDFManagement();
         } else {
             const error = await response.json();
-            alert('âŒ Failed to update PDF: ' + (error.error || 'Unknown error'));
+            alert('Gagal memperbarui PDF: ' + (error.error || 'Kesalahan tidak dikenal'));
         }
 
         submitBtn.innerHTML = originalText;
@@ -2135,7 +2135,7 @@ async function handlePDFDelete(pdfId, title) {
             loadPDFManagement();
         } else {
             const error = await response.json();
-            alert('âŒ Failed to delete PDF: ' + (error.error || 'Unknown error'));
+            alert('Gagal menghapus PDF: ' + (error.error || 'Kesalahan tidak dikenal'));
         }
 
     } catch (error) {
@@ -2151,7 +2151,7 @@ function showPDFUploadModal() {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
-                            <i class="fas fa-plus me-2"></i>Add New PDF Material
+                            <i class="fas fa-plus me-2"></i>Tambah Materi PDF Baru
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -2216,9 +2216,9 @@ function showPDFUploadModal() {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-upload me-2"></i>Upload PDF
+                                <i class="fas fa-upload me-2"></i>Unggah PDF
                             </button>
                         </div>
                     </form>
@@ -2275,7 +2275,7 @@ async function handlePDFUpload(e) {
     try {
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mengunggah...';
         submitBtn.disabled = true;
 
         const response = await fetch('/api/admin/learning-materials/upload', {
@@ -2304,7 +2304,7 @@ async function handlePDFUpload(e) {
         } else {
             const errorMessage = result.error || result.message || 'Unknown error';
             console.error('Upload failed:', result);
-            alert('âŒ Failed to upload PDF: ' + errorMessage);
+            alert('Gagal mengunggah PDF: ' + errorMessage);
         }
 
         submitBtn.innerHTML = originalText;
@@ -2313,7 +2313,7 @@ async function handlePDFUpload(e) {
     } catch (error) {
         console.error('Error uploading PDF:', error);
         alert('âŒ Error uploading PDF: ' + error.message);
-        e.target.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-upload me-2"></i>Upload PDF';
+        e.target.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-upload me-2"></i>Unggah PDF';
         e.target.querySelector('button[type="submit"]').disabled = false;
     }
 }
@@ -2360,4 +2360,3 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
 }
-

@@ -4,7 +4,7 @@ console.log("pdfjs loaded", typeof pdfjsLib);
 // Dynamic configuration - will be set when reader loads
 let courseReaderConfig = {
     courseId: null,
-    title: "Loading...",
+    title: "Memuat...",
     pdfUrl: null,
     chapters: []
 };
@@ -54,12 +54,284 @@ const finishReadingBtn = document.getElementById('finish-reading-btn');
 const nextModuleBtn = document.getElementById('next-module-btn');
 const viewerContainer = document.getElementById('viewer-container');
 
+function normalizeReaderTitle(value) {
+    return String(value || '')
+        .replace(/\.pdf$/i, '')
+        .replace(/[_]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function extractReaderFileTitle(fileReference) {
+    let candidate = String(fileReference || '').trim();
+    if (!candidate) {
+        return 'Dokumen PDF';
+    }
+
+    const explicitPathIndex = candidate.toLowerCase().indexOf('path=');
+    if (explicitPathIndex >= 0) {
+        candidate = candidate.slice(explicitPathIndex + 5);
+    }
+
+    try {
+        const parsedUrl = new URL(candidate, window.location.origin);
+        const nestedPath =
+            parsedUrl.searchParams.get('path') ||
+            parsedUrl.searchParams.get('file') ||
+            parsedUrl.pathname;
+        candidate = nestedPath || candidate;
+    } catch (error) {
+        candidate = candidate;
+    }
+
+    const sanitizedPath = candidate.split('?')[0].split('#')[0];
+    const filename = sanitizedPath.split('/').pop() || sanitizedPath;
+    return normalizeReaderTitle(decodeURIComponent(filename)) || 'Dokumen PDF';
+}
+
+function isReaderAbsoluteFilePath(value) {
+    const candidate = String(value || '').trim();
+    if (!candidate) return false;
+
+    return /^[a-zA-Z]:\\/.test(candidate) || candidate.startsWith('\\\\');
+}
+
+function resolveReaderPdfUrl(fileReference, materialRecord, baseUrl) {
+    const candidate = String(fileReference || '').trim();
+    if (!candidate) return '';
+
+    if (candidate.startsWith('http://') || candidate.startsWith('https://')) {
+        return candidate;
+    }
+
+    if (isReaderAbsoluteFilePath(candidate) && materialRecord?.id) {
+        return `${baseUrl}/api/learning-materials/file/${encodeURIComponent(materialRecord.id)}`;
+    }
+
+    if (isReaderAbsoluteFilePath(candidate)) {
+        return `${baseUrl}/api/file?path=${encodeURIComponent(candidate)}`;
+    }
+
+    return `${baseUrl}${candidate.startsWith('/') ? '' : '/'}${candidate}`;
+}
+
+function applyReaderPageTitle() {
+    const normalizedTitle = normalizeReaderTitle(courseReaderConfig.title) || 'Pembaca';
+    courseReaderConfig.title = normalizedTitle;
+    document.title = normalizedTitle === 'Pembaca' ? 'Pembaca | BCL' : `${normalizedTitle} | BCL`;
+}
+
+function parseReaderJsonSafe(value, fallback) {
+    try {
+        if (!value) return fallback;
+        return JSON.parse(value);
+    } catch (error) {
+        return fallback;
+    }
+}
+
+function toReaderNonNegativeInt(value, fallback = 0) {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 0) return fallback;
+    return Math.floor(number);
+}
+
+function getReaderAuthToken() {
+    const directToken = localStorage.getItem('token');
+    if (directToken) return directToken;
+
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (user && user.token) return user.token;
+    } catch (error) {
+        // ignore
+    }
+
+    return '';
+}
+
+function countReaderCompletedModules() {
+    let count = 0;
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key) continue;
+
+        if (key.startsWith('bcl_completed_') || key.startsWith('bcl_video_completed_')) {
+            count += 1;
+        }
+    }
+
+    return count;
+}
+
+function buildReaderProgressSnapshot() {
+    const storedUser = parseReaderJsonSafe(localStorage.getItem('user'), {});
+    const userData = parseReaderJsonSafe(localStorage.getItem('userData'), {});
+    const userProgress = userData && typeof userData.progress === 'object' ? userData.progress : {};
+    const practiceHistory = Array.isArray(userData.practiceHistory) ? userData.practiceHistory : [];
+    const gamificationProgress = parseReaderJsonSafe(localStorage.getItem('gamification_userProgress'), {});
+    const completedModules = countReaderCompletedModules();
+
+    return {
+        coursesCompleted: Math.max(
+            completedModules,
+            toReaderNonNegativeInt(userProgress.coursesCompleted, 0),
+            toReaderNonNegativeInt(userData.coursesCompleted, 0),
+            toReaderNonNegativeInt(gamificationProgress.coursesCompleted, 0),
+            toReaderNonNegativeInt(storedUser?.progress?.coursesCompleted, 0)
+        ),
+        practiceAttempts: Math.max(
+            toReaderNonNegativeInt(userProgress.practiceAttempts, 0),
+            toReaderNonNegativeInt(userData.practiceAttempts, 0),
+            practiceHistory.length
+        ),
+        examsPassed: Math.max(
+            toReaderNonNegativeInt(userProgress.examsPassed, 0),
+            toReaderNonNegativeInt(userData.examsPassed, 0),
+            toReaderNonNegativeInt(gamificationProgress.examsPassed, 0),
+            toReaderNonNegativeInt(storedUser?.progress?.examsPassed, 0)
+        ),
+        certificatesEarned: Math.max(
+            toReaderNonNegativeInt(userProgress.certificatesEarned, 0),
+            toReaderNonNegativeInt(userData.certificatesEarned, 0),
+            toReaderNonNegativeInt(gamificationProgress.certificatesEarned, 0),
+            toReaderNonNegativeInt(storedUser?.progress?.certificatesEarned, 0)
+        ),
+        currentLevel: String(
+            userProgress.currentLevel ||
+            storedUser.level ||
+            storedUser.bimLevel ||
+            localStorage.getItem('level') ||
+            'BIM Modeller'
+        ).trim(),
+        toNextLevel: toReaderNonNegativeInt(
+            userProgress.toNextLevel ?? storedUser?.progress?.toNextLevel ?? userData.toNextLevel ?? 0,
+            0
+        )
+    };
+}
+
+function persistReaderProgressSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return;
+
+    const storedUser = parseReaderJsonSafe(localStorage.getItem('user'), {});
+    storedUser.progress = {
+        ...(storedUser.progress || {}),
+        ...snapshot
+    };
+    storedUser.coursesCompleted = snapshot.coursesCompleted;
+    localStorage.setItem('user', JSON.stringify(storedUser));
+
+    const userData = parseReaderJsonSafe(localStorage.getItem('userData'), {});
+    userData.progress = {
+        ...(userData.progress || {}),
+        ...snapshot
+    };
+    userData.coursesCompleted = snapshot.coursesCompleted;
+    localStorage.setItem('userData', JSON.stringify(userData));
+
+    const gamificationProgress = parseReaderJsonSafe(localStorage.getItem('gamification_userProgress'), {});
+    gamificationProgress.coursesCompleted = snapshot.coursesCompleted;
+    localStorage.setItem('gamification_userProgress', JSON.stringify(gamificationProgress));
+}
+
+async function syncReaderProgressSnapshot() {
+    const token = getReaderAuthToken();
+    if (!token) return null;
+
+    const snapshot = buildReaderProgressSnapshot();
+    persistReaderProgressSnapshot(snapshot);
+
+    try {
+        const response = await fetch('/api/elearning/progress/sync', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(snapshot)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Progress sync failed (${response.status})`);
+        }
+
+        return snapshot;
+    } catch (error) {
+        console.warn('Failed to sync reader progress:', error.message);
+        return null;
+    }
+}
+
+async function trackReaderLearningActivity(payload) {
+    const token = getReaderAuthToken();
+    if (!token) return null;
+
+    try {
+        const response = await fetch('/api/elearning/activity/track', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Activity track failed (${response.status})`);
+        }
+
+        return response.json().catch(() => null);
+    } catch (error) {
+        console.warn('Failed to track reader activity:', error.message);
+        return null;
+    }
+}
+
+async function markReaderModuleCompleted(progressPercent = 100) {
+    const completionKey = `bcl_completed_${courseReaderConfig.courseId}`;
+    const existingCompletion = parseReaderJsonSafe(localStorage.getItem(completionKey), null);
+
+    if (!existingCompletion) {
+        const completionData = {
+            materialId: courseReaderConfig.courseId,
+            title: courseReaderConfig.title,
+            completedAt: new Date().toISOString(),
+            totalPages: pdfDoc ? pdfDoc.numPages : 0,
+            lastPageRead: pageNum,
+            progressPercent: progressPercent
+        };
+
+        localStorage.setItem(completionKey, JSON.stringify(completionData));
+    }
+
+    await trackReaderLearningActivity({
+        moduleId: String(courseReaderConfig.courseId || '').trim(),
+        moduleType: 'pdf',
+        eventType: 'completed',
+        title: courseReaderConfig.title || 'Materi PDF',
+        category: '',
+        source: 'reader',
+        progressPercent: progressPercent
+    });
+
+    await syncReaderProgressSnapshot();
+}
+
 // Initialize the reader
 function initReader() {
     canvas = canvasElement;
     ctx = canvas.getContext('2d');
 
+    localStorage.setItem(`bcl_pdf_opened_${courseReaderConfig.courseId}`, JSON.stringify({
+        id: courseReaderConfig.courseId,
+        title: courseReaderConfig.title,
+        openedAt: new Date().toISOString()
+    }));
+
     // Set course title
+    applyReaderPageTitle();
     courseTitle.textContent = courseReaderConfig.title;
 
     // Load PDF
@@ -136,13 +408,13 @@ function toggleMouseMode() {
         mouseMode = 'zoom';
         icon.className = 'fas fa-search-plus';
         if (span) span.textContent = 'Zoom';
-        mouseModeBtn.title = 'Mouse Wheel: Zoom (Click to switch to Scroll)';
+        mouseModeBtn.title = 'Roda Mouse: Zoom (klik untuk ganti ke Gulir)';
         mouseModeBtn.classList.add('primary'); // Highlight active state
     } else {
         mouseMode = 'scroll';
         icon.className = 'fas fa-hand-paper';
-        if (span) span.textContent = 'Scroll';
-        mouseModeBtn.title = 'Mouse Wheel: Scroll (Ctrl+Wheel to Zoom)';
+        if (span) span.textContent = 'Gulir';
+        mouseModeBtn.title = 'Roda Mouse: Gulir (Ctrl+Roda untuk Zoom)';
         mouseModeBtn.classList.remove('primary');
     }
 }
@@ -186,7 +458,7 @@ function loadPDF() {
         console.error("Error loading PDF:", error);
         loadingIndicator.style.display = 'none';
         errorBox.style.display = 'block';
-        errorMessage.textContent = `Failed to load PDF from ${courseReaderConfig.pdfUrl}. Error: ${error.message}`;
+        errorMessage.textContent = `Gagal memuat PDF dari ${courseReaderConfig.pdfUrl}. Error: ${error.message}`;
     };
 
     const primaryTask = pdfjsLib.getDocument({ url: courseReaderConfig.pdfUrl });
@@ -439,6 +711,13 @@ function closePDFReader() {
     // Save progress before closing
     saveProgress();
 
+    if (pdfDoc) {
+        const progressPercent = Math.round((pageNum / pdfDoc.numPages) * 100);
+        if (progressPercent >= 95) {
+            markReaderModuleCompleted(progressPercent);
+        }
+    }
+
     // If opened in a modal/overlay, close it
     if (window.parent !== window) {
         // If opened in an iframe or modal, close parent modal
@@ -495,7 +774,7 @@ function updateReadingProgress() {
 }
 
 // Finish reading functionality
-function finishReading() {
+async function finishReading() {
     if (!pdfDoc) return;
 
     const progressPercent = Math.round((pageNum / pdfDoc.numPages) * 100);
@@ -504,19 +783,10 @@ function finishReading() {
         return;
     }
 
-    // Mark as completed in localStorage
-    const completionData = {
-        materialId: courseReaderConfig.courseId,
-        completedAt: new Date().toISOString(),
-        totalPages: pdfDoc.numPages,
-        lastPageRead: pageNum,
-        progressPercent: progressPercent
-    };
-
-    localStorage.setItem(`bcl_completed_${courseReaderConfig.courseId}`, JSON.stringify(completionData));
+    await markReaderModuleCompleted(progressPercent);
 
     // Show completion message
-    alert(`🎉 Congratulations! You have completed reading "${courseReaderConfig.title}"`);
+    alert(`🎉 Anda telah menyelesaikan bacaan "${courseReaderConfig.title}"`);
 
     // Close the reader
     closePDFReader();
@@ -528,7 +798,7 @@ async function goToNextModule() {
         // Get all materials to find the next one
         const materialsResponse = await fetch(`${window.location.origin}/api/learning-materials`);
         if (!materialsResponse.ok) {
-            throw new Error('Failed to load materials list');
+            throw new Error('Gagal memuat daftar materi');
         }
 
         const materialsData = await materialsResponse.json();
@@ -581,7 +851,7 @@ async function goToNextModule() {
 
     } catch (error) {
         console.error('Error navigating to next module:', error);
-        alert('Failed to navigate to next module. Please try again.');
+        alert('Gagal membuka modul berikutnya. Silakan coba lagi.');
     }
 }
 
@@ -594,12 +864,9 @@ async function loadMaterialConfig() {
             const baseUrl = window.location.origin && window.location.origin !== 'null'
                 ? window.location.origin
                 : '';
-            const normalizedFile = materialFileParam.startsWith('http')
-                ? materialFileParam
-                : `${baseUrl}${materialFileParam.startsWith('/') ? '' : '/'}${materialFileParam}`;
+            const normalizedFile = resolveReaderPdfUrl(materialFileParam, null, baseUrl);
 
-            const filename = materialFileParam.split('?')[0].split('#')[0].split('/').pop() || 'PDF Document';
-            const cleanTitle = decodeURIComponent(filename).replace(/\.pdf$/i, '');
+            const cleanTitle = extractReaderFileTitle(materialFileParam);
 
             courseReaderConfig = {
                 courseId: `file:${normalizedFile}`,
@@ -651,7 +918,7 @@ async function loadMaterialConfig() {
         courseReaderConfig = {
             courseId: material.id,
             title: material.title,
-            pdfUrl: filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`,
+            pdfUrl: resolveReaderPdfUrl(filePath, material, baseUrl),
             chapters: [] // Chapters ignored in favor of thumbnails
         };
 
@@ -669,12 +936,9 @@ async function loadMaterialConfig() {
         let fallbackCourseId = materialId;
 
         if (materialFileParam) {
-            fallbackUrl = materialFileParam.startsWith('http')
-                ? materialFileParam
-                : `${window.location.origin}${materialFileParam.startsWith('/') ? '' : '/'}${materialFileParam}`;
+            fallbackUrl = resolveReaderPdfUrl(materialFileParam, explicitMaterialId ? { id: explicitMaterialId } : null, window.location.origin);
 
-            const filename = materialFileParam.split('?')[0].split('#')[0].split('/').pop() || 'PDF Document';
-            fallbackTitle = decodeURIComponent(filename).replace(/\.pdf$/i, '');
+            fallbackTitle = extractReaderFileTitle(materialFileParam);
             fallbackCourseId = `file:${fallbackUrl}`;
         }
 

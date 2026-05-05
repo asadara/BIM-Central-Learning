@@ -37,6 +37,76 @@ function buildForwardHeaders(req) {
     return headers;
 }
 
+function isHtmlNavigationRequest(req) {
+    if (req.method !== 'GET') {
+        return false;
+    }
+
+    const accept = String(req.headers.accept || '').toLowerCase();
+    return accept.includes('text/html');
+}
+
+function sendBackendUnavailableResponse(req, res) {
+    if (isHtmlNavigationRequest(req)) {
+        if (!res.headersSent) {
+            res.writeHead(502, {
+                'Content-Type': 'text/html; charset=utf-8',
+                'Cache-Control': 'no-store, no-cache, must-revalidate',
+                'Retry-After': '5',
+                'x-bcl-legacy-proxy': `${LISTEN_PORT}->${TARGET_PORT}`
+            });
+        }
+
+        const safeUrl = JSON.stringify(req.url || '/');
+        res.end(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BCL Restart In Progress</title>
+  <style>
+    body { margin: 0; font-family: Segoe UI, Arial, sans-serif; background: #0f172a; color: #e2e8f0; display: grid; place-items: center; min-height: 100vh; }
+    .panel { width: min(92vw, 560px); background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 18px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+    h1 { margin: 0 0 12px; font-size: 24px; }
+    p { margin: 0 0 12px; line-height: 1.5; color: #cbd5e1; }
+    .spinner { width: 22px; height: 22px; border: 3px solid rgba(148,163,184,0.25); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+    .meta { font-size: 13px; color: #94a3b8; margin-top: 18px; }
+    .btn { display: inline-block; margin-top: 16px; padding: 10px 14px; border-radius: 10px; background: #1d4ed8; color: #fff; text-decoration: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>BCL sedang restart</h1>
+    <p>Legacy proxy 5051 belum bisa menjangkau backend ${TARGET_HOST}:${TARGET_PORT}.</p>
+    <p>Halaman akan mencoba memuat ulang otomatis dalam beberapa detik.</p>
+    <a class="btn" href=${safeUrl}>Coba lagi sekarang</a>
+    <div class="meta">Proxy ${LISTEN_PORT} -> ${TARGET_HOST}:${TARGET_PORT}</div>
+  </div>
+  <script>
+    setTimeout(function () { window.location.reload(); }, 5000);
+  </script>
+</body>
+</html>`);
+        return;
+    }
+
+    if (!res.headersSent) {
+        res.writeHead(502, {
+            'Content-Type': 'application/json',
+            'x-bcl-legacy-proxy': `${LISTEN_PORT}->${TARGET_PORT}`
+        });
+    }
+
+    res.end(
+        JSON.stringify({
+            success: false,
+            error: `Legacy proxy could not reach backend ${TARGET_HOST}:${TARGET_PORT}`
+        })
+    );
+}
+
 const server = http.createServer((req, res) => {
     const startedAt = Date.now();
     const proxyReq = http.request(
@@ -80,19 +150,7 @@ const server = http.createServer((req, res) => {
             ].join(' | ')
         );
 
-        if (!res.headersSent) {
-            res.writeHead(502, {
-                'Content-Type': 'application/json',
-                'x-bcl-legacy-proxy': `${LISTEN_PORT}->${TARGET_PORT}`
-            });
-        }
-
-        res.end(
-            JSON.stringify({
-                success: false,
-                error: `Legacy proxy could not reach backend ${TARGET_HOST}:${TARGET_PORT}`
-            })
-        );
+        sendBackendUnavailableResponse(req, res);
     });
 
     req.pipe(proxyReq);

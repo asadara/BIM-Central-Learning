@@ -63,6 +63,28 @@ class ContentManagementModule {
         this.loadBIMCustomCategories();
     }
 
+    getPDFCategoryOptionsHtml(selectedValue = '') {
+        const options = [
+            { value: 'bim-modeller', label: 'BIM Modeller' },
+            { value: 'bim-coordinator', label: 'BIM Coordinator' },
+            { value: 'bim-manager', label: 'BIM Manager' }
+        ];
+
+        return options
+            .map((option) => `<option value="${option.value}" ${selectedValue === option.value ? 'selected' : ''}>${option.label}</option>`)
+            .join('');
+    }
+
+    formatPDFCategoryLabel(category) {
+        const labels = {
+            'bim-modeller': 'BIM Modeller',
+            'bim-coordinator': 'BIM Coordinator',
+            'bim-manager': 'BIM Manager'
+        };
+
+        return labels[category] || category || 'Uncategorized';
+    }
+
     // ===== PDF MANAGEMENT FUNCTIONS =====
 
     /**
@@ -357,7 +379,7 @@ class ContentManagementModule {
         pdfsToShow.forEach((pdf, index) => {
             const pdfId = pdf.id;
             const title = pdf.title || pdf.name || 'Unknown';
-            const category = pdf.category || 'General';
+            const category = this.formatPDFCategoryLabel(pdf.category);
             const level = pdf.level || 'Beginner';
             const pages = pdf.pageCount || 'Unknown';
             const size = pdf.size ? this.formatFileSize(pdf.size) : 'Unknown';
@@ -863,11 +885,7 @@ class ContentManagementModule {
                                         <label class="form-label">Category *</label>
                                         <select class="form-select" id="uploadPdfCategory" required>
                                             <option value="">Select Category</option>
-                                            <option value="autocad">AutoCAD</option>
-                                            <option value="revit">Revit BIM</option>
-                                            <option value="sketchup">SketchUp</option>
-                                            <option value="3dsmax">3ds Max</option>
-                                            <option value="general">General BIM</option>
+                                            ${this.getPDFCategoryOptionsHtml()}
                                         </select>
                                     </div>
                                     <div class="col-md-6">
@@ -1036,7 +1054,7 @@ class ContentManagementModule {
                                 <div class="col-md-6">
                                     <h6>PDF Information</h6>
                                     <p><strong>Title:</strong> ${pdf.title || pdf.name}</p>
-                                    <p><strong>Category:</strong> <span class="badge bg-info">${pdf.category || 'N/A'}</span></p>
+                                    <p><strong>Category:</strong> <span class="badge bg-info">${this.formatPDFCategoryLabel(pdf.category)}</span></p>
                                     <p><strong>Level:</strong> <span class="badge bg-warning">${pdf.level || 'N/A'}</span></p>
                                     <p><strong>Pages:</strong> ${pdf.pageCount || 'Unknown'}</p>
                                     <p><strong>Size:</strong> ${pdf.size ? this.formatFileSize(pdf.size) : 'Unknown'}</p>
@@ -1113,11 +1131,7 @@ class ContentManagementModule {
                                     <div class="col-md-4">
                                         <label class="form-label">Category *</label>
                                         <select class="form-select" id="editPdfManagementCategory" required>
-                                            <option value="autocad" ${pdf.category === 'autocad' ? 'selected' : ''}>AutoCAD</option>
-                                            <option value="revit" ${pdf.category === 'revit' ? 'selected' : ''}>Revit BIM</option>
-                                            <option value="sketchup" ${pdf.category === 'sketchup' ? 'selected' : ''}>SketchUp</option>
-                                            <option value="3dsmax" ${pdf.category === '3dsmax' ? 'selected' : ''}>3ds Max</option>
-                                            <option value="general" ${pdf.category === 'general' ? 'selected' : ''}>General BIM</option>
+                                            ${this.getPDFCategoryOptionsHtml(pdf.category)}
                                         </select>
                                     </div>
                                     <div class="col-md-6">

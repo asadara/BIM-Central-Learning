@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { shouldExcludeMediaFolder } = require('../shared/rawMediaFolderFilter');
 
 const DEFAULT_SRC_ROOT = 'C:/BCL/PC-BIM02';
 const DEFAULT_DST_ROOT = 'C:/BCL/data/pc-bim02-cache/PROJECT BIM 2025';
@@ -56,6 +57,9 @@ function walkMediaFiles(dir, bucket) {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
+      if (shouldExcludeMediaFolder(entry.name)) {
+        continue;
+      }
       walkMediaFiles(fullPath, bucket);
       continue;
     }

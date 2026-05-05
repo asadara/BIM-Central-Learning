@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c">
-    <title>BCL-BIM Central Learning</title>
+    <title>Home | BCL</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="./lib/owlcarousel/assets/owl.carousel.min.css">
     <link rel="stylesheet" href="./css/bootstrap.min.css">
     <link rel="stylesheet" href="./css/style.css">
-    <link rel="icon" href="/img/icon.png">
+    <link rel="icon" href="/logos/fav_logo_BCL.ico?v=20260424b" type="image/x-icon">
 
 
 
@@ -1542,7 +1542,7 @@
                 }
 
                 // Create thumbnail URL (fallback if not available)
-                const thumbnailUrl = course.thumbnail || './img/course-default.jpg';
+                const thumbnailUrl = course.thumbnail || './img/course-default.svg';
 
                 // Create completion rate display
                 const completionRate = course.completionRate || 0;
@@ -1553,7 +1553,7 @@
                     <div class="course-item shadow">
                         <div class="position-relative overflow-hidden text-light image">
                             <img class="img-fluid" src="${thumbnailUrl}" alt="${course.title}"
-                                style="object-fit: cover; height: 150px;" onerror="this.src='./img/course-default.jpg'">
+                                style="object-fit: cover; height: 150px;" onerror="this.src='./img/course-default.svg'">
                             ${badgeText !== 'GRATIS' ? `<div class="course-badge position-absolute" style="top: 10px; left: 10px; background-color: ${badgeColor}; color: white; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">${badgeText}</div>` : ''}
                         </div>
 

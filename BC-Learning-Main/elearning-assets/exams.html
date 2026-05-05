@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exams - BC Learning</title>
+    <title>Ujian - BC Learning</title>
 
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://use.fontawesome.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://use.fontawesome.com https://cdn.jsdelivr.net; img-src 'self' data: https:; media-src 'self' https:; connect-src 'self'; frame-src 'self';">
@@ -239,18 +239,18 @@
     <div class="side-bar" id="sidebar-container"></div>
 
     <section class="exams">
-        <h1 class="heading">Formal Examinations</h1>
+        <h1 class="heading">Ujian Formal</h1>
 
         <div class="exam-shell">
             <div class="exam-hero">
                 <div class="exam-hero-copy">
                     <div class="exam-pill-row">
-                        <span class="exam-pill"><i class="fas fa-route"></i> Practice -> Readiness -> Exam</span>
-                        <span class="exam-pill"><i class="fas fa-shield-alt"></i> Measured access, not guesswork</span>
+                        <span class="exam-pill"><i class="fas fa-route"></i> Latihan -> Kesiapan -> Ujian</span>
+                        <span class="exam-pill"><i class="fas fa-shield-alt"></i> Akses terukur, bukan tebakan</span>
                     </div>
-                    <h2 id="exam-hero-title">Move into certification only when the path is measurable</h2>
+                    <h2 id="exam-hero-title">Masuk ke sertifikasi hanya saat jalurnya sudah terukur</h2>
                     <p id="exam-hero-copy">
-                        Use your drill accuracy, coverage, and consistency to decide which exam is ready now, which one needs more preparation, and what to do next.
+                        Gunakan akurasi latihan, cakupan materi, dan konsistensi Anda untuk menentukan ujian mana yang siap diambil sekarang, mana yang masih perlu persiapan, dan langkah berikutnya.
                     </p>
                     <div class="exam-action-row" id="exam-hero-actions"></div>
                 </div>
@@ -260,56 +260,56 @@
             <div class="exam-overview-grid" id="exam-overview-metrics"></div>
 
             <div class="exam-info-banner">
-                <h3><i class="fas fa-info-circle"></i> Exam Rules</h3>
+                <h3><i class="fas fa-info-circle"></i> Aturan Ujian</h3>
                 <ul>
-                    <li>Strict time limits apply and auto-submit is enabled.</li>
-                    <li>Proctoring monitors visibility changes and fullscreen exits.</li>
-                    <li>Retake windows still apply after each attempt.</li>
-                    <li>Readiness status is measured from practice performance, not manual judgment.</li>
+                    <li>Batas waktu ketat berlaku dan pengumpulan otomatis diaktifkan.</li>
+                    <li>Proctoring memantau perubahan visibilitas dan keluar dari mode layar penuh.</li>
+                    <li>Jeda pengulangan tetap berlaku setelah setiap percobaan.</li>
+                    <li>Status kesiapan diukur dari performa latihan, bukan penilaian manual.</li>
                 </ul>
             </div>
 
             <div class="exam-section-panel">
                 <div class="exam-panel-title">
-                    <h3>Eligible Now</h3>
-                    <span class="exam-panel-subtitle">These paths are both operationally eligible and readiness-complete.</span>
+                    <h3>Siap Diambil</h3>
+                    <span class="exam-panel-subtitle">Jalur ini sudah memenuhi syarat operasional dan kesiapan.</span>
                 </div>
                 <div class="exam-card-grid" id="exam-ready-container"></div>
             </div>
 
             <div class="exam-section-panel">
                 <div class="exam-panel-title">
-                    <h3>Need Preparation</h3>
-                    <span class="exam-panel-subtitle">Close to target, but still missing accuracy, attempts, or coverage.</span>
+                    <h3>Perlu Persiapan</h3>
+                    <span class="exam-panel-subtitle">Sudah dekat target, tetapi masih kurang pada akurasi, jumlah percobaan, atau cakupan.</span>
                 </div>
                 <div class="exam-card-grid" id="exam-almost-ready-container"></div>
             </div>
 
             <div class="exam-section-panel">
                 <div class="exam-panel-title">
-                    <h3>Locked Paths</h3>
-                    <span class="exam-panel-subtitle">Blocked by level, retake windows, attempt caps, or incomplete preparation.</span>
+                    <h3>Jalur Terkunci</h3>
+                    <span class="exam-panel-subtitle">Terhambat oleh level, jeda ulang, batas percobaan, atau persiapan yang belum lengkap.</span>
                 </div>
                 <div class="exam-card-grid" id="exam-locked-container"></div>
             </div>
 
             <div class="exam-section-panel">
                 <div class="exam-panel-title">
-                    <h3>Attempt History</h3>
-                    <span class="exam-panel-subtitle">Recent exam runs and outcomes stored from this device.</span>
+                    <h3>Riwayat Percobaan</h3>
+                    <span class="exam-panel-subtitle">Percobaan ujian terbaru dan hasilnya yang tersimpan dari perangkat ini.</span>
                 </div>
                 <div class="exam-history-grid" id="exam-history-container"></div>
             </div>
 
             <div class="exam-materials-section">
-                <h3><i class="fas fa-file-download"></i> Downloadable Exam Materials</h3>
+                <h3><i class="fas fa-file-download"></i> Materi Ujian yang Dapat Diunduh</h3>
                 <p class="section-intro" style="margin-bottom: 2rem; color: #666;">
-                    Download official exam materials and practice tests to prepare for certification exams.
+                    Unduh materi ujian resmi dan latihan untuk mempersiapkan ujian sertifikasi.
                 </p>
                 <div class="exam-materials-container">
                     <div class="loading-exam-materials" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
                         <i class="fas fa-spinner fa-spin fa-2x"></i>
-                        <p>Loading exam materials...</p>
+                        <p>Memuat materi ujian...</p>
                     </div>
                 </div>
             </div>
@@ -317,16 +317,16 @@
             <div class="modal" id="prerequisites-modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3><i class="fas fa-exclamation-triangle"></i> Exam Requirements</h3>
+                        <h3><i class="fas fa-exclamation-triangle"></i> Persyaratan Ujian</h3>
                         <button class="close-modal" id="close-prerequisites">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <p>You need to resolve the following items before this exam path is considered clear:</p>
+                        <p>Anda perlu menyelesaikan hal-hal berikut sebelum jalur ujian ini dianggap siap.</p>
                         <ul id="prerequisites-list"></ul>
-                        <p class="suggestion">Use the linked preparation path to improve readiness or unlock requirements.</p>
+                        <p class="suggestion">Gunakan jalur persiapan terkait untuk meningkatkan kesiapan atau membuka persyaratan.</p>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn" id="view-requirements">Open Preparation Path</button>
+                        <button class="btn" id="view-requirements">Buka Jalur Persiapan</button>
                     </div>
                 </div>
             </div>
@@ -334,70 +334,70 @@
             <div class="modal" id="exam-prep-modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3><i class="fas fa-clipboard-list"></i> Exam Preparation</h3>
+                        <h3><i class="fas fa-clipboard-list"></i> Persiapan Ujian</h3>
                         <button class="close-modal" id="close-prep">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="exam-details" id="exam-details"></div>
                         <div class="preparation-checklist">
-                            <h4><i class="fas fa-tasks"></i> Pre-Exam Checklist</h4>
+                            <h4><i class="fas fa-tasks"></i> Checklist Pra-Ujian</h4>
                             <div class="checklist-items">
                                 <label class="checklist-item">
                                     <input type="checkbox" id="stable-connection">
-                                    <span>I have a stable internet connection</span>
+                                    <span>Saya memiliki koneksi internet yang stabil</span>
                                 </label>
                                 <label class="checklist-item">
                                     <input type="checkbox" id="quiet-environment">
-                                    <span>I am in a quiet, distraction-free environment</span>
+                                    <span>Saya berada di lingkungan yang tenang dan minim gangguan</span>
                                 </label>
                                 <label class="checklist-item">
                                     <input type="checkbox" id="understand-rules">
-                                    <span>I understand the exam rules and regulations</span>
+                                    <span>Saya memahami aturan dan ketentuan ujian</span>
                                 </label>
                                 <label class="checklist-item">
                                     <input type="checkbox" id="camera-permission">
-                                    <span>I grant permission for proctoring (camera/microphone)</span>
+                                    <span>Saya memberikan izin untuk proctoring (kamera/mikrofon)</span>
                                 </label>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn secondary" id="cancel-exam">Cancel</button>
-                        <button class="btn" id="start-exam" disabled>Start Exam</button>
+                        <button class="btn secondary" id="cancel-exam">Batal</button>
+                        <button class="btn" id="start-exam" disabled>Mulai Ujian</button>
                     </div>
                 </div>
             </div>
 
             <div class="exam-interface" id="exam-interface">
                 <div class="exam-header">
-                    <div class="exam-title" id="exam-title-header">Exam Title</div>
+                    <div class="exam-title" id="exam-title-header">Judul Ujian</div>
                     <div class="exam-controls">
                         <div class="time-remaining" id="time-remaining">60:00</div>
                         <div class="proctoring-status">
                             <i class="fas fa-video" id="camera-status"></i>
-                            <span>Proctored</span>
+                            <span>Dipantau</span>
                         </div>
                     </div>
                 </div>
                 <div class="exam-body">
                     <div class="question-navigation">
                         <div class="nav-header">
-                            <h4>Questions</h4>
+                            <h4>Soal</h4>
                             <span id="question-progress">1 / 25</span>
                         </div>
                         <div class="question-grid" id="question-grid"></div>
                     </div>
                     <div class="question-content">
                         <div class="current-question" id="current-question">
-                            <h3 id="question-number">Question 1</h3>
-                            <div class="question-text" id="question-text">Question will appear here</div>
+                            <h3 id="question-number">Soal 1</h3>
+                            <div class="question-text" id="question-text">Soal akan tampil di sini</div>
                             <div class="question-options" id="question-options"></div>
                         </div>
                         <div class="question-controls">
-                            <button class="btn secondary" id="prev-question" disabled>Previous</button>
-                            <button class="btn secondary" id="mark-review">Mark for Review</button>
-                            <button class="btn" id="next-question">Next</button>
-                            <button class="btn warning" id="submit-exam" style="display: none;">Submit Exam</button>
+                            <button class="btn secondary" id="prev-question" disabled>Sebelumnya</button>
+                            <button class="btn secondary" id="mark-review">Tandai untuk Ditinjau</button>
+                            <button class="btn" id="next-question">Berikutnya</button>
+                            <button class="btn warning" id="submit-exam" style="display: none;">Kumpulkan Ujian</button>
                         </div>
                     </div>
                 </div>
@@ -406,7 +406,7 @@
             <div class="modal" id="exam-results-modal">
                 <div class="modal-content large">
                     <div class="modal-header">
-                        <h3><i class="fas fa-poll"></i> Exam Results</h3>
+                        <h3><i class="fas fa-poll"></i> Hasil Ujian</h3>
                         <button class="close-modal" id="close-results">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -417,14 +417,14 @@
                                 </div>
                                 <div class="score-status">
                                     <h4 id="pass-fail-status">Status</h4>
-                                    <p id="score-message">Message</p>
+                                    <p id="score-message">Pesan</p>
                                 </div>
                             </div>
                         </div>
                         <div class="detailed-results">
                             <div class="result-stats">
                                 <div class="stat-item">
-                                    <span class="stat-label">Total Questions:</span>
+                                    <span class="stat-label">Total Soal:</span>
                                     <span class="stat-value" id="total-questions">0</span>
                                 </div>
                                 <div class="stat-item">
@@ -471,7 +471,7 @@
 
         async function loadExamMaterialsForExamsPage() {
             const container = document.querySelector('.exam-materials-container');
-            container.innerHTML = '<div class="loading-exam-materials" style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading exam materials...</p></div>';
+            container.innerHTML = '<div class="loading-exam-materials" style="grid-column: 1 / -1; text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Memuat materi ujian...</p></div>';
 
             try {
                 const response = await fetch('/api/exam-materials');
@@ -558,7 +558,7 @@
                                     <p><strong>Type:</strong> ${exam.type}</p>
                                     <p><strong>Time Limit:</strong> ${exam.timeLimit} minutes</p>
                                     <p><strong>Passing Score:</strong> ${exam.passingScore}%</p>
-                                    <p><strong>Total Questions:</strong> ${exam.totalQuestions || 'Not specified'}</p>
+                                    <p><strong>Total Soal:</strong> ${exam.totalSoal || 'Not specified'}</p>
                                 </div>
                                 <div class="col-md-6">
                                     <h5>Description</h5>
@@ -584,5 +584,3 @@
 </body>
 
 </html>
-
-

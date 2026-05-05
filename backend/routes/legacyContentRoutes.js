@@ -14,6 +14,7 @@ function createLegacyContentRoutes({
     videoCache
 }) {
     const router = express.Router();
+    const learningRootDir = path.join(backendDir, "../BC-Learning-Main");
     const manualBookRootCandidates = [
         path.join(baseDir, "6. Manual Books"),
         path.join(baseDir, "BAHAN PEMBELAJARAN", "MANUAL BOOK"),
@@ -602,17 +603,20 @@ function createLegacyContentRoutes({
         return res.redirect(`/api/file?path=${encodeURIComponent(String(fileValue))}`);
     });
 
-    router.use("/public", express.static(path.join(backendDir, "../BC-Learning-Main/public")));
+    router.use("/uploads", express.static(path.join(backendDir, "public", "uploads")));
+    router.use("/uploads", express.static(path.join(backendDir, "uploads")));
+    router.use("/public", express.static(path.join(learningRootDir, "public")));
     router.use(express.static(path.join(backendDir, "..", "public")));
     router.use("/logos", express.static(path.join(backendDir, "..", "public", "logos")));
     router.use("/data", express.static(path.join(backendDir, "../data")));
-    router.use("/img", express.static(path.join(backendDir, "../BC-Learning-Main/img")));
-    router.use("/elearning-assets", express.static(path.join(backendDir, "../BC-Learning-Main/elearning-assets")));
+    router.use("/img", express.static(path.join(learningRootDir, "img")));
+    router.use("/elearning-assets", express.static(path.join(learningRootDir, "elearning-assets")));
+    router.use(express.static(learningRootDir));
     router.use("/plugin-packages", express.static(pluginPackagesDir));
     router.use("/files", express.static(baseDir));
 
     router.get("/favicon.ico", (req, res) => {
-        res.sendFile(path.join(backendDir, "..", "public", "logos", "icon_bcl.ico"));
+        res.sendFile(path.join(learningRootDir, "logos", "fav_logo_BCL.ico"));
     });
 
     router.get("/files/:filePath", (req, res) => {

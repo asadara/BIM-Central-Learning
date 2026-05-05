@@ -500,7 +500,7 @@ function createExamCardMarkup(model) {
                 <strong>${attemptStats.lastScore === null ? '-' : `${attemptStats.lastScore}%`}</strong>
             </div>
             <div class="exam-detail-row">
-                <span>Last Attempt</span>
+                <span>Percobaan Terakhir</span>
                 <strong>${formatDate(attemptStats.lastAttemptAt)}</strong>
             </div>
             <p>${baseEligibility.eligible ? readiness.recommendation : getIneligibilityMessage(baseEligibility)}</p>
@@ -523,11 +523,11 @@ function renderExamHero(dashboard, models, requestedExamId) {
 
     if (heroTitle && heroCopy) {
         if (focusedModel) {
-            heroTitle.textContent = `Exam path for ${focusedModel.exam.title}`;
-            heroCopy.textContent = `${focusedModel.readiness.recommendation} Use the preparation path if you still need more coverage, consistency, or accuracy before attempting the formal exam.`;
+            heroTitle.textContent = `Jalur ujian untuk ${focusedModel.exam.title}`;
+            heroCopy.textContent = `${focusedModel.readiness.recommendation} Gunakan jalur persiapan jika Anda masih membutuhkan cakupan, konsistensi, atau akurasi yang lebih baik sebelum mengikuti ujian formal.`;
         } else {
-            heroTitle.textContent = 'Move into certification only when the path is measurable';
-            heroCopy.textContent = 'Use your drill accuracy, coverage, and consistency to decide which exam is ready now, which one needs more preparation, and what to do next.';
+            heroTitle.textContent = 'Masuk ke sertifikasi hanya saat jalurnya sudah terukur';
+            heroCopy.textContent = 'Gunakan akurasi latihan, cakupan materi, dan konsistensi Anda untuk menentukan ujian mana yang siap diambil sekarang, mana yang masih perlu persiapan, dan langkah berikutnya.';
         }
     }
 
@@ -535,10 +535,10 @@ function renderExamHero(dashboard, models, requestedExamId) {
         const linkedExam = focusedModel || models.find(model => model.section === 'ready') || models[0];
         heroActions.innerHTML = linkedExam ? `
             <a class="exam-link-btn" href="${linkedExam.practiceHref}">
-                <i class="fas fa-route"></i> Open Practice Path
+                <i class="fas fa-route"></i> Buka Jalur Latihan
             </a>
             <button class="exam-primary-btn" type="button" onclick="showExamPath('${linkedExam.exam.id}')">
-                <i class="fas fa-bullseye"></i> Focus This Exam
+                <i class="fas fa-bullseye"></i> Fokus ke Ujian Ini
             </button>
         ` : '';
     }
@@ -546,17 +546,17 @@ function renderExamHero(dashboard, models, requestedExamId) {
     if (heroSummary) {
         const examHistory = getExamHistory();
         heroSummary.innerHTML = `
-            <span class="exam-mini-label">Overall Readiness</span>
+            <span class="exam-mini-label">Kesiapan Keseluruhan</span>
             <div class="exam-score">${dashboard.overallReadiness}%</div>
-            <h3>${dashboard.nextExam ? dashboard.nextExam.shortTitle : 'No exam target yet'}</h3>
-            <p>${dashboard.nextExam ? dashboard.nextExam.recommendation : 'Complete practice attempts to generate a readiness baseline.'}</p>
+            <h3>${dashboard.nextExam ? dashboard.nextExam.shortTitle : 'Belum ada target ujian'}</h3>
+            <p>${dashboard.nextExam ? dashboard.nextExam.recommendation : 'Selesaikan beberapa latihan untuk membentuk baseline kesiapan.'}</p>
             <div class="exam-summary-grid">
                 <div>
-                    <div class="exam-mini-label">Ready Now</div>
+                    <div class="exam-mini-label">Siap Sekarang</div>
                     <div class="exam-score" style="font-size:2.4rem;">${dashboard.readyCount}</div>
                 </div>
                 <div>
-                    <div class="exam-mini-label">Stored Attempts</div>
+                    <div class="exam-mini-label">Percobaan Tersimpan</div>
                     <div class="exam-score" style="font-size:2.4rem;">${examHistory.length}</div>
                 </div>
             </div>
@@ -571,24 +571,24 @@ function renderExamOverview(dashboard) {
         : 0;
     const metrics = [
         {
-            label: 'Ready Exams',
+            label: 'Ujian Siap',
             value: dashboard.readyCount,
-            caption: 'Exam paths meeting readiness and operational gates.'
+            caption: 'Jalur ujian yang sudah memenuhi kesiapan dan syarat operasional.'
         },
         {
-            label: 'Almost Ready',
+            label: 'Hampir Siap',
             value: dashboard.almostReadyCount,
-            caption: 'Strong progress, but still missing measured thresholds.'
+            caption: 'Progres sudah kuat, tetapi masih kurang pada ambang terukur.'
         },
         {
-            label: 'Practice Attempts',
+            label: 'Percobaan Latihan',
             value: dashboard.practiceHistory.length,
-            caption: 'Practice attempts contributing to readiness calculations.'
+            caption: 'Percobaan latihan yang berkontribusi pada perhitungan kesiapan.'
         },
         {
-            label: 'Average Exam Score',
+            label: 'Rata-rata Nilai Ujian',
             value: `${averageExamScore}%`,
-            caption: 'Stored from local exam history on this device.'
+            caption: 'Diambil dari riwayat ujian lokal pada perangkat ini.'
         }
     ];
 
@@ -629,20 +629,20 @@ function renderExamSections(models) {
     renderGroup(
         readyContainer,
         models.filter(model => model.section === 'ready'),
-        'No exam is fully ready yet',
-        'Keep building performance in practice until one path clears readiness and operational rules.'
+        'Belum ada ujian yang benar-benar siap',
+        'Terus bangun performa lewat latihan sampai salah satu jalur lolos syarat kesiapan dan aturan operasional.'
     );
     renderGroup(
         almostReadyContainer,
         models.filter(model => model.section === 'almost-ready'),
-        'No exam is in the preparation band',
-        'When an exam is eligible but not yet ready, it will appear here with a direct practice path.'
+        'Belum ada ujian di zona persiapan',
+        'Saat sebuah ujian sudah memenuhi syarat dasar tetapi belum siap penuh, ujian itu akan tampil di sini dengan jalur latihan langsung.'
     );
     renderGroup(
         lockedContainer,
         models.filter(model => model.section === 'locked'),
-        'No locked paths',
-        'If a level gate, retake window, or prerequisite blocks an exam, it will be shown here.'
+        'Tidak ada jalur yang terkunci',
+        'Jika sebuah ujian terblokir oleh level, jeda ulang, atau prasyarat, ujian itu akan ditampilkan di sini.'
     );
 }
 
@@ -658,29 +658,29 @@ function renderExamHistory() {
         ? history.map(entry => `
             <div class="exam-history-card">
                 <h4>${entry.title || entry.examId}</h4>
-                <p>${entry.passed ? 'Passed exam attempt' : 'Exam attempt needs improvement'}</p>
+                <p>${entry.passed ? 'Percobaan ujian lulus' : 'Percobaan ujian masih perlu peningkatan'}</p>
                 <div class="exam-history-row">
-                    <span>Score</span>
+                    <span>Nilai</span>
                     <strong>${entry.percentage}%</strong>
                 </div>
                 <div class="exam-history-row">
-                    <span>Time</span>
+                    <span>Waktu</span>
                     <strong>${Math.round(Number(entry.timeTaken || 0) / 60)} min</strong>
                 </div>
                 <div class="exam-history-row">
-                    <span>Result</span>
-                    <strong>${entry.passed ? 'Passed' : 'Failed'}</strong>
+                    <span>Hasil</span>
+                    <strong>${entry.passed ? 'Lulus' : 'Belum Lulus'}</strong>
                 </div>
                 <div class="exam-history-row">
-                    <span>Attempted At</span>
+                    <span>Dikerjakan Pada</span>
                     <strong>${formatDate(entry.attemptedAt || entry.savedAt)}</strong>
                 </div>
             </div>
         `).join('')
         : `
             <div class="exam-empty-card">
-                <h4>No exam attempts yet</h4>
-                <p>Exam history will appear here after the first formal attempt is completed.</p>
+                <h4>Belum ada percobaan ujian</h4>
+                <p>Riwayat ujian akan tampil di sini setelah percobaan formal pertama selesai.</p>
             </div>
         `;
 }
@@ -706,15 +706,15 @@ function loadAvailableExams() {
 function getIneligibilityMessage(eligibility) {
     switch (eligibility.reason) {
         case 'level':
-            return `Requires level ${eligibility.required}.`;
+            return `Memerlukan level ${eligibility.required}.`;
         case 'attempts':
-            return 'Maximum attempt limit has been reached.';
+            return 'Batas maksimal percobaan telah tercapai.';
         case 'retake':
-            return `Retake available in ${eligibility.daysRemaining} day(s).`;
+            return `Ujian ulang tersedia dalam ${eligibility.daysRemaining} hari.`;
         case 'prerequisites':
-            return 'Required preparation items are incomplete.';
+            return 'Item persiapan yang diwajibkan belum lengkap.';
         default:
-            return 'This exam path is not available yet.';
+            return 'Jalur ujian ini belum tersedia.';
     }
 }
 
@@ -758,24 +758,24 @@ function showPrerequisites(examId, reason) {
     }
 
     if (eligibility.reason === 'prerequisites' && Array.isArray(eligibility.missing)) {
-        blockers.push(...eligibility.missing.map(item => `Complete ${formatPrerequisite(item)}.`));
+        blockers.push(...eligibility.missing.map(item => `Selesaikan ${formatPrerequisite(item)}.`));
     } else if (eligibility.reason === 'level') {
-        blockers.push(`Current level is below ${eligibility.required}.`);
+        blockers.push(`Level saat ini masih di bawah ${eligibility.required}.`);
     } else if (eligibility.reason === 'attempts') {
-        blockers.push(`You have reached the maximum of ${eligibility.maxAttempts} attempts.`);
+        blockers.push(`Anda telah mencapai batas maksimal ${eligibility.maxAttempts} percobaan.`);
     } else if (eligibility.reason === 'retake') {
-        blockers.push(`Wait ${eligibility.daysRemaining} more day(s) before retaking this exam.`);
+        blockers.push(`Tunggu ${eligibility.daysRemaining} hari lagi sebelum mengulang ujian ini.`);
     }
 
     if (readiness) {
         if (readiness.coverage < 100 && Array.isArray(readiness.missingCategories) && readiness.missingCategories.length) {
-            blockers.push(`Complete practice coverage in ${readiness.missingCategories.join(', ')}.`);
+            blockers.push(`Lengkapi cakupan latihan pada ${readiness.missingCategories.join(', ')}.`);
         }
         if (readiness.accuracy < readiness.minAccuracy) {
-            blockers.push(`Raise measured accuracy to at least ${readiness.minAccuracy}%.`);
+            blockers.push(`Tingkatkan akurasi terukur setidaknya ke ${readiness.minAccuracy}%.`);
         }
         if (readiness.attempts < readiness.minAttempts) {
-            blockers.push(`Finish ${readiness.minAttempts - readiness.attempts} more measured attempt(s).`);
+            blockers.push(`Selesaikan ${readiness.minAttempts - readiness.attempts} percobaan terukur lagi.`);
         }
         if (!blockers.length) {
             blockers.push(readiness.recommendation);
@@ -822,33 +822,33 @@ function prepareExam(examId, bypassReadiness = false) {
             <div class="exam-specs">
                 <div class="spec">
                     <i class="fas fa-clock"></i>
-                    <span>Duration: ${exam.duration} minutes</span>
+                    <span>Durasi: ${exam.duration} menit</span>
                 </div>
                 <div class="spec">
                     <i class="fas fa-question-circle"></i>
-                    <span>Questions: ${exam.questionCount}</span>
+                    <span>Soal: ${exam.questionCount}</span>
                 </div>
                 <div class="spec">
                     <i class="fas fa-target"></i>
-                    <span>Passing Score: ${exam.passingScore}%</span>
+                    <span>Nilai Lulus: ${exam.passingScore}%</span>
                 </div>
                 <div class="spec">
                     <i class="fas fa-database"></i>
-                    <span>Question Pool: ${questionPool.length} item(s)</span>
+                    <span>Bank Soal: ${questionPool.length} item</span>
                 </div>
             </div>
             <div class="exam-rules">
-                <h5>Exam Rules:</h5>
+                <h5>Aturan Ujian:</h5>
                 <ul>
-                    <li>Camera and microphone monitoring required</li>
-                    <li>Full-screen mode mandatory</li>
-                    <li>No external resources allowed</li>
-                    <li>Browser tab switching detected</li>
-                    <li>Time limit strictly enforced</li>
+                    <li>Pemantauan kamera dan mikrofon wajib diaktifkan</li>
+                    <li>Mode layar penuh wajib digunakan</li>
+                    <li>Tidak diperbolehkan menggunakan sumber eksternal</li>
+                    <li>Perpindahan tab browser akan terdeteksi</li>
+                    <li>Batas waktu diterapkan secara ketat</li>
                 </ul>
             </div>
-            ${readiness ? `<p><strong>Readiness:</strong> ${readiness.recommendation}</p>` : ''}
-            ${bypassReadiness ? '<p><strong>Warning:</strong> You are entering before this path is fully ready.</p>' : ''}
+            ${readiness ? `<p><strong>Kesiapan:</strong> ${readiness.recommendation}</p>` : ''}
+            ${bypassReadiness ? '<p><strong>Peringatan:</strong> Anda masuk sebelum jalur ini benar-benar siap.</p>' : ''}
         </div>
     `;
 
@@ -866,7 +866,7 @@ function startExam() {
 
     currentExamQuestions = buildRuntimeQuestionSet(currentExam);
     if (!currentExamQuestions.length) {
-        alert('No exam question pool is available yet for this exam.');
+        alert('Bank soal untuk ujian ini belum tersedia.');
         return;
     }
 
@@ -930,7 +930,7 @@ function displayQuestion() {
         return;
     }
 
-    document.getElementById('question-number').textContent = `Question ${currentQuestionIndex + 1}`;
+    document.getElementById('question-number').textContent = `Soal ${currentQuestionIndex + 1}`;
     document.getElementById('question-text').textContent = question.question;
     document.getElementById('question-progress').textContent = `${currentQuestionIndex + 1} / ${currentExamQuestions.length}`;
 
@@ -1065,7 +1065,7 @@ function submitExam(autoSubmit = false) {
     if (!autoSubmit) {
         const unanswered = examAnswers.filter(answer => answer === null).length;
         if (unanswered > 0) {
-            const confirmSubmit = window.confirm(`You have ${unanswered} unanswered questions. Are you sure you want to submit?`);
+            const confirmSubmit = window.confirm(`Masih ada ${unanswered} soal yang belum dijawab. Yakin ingin mengumpulkan?`);
             if (!confirmSubmit) {
                 return;
             }
@@ -1106,21 +1106,21 @@ function showExamResults(results) {
     const downloadBtn = document.getElementById('download-certificate');
 
     if (results.passed) {
-        statusElement.textContent = 'PASSED';
+        statusElement.textContent = 'LULUS';
         statusElement.className = 'pass';
-        messageElement.textContent = 'Congratulations! You have successfully passed the exam.';
+        messageElement.textContent = 'Selamat! Anda berhasil lulus ujian.';
         scoreCircle.className = 'score-circle pass';
         downloadBtn.style.display = 'inline-block';
     } else {
-        statusElement.textContent = 'FAILED';
+        statusElement.textContent = 'BELUM LULUS';
         statusElement.className = 'fail';
-        messageElement.textContent = `You need ${currentExam.passingScore}% to pass. Keep studying and try again.`;
+        messageElement.textContent = `Anda membutuhkan ${currentExam.passingScore}% untuk lulus. Terus belajar dan coba lagi.`;
         scoreCircle.className = 'score-circle fail';
         downloadBtn.style.display = 'none';
     }
 
     const breakdownContainer = document.getElementById('category-breakdown');
-    breakdownContainer.innerHTML = '<h4>Performance by Category:</h4>';
+    breakdownContainer.innerHTML = '<h4>Performa per Kategori:</h4>';
 
     Object.entries(results.categoryPerformance).forEach(([category, performance]) => {
         const percentage = Math.round((performance.correct / performance.total) * 100);

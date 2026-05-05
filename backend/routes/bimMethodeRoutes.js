@@ -27,6 +27,7 @@ const DOCUMENT_TYPES = new Set(['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xls
 const MODEL_TYPES = new Set(['dwg', 'dxf', 'rvt', 'rfa', 'skp', 'fbx', 'tm']);
 
 const CACHE_TTL_MS = 30 * 60 * 1000;
+const REFRESH_RETRY_COOLDOWN_MS = 15 * 1000;
 const THUMB_CACHE_DIR = path.resolve(__dirname, '..', 'public', 'cache', 'bim-methode-thumbnails');
 const THUMB_STABLE_CACHE_DIR = path.resolve(__dirname, '..', 'public', 'cache', 'bim-methode-thumbnails-stable');
 const FILE_CACHE_DIR = path.resolve(__dirname, '..', 'public', 'cache', 'bim-methode-files');
@@ -620,20 +621,35 @@ function scheduleRefresh() {
     return refreshPromise;
 }
 
+function shouldScheduleRefresh() {
+    if (refreshInProgress) {
+        return false;
+    }
+
+    if (!lastRefreshError) {
+        return true;
+    }
+
+    return (Date.now() - lastRefreshStart) >= REFRESH_RETRY_COOLDOWN_MS;
+}
+
 function getCachedData() {
     const hasCache = bimMethodeCache.lastUpdated > 0;
     const isFresh = hasCache && (Date.now() - bimMethodeCache.lastUpdated < CACHE_TTL_MS);
     const cacheHasContent = (bimMethodeCache.categories?.length || 0) > 0 || (bimMethodeCache.allMedia?.length || 0) > 0;
+    const canScheduleRefresh = shouldScheduleRefresh();
 
     if (isFresh && !cacheHasContent) {
-        scheduleRefresh().catch(() => {});
+        if (canScheduleRefresh) {
+            scheduleRefresh().catch(() => {});
+        }
         return {
             root: bimMethodeCache.root,
             categories: bimMethodeCache.categories,
             mediaByCategory: bimMethodeCache.mediaByCategory,
             allMedia: bimMethodeCache.allMedia,
             stale: true,
-            refreshing: true,
+            refreshing: refreshInProgress,
             refreshError: lastRefreshError ? lastRefreshError.message : null
         };
     }
@@ -651,26 +667,30 @@ function getCachedData() {
     }
 
     if (hasCache) {
-        scheduleRefresh().catch(() => {});
+        if (canScheduleRefresh) {
+            scheduleRefresh().catch(() => {});
+        }
         return {
             root: bimMethodeCache.root,
             categories: bimMethodeCache.categories,
             mediaByCategory: bimMethodeCache.mediaByCategory,
             allMedia: bimMethodeCache.allMedia,
             stale: true,
-            refreshing: true,
+            refreshing: refreshInProgress,
             refreshError: lastRefreshError ? lastRefreshError.message : null
         };
     }
 
-    scheduleRefresh().catch(() => {});
+    if (canScheduleRefresh) {
+        scheduleRefresh().catch(() => {});
+    }
     return {
         root: bimMethodeCache.root,
         categories: [],
         mediaByCategory: new Map(),
         allMedia: [],
         stale: true,
-        refreshing: true,
+        refreshing: refreshInProgress,
         refreshError: lastRefreshError ? lastRefreshError.message : null
     };
 }

@@ -11,6 +11,44 @@ document.addEventListener('DOMContentLoaded', function () {
     loadProfileData();
 });
 
+function normalizeProfileImageUrl(value) {
+    const image = String(value || '').trim();
+    if (!image) return '';
+    if (/^https?:\/\//i.test(image) || image.startsWith('data:')) return image;
+
+    const legacyPrefix = '/uploads/profile-images/';
+    if (image.startsWith(legacyPrefix)) {
+        const filename = image.substring(legacyPrefix.length).split('/').pop();
+        return filename ? `/api/profile-images/${encodeURIComponent(filename)}` : image;
+    }
+
+    return image;
+}
+
+function getProfileAuthToken() {
+    try {
+        const storedUser = localStorage.getItem('user');
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        return localStorage.getItem('token') || (parsedUser && parsedUser.token) || '';
+    } catch (error) {
+        return localStorage.getItem('token') || '';
+    }
+}
+
+function buildProfileRequestOptions() {
+    const token = getProfileAuthToken();
+    const headers = {};
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    return {
+        credentials: 'include',
+        headers
+    };
+}
+
 // Tab Navigation System
 function initializeTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -129,41 +167,56 @@ function setupPhotoUpload() {
     }
 }
 
-function handlePhotoUpload(event) {
+async function handlePhotoUpload(event) {
     const file = event.target.files[0];
     if (file) {
         // Validate file
         if (!file.type.startsWith('image/')) {
-            showNotification('Please select a valid image file', 'error');
+            showNotification('Silakan pilih file gambar yang valid', 'error');
+            event.target.value = '';
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) { // 5MB limit
-            showNotification('File size must be less than 5MB', 'error');
+            showNotification('Ukuran file harus di bawah 5MB', 'error');
+            event.target.value = '';
             return;
         }
 
-        // Preview image with compression for persistence
-        processProfileImage(file)
-            .then((dataUrl) => {
-                document.getElementById('profile-image').src = dataUrl;
-                persistProfileImage(dataUrl);
-                showNotification('Profile photo updated successfully!', 'success');
-            })
-            .catch((error) => {
-                console.error('Error processing profile image:', error);
-                showNotification('Failed to process image. Please try another file.', 'error');
-            });
+        const profileImage = document.getElementById('profile-image');
+        const previousImageSrc = profileImage ? profileImage.src : '';
 
-        // Upload to server (would normally send to backend)
-        uploadProfileImage(file);
+        try {
+            const dataUrl = await processProfileImage(file);
+            if (profileImage) {
+                profileImage.src = dataUrl;
+            }
+
+            const uploadedImageUrl = await uploadProfileImage(file);
+            const finalImageSrc = normalizeProfileImageUrl(uploadedImageUrl || dataUrl);
+
+            if (profileImage) {
+                profileImage.src = finalImageSrc;
+            }
+
+            persistProfileImage(finalImageSrc);
+            showNotification('Foto profil berhasil diperbarui!', 'success');
+        } catch (error) {
+            console.error('Error updating profile image:', error);
+            if (profileImage && previousImageSrc) {
+                profileImage.src = previousImageSrc;
+            }
+            showNotification(error.message || 'Gagal mengunggah foto profil. Silakan coba lagi.', 'error');
+        } finally {
+            event.target.value = '';
+        }
     }
 }
 
 function processProfileImage(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onerror = () => reject(new Error('File read failed'));
+        reader.onerror = () => reject(new Error('Gagal membaca file'));
         reader.onload = function (e) {
             const img = new Image();
             img.onerror = () => resolve(e.target.result);
@@ -202,23 +255,25 @@ function processProfileImage(file) {
 function persistProfileImage(imageSrc) {
     if (!imageSrc) return;
 
+    const normalizedImageSrc = normalizeProfileImageUrl(imageSrc);
+
     try {
         const storedUser = localStorage.getItem('user');
         let userData = storedUser ? JSON.parse(storedUser) : {};
         userData = userData && typeof userData === 'object' ? userData : {};
 
-        userData.photo = imageSrc;
-        userData.profileImage = imageSrc;
+        userData.photo = normalizedImageSrc;
+        userData.profileImage = normalizedImageSrc;
 
         localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('userimg', imageSrc);
+        localStorage.setItem('userimg', normalizedImageSrc);
 
         const cachedProfile = localStorage.getItem('userProfile');
         if (cachedProfile) {
             const profileData = JSON.parse(cachedProfile);
             if (profileData && typeof profileData === 'object') {
-                profileData.photo = imageSrc;
-                profileData.profileImage = imageSrc;
+                profileData.photo = normalizedImageSrc;
+                profileData.profileImage = normalizedImageSrc;
                 localStorage.setItem('userProfile', JSON.stringify(profileData));
             }
         }
@@ -227,13 +282,13 @@ function persistProfileImage(imageSrc) {
         if (cachedUserData) {
             const legacyUserData = JSON.parse(cachedUserData);
             if (legacyUserData && typeof legacyUserData === 'object') {
-                legacyUserData.image = imageSrc;
+                legacyUserData.image = normalizedImageSrc;
                 localStorage.setItem('userData', JSON.stringify(legacyUserData));
             }
         }
 
         if (window.currentUser && typeof window.currentUser === 'object') {
-            window.currentUser.photo = imageSrc;
+            window.currentUser.photo = normalizedImageSrc;
         }
 
         if (typeof updateUserUI === 'function') {
@@ -254,49 +309,45 @@ function persistProfileImage(imageSrc) {
 }
 
 async function uploadProfileImage(file) {
-    try {
-        const formData = new FormData();
-        formData.append('profile-image', file);
+    const formData = new FormData();
+    formData.append('profile-image', file);
 
-        const storedUser = localStorage.getItem('user');
-        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-        const token = localStorage.getItem('token') || (parsedUser && parsedUser.token);
+    const storedUser = localStorage.getItem('user');
+    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+    const token = localStorage.getItem('token') || (parsedUser && parsedUser.token);
 
-        const headers = {};
-        if (token) {
-            headers.authorization = `Bearer ${token}`;
-        }
-
-        const response = await fetch('/api/upload-profile-image', {
-            method: 'POST',
-            credentials: 'include',
-            headers,
-            body: formData
-        });
-
-        if (response.ok) {
-            const result = await response.json().catch(() => null);
-            console.log('Profile image uploaded:', result);
-
-            if (result) {
-                const imageUrl =
-                    result.imageUrl ||
-                    result.profileImage ||
-                    result.profileImageUrl ||
-                    result.url ||
-                    result.path;
-
-                if (imageUrl) {
-                    document.getElementById('profile-image').src = imageUrl;
-                    persistProfileImage(imageUrl);
-                }
-            }
-        } else {
-            console.error('Failed to upload profile image');
-        }
-    } catch (error) {
-        console.error('Error uploading profile image:', error);
+    if (!token) {
+        throw new Error('Sesi berakhir. Silakan masuk kembali sebelum mengganti foto profil.');
     }
+
+    const response = await fetch('/api/upload-profile-image', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            Authorization: `Bearer ${token}`
+        },
+        body: formData
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+        const message =
+            (result && (result.error || result.message)) ||
+            'Gagal mengunggah foto profil.';
+        throw new Error(message);
+    }
+
+    console.log('Profile image uploaded:', result);
+
+    return normalizeProfileImageUrl(
+        result?.imageUrl ||
+        result?.profileImage ||
+        result?.profileImageUrl ||
+        result?.url ||
+        result?.path ||
+        ''
+    );
 }
 
 // Form Validation and Handling
@@ -444,17 +495,17 @@ async function handleProfileSave() {
             // Close modal
             document.getElementById('edit-profile-modal').classList.remove('show');
 
-            showNotification('Profile updated successfully!', 'success');
+            showNotification('Profil berhasil diperbarui!', 'success');
         } else {
-            throw new Error('Failed to update profile');
+            throw new Error('Gagal memperbarui profil');
         }
     } catch (error) {
         console.error('Error updating profile:', error);
-        showNotification('Failed to update profile. Please try again.', 'error');
+        showNotification('Gagal memperbarui profil. Silakan coba lagi.', 'error');
     } finally {
         // Reset button state
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
     }
 }
 
@@ -532,7 +583,7 @@ function loadUserProfile() {
         console.warn('User not logged in, redirecting to login page');
         setTimeout(() => {
             if (confirm('You need to login first. Redirect to login page?')) {
-                window.location.href = '/elearning-assets/login.html';
+                window.location.href = '/pages/login.html';
             }
         }, 1000);
         return;
@@ -560,7 +611,7 @@ function updateProfileUI(userData) {
     }
 
     if (userData.photo || userData.profileImage) {
-        document.getElementById('profile-image').src = userData.photo || userData.profileImage;
+        document.getElementById('profile-image').src = normalizeProfileImageUrl(userData.photo || userData.profileImage);
     }
 
     // Update stats
@@ -581,7 +632,7 @@ function updateProfileStats(userData) {
 async function fetchProfileFromServer() {
     try {
         const response = await fetch('/api/profile', {
-            credentials: 'include'
+            ...buildProfileRequestOptions()
         });
 
         if (response.ok) {
@@ -608,7 +659,7 @@ function loadProfileData() {
 async function loadOverviewStats() {
     try {
         const response = await fetch('/api/profile/stats', {
-            credentials: 'include'
+            ...buildProfileRequestOptions()
         });
 
         if (response.ok) {
@@ -642,7 +693,7 @@ async function loadUserAchievements() {
 
     try {
         const response = await fetch('/api/profile/achievements', {
-            credentials: 'include'
+            ...buildProfileRequestOptions()
         });
 
         if (response.ok) {
@@ -653,7 +704,7 @@ async function loadUserAchievements() {
             container.innerHTML = `
                 <div class="badge-placeholder">
                     <i class="fas fa-medal"></i>
-                    <p>Achievements will be loaded here</p>
+                    <p>Pencapaian akan dimuat di sini</p>
                 </div>
             `;
         }
@@ -662,7 +713,7 @@ async function loadUserAchievements() {
         container.innerHTML = `
             <div class="badge-placeholder">
                 <i class="fas fa-exclamation-triangle"></i>
-                <p>Failed to load achievements</p>
+                <p>Gagal memuat pencapaian</p>
             </div>
         `;
     }
@@ -705,7 +756,7 @@ async function loadActivityTimeline() {
 
     try {
         const response = await fetch('/api/profile/activity', {
-            credentials: 'include'
+            ...buildProfileRequestOptions()
         });
 
         if (response.ok) {
@@ -715,7 +766,7 @@ async function loadActivityTimeline() {
             container.innerHTML = `
                 <div class="timeline-placeholder">
                     <i class="fas fa-history"></i>
-                    <p>Activity timeline will be loaded here</p>
+                    <p>Linimasa aktivitas akan dimuat di sini</p>
                 </div>
             `;
         }
@@ -724,7 +775,7 @@ async function loadActivityTimeline() {
         container.innerHTML = `
             <div class="timeline-placeholder">
                 <i class="fas fa-exclamation-triangle"></i>
-                <p>Failed to load activity timeline</p>
+                <p>Gagal memuat linimasa aktivitas</p>
             </div>
         `;
     }
@@ -764,7 +815,7 @@ async function loadEnrolledCourses() {
 
     try {
         const response = await fetch('/api/profile/courses', {
-            credentials: 'include'
+            ...buildProfileRequestOptions()
         });
 
         if (response.ok) {
@@ -783,7 +834,7 @@ async function loadEnrolledCourses() {
         container.innerHTML = `
             <div class="course-placeholder">
                 <i class="fas fa-exclamation-triangle"></i>
-                <p>Failed to load enrolled courses</p>
+                <p>Gagal memuat materi yang diikuti</p>
             </div>
         `;
     }
@@ -828,7 +879,7 @@ function renderEnrolledCourses(courses) {
 async function loadSocialStats() {
     try {
         const response = await fetch('/api/profile/social', {
-            credentials: 'include'
+            ...buildProfileRequestOptions()
         });
 
         if (response.ok) {
@@ -874,14 +925,14 @@ function shareProfile() {
 
     if (navigator.share) {
         navigator.share({
-            title: 'My BIM Learning Profile',
+            title: 'Profil Belajar BIM Saya',
             text: 'Check out my BIM learning progress and achievements!',
             url: profileUrl
         });
     } else {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(profileUrl).then(() => {
-            showNotification('Profile link copied to clipboard!', 'success');
+            showNotification('Tautan profil berhasil disalin!', 'success');
         }).catch(() => {
             showNotification('Unable to copy link. URL: ' + profileUrl, 'info');
         });
@@ -890,7 +941,7 @@ function shareProfile() {
 
 function openSettingsModal() {
     // For now, just show a notification
-    showNotification('Settings panel coming soon!', 'info');
+    showNotification('Panel pengaturan akan segera hadir!', 'info');
 }
 
 // Utility Functions - Synchronized with existing user system
@@ -904,8 +955,14 @@ function getUserData() {
             if (parsed && typeof parsed === 'object' && !parsed.photo) {
                 const storedImage = localStorage.getItem('userimg');
                 if (storedImage) {
-                    parsed.photo = storedImage;
+                    parsed.photo = normalizeProfileImageUrl(storedImage);
                 }
+            }
+            if (parsed.profileImage) {
+                parsed.profileImage = normalizeProfileImageUrl(parsed.profileImage);
+            }
+            if (parsed.photo) {
+                parsed.photo = normalizeProfileImageUrl(parsed.photo);
             }
             return parsed;
         }
@@ -921,7 +978,7 @@ function getUserData() {
             return {
                 name: username,
                 role: role || 'Student',
-                photo: userimg || '/img/user-default.png',
+                photo: normalizeProfileImageUrl(userimg || '/img/user-default.png'),
                 email: email || '',
                 token: token || ''
             };

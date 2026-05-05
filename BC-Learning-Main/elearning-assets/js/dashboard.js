@@ -4,6 +4,8 @@ const dashboardState = {
     quizStats: null,
     certificates: [],
     history: [],
+    activitySummary: null,
+    learningEvents: [],
     weeklyChart: null,
     categoriesChart: null
 };
@@ -45,6 +47,29 @@ function getUserIdentity(userData) {
         userData.name ||
         ''
     ).trim();
+}
+
+function countLearningMarkers(prefixes) {
+    let total = 0;
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key) continue;
+
+        if (prefixes.some((prefix) => key.startsWith(prefix))) {
+            total += 1;
+        }
+    }
+
+    return total;
+}
+
+function getLocalLearningSummary() {
+    return {
+        pdfReads: countLearningMarkers(['bcl_pdf_opened_']),
+        videosWatched: countLearningMarkers(['bcl_video_completed_', 'bcl_video_opened_']),
+        completedModules: countLearningMarkers(['bcl_completed_', 'bcl_video_completed_', 'bcl_page_completed_'])
+    };
 }
 
 function authFetch(url, options = {}) {
@@ -144,7 +169,7 @@ function updateLevelProgress(userData, progressData) {
     if (level === 'BIM Manager' || level === 'Expert') nextLevel = 'Mastery Level';
 
     progressFill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
-    progressText.textContent = percent >= 100 ? 'Maximum level achieved' : `${percent}% to ${nextLevel}`;
+    progressText.textContent = percent >= 100 ? 'Level maksimum tercapai' : `${percent}% menuju ${nextLevel}`;
 }
 
 async function fetchProgressFromApi() {
@@ -189,29 +214,56 @@ async function fetchCertificatesFromApi(userIdentity) {
     }
 }
 
+async function fetchLearningActivitySummary() {
+    const token = getAuthToken();
+    if (!token) return null;
+
+    try {
+        const response = await authFetch('/api/elearning/activity/summary');
+        if (!response.ok) return null;
+        return response.json();
+    } catch (error) {
+        console.warn('Learning activity API unavailable:', error.message);
+        return null;
+    }
+}
+
 async function loadProgressStats() {
     const userData = getUserData();
     const userIdentity = getUserIdentity(userData);
 
     if (!userData || !userIdentity) {
         showDefaultStats();
-        loadRecentActivity([]);
+        loadLearningActivityStats(null);
+        loadRecentActivity([], []);
         loadBadges({ totalAttempts: 0, highestScore: 0, examsPassed: 0 }, 0);
         initializeCharts([]);
         return;
     }
 
-    const [progress, quizStats, certificates] = await Promise.all([
+    const [progress, quizStats, certificates, learningActivity] = await Promise.all([
         fetchProgressFromApi(),
         fetchQuizStatsFromApi(userIdentity),
-        fetchCertificatesFromApi(userIdentity)
+        fetchCertificatesFromApi(userIdentity),
+        fetchLearningActivitySummary()
     ]);
 
     dashboardState.progress = progress;
     dashboardState.quizStats = quizStats;
     dashboardState.certificates = certificates;
+    dashboardState.activitySummary = learningActivity && learningActivity.summary ? learningActivity.summary : null;
+    dashboardState.learningEvents = Array.isArray(learningActivity?.recentEvents) ? learningActivity.recentEvents : [];
 
-    const coursesCompleted = toInt(progress?.coursesCompleted, toInt(userData?.progress?.coursesCompleted, 0));
+    const localLearningSummary = getLocalLearningSummary();
+    const completedModules = Math.max(
+        toInt(dashboardState.activitySummary?.completedModules, 0),
+        toInt(localLearningSummary.completedModules, 0)
+    );
+
+    const coursesCompleted = Math.max(
+        completedModules,
+        toInt(progress?.coursesCompleted, toInt(userData?.progress?.coursesCompleted, 0))
+    );
     const practiceAttempts = Math.max(
         toInt(progress?.practiceAttempts, 0),
         toInt(quizStats?.practiceAttempts, 0)
@@ -227,6 +279,7 @@ async function loadProgressStats() {
     );
 
     setText('courses-completed', coursesCompleted);
+    loadLearningActivityStats(dashboardState.activitySummary);
     setText('practice-attempts', practiceAttempts);
     setText('exams-passed', examsPassed);
     setText('certificates-earned', certificatesEarned);
@@ -246,31 +299,41 @@ async function loadProgressStats() {
         await loadQuizHistory(userIdentity);
     }
 
-    loadRecentActivity(dashboardState.history);
+    loadRecentActivity(dashboardState.history, dashboardState.learningEvents);
     loadBadges(quizStats || {}, certificatesEarned);
     initializeCharts(dashboardState.history, quizStats?.categoriesAttempted || []);
 }
 
 function showDefaultStats() {
     setText('courses-completed', '0');
+    setText('pdf-reads', '0');
+    setText('videos-watched', '0');
+    setText('completed-modules', '0');
     setText('practice-attempts', '0');
     setText('exams-passed', '0');
     setText('certificates-earned', '0');
     setText('total-quiz-attempts', '0');
     setText('highest-score', '0%');
     setText('average-score', '0%');
-    setText('last-quiz-date', 'Never');
+    setText('last-quiz-date', 'Belum ada');
 
     const tbody = document.getElementById('quiz-history-body');
     if (tbody) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" class="text-center text-muted">
-                    <i class="fas fa-info-circle me-2"></i>No quiz attempts yet
+                    <i class="fas fa-info-circle me-2"></i>Belum ada percobaan kuis
                 </td>
             </tr>
         `;
     }
+}
+
+function loadLearningActivityStats(summary) {
+    const localSummary = getLocalLearningSummary();
+    setText('pdf-reads', Math.max(toInt(summary?.pdfReads, 0), toInt(localSummary.pdfReads, 0)));
+    setText('videos-watched', Math.max(toInt(summary?.videosWatched, 0), toInt(localSummary.videosWatched, 0)));
+    setText('completed-modules', Math.max(toInt(summary?.completedModules, 0), toInt(localSummary.completedModules, 0)));
 }
 
 async function loadQuizHistory(userIdentity) {
@@ -298,7 +361,7 @@ function renderQuizHistory(results) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="5" class="text-center text-muted">
-                    <i class="fas fa-info-circle me-2"></i>No quiz attempts yet
+                    <i class="fas fa-info-circle me-2"></i>Belum ada percobaan kuis
                 </td>
             </tr>
         `;
@@ -310,7 +373,7 @@ function renderQuizHistory(results) {
         const passed = !!result.passed;
         const statusClass = passed ? 'success' : 'danger';
         const statusIcon = passed ? 'check-circle' : 'times-circle';
-        const statusText = passed ? 'Passed' : 'Failed';
+        const statusText = passed ? 'Lulus' : 'Belum Lulus';
 
         return `
             <tr>
@@ -324,7 +387,7 @@ function renderQuizHistory(results) {
     }).join('');
 }
 
-function loadRecentActivity(history) {
+function loadRecentActivity(history, learningEvents = []) {
     const activityList = document.getElementById('activity-list');
     if (!activityList) return;
 
@@ -335,28 +398,64 @@ function loadRecentActivity(history) {
         const icon = type === 'exam' ? 'fa-clipboard-check' : type === 'practice' ? 'fa-edit' : 'fa-brain';
         const color = type === 'exam' ? 'purple' : type === 'practice' ? 'blue' : 'green';
         activities.push({
-            title: `${attempt.passed ? 'Passed' : 'Completed'} ${attempt.quizName || 'Quiz'} (${toInt(attempt.percentage, 0)}%)`,
+            title: `${attempt.passed ? 'Lulus' : 'Menyelesaikan'} ${attempt.quizName || 'Kuis'} (${toInt(attempt.percentage, 0)}%)`,
             time: formatRelativeDate(attempt.submittedAt),
             icon,
-            color
+            color,
+            sortValue: attempt.submittedAt || null
         });
     });
 
     dashboardState.certificates.slice(0, 2).forEach((cert) => {
         activities.push({
-            title: `Earned certificate: ${cert.title || 'Certificate'}`,
+            title: `Mendapat sertifikat: ${cert.title || 'Sertifikat'}`,
             time: formatRelativeDate(cert.issuedAt),
             icon: 'fa-certificate',
-            color: 'gold'
+            color: 'gold',
+            sortValue: cert.issuedAt || null
+        });
+    });
+
+    (Array.isArray(learningEvents) ? learningEvents : []).slice(0, 6).forEach((event) => {
+        const moduleType = String(event.moduleType || '').toLowerCase();
+        const eventType = String(event.eventType || '').toLowerCase();
+        const icon =
+            moduleType === 'video' ? 'fa-video' :
+            moduleType === 'page' ? 'fa-book-open' :
+            'fa-file-pdf';
+        const color = eventType === 'completed' ? 'green' : 'blue';
+        const rawTitle = event.rawTitle || (
+            moduleType === 'video' ? 'Video learning' :
+            moduleType === 'page' ? 'Materi bacaan' :
+            'PDF learning'
+        );
+
+        activities.push({
+            title: eventType === 'completed'
+                ? `Menyelesaikan ${rawTitle}`
+                : `Membuka ${rawTitle}`,
+            time: formatRelativeDate(event.createdAt),
+            icon,
+            color,
+            sortValue: event.createdAt || null
         });
     });
 
     if (activities.length === 0) {
-        activityList.innerHTML = '<div class="text-muted">No activity yet.</div>';
+        activityList.innerHTML = '<div class="text-muted">Belum ada aktivitas.</div>';
         return;
     }
 
-    activityList.innerHTML = activities.slice(0, 5).map((activity) => `
+    const sortedActivities = activities
+        .slice()
+        .sort((left, right) => {
+            const leftTime = left.sortValue ? new Date(left.sortValue).getTime() : 0;
+            const rightTime = right.sortValue ? new Date(right.sortValue).getTime() : 0;
+            return rightTime - leftTime;
+        })
+        .slice(0, 5);
+
+    activityList.innerHTML = sortedActivities.map((activity) => `
         <div class="activity-item">
             <div class="activity-icon" style="background-color: var(--${activity.color});">
                 <i class="fas ${activity.icon}"></i>
@@ -377,8 +476,8 @@ function loadBadges(quizStats, certificatesEarned) {
 
     if (totalAttempts >= 1) {
         badges.push({
-            name: 'Quiz Starter',
-            description: 'Completed your first quiz',
+            name: 'Pemula Kuis',
+            description: 'Menyelesaikan kuis pertama',
             icon: 'fas fa-rocket',
             color: 'blue'
         });
@@ -386,8 +485,8 @@ function loadBadges(quizStats, certificatesEarned) {
 
     if (totalAttempts >= 5) {
         badges.push({
-            name: 'Practice Runner',
-            description: 'Finished 5+ quiz attempts',
+            name: 'Rajin Berlatih',
+            description: 'Menyelesaikan 5+ percobaan kuis',
             icon: 'fas fa-edit',
             color: 'green'
         });
@@ -395,8 +494,8 @@ function loadBadges(quizStats, certificatesEarned) {
 
     if (highestScore >= 90) {
         badges.push({
-            name: 'High Scorer',
-            description: 'Reached 90%+ on a quiz',
+            name: 'Skor Tinggi',
+            description: 'Mencapai nilai 90%+ pada kuis',
             icon: 'fas fa-star',
             color: 'gold'
         });
@@ -404,8 +503,8 @@ function loadBadges(quizStats, certificatesEarned) {
 
     if (examsPassed >= 1) {
         badges.push({
-            name: 'Exam Passer',
-            description: 'Passed at least one exam',
+            name: 'Lulus Ujian',
+            description: 'Lulus minimal satu ujian',
             icon: 'fas fa-clipboard-check',
             color: 'purple'
         });
@@ -413,8 +512,8 @@ function loadBadges(quizStats, certificatesEarned) {
 
     if (certificatesEarned >= 1) {
         badges.push({
-            name: 'Certified Learner',
-            description: 'Earned your first certificate',
+            name: 'Pembelajar Bersertifikat',
+            description: 'Mendapat sertifikat pertama',
             icon: 'fas fa-certificate',
             color: 'gold'
         });
@@ -424,7 +523,7 @@ function loadBadges(quizStats, certificatesEarned) {
     if (!badgesContainer) return;
 
     if (badges.length === 0) {
-        badgesContainer.innerHTML = '<div class="text-muted">No badges yet. Complete quizzes to unlock.</div>';
+        badgesContainer.innerHTML = '<div class="text-muted">Belum ada badge. Selesaikan kuis untuk membukanya.</div>';
         return;
     }
 
@@ -473,7 +572,7 @@ function initializeCharts(history, categoriesFallback = []) {
             data: {
                 labels: weeklyLabels,
                 datasets: [{
-                    label: 'Quiz Attempts',
+                    label: 'Percobaan Kuis',
                     data: weeklyData,
                     borderColor: 'var(--main-color)',
                     backgroundColor: 'rgba(6, 187, 204, 0.1)',
@@ -521,7 +620,7 @@ function initializeCharts(history, categoriesFallback = []) {
         dashboardState.categoriesChart = new Chart(categoriesCtx, {
             type: 'doughnut',
             data: {
-                labels: categoryLabels.length > 0 ? categoryLabels.map((v) => v.toUpperCase()) : ['No Data'],
+                labels: categoryLabels.length > 0 ? categoryLabels.map((v) => v.toUpperCase()) : ['Tidak Ada Data'],
                 datasets: [{
                     data: categoryValues.length > 0 ? categoryValues : [1],
                     backgroundColor: [
@@ -644,7 +743,7 @@ function enrollCourse(courseId) {
     if (!userData.enrolledCourses.includes(courseId)) {
         userData.enrolledCourses.push(courseId);
         saveUserData(userData);
-        showToast('Successfully enrolled in course!', 'success');
+        showToast('Berhasil mendaftar materi!', 'success');
 
         setTimeout(() => {
             loadEnhancedCourses();
@@ -694,18 +793,18 @@ function formatDateTime(value) {
 }
 
 function formatRelativeDate(value) {
-    if (!value) return 'Never';
+    if (!value) return 'Belum ada';
 
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Never';
+    if (Number.isNaN(date.getTime())) return 'Belum ada';
 
     const now = Date.now();
     const diffMs = now - date.getTime();
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffDays <= 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays <= 0) return 'Hari ini';
+    if (diffDays === 1) return 'Kemarin';
+    if (diffDays < 7) return `${diffDays} hari lalu`;
 
     return date.toLocaleDateString();
 }

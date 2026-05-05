@@ -83,7 +83,7 @@ router.post("/courses", requireAdmin, (req, res) => {
             duration: req.body.duration || "1 jam",
             level: req.body.level || "Beginner",
             language: req.body.language || "Bahasa Indonesia",
-            thumbnail: req.body.thumbnail || "images/course-default.jpg",
+            thumbnail: req.body.thumbnail || "/img/course-default.svg",
             price: req.body.price || "Gratis",
             tags: req.body.tags || [],
             modules: req.body.modules || [],

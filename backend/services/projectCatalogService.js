@@ -1,5 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const {
+    sanitizeExcludedFolderRules,
+    shouldExcludeMediaFolder
+} = require("../../shared/rawMediaFolderFilter");
 
 function createProjectCatalogService({
     buildYearMatchRegex,
@@ -85,13 +89,13 @@ function createProjectCatalogService({
         if (sourceId.startsWith('pc-bim02')) {
             return {
                 maxDepth: 12,
-                excludedFolders: ['clash', 'Clash Detection', 'Texture Image Marbel']
+                excludedFolders: sanitizeExcludedFolderRules(['clash', 'Clash Detection', 'Texture Image Marbel'])
             };
         }
 
         return {
             maxDepth: 5,
-            excludedFolders: excludedFolders
+            excludedFolders: sanitizeExcludedFolderRules(excludedFolders)
         };
     }
 
@@ -111,10 +115,7 @@ function createProjectCatalogService({
     }
 
     function shouldSkipProjectFolder(folderName, scanExcludedFolders = excludedFolders) {
-        const normalizedName = String(folderName || '').toLowerCase();
-        return scanExcludedFolders.some(excluded =>
-            normalizedName.includes(String(excluded || '').toLowerCase())
-        );
+        return shouldExcludeMediaFolder(folderName, scanExcludedFolders);
     }
 
     function findMediaRecursive(dir, maxDepth = 5, currentDepth = 0, baseDir, mediaRoute = '/media', scanConfig = null) {
@@ -326,15 +327,24 @@ function createProjectCatalogService({
                     }
                     console.log(`✅ ${source.id}: ROOT scan source - detected years: ${years.join(', ') || 'none'}`);
                 } else {
-                    const items = fs.readdirSync(sourcePath, { withFileTypes: true });
                     const yearRegex = buildYearMatchRegex(source.folderPattern);
-                    years = items
-                        .filter(item => item.isDirectory() && yearRegex.test(item.name))
-                        .map(item => {
-                            const match = item.name.match(yearRegex);
-                            return match && match[1] ? match[1] : null;
-                        })
-                        .filter(Boolean);
+                    if (Array.isArray(source.fixedYears) && source.fixedYears.length > 0) {
+                        years = normalizeYears(
+                            source.fixedYears.filter((fixedYear) => {
+                                const yearFolder = findYearFolderForSource(sourcePath, source, fixedYear, null);
+                                return !!(yearFolder && fs.existsSync(yearFolder.path));
+                            })
+                        );
+                    } else {
+                        const items = fs.readdirSync(sourcePath, { withFileTypes: true });
+                        years = items
+                            .filter(item => item.isDirectory() && yearRegex.test(item.name))
+                            .map(item => {
+                                const match = item.name.match(yearRegex);
+                                return match && match[1] ? match[1] : null;
+                            })
+                            .filter(Boolean);
+                    }
 
                     const sourceBaseName = path.basename(sourcePath);
                     if (yearRegex.test(sourceBaseName)) {

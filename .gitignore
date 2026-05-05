@@ -25,6 +25,9 @@ error.log
 test_debug.log
 *.tmp
 *.temp
+output/
+tmp-live-*
+backend/tmp-*.png
 
 # Runtime locks / generated control files
 runlock/

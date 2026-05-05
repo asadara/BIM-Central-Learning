@@ -98,7 +98,7 @@ function generateRandomQuiz() {
         allQuestions = fallbackData[0].questions_data.map(q => ({
             ...q,
             category: 'fallback',
-            sourceCategory: 'Fallback Questions'
+            sourceCategory: 'Soal Cadangan'
         }));
     }
 
@@ -109,13 +109,13 @@ function generateRandomQuiz() {
     // Create random quiz set
     const randomQuizSet = {
         id: 'random-quiz-' + Date.now(),
-        title: '🎲 Random Practice Quiz (20 Questions)',
+        title: 'Kuis Latihan Acak (20 Soal)',
         category: 'mixed',
         level: 'bim_modeller',
-        difficulty: 'Mixed',
+        difficulty: 'Campuran',
         questions: selectedQuestions.length,
         timeLimit: selectedQuestions.length * 60, // 1 minute per question
-        description: `Random quiz with ${selectedQuestions.length} questions from BIM Modeller topics`,
+        description: `Kuis acak dengan ${selectedQuestions.length} soal dari topik BIM Modeller`,
         isRandomQuiz: true,
         questions_data: selectedQuestions.map(q => ({
             id: q.id,
@@ -123,7 +123,7 @@ function generateRandomQuiz() {
             options: q.options,
             correct: typeof q.correct === 'number' ? q.correct : (typeof q.correctAnswer === 'number' ? q.correctAnswer : q.options.indexOf(q.correctAnswer)),
             explanation: q.explanation,
-            learningObjective: q.learningObjective || 'Practice BIM concepts',
+            learningObjective: q.learningObjective || 'Latih konsep BIM',
             category: q.category,
             sourceCategory: q.sourceCategory,
             practicalScenario: q.practicalScenario,
@@ -153,7 +153,7 @@ function getPracticeQuestions() {
 
             // Group by difficulty
             questions.forEach(q => {
-                const difficulty = q.difficulty || 'Beginner';
+                const difficulty = q.difficulty || 'Pemula';
                 if (!questionSets[difficulty]) {
                     questionSets[difficulty] = [];
                 }
@@ -190,7 +190,7 @@ function getPracticeQuestions() {
                                 options: q.options,
                                 correct: typeof q.correctAnswer === 'number' ? q.correctAnswer : q.options.indexOf(q.correctAnswer),
                                 explanation: q.explanation,
-                                learningObjective: q.learningObjective || 'Practice BIM concepts',
+                                learningObjective: q.learningObjective || 'Latih konsep BIM',
                                 practicalScenario: q.practicalScenario,
                                 imageUrl: q.imageUrl
                             }))
@@ -209,7 +209,7 @@ function getPracticeQuestions() {
             practiceSets.push({
                 ...fallbackSet,
                 id: `fallback-${fallbackSet.category}-${index + 1}`,
-                description: `${fallbackSet.description} (supplemental set)`,
+                description: `${fallbackSet.description} (set pelengkap)`,
                 isFallbackSupplement: true
             });
         });
@@ -236,13 +236,13 @@ function getFallbackPracticeData() {
     return [
         {
             id: 1,
-            title: "AutoCAD 2D Basics",
+            title: "Dasar AutoCAD 2D",
             category: "autocad",
             level: "beginner",
-            difficulty: "Easy",
+            difficulty: "Mudah",
             questions: 10,
             timeLimit: 300,
-            description: "Test your knowledge of AutoCAD 2D drawing basics",
+            description: "Uji pemahaman Anda tentang dasar gambar 2D AutoCAD",
             questions_data: [
                 {
                     question: "What is the keyboard shortcut for the LINE command in AutoCAD?",
@@ -266,13 +266,13 @@ function getFallbackPracticeData() {
         },
         {
             id: 2,
-            title: "Revit Architecture Fundamentals",
+            title: "Fundamental Revit Architecture",
             category: "revit",
             level: "beginner",
-            difficulty: "Easy",
+            difficulty: "Mudah",
             questions: 12,
             timeLimit: 360,
-            description: "Basic concepts of Revit Architecture modeling",
+            description: "Konsep dasar pemodelan Revit Architecture",
             questions_data: [
                 {
                     question: "What is a family in Revit?",
@@ -290,13 +290,13 @@ function getFallbackPracticeData() {
         },
         {
             id: 3,
-            title: "BIM Coordination Principles",
+            title: "Prinsip Koordinasi BIM",
             category: "general",
             level: "intermediate",
-            difficulty: "Medium",
+            difficulty: "Menengah",
             questions: 15,
             timeLimit: 450,
-            description: "Understanding BIM coordination workflows and clash detection",
+            description: "Memahami alur koordinasi BIM dan clash detection",
             questions_data: [
                 {
                     question: "What is the primary purpose of clash detection in BIM?",
@@ -342,11 +342,11 @@ function createPracticeSetCardMarkup(set) {
                 <div class="set-stats">
                     <div class="stat">
                         <i class="fas fa-question-circle"></i>
-                        <span>${set.questions} Questions</span>
+                        <span>${set.questions} Soal</span>
                     </div>
                     <div class="stat">
                         <i class="fas fa-clock"></i>
-                        <span>${Math.floor(set.timeLimit / 60)} minutes</span>
+                        <span>${Math.floor(set.timeLimit / 60)} menit</span>
                     </div>
                     <div class="stat">
                         <i class="fas fa-chart-line"></i>
@@ -356,10 +356,10 @@ function createPracticeSetCardMarkup(set) {
             </div>
             <div class="set-actions">
                 <button class="btn btn-primary start-practice" onclick="startPractice('${set.id}')">
-                    ${set.isMockExam ? 'Start Mock Test' : 'Start Practice'}
+                    ${set.isMockExam ? 'Mulai Tes Simulasi' : 'Mulai Latihan'}
                 </button>
                 <button class="btn btn-outline review-questions" onclick="reviewQuestions('${set.id}')">
-                    Review Questions
+                    Tinjau Soal
                 </button>
             </div>
         </div>
@@ -383,8 +383,8 @@ function displayPracticeSets(sets, containerId = 'practice-container') {
         ? sets.map(set => createPracticeSetCardMarkup(set)).join('')
         : `
             <div class="practice-empty-state">
-                <h3>No practice sets found</h3>
-                <p class="practice-history-empty">Adjust the current filter or complete more drills to unlock new recommendations.</p>
+                <h3>Tidak ada set latihan</h3>
+                <p class="practice-history-empty">Sesuaikan filter saat ini atau selesaikan lebih banyak latihan untuk membuka rekomendasi baru.</p>
             </div>
         `;
 }
@@ -796,25 +796,25 @@ function renderPracticeHistory() {
         ? history.map(entry => `
             <div class="practice-history-card">
                 <h4>${entry.title || entry.category || entry.setId}</h4>
-                <p>${entry.mode === 'mock-tests' || entry.mode === 'mock' ? 'Mock progression' : 'Skill drill performance'}</p>
+                <p>${entry.mode === 'mock-tests' || entry.mode === 'mock' ? 'Progres tes simulasi' : 'Performa latihan keahlian'}</p>
                 <div class="practice-history-row">
-                    <span>Score</span>
+                    <span>Nilai</span>
                     <strong>${entry.score}%</strong>
                 </div>
                 <div class="practice-history-row">
-                    <span>Time</span>
+                    <span>Waktu</span>
                     <strong>${Math.round((entry.timeSpent || 0) / 60)} min</strong>
                 </div>
                 <div class="practice-history-row">
-                    <span>Categories</span>
+                    <span>Kategori</span>
                     <strong>${Array.isArray(entry.categories) ? entry.categories.join(', ') : (entry.category || '-')}</strong>
                 </div>
             </div>
         `).join('')
         : `
             <div class="practice-empty-state">
-                <h3>No history yet</h3>
-                <p class="practice-history-empty">Complete a drill or mock test to start tracking progress over time.</p>
+                <h3>Belum ada riwayat</h3>
+                <p class="practice-history-empty">Selesaikan latihan atau tes simulasi untuk mulai melacak progres dari waktu ke waktu.</p>
             </div>
         `;
 }
@@ -919,7 +919,7 @@ async function submitPracticeResultToServer(setData, resultData) {
 
         const payload = {
             quizId: `practice-${setData.id}`,
-            quizName: setData.title || 'Practice Quiz',
+            quizName: setData.title || 'Kuis Latihan',
             quizCategory: setData.category || 'practice',
             sourceType: 'practice',
             score: resultData.correctCount,
@@ -1035,21 +1035,21 @@ function displayPracticeStats() {
         statsContainer.innerHTML = `
             <div class="stat-item">
                 <div class="stat-number">${stats.totalAttempts}</div>
-                <div class="stat-label">Total Attempts</div>
+                <div class="stat-label">Total Percobaan</div>
             </div>
             <div class="stat-item">
                 <div class="stat-number">${stats.averageScore}%</div>
-                <div class="stat-label">Average Score</div>
+                <div class="stat-label">Rata-rata Nilai</div>
             </div>
             <div class="stat-item">
                 <div class="stat-number">${stats.totalTimeSpent}m</div>
-                <div class="stat-label">Time Spent</div>
+                <div class="stat-label">Waktu Belajar</div>
             </div>
             <div class="stat-item">
                 <div class="stat-number ${stats.improvementTrend >= 0 ? 'positive' : 'negative'}">
                     ${stats.improvementTrend >= 0 ? '+' : ''}${stats.improvementTrend}%
                 </div>
-                <div class="stat-label">Improvement</div>
+                <div class="stat-label">Peningkatan</div>
             </div>
         `;
     }
@@ -1061,7 +1061,7 @@ function showQuizModal() {
     const title = document.getElementById('quiz-title');
 
     if (modal && title) {
-        title.textContent = isReviewMode ? 'Review Questions' : currentPracticeSet.title;
+        title.textContent = isReviewMode ? 'Tinjau Soal' : currentPracticeSet.title;
         modal.style.display = 'flex';
     }
 }
@@ -1274,7 +1274,7 @@ function showResultsModal(correctCount, score, timeSpent) {
 
     if (modal && scoreElement && messageElement && correctElement && wrongElement && timeElement) {
         scoreElement.textContent = `${score}%`;
-        messageElement.textContent = score >= 80 ? 'Excellent!' : score >= 60 ? 'Good job!' : 'Keep practicing!';
+        messageElement.textContent = score >= 80 ? 'Sangat Baik!' : score >= 60 ? 'Bagus!' : 'Terus berlatih!';
 
         correctElement.textContent = correctCount;
         wrongElement.textContent = currentPracticeSet.questions_data.length - correctCount;

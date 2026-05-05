@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Practice Questions - BC Learning</title>
+    <title>Soal Latihan - BC Learning</title>
 
     <!-- Security Headers (fixed for FontAwesome compatibility) -->
     <meta http-equiv="Content-Security-Policy"
@@ -234,17 +234,17 @@
     <div class="side-bar" id="sidebar-container"></div>
 
     <section class="practice">
-        <h1 class="heading">Practice Questions</h1>
+        <h1 class="heading">Soal Latihan</h1>
         <div class="practice-shell">
             <div class="practice-hero">
                 <div class="practice-hero-copy">
                     <div class="practice-pill-row">
-                        <span class="practice-pill"><i class="fas fa-route"></i> Learn -> Practice -> Exam</span>
-                        <span class="practice-pill"><i class="fas fa-chart-line"></i> Measured readiness</span>
+                        <span class="practice-pill"><i class="fas fa-route"></i> Belajar -> Latihan -> Ujian</span>
+                        <span class="practice-pill"><i class="fas fa-chart-line"></i> Kesiapan terukur</span>
                     </div>
-                    <h2 id="practice-hero-title">Build exam readiness with measured drills and mock sessions</h2>
+                    <h2 id="practice-hero-title">Bangun kesiapan ujian melalui latihan terukur dan simulasi</h2>
                     <p id="practice-hero-copy">
-                        Strengthen weak topics, track consistency, and move into formal exams only when your readiness score is strong enough.
+                        Perkuat topik yang lemah, lacak konsistensi, dan lanjut ke ujian formal hanya saat skor kesiapan Anda sudah cukup kuat.
                     </p>
                     <div class="practice-pill-row" id="practice-hero-actions"></div>
                 </div>
@@ -254,25 +254,25 @@
             </div>
 
             <div class="practice-menu" id="practice-menu">
-                <button class="practice-menu-btn active" data-view="overview">Overview</button>
-                <button class="practice-menu-btn" data-view="skill-drills">Skill Drills</button>
-                <button class="practice-menu-btn" data-view="mock-tests">Mock Tests</button>
-                <button class="practice-menu-btn" data-view="history">History</button>
+                <button class="practice-menu-btn active" data-view="overview">Ringkasan</button>
+                <button class="practice-menu-btn" data-view="skill-drills">Latihan Keahlian</button>
+                <button class="practice-menu-btn" data-view="mock-tests">Tes Simulasi</button>
+                <button class="practice-menu-btn" data-view="history">Riwayat</button>
             </div>
 
             <div class="practice-view active" id="practice-overview-view">
                 <div class="practice-overview-grid" id="practice-overview-metrics"></div>
                 <div class="practice-panel">
                     <div class="practice-panel-title">
-                        <h3>Readiness by Exam</h3>
-                        <span class="practice-panel-subtitle">Measured from accuracy, attempts, coverage, and consistency.</span>
+                        <h3>Kesiapan per Ujian</h3>
+                        <span class="practice-panel-subtitle">Diukur dari akurasi, jumlah percobaan, cakupan, dan konsistensi.</span>
                     </div>
                     <div class="practice-recommendation-grid" id="practice-readiness-grid"></div>
                 </div>
                 <div class="practice-panel">
                     <div class="practice-panel-title">
-                        <h3>Next Best Actions</h3>
-                        <span class="practice-panel-subtitle">Use these shortcuts to move from drilling into formal assessment.</span>
+                        <h3>Langkah Terbaik Berikutnya</h3>
+                        <span class="practice-panel-subtitle">Gunakan pintasan ini untuk beralih dari latihan ke asesmen formal.</span>
                     </div>
                     <div class="practice-recommendation-grid" id="practice-recommendations"></div>
                 </div>
@@ -281,7 +281,7 @@
             <div class="practice-view" id="practice-skill-drills-view">
                 <div class="search-bar" style="margin-bottom: 1rem;">
                     <div class="search-input" style="max-width: 500px; margin: 0 auto;">
-                        <input type="text" id="practice-search" placeholder="Search practice questions..."
+                        <input type="text" id="practice-search" placeholder="Cari soal latihan..."
                             style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
                         <i class="fas fa-search"
                             style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666;"></i>
@@ -298,8 +298,8 @@
             <div class="practice-view" id="practice-mock-tests-view">
                 <div class="practice-panel">
                     <div class="practice-panel-title">
-                        <h3>Exam-Style Mock Tests</h3>
-                        <span class="practice-panel-subtitle">Timed simulations linked directly to the exam pathways on the Exams page.</span>
+                        <h3>Tes Simulasi Bergaya Ujian</h3>
+                        <span class="practice-panel-subtitle">Simulasi berwaktu yang terhubung langsung ke jalur ujian di halaman Ujian.</span>
                     </div>
                     <div class="box-container" id="practice-mock-container">
                         <!-- Mock test cards will be loaded dynamically -->
@@ -310,8 +310,8 @@
             <div class="practice-view" id="practice-history-view">
                 <div class="practice-panel">
                     <div class="practice-panel-title">
-                        <h3>Measured Progress</h3>
-                        <span class="practice-panel-subtitle">Recent attempts, improvement trend, and weak topics.</span>
+                        <h3>Progres Terukur</h3>
+                        <span class="practice-panel-subtitle">Percobaan terbaru, tren peningkatan, dan topik yang masih lemah.</span>
                     </div>
                     <div class="practice-history-grid" id="practice-history-container">
                         <!-- Practice history will be loaded dynamically -->
@@ -324,7 +324,7 @@
         <div class="quiz-modal" id="quiz-modal">
             <div class="quiz-content">
                 <div class="quiz-header">
-                    <h3 id="quiz-title">Practice Quiz</h3>
+                    <h3 id="quiz-title">Kuis Latihan</h3>
                     <div class="quiz-info">
                         <span id="question-counter">1 / 10</span>
                         <span id="timer">05:00</span>
@@ -338,7 +338,7 @@
                             <img id="question-image" src="" alt="Question Image"
                                 style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         </div>
-                        <h4 id="question-text">Question will appear here</h4>
+                        <h4 id="question-text">Soal akan tampil di sini</h4>
                         <div class="options" id="options-container">
                             <!-- Options will be loaded dynamically -->
                         </div>
@@ -346,9 +346,9 @@
                 </div>
 
                 <div class="quiz-footer">
-                    <button class="btn prev-btn" id="prev-btn" disabled>Previous</button>
-                    <button class="btn next-btn" id="next-btn">Next</button>
-                    <button class="btn submit-btn" id="submit-btn" style="display: none;">Submit Quiz</button>
+                    <button class="btn prev-btn" id="prev-btn" disabled>Sebelumnya</button>
+                    <button class="btn next-btn" id="next-btn">Berikutnya</button>
+                    <button class="btn submit-btn" id="submit-btn" style="display: none;">Kumpulkan Kuis</button>
                 </div>
             </div>
         </div>
@@ -357,7 +357,7 @@
         <div class="results-modal" id="results-modal">
             <div class="results-content">
                 <div class="results-header">
-                    <h3>Quiz Results</h3>
+                    <h3>Hasil Kuis</h3>
                     <button class="close-results" id="close-results">&times;</button>
                 </div>
 
@@ -366,28 +366,28 @@
                         <div class="score-circle">
                             <span id="final-score">0%</span>
                         </div>
-                        <h4 id="score-message">Good job!</h4>
+                        <h4 id="score-message">Bagus!</h4>
                     </div>
 
                     <div class="results-details">
                         <div class="detail-item">
-                            <span>Correct Answers:</span>
+                            <span>Jawaban Benar:</span>
                             <span id="correct-count">0</span>
                         </div>
                         <div class="detail-item">
-                            <span>Wrong Answers:</span>
+                            <span>Jawaban Salah:</span>
                             <span id="wrong-count">0</span>
                         </div>
                         <div class="detail-item">
-                            <span>Time Taken:</span>
+                            <span>Waktu Pengerjaan:</span>
                             <span id="time-taken">00:00</span>
                         </div>
                     </div>
 
                     <div class="results-actions">
-                        <button class="btn" id="review-btn">Review Answers</button>
-                        <button class="btn" id="retry-btn">Try Again</button>
-                        <button class="btn" id="next-level-btn" style="display: none;">Next Level</button>
+                        <button class="btn" id="review-btn">Tinjau Jawaban</button>
+                        <button class="btn" id="retry-btn">Coba Lagi</button>
+                        <button class="btn" id="next-level-btn" style="display: none;">Level Berikutnya</button>
                     </div>
                 </div>
             </div>
@@ -410,8 +410,3 @@
 </body>
 
 </html>
-
-
-
-
-

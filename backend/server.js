@@ -405,6 +405,7 @@ const createVideoCatalogService = require('./services/videoCatalogService');
 // E-learning modular backend routes
 const moduleRoutes = require('./elearning/routes/moduleRoutes');
 const progressRoutes = require('./elearning/routes/progressRoutes');
+const activityRoutes = require('./elearning/routes/activityRoutes');
 const quizRoutes = require('./elearning/routes/quizRoutes');
 const certificateRoutes = require('./elearning/routes/certificateRoutes');
 
@@ -449,6 +450,7 @@ app.use('/api/courses', optionalAuth, (req, res) => {
 // Mount e-learning routes
 app.use('/api/elearning/modules', moduleRoutes);
 app.use('/api/elearning/progress', progressRoutes);
+app.use('/api/elearning/activity', activityRoutes);
 app.use('/api/elearning/quiz', quizRoutes);
 app.use('/api/elearning/certificate', certificateRoutes);
 
@@ -595,7 +597,7 @@ const PROJECT_SOURCES = [
     {
         id: 'pc-bim02-2025',
         name: 'PC-BIM02 PROJECT BIM 2025',
-        path: path.resolve(__dirname, '..', 'PC-BIM02'),
+        path: path.resolve(__dirname, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2025'),
         mountId: 'pc-bim02', // Reference to LAN mount
         priority: 2,
         enabled: true, // âœ… ENABLED by default, will auto-disable if mount fails
@@ -609,84 +611,86 @@ const PROJECT_SOURCES = [
     {
         id: 'pc-bim02-2026',
         name: 'PC-BIM02 PROJECT BIM 2026',
-        path: null,
+        path: path.resolve(__dirname, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2026'),
         mountId: 'pc-bim02-2026',
         priority: 3,
         enabled: true,
         folderPattern: 'PROJECT BIM {year}', // \\pc-bim02\PROJECT BIM 2026
         mediaRoute: '/media-bim02-2026',
+        rootScan: true,
+        fixedYears: ['2026'],
         groupId: 'pc-bim02',
         groupName: 'PC-BIM02 PROJECT BIM'
     },
     {
         id: 'pc-bim1-2025',
         name: 'PC-BIM1 PROJECT 2025',
-        path: null, // Will be set when mounted
-        mountId: 'pc-bim1', // Reference to LAN mount
+        path: BASE_PROJECT_DIR,
         priority: 4,
         enabled: true,
         folderPattern: 'PROJECT {year}', // \\pc-bim1\PROJECT 2025
         mediaRoute: '/media-bim1-2025',
+        fixedYears: ['2025'],
         groupId: 'pc-bim1',
         groupName: 'PC-BIM1 PROJECT'
     },
     {
         id: 'pc-bim1-2024',
         name: 'PC-BIM1 PROJECT 2024',
-        path: null,
-        mountId: 'pc-bim1-2024',
+        path: BASE_PROJECT_DIR,
         priority: 5,
         enabled: true,
         folderPattern: 'PROJECT {year}',
         mediaRoute: '/media-bim1-2024',
+        fixedYears: ['2024'],
         groupId: 'pc-bim1',
         groupName: 'PC-BIM1 PROJECT'
     },
     {
         id: 'pc-bim1-2023',
         name: 'PC-BIM1 PROJECT 2023',
-        path: null,
-        mountId: 'pc-bim1-2023',
+        path: BASE_PROJECT_DIR,
         priority: 6,
         enabled: true,
         folderPattern: 'PROJECT {year}',
         mediaRoute: '/media-bim1-2023',
+        fixedYears: ['2023'],
         groupId: 'pc-bim1',
         groupName: 'PC-BIM1 PROJECT'
     },
     {
         id: 'pc-bim1-2022',
         name: 'PC-BIM1 PROJECT 2022',
-        path: null,
-        mountId: 'pc-bim1-2022',
+        path: BASE_PROJECT_DIR,
         priority: 7,
         enabled: true,
         folderPattern: 'PROJECT {year}',
         mediaRoute: '/media-bim1-2022',
+        fixedYears: ['2022'],
         groupId: 'pc-bim1',
         groupName: 'PC-BIM1 PROJECT'
     },
     {
         id: 'pc-bim1-2021',
         name: 'PC-BIM1 PROJECT 2021',
-        path: null,
-        mountId: 'pc-bim1-2021',
+        path: BASE_PROJECT_DIR,
         priority: 8,
         enabled: true,
         folderPattern: 'PROJECT {year}',
         mediaRoute: '/media-bim1-2021',
+        fixedYears: ['2021'],
         groupId: 'pc-bim1',
         groupName: 'PC-BIM1 PROJECT'
     },
     {
         id: 'pc-bim1-2020',
         name: 'PC-BIM1 PROJECT 2020',
-        path: null,
-        mountId: 'pc-bim1-2020',
+        path: BASE_PROJECT_DIR,
         priority: 9,
         enabled: true,
         folderPattern: 'PROJECT {year}',
         mediaRoute: '/media-bim1-2020',
+        fixedYears: ['2020'],
         groupId: 'pc-bim1',
         groupName: 'PC-BIM1 PROJECT'
     }

@@ -3,98 +3,98 @@
 // Badge data structure
 const badgeData = {
     'first-course': {
-        title: 'First Steps',
-        description: 'Complete your first course',
+        title: 'Langkah Pertama',
+        description: 'Selesaikan materi pertama Anda',
         icon: 'fas fa-play-circle',
-        requirements: ['Complete any course'],
+        requirements: ['Selesaikan satu materi apa pun'],
         category: 'learning',
         points: 10
     },
     'course-master': {
-        title: 'Course Master',
-        description: 'Complete 5 courses',
+        title: 'Master Materi',
+        description: 'Selesaikan 5 materi',
         icon: 'fas fa-books',
-        requirements: ['Complete 5 different courses'],
+        requirements: ['Selesaikan 5 materi yang berbeda'],
         category: 'learning',
         points: 50
     },
     'knowledge-seeker': {
-        title: 'Knowledge Seeker',
-        description: 'Complete all courses in a category',
+        title: 'Penjelajah Pengetahuan',
+        description: 'Tuntaskan semua materi dalam satu kategori',
         icon: 'fas fa-search',
-        requirements: ['Complete all courses in any category'],
+        requirements: ['Selesaikan semua materi dalam satu kategori'],
         category: 'learning',
         points: 75
     },
     'practice-starter': {
-        title: 'Practice Starter',
-        description: 'Complete 10 practice questions',
+        title: 'Awal Latihan',
+        description: 'Selesaikan 10 soal latihan',
         icon: 'fas fa-play',
-        requirements: ['Complete 10 practice questions'],
+        requirements: ['Selesaikan 10 soal latihan'],
         category: 'practice',
         points: 15
     },
     'accuracy-expert': {
-        title: 'Accuracy Expert',
-        description: 'Achieve 90% accuracy in practice',
+        title: 'Akurasi Tinggi',
+        description: 'Capai akurasi 90% dalam latihan',
         icon: 'fas fa-bullseye',
-        requirements: ['Achieve 90% or higher accuracy on practice questions'],
+        requirements: ['Capai akurasi 90% atau lebih pada soal latihan'],
         category: 'practice',
         points: 40
     },
     'speed-demon': {
-        title: 'Speed Demon',
-        description: 'Complete 50 questions in record time',
+        title: 'Cepat Tuntas',
+        description: 'Selesaikan 50 soal dalam waktu singkat',
         icon: 'fas fa-bolt',
-        requirements: ['Complete 50 practice questions under time limit'],
+        requirements: ['Selesaikan 50 soal latihan dalam batas waktu'],
         category: 'practice',
         points: 30
     },
     'exam-ready': {
-        title: 'Exam Ready',
-        description: 'Pass your first formal exam',
+        title: 'Siap Ujian',
+        description: 'Lulus ujian formal pertama Anda',
         icon: 'fas fa-check-circle',
-        requirements: ['Pass any formal examination'],
+        requirements: ['Lulus satu ujian formal'],
         category: 'exam',
         points: 100
     },
     'high-achiever': {
-        title: 'High Achiever',
-        description: 'Score 95% or higher on an exam',
+        title: 'Prestasi Tinggi',
+        description: 'Raih nilai 95% atau lebih pada ujian',
         icon: 'fas fa-star',
-        requirements: ['Score 95% or higher on any exam'],
+        requirements: ['Raih nilai 95% atau lebih pada satu ujian'],
         category: 'exam',
         points: 150
     },
     'certification-master': {
-        title: 'Certification Master',
-        description: 'Earn all available certifications',
+        title: 'Master Sertifikasi',
+        description: 'Raih semua sertifikasi yang tersedia',
         icon: 'fas fa-crown',
-        requirements: ['Earn all certifications for your level'],
+        requirements: ['Raih seluruh sertifikasi untuk level Anda'],
         category: 'exam',
         points: 200
     },
     'early-bird': {
-        title: 'Early Bird',
-        description: 'Complete activities before 8 AM',
+        title: 'Rajin Pagi',
+        description: 'Selesaikan aktivitas sebelum pukul 08.00',
         icon: 'fas fa-sun',
-        requirements: ['Complete learning activities before 8 AM on 5 different days'],
+        requirements: ['Selesaikan aktivitas belajar sebelum pukul 08.00 pada 5 hari berbeda'],
         category: 'special',
         points: 25
     },
     'streak-master': {
-        title: 'Streak Master',
-        description: 'Maintain a 7-day learning streak',
+        title: 'Master Streak',
+        description: 'Pertahankan streak belajar 7 hari',
         icon: 'fas fa-fire',
-        requirements: ['Complete learning activities for 7 consecutive days'],
+        requirements: ['Selesaikan aktivitas belajar selama 7 hari berturut-turut'],
         category: 'special',
         points: 60
     },
     'bim-legend': {
-        title: 'BIM Legend',
-        description: 'Reach BIM Manager level',
+        title: 'Legenda BIM',
+        description: 'Capai level BIM Manager',
         icon: 'fas fa-building',
-        requirements: ['Achieve BIM Manager level status'],
+        requirements: ['Capai status BIM Manager'],
         category: 'special',
         points: 500
     }
@@ -115,6 +115,17 @@ let userBadgeProgress = {
     'streak-master': { earned: false, progress: 3, total: 7 },
     'bim-legend': { earned: false, progress: 0, total: 1 }
 };
+
+function translateBadgeCategory(category) {
+    const labels = {
+        learning: 'belajar',
+        practice: 'latihan',
+        exam: 'ujian',
+        special: 'khusus'
+    };
+
+    return labels[category] || category;
+}
 
 // Initialize badges page
 document.addEventListener('DOMContentLoaded', function () {
@@ -162,12 +173,12 @@ function renderBadges() {
             if (progress.earned) {
                 badgeElement.classList.remove('locked');
                 badgeElement.classList.add('earned');
-                badgeElement.querySelector('.badge-status').textContent = 'Earned';
+                badgeElement.querySelector('.badge-status').textContent = 'Diraih';
                 badgeElement.querySelector('.badge-status').className = 'badge-status earned';
             } else if (progress.progress > 0) {
                 badgeElement.classList.remove('locked');
                 badgeElement.classList.add('in-progress');
-                badgeElement.querySelector('.badge-status').textContent = 'In Progress';
+                badgeElement.querySelector('.badge-status').textContent = 'Sedang Proses';
                 badgeElement.querySelector('.badge-status').className = 'badge-status in-progress';
             }
 
@@ -214,7 +225,7 @@ function showBadgeModal(badgeId) {
     // Update progress
     const progressPercentage = Math.round((progress.progress / progress.total) * 100);
     document.getElementById('modal-badge-progress').style.width = progressPercentage + '%';
-    document.getElementById('modal-progress-text').textContent = `${progress.progress}/${progress.total} completed`;
+    document.getElementById('modal-progress-text').textContent = `${progress.progress}/${progress.total} selesai`;
 
     // Show modal
     modal.style.display = 'block';
@@ -245,9 +256,9 @@ function showBadgeEarnedNotification(badgeId) {
     notification.innerHTML = `
         <div class="notification-content">
             <i class="${badge.icon}"></i>
-            <h3>Badge Earned!</h3>
+            <h3>Lencana Diraih!</h3>
             <p>${badge.title}</p>
-            <small>+${badge.points} points</small>
+            <small>+${badge.points} poin</small>
         </div>
     `;
 
@@ -275,7 +286,7 @@ function updateProgressBar() {
 
     // Update overall progress bar
     document.getElementById('overall-progress').style.width = completionRate + '%';
-    document.getElementById('progress-text').textContent = `${earnedBadges} of ${totalBadges} badges earned`;
+    document.getElementById('progress-text').textContent = `${earnedBadges} dari ${totalBadges} lencana telah diraih`;
 
     // Update milestone markers
     updateMilestones(completionRate);
@@ -504,9 +515,9 @@ function showBadgeEarnedNotification(badgeId) {
                 <i class="${badge.icon}"></i>
             </div>
             <div class="notification-text">
-                <h3>🎉 Badge Earned!</h3>
+                <h3>Lencana Diraih!</h3>
                 <p><strong>${badge.title}</strong></p>
-                <small>+${badge.points} XP • ${badge.category} category</small>
+                <small>+${badge.points} XP • kategori ${translateBadgeCategory(badge.category)}</small>
             </div>
             <div class="notification-sparkles">
                 ✨ ✨ ✨

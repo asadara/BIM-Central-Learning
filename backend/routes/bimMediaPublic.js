@@ -6,9 +6,18 @@ const router = express.Router();
 // BIM Media Tags Storage
 const BIM_MEDIA_TAGS_FILE = path.join(__dirname, '..', 'bim-media-tags.json');
 const G_DRIVE_ROOT = 'G:/';
-const PCBIM02_2025_ROOT = '\\\\pc-bim02\\PROJECT BIM 2025';
-const PCBIM02_2026_ROOT = '\\\\pc-bim02\\PROJECT BIM 2026';
-const PUBLIC_MEDIA_SEARCH_ROOTS = [PCBIM02_2025_ROOT, PCBIM02_2026_ROOT];
+const PCBIM02_2025_LOCAL_ROOT = path.join(__dirname, '..', '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2025');
+const PCBIM02_2026_LOCAL_ROOT = path.join(__dirname, '..', '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2026');
+const PCBIM02_2025_NETWORK_ROOT = '\\\\pc-bim02\\PROJECT BIM 2025';
+const PCBIM02_2026_NETWORK_ROOT = '\\\\pc-bim02\\PROJECT BIM 2026';
+const PCBIM02_2025_ROOT = fs.existsSync(PCBIM02_2025_LOCAL_ROOT) ? PCBIM02_2025_LOCAL_ROOT : PCBIM02_2025_NETWORK_ROOT;
+const PCBIM02_2026_ROOT = fs.existsSync(PCBIM02_2026_LOCAL_ROOT) ? PCBIM02_2026_LOCAL_ROOT : PCBIM02_2026_NETWORK_ROOT;
+const PUBLIC_MEDIA_SEARCH_ROOTS = [
+    PCBIM02_2025_LOCAL_ROOT,
+    PCBIM02_2026_LOCAL_ROOT,
+    PCBIM02_2025_NETWORK_ROOT,
+    PCBIM02_2026_NETWORK_ROOT
+];
 const mediaResolutionCache = new Map();
 
 const MIME_TYPES = {
@@ -115,6 +124,9 @@ function searchFileByName(searchRoots, fileName) {
 
     for (const rootPath of searchRoots) {
         try {
+            if (!rootPath || !fs.existsSync(rootPath)) {
+                continue;
+            }
             const stack = [rootPath];
 
             while (stack.length > 0) {

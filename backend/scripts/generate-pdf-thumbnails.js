@@ -8,13 +8,17 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 const { pathToFileURL } = require('url');
+let sharpLib;
 let canvasLib;
 let pdfjsLib;
 let pdfjsLibPromise;
+let puppeteerLib;
 let canvasLoadError = null;
 let pdfjsCjsLoadError = null;
 let pdfjsEsmLoadError = null;
 let pdfjsGenericLoadError = null;
+let sharpLoadError = null;
+let puppeteerLoadError = null;
 let dependencyNoticeLogged = false;
 const VERBOSE_PDF_THUMBNAIL_LOG =
     process.env.BCL_VERBOSE_STARTUP === '1' ||
@@ -36,6 +40,12 @@ function logDependencyNoticeOnce() {
 }
 
 try {
+    sharpLib = require('sharp');
+} catch (e) {
+    sharpLoadError = e;
+}
+
+try {
     canvasLib = require('canvas');
 } catch (e) {
     canvasLoadError = e;
@@ -51,6 +61,12 @@ try {
     if (VERBOSE_PDF_THUMBNAIL_LOG) {
         console.warn('pdfjs-dist/legacy (CJS) not found, will try ESM legacy build when needed.');
     }
+}
+
+try {
+    puppeteerLib = require('puppeteer');
+} catch (e) {
+    puppeteerLoadError = e;
 }
 
 // Configuration
@@ -97,6 +113,48 @@ async function loadPdfJs() {
     }
     pdfjsLib = await pdfjsLibPromise;
     return pdfjsLib;
+}
+
+function getChromeExecutablePath() {
+    const candidates = [
+        process.env.BCL_CHROME_EXECUTABLE,
+        process.env.PUPPETEER_EXECUTABLE_PATH,
+        process.env.CHROME_PATH,
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+    ].filter(Boolean);
+
+    return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
+async function isLikelyInvalidThumbnail(imagePath) {
+    if (!fs.existsSync(imagePath)) return true;
+    if (!sharpLib) return fs.statSync(imagePath).size < 6000;
+
+    try {
+        const image = sharpLib(imagePath);
+        const metadata = await image.metadata();
+        const stats = await image.stats();
+        const channels = Array.isArray(stats.channels) ? stats.channels : [];
+        const isFlatWhite = channels.length > 0 && channels.every((channel) =>
+            channel.mean >= 250 &&
+            channel.stdev <= 1 &&
+            channel.min >= 245
+        );
+
+        return (
+            !metadata.width ||
+            !metadata.height ||
+            stats.entropy < 0.05 ||
+            stats.sharpness < 0.05 ||
+            isFlatWhite
+        );
+    } catch (error) {
+        console.warn(`⚠️ Thumbnail validation failed for ${path.basename(imagePath)}: ${error.message}`);
+        return fs.statSync(imagePath).size < 6000;
+    }
 }
 
 // Create directories if they don't exist
@@ -303,6 +361,82 @@ async function generatePDFThumbnailWithImageMagick(pdfPath, outputPath) {
     });
 }
 
+async function generatePDFThumbnailWithPuppeteer(materialId, readerUrl, outputPath) {
+    if (!puppeteerLib) {
+        if (VERBOSE_PDF_THUMBNAIL_LOG && puppeteerLoadError) {
+            console.warn(`puppeteer not available for thumbnail fallback: ${puppeteerLoadError.message}`);
+        }
+        return false;
+    }
+
+    const executablePath = getChromeExecutablePath();
+    const launchOptions = {
+        headless: true,
+        args: ['--no-sandbox', '--disable-gpu', '--hide-scrollbars']
+    };
+
+    if (executablePath) {
+        launchOptions.executablePath = executablePath;
+    }
+
+    let browser;
+    try {
+        browser = await puppeteerLib.launch(launchOptions);
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1200, height: 1600, deviceScaleFactor: 1 });
+        await page.goto(readerUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.waitForFunction(() => {
+            const canvas = document.querySelector('#pdfCanvas, .pdfViewer canvas, canvas');
+            const pageInfo = document.querySelector('#pageInfo, #page-info');
+            if (!canvas) return false;
+            if (!pageInfo) return true;
+            const text = String(pageInfo.textContent || '').trim();
+            return text && !text.includes('--');
+        }, { timeout: 60000 });
+
+        const canvasHandle = await page.$('#pdfCanvas, .pdfViewer canvas, canvas');
+        if (!canvasHandle) {
+            throw new Error('PDF canvas not found in reader');
+        }
+
+        await canvasHandle.screenshot({ path: outputPath, type: 'jpeg', quality: 88 });
+        console.log(`✅ Generated thumbnail with Puppeteer: ${path.basename(outputPath)}`);
+        return true;
+    } catch (error) {
+        console.warn(`⚠️ Puppeteer thumbnail generation failed for ${materialId}: ${error.message}`);
+        return false;
+    } finally {
+        if (browser) {
+            await browser.close().catch(() => {});
+        }
+    }
+}
+
+async function generateValidatedThumbnail({ materialId, pdfPath, outputPath, title, category, readerUrl }) {
+    const attempts = [
+        () => generatePDFThumbnailWithPdfJs(pdfPath, outputPath),
+        () => generatePDFThumbnailWithPoppler(pdfPath, outputPath),
+        () => generatePDFThumbnailWithImageMagick(pdfPath, outputPath),
+        () => generatePDFThumbnailWithPuppeteer(materialId, readerUrl, outputPath)
+    ];
+
+    for (const attempt of attempts) {
+        const success = await attempt();
+        if (!success) continue;
+
+        const invalid = await isLikelyInvalidThumbnail(outputPath);
+        if (!invalid) {
+            return true;
+        }
+
+        console.warn(`⚠️ Thumbnail output invalid for ${materialId}, retrying with next renderer`);
+        fs.rmSync(outputPath, { force: true });
+    }
+
+    generatePlaceholderThumbnail(outputPath, title, category);
+    return false;
+}
+
 /**
  * Main function to generate thumbnails for all PDF materials
  */
@@ -354,40 +488,19 @@ async function generateAllThumbnails() {
             continue;
         }
         
-        // Try different methods to generate thumbnail
-        let success = false;
-        
-        // Method 1: Try PDF.js (Node Canvas) - Most reliable cross-platform
-        success = await generatePDFThumbnailWithPdfJs(pdfPath, thumbnailPath);
+        const success = await generateValidatedThumbnail({
+            materialId: String(material.id),
+            pdfPath,
+            outputPath: thumbnailPath,
+            title: material.title,
+            category: material.category,
+            readerUrl: `http://127.0.0.1:${process.env.PORT || 5052}/public/reader.html?material=${encodeURIComponent(material.id)}`
+        });
 
-        // Method 2: Try pdftoppm (poppler-utils)
-        if (!success) {
-            success = await generatePDFThumbnailWithPoppler(pdfPath, thumbnailPath);
-        }
-        
-        // Method 3: Try ImageMagick if others failed
-        if (!success) {
-            success = await generatePDFThumbnailWithImageMagick(pdfPath, thumbnailPath);
-        }
-        // Method 1: Try PDF.js (Node Canvas) - Most reliable cross-platform
-        success = await generatePDFThumbnailWithPdfJs(pdfPath, thumbnailPath);
-
-        // Method 2: Try pdftoppm (poppler-utils)
-        if (!success) {
-            success = await generatePDFThumbnailWithPoppler(pdfPath, thumbnailPath);
-        }
-        
-        // Method 3: Try ImageMagick if others failed
-        if (!success) {
-            success = await generatePDFThumbnailWithImageMagick(pdfPath, thumbnailPath);
-        }
-        
-        // Method 3: Generate placeholder if both failed
-        if (!success) {
-            generatePlaceholderThumbnail(thumbnailPath, material.title, material.category);
-            failCount++;
-        } else {
+        if (success) {
             successCount++;
+        } else {
+            failCount++;
         }
     }
     
@@ -431,21 +544,14 @@ async function generateSingleThumbnail(materialId) {
         return false;
     }
     
-    let success = await generatePDFThumbnailWithPdfJs(pdfPath, thumbnailPath);
-
-    if (!success) {
-        success = await generatePDFThumbnailWithPoppler(pdfPath, thumbnailPath);
-    }
-    
-    if (!success) {
-        success = await generatePDFThumbnailWithImageMagick(pdfPath, thumbnailPath);
-    }
-    
-    if (!success) {
-        generatePlaceholderThumbnail(thumbnailPath, material.title, material.category);
-    }
-    
-    return success;
+    return generateValidatedThumbnail({
+        materialId: String(material.id),
+        pdfPath,
+        outputPath: thumbnailPath,
+        title: material.title,
+        category: material.category,
+        readerUrl: `http://127.0.0.1:${process.env.PORT || 5052}/public/reader.html?material=${encodeURIComponent(material.id)}`
+    });
 }
 
 // Run if called directly
@@ -469,7 +575,10 @@ if (require.main === module) {
 module.exports = {
     generateAllThumbnails,
     generateSingleThumbnail,
+    generateValidatedThumbnail,
     generatePDFThumbnailWithPdfJs,
     generatePDFThumbnailWithPoppler,
-    generatePDFThumbnailWithImageMagick
+    generatePDFThumbnailWithImageMagick,
+    generatePDFThumbnailWithPuppeteer,
+    isLikelyInvalidThumbnail
 };

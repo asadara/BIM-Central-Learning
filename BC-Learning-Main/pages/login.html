@@ -53,13 +53,41 @@
         .google-auth-wrap {
             display: flex;
             justify-content: center;
-            min-height: 44px;
+            width: 100%;
+            max-width: 460px;
+            min-height: 78px;
+            margin: 0 auto;
+            overflow: visible;
         }
 
         .google-auth-note {
             font-size: 0.85rem;
             color: #6c757d;
             text-align: center;
+        }
+
+        .google-auth-wrap>div,
+        .google-auth-wrap iframe {
+            max-width: 100%;
+        }
+
+        .google-auth-wrap>div {
+            transform: scale(1.14);
+            transform-origin: center top;
+        }
+
+        @media (max-width: 575.98px) {
+            .google-auth-wrap {
+                min-height: 64px;
+            }
+
+            .google-auth-wrap>div {
+                transform: scale(1.04);
+            }
+        }
+
+        .social-auth-section[hidden] {
+            display: none !important;
         }
     </style>
 </head>
@@ -104,10 +132,10 @@
                             <div class="col-12">
                                 <button class="btn text-light w-100 py-3" type="submit"> Log in</button>
                             </div>
-                            <div class="col-12">
+                            <div class="col-12 social-auth-section" id="google-login-section" hidden>
                                 <div class="auth-divider">atau</div>
                             </div>
-                            <div class="col-12">
+                            <div class="col-12 social-auth-section" id="google-login-ui" hidden>
                                 <div id="google-login-wrap" class="google-auth-wrap"></div>
                                 <div id="google-login-note" class="google-auth-note mt-2"></div>
                             </div>
@@ -150,6 +178,24 @@
     <script>
         let googleLoginInitialized = false;
 
+        function setGoogleLoginSectionVisible(isVisible) {
+            ['google-login-section', 'google-login-ui'].forEach((id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.hidden = !isVisible;
+                }
+            });
+        }
+
+        function getGoogleButtonWidth(container) {
+            const measuredWidth = Math.floor(container?.getBoundingClientRect?.().width || 0);
+            if (!measuredWidth) {
+                return 360;
+            }
+
+            return Math.min(Math.max(measuredWidth, 360), 460);
+        }
+
         async function initGoogleLogin() {
             const noteEl = document.getElementById('google-login-note');
             const container = document.getElementById('google-login-wrap');
@@ -166,9 +212,11 @@
                 const config = await configRes.json();
 
                 if (!configRes.ok || !config.success || !config.enabled || !config.clientId) {
-                    noteEl.textContent = 'Login with Google belum tersedia.';
+                    setGoogleLoginSectionVisible(false);
                     return;
                 }
+
+                setGoogleLoginSectionVisible(true);
 
                 window.google.accounts.id.initialize({
                     client_id: config.clientId,
@@ -183,13 +231,14 @@
                     type: 'standard',
                     text: 'signin_with',
                     shape: 'rectangular',
-                    width: 280
+                    width: getGoogleButtonWidth(container)
                 });
 
                 googleLoginInitialized = true;
                 noteEl.textContent = '';
             } catch (error) {
                 console.error('Google login init error:', error);
+                setGoogleLoginSectionVisible(true);
                 noteEl.textContent = 'Gagal memuat Google Login. Coba lagi nanti.';
             }
         }
@@ -241,7 +290,9 @@
                     localStorage.setItem('token', user.token);
                 }
 
-                const lastPage = localStorage.getItem('lastPage') || '/elearning-assets/dashboard.html';
+                const lastPage = typeof getPostLoginDestination === 'function'
+                    ? getPostLoginDestination('/elearning-assets/dashboard.html')
+                    : (localStorage.getItem('lastPage') || '/elearning-assets/dashboard.html');
                 alert(data.message || 'Login with Google berhasil.');
                 window.location.href = lastPage;
             } catch (error) {

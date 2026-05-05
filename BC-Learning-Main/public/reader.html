@@ -1,10 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BIM Learning Reader</title>
+    <title>Pembaca | BCL</title>
+    <link rel="icon" href="/logos/fav_logo_BCL.ico?v=20260424b" type="image/x-icon">
+    <link rel="shortcut icon" href="/logos/fav_logo_BCL.ico?v=20260424b" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -268,7 +270,7 @@
                 <button class="toolbar-btn" id="sidebar-toggle" title="Toggle Sidebar">
                     <i class="fas fa-th-large"></i>
                 </button>
-                <div class="title-text" id="course-title">Loading...</div>
+                <div class="title-text" id="course-title">Memuat...</div>
             </div>
 
             <div class="toolbar-group">
@@ -279,9 +281,9 @@
                 <button class="toolbar-btn" id="next-btn" title="Next Page">
                     <i class="fas fa-chevron-down"></i>
                 </button>
-                
+
                 <div class="divider"></div>
-                
+
                 <button class="toolbar-btn" id="zoom-out" title="Zoom Out">
                     <i class="fas fa-minus"></i>
                 </button>
@@ -291,34 +293,34 @@
 
                 <div class="divider"></div>
 
-                <button class="toolbar-btn" id="fit-width" title="Fit Width">
+                <button class="toolbar-btn" id="fit-width" title="Pas Lebar">
                     <i class="fas fa-arrows-alt-h"></i>
                 </button>
-                <button class="toolbar-btn" id="fit-page" title="Fit Page">
+                <button class="toolbar-btn" id="fit-page" title="Pas Halaman">
                     <i class="fas fa-compress"></i>
                 </button>
-                
+
                 <div class="divider"></div>
-                
-                <button class="toolbar-btn" id="mouse-mode-btn" title="Toggle Mouse Wheel: Scroll / Zoom">
-                    <i class="fas fa-hand-paper"></i> <span style="font-size: 11px; margin-left: 4px;">Scroll</span>
+
+                <button class="toolbar-btn" id="mouse-mode-btn" title="Ubah Roda Mouse: Gulir / Zoom">
+                    <i class="fas fa-hand-paper"></i> <span style="font-size: 11px; margin-left: 4px;">Gulir</span>
                 </button>
 
-                <button class="toolbar-btn" id="last-read-btn" title="Go to Last Read Page" style="display: none;">
+                <button class="toolbar-btn" id="last-read-btn" title="Buka Halaman Terakhir Dibaca" style="display: none;">
                     <i class="fas fa-history"></i> <span style="font-size: 12px; margin-left: 4px;">Resume</span>
                 </button>
             </div>
 
             <div class="toolbar-group">
                 <span id="reading-progress" style="font-size: 12px; color: #aaa; margin-right: 8px;">0%</span>
-                <button class="toolbar-btn success" id="finish-reading-btn" title="Finish Reading">
+                <button class="toolbar-btn success" id="finish-reading-btn" title="Selesai Membaca">
                     <i class="fas fa-check"></i> <span style="display: none; @media(min-width: 800px){display:inline;}">Finish</span>
                 </button>
                 <button class="toolbar-btn primary" id="next-module-btn" title="Next Module">
                     <i class="fas fa-forward"></i> <span style="display: none; @media(min-width: 800px){display:inline;}">Next</span>
                 </button>
                 <div class="divider"></div>
-                <button class="toolbar-btn" onclick="closePDFReader()" title="Close">
+                <button class="toolbar-btn" onclick="closePDFReader()" title="Tutup">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -338,9 +340,9 @@
             <div class="viewer-area" id="viewer-container">
                 <div class="loading-overlay" id="loading-indicator">
                     <i class="fas fa-spinner fa-spin fa-2x" style="color: white; margin-bottom: 10px;"></i>
-                    <div style="color: white;">Loading Document...</div>
+                    <div style="color: white;">Memuat Dokumen...</div>
                 </div>
-                
+
                 <div class="error-message" id="error-box">
                     <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
                     <div id="error-message">Error loading PDF</div>
@@ -359,7 +361,7 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = "/public/vendor/pdfjs/pdf.worker.min.js";
     </script>
-    <script src="/public/js/reader.js?v=fix_zoom_scroll_v2"></script>
+    <script src="/public/js/reader.js?v=20260427a"></script>
 </body>
 
 </html>

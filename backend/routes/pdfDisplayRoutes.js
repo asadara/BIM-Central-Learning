@@ -5,10 +5,10 @@ const PDFParse = require('pdf-parse');
 const { Pool } = require('pg');
 const { requireAdmin, requireAuthenticated, getRequestUser } = require('../utils/auth');
 const { createPgConfig } = require('../config/runtimeConfig');
+const { LEARNING_MATERIALS_FILE, loadLearningMaterialsData, resolveMaterialFileSystemPath } = require('../services/learningMaterialsSource');
 
 const router = express.Router();
 
-const LEARNING_MATERIALS_FILE = path.join(__dirname, '../learning-materials.json');
 const PDF_DISPLAY_CONFIG_FILE = path.join(__dirname, '../pdf-display-config.json');
 
 const pgPool = new Pool(createPgConfig({
@@ -91,32 +91,6 @@ function normalizePageCount(value) {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
-function resolveMaterialFileSystemPath(material) {
-    const materialFilePath = material.filePath || material.file_path || '';
-    if (!materialFilePath) return null;
-
-    if (materialFilePath.startsWith('/elearning-assets/materials/')) {
-        const filename = materialFilePath.replace('/elearning-assets/materials/', '');
-        return path.join(__dirname, '../../BC-Learning-Main/elearning-assets/materials', filename);
-    }
-
-    if (materialFilePath.startsWith('/BC-Learning-Main/')) {
-        const relativePath = materialFilePath.replace('/BC-Learning-Main/', '');
-        return path.join(__dirname, '../../BC-Learning-Main', relativePath);
-    }
-
-    if (materialFilePath.startsWith('/elearning-assets/')) {
-        const relativePath = materialFilePath.replace('/elearning-assets/', '');
-        return path.join(__dirname, '../../BC-Learning-Main/elearning-assets', relativePath);
-    }
-
-    if (path.isAbsolute(materialFilePath)) {
-        return materialFilePath;
-    }
-
-    return path.join(__dirname, '../', materialFilePath);
-}
-
 async function getPdfPageCount(fileSystemPath) {
     if (!fileSystemPath || !fs.existsSync(fileSystemPath)) return null;
 
@@ -172,6 +146,11 @@ function normalizeMaterial(material, selectedSet, readCountMap = {}) {
         title: material.title || material.name || 'Untitled',
         description: material.description || material.summary || '',
         category: material.category || material.category_name || 'general',
+        categoryLabel: material.categoryLabel || material.roleTrackLabel || null,
+        roleTrack: material.roleTrack || null,
+        roleTrackLabel: material.roleTrackLabel || null,
+        moduleTopic: material.moduleTopic || null,
+        moduleTopicLabel: material.moduleTopicLabel || null,
         level: material.level || material.bimLevel || 'beginner',
         pageCount: material.pageCount || material.pages || null,
         size: size,
@@ -182,10 +161,6 @@ function normalizeMaterial(material, selectedSet, readCountMap = {}) {
         displayOnCourses: !!material.displayOnCourses,
         selected: selectedSet ? selectedSet.has(id) : false
     };
-}
-
-function getMaterialsData() {
-    return readJsonSafe(LEARNING_MATERIALS_FILE, { materials: [], metadata: {} });
 }
 
 function getDisplayConfig() {
@@ -202,7 +177,7 @@ function getDisplayConfig() {
 
 // Admin: list PDFs with selection status
 router.get('/admin/pdf-display/list', requireAdmin, async (req, res) => {
-    const materialsData = getMaterialsData();
+    const materialsData = await loadLearningMaterialsData();
     const config = getDisplayConfig();
     const selectedSet = new Set((config.selectedPDFs || []).map(id => id.toString()));
 
@@ -229,7 +204,7 @@ router.get('/admin/pdf-display/list', requireAdmin, async (req, res) => {
         pdfs.push(normalizeMaterial(material, selectedSet));
     }
 
-    if (materialsUpdated) {
+    if (materialsUpdated && materialsData.metadata?.source === 'json') {
         materialsData.materials = materialsData.materials || [];
         writeJsonSafe(LEARNING_MATERIALS_FILE, materialsData);
     }
@@ -253,19 +228,21 @@ router.post('/admin/pdf-display/update', requireAdmin, (req, res) => {
     config.lastUpdated = new Date().toISOString();
     writeJsonSafe(PDF_DISPLAY_CONFIG_FILE, config);
 
-    // Also update displayOnCourses flag in learning-materials.json
-    const materialsData = getMaterialsData();
-    const selectedSet = new Set(selectedPDFIds);
-    const materials = materialsData.materials || [];
+    // Also update displayOnCourses flag in curated learning-materials.json when available
+    const materialsData = readJsonSafe(LEARNING_MATERIALS_FILE, { materials: [], metadata: {} });
+    if ((materialsData.metadata || {}).source !== 'external-drive') {
+        const selectedSet = new Set(selectedPDFIds);
+        const materials = materialsData.materials || [];
 
-    materials.forEach(material => {
-        if (!isPdfMaterial(material)) return;
-        const id = material.id != null ? material.id.toString() : '';
-        material.displayOnCourses = selectedSet.has(id);
-    });
+        materials.forEach(material => {
+            if (!isPdfMaterial(material)) return;
+            const id = material.id != null ? material.id.toString() : '';
+            material.displayOnCourses = selectedSet.has(id);
+        });
 
-    materialsData.materials = materials;
-    writeJsonSafe(LEARNING_MATERIALS_FILE, materialsData);
+        materialsData.materials = materials;
+        writeJsonSafe(LEARNING_MATERIALS_FILE, materialsData);
+    }
 
     res.json({
         success: true,
@@ -277,7 +254,7 @@ router.post('/admin/pdf-display/update', requireAdmin, (req, res) => {
 // Public: selected PDFs for courses page
 router.get('/pdf-display/selected', (req, res) => {
     (async () => {
-        const materialsData = getMaterialsData();
+        const materialsData = await loadLearningMaterialsData();
         const config = getDisplayConfig();
         const selectedIds = (config.selectedPDFs || []).map(id => id.toString());
         const selectedSet = new Set(selectedIds);
@@ -332,7 +309,7 @@ router.post('/pdf-display/read/:materialId', requireAuthenticated, async (req, r
             });
         }
 
-        const materialsData = getMaterialsData();
+        const materialsData = await loadLearningMaterialsData();
         const existingMaterial = (materialsData.materials || []).find((material) => {
             const id = material && material.id != null ? String(material.id) : '';
             return id === materialId && isPdfMaterial(material);

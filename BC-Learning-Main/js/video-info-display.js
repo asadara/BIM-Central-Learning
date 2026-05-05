@@ -357,7 +357,10 @@ class VideoInfoDisplay {
             const statsPromises = await Promise.allSettled([
                 fetch('/api/tutorials').then(r => r.ok ? r.json() : null),
                 fetch('/api/courses').then(r => r.ok ? r.json() : null),
-                fetch('/api/user-activity/public').then(r => r.ok ? r.json() : null)
+                fetch('/api/user-activity/public').then(r => r.ok ? r.json() : null),
+                fetch('/api/business-intelligence').then(r => r.ok ? r.json() : null),
+                fetch('/api/predictive-engine').then(r => r.ok ? r.json() : null),
+                fetch('/api/realtime-collaboration').then(r => r.ok ? r.json() : null)
             ]);
 
             const videos = (statsPromises[0].status === 'fulfilled' && Array.isArray(statsPromises[0].value))
@@ -369,23 +372,50 @@ class VideoInfoDisplay {
             const userActivity = (statsPromises[2].status === 'fulfilled' && statsPromises[2].value)
                 ? statsPromises[2].value
                 : null;
+            const businessIntelligence = (statsPromises[3].status === 'fulfilled' && statsPromises[3].value)
+                ? statsPromises[3].value
+                : null;
+            const predictiveEngine = (statsPromises[4].status === 'fulfilled' && statsPromises[4].value)
+                ? statsPromises[4].value
+                : null;
+            const realtimeCollaboration = (statsPromises[5].status === 'fulfilled' && statsPromises[5].value)
+                ? statsPromises[5].value
+                : null;
+            const businessMetrics = businessIntelligence?.metrics || {};
+            const predictiveMetrics = predictiveEngine?.predictions || {};
 
             const totalUsers = this.parseNumeric(
                 userActivity?.totalUsers ??
                 userActivity?.registeredUsers ??
-                userActivity?.totalRegisteredUsers
+                userActivity?.totalRegisteredUsers ??
+                businessMetrics.totalUsers
             );
             const totalVideos = videos ? videos.length : null;
             const totalCourses = courses ? courses.length : null;
 
             // Active users from public activity endpoint.
-            let activeUsers = this.parseNumeric(userActivity?.totalActiveUsers);
+            let activeUsers = this.parseNumeric(
+                userActivity?.totalActiveUsers ??
+                businessMetrics.activeToday ??
+                realtimeCollaboration?.activeUsers
+            );
 
-            const completionRate = this.computeAverageFromKeys(courses, ['completionRate', 'completion_rate']);
+            let completionRate = this.computeAverageFromKeys(courses, ['completionRate', 'completion_rate']);
+            if (!Number.isFinite(completionRate)) {
+                const businessProgress = this.parseNumeric(businessMetrics.averageProgress);
+                const predictiveCompletion = this.parseNumeric(predictiveMetrics.completionRate);
+                if (Number.isFinite(businessProgress)) {
+                    completionRate = Math.round(businessProgress * 10) / 10;
+                } else if (Number.isFinite(predictiveCompletion)) {
+                    completionRate = Math.round(predictiveCompletion * 1000) / 10;
+                }
+            }
+
             const avgRating = this.computeAverageFromKeys(
                 (videos || []).concat(courses || []),
                 ['avgRating', 'averageRating', 'rating', 'rate']
             );
+            const collaborationRooms = this.parseNumeric(realtimeCollaboration?.collaborationRooms);
 
             this.stats = {
                 totalUsers,
@@ -393,7 +423,8 @@ class VideoInfoDisplay {
                 totalCourses,
                 activeUsers,
                 completionRate,
-                avgRating
+                avgRating,
+                collaborationRooms
             };
 
 
@@ -404,7 +435,8 @@ class VideoInfoDisplay {
                 totalCourses: null,
                 activeUsers: null,
                 completionRate: null,
-                avgRating: null
+                avgRating: null,
+                collaborationRooms: null
             };
         }
     }
@@ -943,7 +975,12 @@ class VideoInfoDisplay {
         const totalCoursesLabel = this.formatCount(stats.totalCourses);
         const completionRateLabel = this.formatPercent(stats.completionRate);
         const totalVideosLabel = this.formatCount(stats.totalVideos);
-        const ratingLabel = this.formatRating(stats.avgRating);
+        const ratingLabel = Number.isFinite(stats.avgRating)
+            ? this.formatRating(stats.avgRating)
+            : this.formatCount(stats.collaborationRooms);
+        const ratingSourceLabel = Number.isFinite(stats.avgRating)
+            ? 'Rating'
+            : 'Live Rooms';
 
         bottomNewsItems.innerHTML = `
             <div class="news-item stats-item">
@@ -961,7 +998,7 @@ class VideoInfoDisplay {
             <div class="news-item stats-item">
                 <div class="news-content">
                     <span class="news-title">${totalVideosLabel} Videos</span>
-                    <span class="news-source">Rating: ${ratingLabel}</span>
+                    <span class="news-source">${ratingSourceLabel}: ${ratingLabel}</span>
                 </div>
             </div>
         `;
@@ -1014,7 +1051,10 @@ class VideoInfoDisplay {
         const totalCoursesLabel = this.formatCount(stats.totalCourses);
         const totalVideosLabel = this.formatCount(stats.totalVideos);
         const completionRateLabel = this.formatPercent(stats.completionRate);
-        const avgRatingLabel = Number.isFinite(stats.avgRating) ? stats.avgRating.toFixed(1) : 'N/A';
+        const qualityValueLabel = Number.isFinite(stats.avgRating)
+            ? stats.avgRating.toFixed(1)
+            : this.formatCount(stats.collaborationRooms);
+        const qualityLabel = Number.isFinite(stats.avgRating) ? 'Avg Rating' : 'Live Rooms';
 
         this.statsContainer.innerHTML = `
             <div class="stat-card">
@@ -1061,8 +1101,8 @@ class VideoInfoDisplay {
                 <div class="stat-icon">
                     <i class="fas fa-star text-warning"></i>
                 </div>
-                <div class="stat-value">${avgRatingLabel}</div>
-                <div class="stat-label">Avg Rating</div>
+                <div class="stat-value">${qualityValueLabel}</div>
+                <div class="stat-label">${qualityLabel}</div>
             </div>
         `;
 

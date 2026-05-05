@@ -8,7 +8,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "BIM Central Learning (`BCL`) adalah portal pembelajaran, knowledge management, dan eksplorasi konten BIM untuk ekosistem NKE. Aplikasi ini menggabungkan materi pembelajaran, galeri metode kerja BIM, dokumentasi proyek, knowledge assets, dan modul training dalam satu pengalaman web yang terhubung ke backend Node.js dan data internal perusahaan.",
   "dependencies": {
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
@@ -22,5 +22,17 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
     "pg": "^8.17.1"
-  }
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asadara/BIM-Central-Learning.git"
+  },
+  "bugs": {
+    "url": "https://github.com/asadara/BIM-Central-Learning/issues"
+  },
+  "homepage": "https://github.com/asadara/BIM-Central-Learning#readme"
 }

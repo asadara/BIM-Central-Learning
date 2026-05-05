@@ -1,5 +1,7 @@
 const crypto = require("crypto");
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 function createUserAuthRoutes({
     authLimiter,
@@ -37,6 +39,282 @@ function createUserAuthRoutes({
     writeUsers
 }) {
     const router = express.Router();
+    const profileImageDir = path.join(__dirname, "..", "public", "uploads", "profile-images");
+
+    function normalizeProfileImageUrl(imageUrl) {
+        const value = String(imageUrl || "").trim();
+        if (!value) {
+            return value;
+        }
+
+        if (/^https?:\/\//i.test(value) || value.startsWith("data:")) {
+            return value;
+        }
+
+        const uploadPrefix = "/uploads/profile-images/";
+        if (value.startsWith(uploadPrefix)) {
+            const filename = path.basename(value);
+            return filename ? `/api/profile-images/${encodeURIComponent(filename)}` : value;
+        }
+
+        return value;
+    }
+
+    function getBearerToken(req) {
+        const authHeader = String(req.headers.authorization || "").trim();
+        return authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    }
+
+    async function resolveProfileUser(req) {
+        const token = getBearerToken(req);
+        if (!token) {
+            return null;
+        }
+
+        try {
+            const decoded = jwt.verify(token, secretKey);
+            const lookup = await findUserForProfileUpdate(decoded.email || null, decoded.userId || null);
+            return lookup && lookup.user ? lookup.user : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function formatJoinDate(user) {
+        const rawValue =
+            user?.registrationDate ||
+            user?.registration_date ||
+            user?.created_at ||
+            user?.createdAt ||
+            null;
+
+        if (!rawValue) {
+            return null;
+        }
+
+        const parsed = new Date(rawValue);
+        if (Number.isNaN(parsed.getTime())) {
+            return null;
+        }
+
+        return parsed.toLocaleString("en-US", {
+            month: "short",
+            year: "numeric"
+        });
+    }
+
+    async function buildProfileStats(user) {
+        const fallbackProgress = user?.progress && typeof user.progress === "object" ? user.progress : {};
+        let coursesCompleted = Number(fallbackProgress.coursesCompleted || 0);
+        let practiceAttempts = Number(fallbackProgress.practiceAttempts || 0);
+        let certificatesEarned = Number(fallbackProgress.certificatesEarned || 0);
+        let examsPassed = Number(fallbackProgress.examsPassed || 0);
+
+        if (pgPool && user?.id) {
+            try {
+                const progressResult = await pgPool.query(
+                    `SELECT
+                        COALESCE(courses_completed, 0) AS courses_completed,
+                        COALESCE(practice_attempts, 0) AS practice_attempts,
+                        COALESCE(exams_passed, 0) AS exams_passed,
+                        COALESCE(certificates_earned, 0) AS certificates_earned
+                     FROM user_progress
+                     WHERE user_id = $1
+                     LIMIT 1`,
+                    [user.id]
+                );
+
+                if (progressResult.rows[0]) {
+                    coursesCompleted = Number(progressResult.rows[0].courses_completed || 0);
+                    practiceAttempts = Number(progressResult.rows[0].practice_attempts || 0);
+                    examsPassed = Number(progressResult.rows[0].exams_passed || 0);
+                    certificatesEarned = Number(progressResult.rows[0].certificates_earned || 0);
+                }
+
+                const certificateCountResult = await pgPool.query(
+                    `SELECT COUNT(*)::int AS total
+                     FROM user_certificates
+                     WHERE ($1::text IS NOT NULL AND user_id::text = $1::text)
+                        OR ($2::text IS NOT NULL AND user_identifier = $2)`,
+                    [user.id ? String(user.id) : null, user.email || null]
+                );
+
+                const issuedCertificates = Number(certificateCountResult.rows[0]?.total || 0);
+                certificatesEarned = Math.max(certificatesEarned, issuedCertificates);
+            } catch (error) {
+                console.warn("Profile stats fallback to local user data:", error.message);
+            }
+        }
+
+        return {
+            coursesCompleted: Math.max(0, Math.floor(coursesCompleted)),
+            practiceAttempts: Math.max(0, Math.floor(practiceAttempts)),
+            examsPassed: Math.max(0, Math.floor(examsPassed)),
+            certifications: Math.max(0, Math.floor(certificatesEarned)),
+            studyHours: Math.max(0, Math.round((coursesCompleted * 6) + (practiceAttempts * 0.5))),
+            connections: 0
+        };
+    }
+
+    router.get("/api/profile-images/:filename", (req, res) => {
+        const requestedName = String(req.params.filename || "").trim();
+        const safeName = path.basename(requestedName);
+
+        if (!safeName || safeName !== requestedName) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid profile image path"
+            });
+        }
+
+        const imagePath = path.join(profileImageDir, safeName);
+        if (!fs.existsSync(imagePath)) {
+            return res.status(404).json({
+                success: false,
+                error: "Profile image not found"
+            });
+        }
+
+        return res.sendFile(imagePath);
+    });
+
+    router.get("/api/profile", async (req, res) => {
+        const user = await resolveProfileUser(req);
+        if (!user) {
+            return res.json({
+                success: true,
+                name: "Guest User",
+                role: "Visitor",
+                photo: "/img/user-default.png",
+                joinDate: null,
+                streak: 0,
+                xp: 0
+            });
+        }
+
+        return res.json({
+            success: true,
+            id: user.id,
+            name: user.username || user.name || "User",
+            username: user.username || user.name || "User",
+            email: user.email || "",
+            role: user.jobRole || user.job_role || "BIM Specialist",
+            bimLevel: user.bimLevel || user.bim_level || "BIM Modeller",
+            organization: user.organization || "",
+            photo: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.png"),
+            profileImage: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.png"),
+            joinDate: formatJoinDate(user),
+            streak: 0,
+            xp: 0
+        });
+    });
+
+    router.get("/api/profile/stats", async (req, res) => {
+        const user = await resolveProfileUser(req);
+        if (!user) {
+            return res.json({
+                coursesCompleted: 0,
+                certifications: 0,
+                studyHours: 0,
+                connections: 0
+            });
+        }
+
+        const stats = await buildProfileStats(user);
+        return res.json({
+            coursesCompleted: stats.coursesCompleted,
+            certifications: stats.certifications,
+            studyHours: stats.studyHours,
+            connections: stats.connections
+        });
+    });
+
+    router.get("/api/profile/achievements", async (req, res) => {
+        const user = await resolveProfileUser(req);
+        if (!user) {
+            return res.json([]);
+        }
+
+        const stats = await buildProfileStats(user);
+        const achievements = [];
+
+        if (stats.coursesCompleted > 0) {
+            achievements.push({
+                title: "Course Starter",
+                description: `Completed ${stats.coursesCompleted} learning module${stats.coursesCompleted > 1 ? "s" : ""}.`,
+                icon: "fas fa-book-open",
+                rarity: "common",
+                dateEarned: new Date().toISOString()
+            });
+        }
+
+        if (stats.certifications > 0) {
+            achievements.push({
+                title: "Certified Learner",
+                description: `Earned ${stats.certifications} certificate${stats.certifications > 1 ? "s" : ""}.`,
+                icon: "fas fa-certificate",
+                rarity: "rare",
+                dateEarned: new Date().toISOString()
+            });
+        }
+
+        if (stats.practiceAttempts >= 5) {
+            achievements.push({
+                title: "Practice Builder",
+                description: `Completed ${stats.practiceAttempts} practice attempt${stats.practiceAttempts > 1 ? "s" : ""}.`,
+                icon: "fas fa-dumbbell",
+                rarity: "common",
+                dateEarned: new Date().toISOString()
+            });
+        }
+
+        return res.json(achievements);
+    });
+
+    router.get("/api/profile/activity", async (req, res) => {
+        const user = await resolveProfileUser(req);
+        if (!user) {
+            return res.json([]);
+        }
+
+        const activities = [];
+        const lastLogin = user.lastLogin || user.last_login || null;
+        const updatedAt = user.updatedAt || user.updated_at || null;
+
+        if (lastLogin) {
+            activities.push({
+                type: "login",
+                icon: "fas fa-sign-in-alt",
+                title: "Last login",
+                description: "User signed in to the learning platform.",
+                timestamp: lastLogin
+            });
+        }
+
+        if (updatedAt) {
+            activities.push({
+                type: "profile",
+                icon: "fas fa-user-edit",
+                title: "Profile updated",
+                description: "Profile data was updated on the platform.",
+                timestamp: updatedAt
+            });
+        }
+
+        return res.json(activities);
+    });
+
+    router.get("/api/profile/courses", async (req, res) => {
+        return res.json([]);
+    });
+
+    router.get("/api/profile/social", async (req, res) => {
+        return res.json({
+            followers: 0,
+            following: 0,
+            discussions: 0
+        });
+    });
 
     router.get("/api/auth/google/config", (req, res) => {
         res.json({
@@ -221,7 +499,9 @@ function createUserAuthRoutes({
             );
 
             const existingProfileImage = user.profileImage || user.profile_image || null;
-            const finalProfileImage = existingProfileImage || googleProfile.picture || "/img/user-default.png";
+            const finalProfileImage = normalizeProfileImageUrl(
+                existingProfileImage || googleProfile.picture || "/img/user-default.png"
+            );
 
             if (!existingProfileImage && googleProfile.picture) {
                 if (storageType === "postgresql") {
@@ -533,11 +813,12 @@ function createUserAuthRoutes({
             console.log(`✅ User logged in from ${storageType}: ${user.email || user.username} (ID: ${user.id})`);
 
             const loginCount = user.loginCount || user.login_count || 0;
-            const storedProfileImage =
+            const storedProfileImage = normalizeProfileImageUrl(
                 (await fetchProfileImageFromPostgres(user.id, user.email)) ||
                 user.profileImage ||
                 user.profile_image ||
-                null;
+                null
+            );
 
             res.json({
                 success: true,
@@ -588,7 +869,11 @@ function createUserAuthRoutes({
                 return res.status(404).json({ error: "User not found for profile update" });
             }
 
-            res.json({ success: true, imageUrl });
+            res.json({
+                success: true,
+                imageUrl: normalizeProfileImageUrl(imageUrl),
+                storedPath: imageUrl
+            });
         });
     });
 
@@ -765,8 +1050,12 @@ function createUserAuthRoutes({
                         username: updatedUser.username,
                         name: updatedUser.username,
                         email: updatedUser.email,
-                        profileImage: updates.profileImage || updatedUser.profile_image || null,
-                        profile_pic: updates.profileImage || updatedUser.profile_image || null
+                        profileImage: normalizeProfileImageUrl(
+                            updates.profileImage || updatedUser.profile_image || null
+                        ),
+                        profile_pic: normalizeProfileImageUrl(
+                            updates.profileImage || updatedUser.profile_image || null
+                        )
                     }
                 });
             } catch (error) {

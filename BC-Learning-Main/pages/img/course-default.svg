@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Default course thumbnail</title>
+  <desc id="desc">Fallback image for BCL course cards.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bg)" rx="24" />
+  <circle cx="512" cy="72" r="86" fill="#ffffff" fill-opacity="0.08" />
+  <circle cx="128" cy="310" r="120" fill="#ffffff" fill-opacity="0.08" />
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="206" y="98" width="228" height="148" rx="18" stroke-width="10" stroke-opacity="0.92" />
+    <path d="M258 152h124" stroke-width="12" stroke-opacity="0.92" />
+    <path d="M258 188h86" stroke-width="12" stroke-opacity="0.78" />
+    <path d="M258 224h144" stroke-width="12" stroke-opacity="0.58" />
+  </g>
+  <text x="52" y="62" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="3">BCL</text>
+  <text x="52" y="320" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700">Course Preview</text>
+</svg>

@@ -30,7 +30,6 @@
 
     async function fetchManualBooks() {
         const dataSources = [
-            '/data/manual-books.json',
             '/api/manual-books'
         ];
 
@@ -212,10 +211,22 @@
     }
 
     function buildReaderUrl(file) {
-        const mediaUrl = resolveManualBookMediaUrl(file);
-        const pdfUrl = `${window.location.origin}/api/media-proxy?url=${encodeURIComponent(mediaUrl)}`;
+        const pdfUrl = buildManualBookFileUrl(file);
 
         return `/public/reader.html?file=${encodeURIComponent(pdfUrl)}&return=/pages/manual-books.html`;
+    }
+
+    function buildManualBookFileUrl(file) {
+        const relativePath = safeDecodePath(String(file && file.relativePath ? file.relativePath : ''))
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '');
+
+        if (relativePath) {
+            return `${window.location.origin}/api/file?path=${encodeURIComponent(relativePath)}`;
+        }
+
+        const mediaUrl = resolveManualBookMediaUrl(file);
+        return `${window.location.origin}/api/media-proxy?url=${encodeURIComponent(mediaUrl)}`;
     }
 
     function resolveManualBookMediaUrl(file) {

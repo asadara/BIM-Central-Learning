@@ -27,6 +27,7 @@ set "STOP_ERRORS=0"
 
 call :stop_nginx
 call :stop_backend
+call :stop_legacy_proxy
 call :stop_postgres
 
 if exist "runlock" (
@@ -111,6 +112,30 @@ for /f "tokens=2 delims== " %%p in ('wmic process where "name='node.exe' and Com
 
 if "%BACKEND_KILLED%"=="0" (
     call :log "[INFO] No active backend process found"
+)
+exit /b 0
+
+:stop_legacy_proxy
+call :log "[STEP] Stopping legacy proxy on port 5051..."
+set "LEGACY_PROXY_KILLED=0"
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":5051.*LISTENING"') do (
+    taskkill /PID %%p /F >nul 2>&1
+    if not errorlevel 1 (
+        set "LEGACY_PROXY_KILLED=1"
+        call :log "[OK] Killed legacy proxy listener PID %%p"
+    ) else (
+        wmic process where "ProcessId=%%p" call terminate >nul 2>&1
+        if not errorlevel 1 (
+            set "LEGACY_PROXY_KILLED=1"
+            call :log "[OK] Killed legacy proxy listener PID %%p via WMIC fallback"
+        ) else (
+            call :log "[WARNING] Failed to terminate legacy proxy PID %%p (access denied or already exited)"
+        )
+    )
+)
+
+if "%LEGACY_PROXY_KILLED%"=="0" (
+    call :log "[INFO] No active legacy proxy process found"
 )
 exit /b 0
 

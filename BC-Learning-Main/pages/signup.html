@@ -91,13 +91,41 @@
         .google-auth-wrap {
             display: flex;
             justify-content: center;
-            min-height: 44px;
+            width: 100%;
+            max-width: 460px;
+            min-height: 78px;
+            margin: 0 auto;
+            overflow: visible;
         }
 
         .google-auth-note {
             font-size: 0.85rem;
             color: #6c757d;
             text-align: center;
+        }
+
+        .google-auth-wrap>div,
+        .google-auth-wrap iframe {
+            max-width: 100%;
+        }
+
+        .google-auth-wrap>div {
+            transform: scale(1.14);
+            transform-origin: center top;
+        }
+
+        @media (max-width: 575.98px) {
+            .google-auth-wrap {
+                min-height: 64px;
+            }
+
+            .google-auth-wrap>div {
+                transform: scale(1.04);
+            }
+        }
+
+        .social-auth-section[hidden] {
+            display: none !important;
         }
 
         @keyframes spin {
@@ -194,11 +222,11 @@
                                     Account</button>
                             </div>
 
-                            <div class="col-12">
+                            <div class="col-12 social-auth-section" id="google-signup-section" hidden>
                                 <div class="auth-divider">atau</div>
                             </div>
 
-                            <div class="col-12">
+                            <div class="col-12 social-auth-section" id="google-signup-ui" hidden>
                                 <div id="google-signup-wrap" class="google-auth-wrap"></div>
                                 <div id="google-signup-note" class="google-auth-note mt-2"></div>
                             </div>
@@ -248,6 +276,24 @@
             'BIM Manager': 'Advanced level for project leaders focused on BIM strategy and implementation.'
         };
         let googleSignupInitialized = false;
+
+        function setGoogleSignupSectionVisible(isVisible) {
+            ['google-signup-section', 'google-signup-ui'].forEach((id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.hidden = !isVisible;
+                }
+            });
+        }
+
+        function getGoogleButtonWidth(container) {
+            const measuredWidth = Math.floor(container?.getBoundingClientRect?.().width || 0);
+            if (!measuredWidth) {
+                return 360;
+            }
+
+            return Math.min(Math.max(measuredWidth, 360), 460);
+        }
 
         // Update level description when selection changes
         document.getElementById('bim-level').addEventListener('change', function () {
@@ -352,12 +398,18 @@
                     }
 
                     // Redirect to appropriate starting page based on level
-                    if (bimLevel === 'BIM Modeller') {
-                        window.location.href = '/elearning-assets/courses.html?level=beginner';
-                    } else if (bimLevel === 'BIM Coordinator') {
-                        window.location.href = '/elearning-assets/courses.html?level=intermediate';
-                    } else {
-                        window.location.href = '/elearning-assets/dashboard.html';
+               const nextPage = typeof getPostLoginDestination === 'function'
+                   ? getPostLoginDestination('')
+                   : '';
+
+               if (nextPage) {
+                  window.location.href = nextPage;
+               } else if (bimLevel === 'BIM Modeller') {
+                  window.location.href = '/elearning-assets/courses.html?level=beginner';
+               } else if (bimLevel === 'BIM Coordinator') {
+                  window.location.href = '/elearning-assets/courses.html?level=intermediate';
+               } else {
+                  window.location.href = '/elearning-assets/dashboard.html';
                     }
                 } else {
                     alert(data.error || 'Signup failed! Please try again.');
@@ -387,9 +439,11 @@
                 const config = await configRes.json();
 
                 if (!configRes.ok || !config.success || !config.enabled || !config.clientId) {
-                    noteEl.textContent = 'Sign up with Google belum tersedia.';
+                    setGoogleSignupSectionVisible(false);
                     return;
                 }
+
+                setGoogleSignupSectionVisible(true);
 
                 window.google.accounts.id.initialize({
                     client_id: config.clientId,
@@ -404,13 +458,14 @@
                     type: 'standard',
                     text: 'signup_with',
                     shape: 'rectangular',
-                    width: 280
+                    width: getGoogleButtonWidth(container)
                 });
 
                 googleSignupInitialized = true;
                 noteEl.textContent = '';
             } catch (error) {
                 console.error('Google signup init error:', error);
+                setGoogleSignupSectionVisible(true);
                 noteEl.textContent = 'Gagal memuat Google Sign up. Coba lagi nanti.';
             }
         }
@@ -481,7 +536,10 @@
                 }));
 
                 alert(data.message || 'Sign up with Google berhasil.');
-                window.location.href = '/elearning-assets/dashboard.html';
+                const nextPage = typeof getPostLoginDestination === 'function'
+                    ? getPostLoginDestination('/elearning-assets/dashboard.html')
+                    : '/elearning-assets/dashboard.html';
+                window.location.href = nextPage;
             } catch (error) {
                 console.error('Google signup error:', error);
                 alert('Gagal terhubung ke server saat Sign up with Google.');

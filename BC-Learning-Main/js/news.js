@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const defaultImage = '/img/ready.jpg';
     const defaultFallbackImage = '/img/ready.jpg';
     const fullReadLabel = 'Baca Berita Lengkap';
@@ -206,6 +206,24 @@ document.addEventListener('DOMContentLoaded', function () {
         return news.slice(0, 3);
     }
 
+    function localizeNewsCategory(category) {
+        const labels = {
+            regulation: 'Regulasi',
+            technology: 'Teknologi',
+            education: 'Edukasi',
+            infrastructure: 'Infrastruktur',
+            architecture: 'Arsitektur',
+            standards: 'Standar',
+            international: 'Internasional',
+            construction: 'Konstruksi',
+            general: 'Umum',
+            bim: 'BIM'
+        };
+
+        const key = safeText(category).toLowerCase();
+        return labels[key] || category || 'Umum';
+    }
+
     function buildPrimaryAction(article) {
         const hasFullContent = !!safeText(article.fullContent);
         const hasExternalLink = !!(article.url && article.url !== '#');
@@ -239,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const description = article.stickerText || article.description || 'Deskripsi tidak tersedia';
         const imageUrl = resolveImageUrl(article.urlToImage);
         const source = article.source?.name || 'Sumber Tidak Diketahui';
-        const category = article.category || 'General';
+        const category = localizeNewsCategory(article.category || 'General');
         const shareUrl = article.url && article.url !== '#' ? article.url : `${window.location.origin}${window.location.pathname}`;
 
         return `
@@ -256,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="news-actions">
                         ${buildPrimaryAction(article)}
                         <span class="news-btn news-btn-secondary" onclick="shareArticle('${encodeURIComponent(title)}', '${encodeURIComponent(shareUrl)}')">
-                            <i class="fas fa-share"></i> Share
+                            <i class="fas fa-share"></i> Bagikan
                         </span>
                     </div>
                 </div>
@@ -278,12 +296,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div class="col-md-6 d-flex align-items-center">
                         <div class="p-4">
-                            <div class="news-badge mb-3">${lead.category || 'BIM'}</div>
+                            <div class="news-badge mb-3">${localizeNewsCategory(lead.category || 'BIM')}</div>
                             <h3 class="news-title">${lead.title}</h3>
                             <p class="news-description">${leadDescription.length > 220 ? `${leadDescription.substring(0, 220)}...` : leadDescription}</p>
                             <div class="news-meta mb-3">
                                 <i class="fas fa-calendar me-2"></i>${lead.displayDate} |
-                                <i class="fas fa-user me-2"></i>${lead.source?.name || 'Unknown Source'}
+                                <i class="fas fa-user me-2"></i>${lead.source?.name || 'Sumber tidak diketahui'}
                             </div>
                             ${buildPrimaryAction(lead)}
                         </div>
@@ -418,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
         resultsDiv.innerHTML = `
             <div class="alert alert-info">
                 <i class="fas fa-search me-2"></i>
-                Found <strong>${filteredNews.length}</strong> articles from <strong>${allNews.length}</strong> total articles for "<strong>${searchTerm}</strong>"
+                Ditemukan <strong>${filteredNews.length}</strong> artikel dari total <strong>${allNews.length}</strong> artikel untuk kata kunci "<strong>${searchTerm}</strong>"
             </div>
         `;
     }
@@ -459,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function formatDisplayDate(dateString) {
-        if (!dateString) return 'No date';
+        if (!dateString) return 'Tanpa tanggal';
 
         try {
             const date = new Date(dateString);
@@ -528,10 +546,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (isApiAvailable) {
             statusDiv.className = 'alert alert-success';
-            statusDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>API connected successfully - ${allNews.length} articles loaded`;
+            statusDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>API terhubung dengan baik - ${allNews.length} artikel dimuat`;
         } else {
             statusDiv.className = 'alert alert-warning';
-            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Using fallback content - API unavailable';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Menggunakan konten cadangan - API tidak tersedia';
         }
     }
 
@@ -542,10 +560,10 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="col-12">
                 <div class="empty-state">
                     <i class="fas fa-search"></i>
-                    <h4>No Articles Found</h4>
-                    <p>No news articles match your current filters. Try adjusting your search terms or category filters.</p>
+                    <h4>Artikel Tidak Ditemukan</h4>
+                    <p>Tidak ada artikel yang cocok dengan filter saat ini. Coba ubah kata kunci atau kategori pencarian Anda.</p>
                     <button class="btn btn-outline-primary" onclick="resetFilters()">
-                        <i class="fas fa-redo me-1"></i>Reset Filters
+                        <i class="fas fa-redo me-1"></i>Reset Filter
                     </button>
                 </div>
             </div>
@@ -627,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="mb-3 text-muted">
                                 <i class="fas fa-calendar me-1"></i>${article.displayDate}
                                 <span class="mx-2">|</span>
-                                <i class="fas fa-user me-1"></i>${escapeHtml(article.source?.name || 'Unknown')}
+                                <i class="fas fa-user me-1"></i>${escapeHtml(article.source?.name || 'Tidak diketahui')}
                             </div>
                             <div class="p-3 border rounded bg-light mb-3">
                                 <strong>Kalimat Utama:</strong><br>
@@ -680,11 +698,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (navigator.clipboard) {
             navigator.clipboard.writeText(decodedUrl);
-            alert('Link copied to clipboard!');
+            alert('Tautan berhasil disalin.');
             return;
         }
 
-        prompt('Copy this link:', decodedUrl);
+        prompt('Salin tautan ini:', decodedUrl);
     };
 
     window.resetFilters = resetFilters;

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Progress - BC Learning</title>
+    <title>Progres Belajar - BC Learning</title>
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://use.fontawesome.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://use.fontawesome.com https://cdn.jsdelivr.net; img-src 'self' data: https:; media-src 'self' https:; connect-src 'self'; frame-src 'self';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -15,99 +15,412 @@
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --dashboard-accent: #0b7688;
+            --dashboard-ink: #12343b;
+            --dashboard-surface: #f5fbfc;
+            --dashboard-line: rgba(10, 54, 63, 0.1);
+            --dashboard-shadow: 0 18px 40px rgba(13, 47, 54, 0.08);
+        }
+
+        .dashboard.elearn-page-shell {
+            max-width: 1280px;
+        }
+
+        .elearn-page-intro {
+            margin-bottom: 1.2rem;
+        }
+
+        .elearn-page-copy {
+            max-width: 62rem;
+            font-size: 1.45rem;
+        }
+
+        .dashboard-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.85fr);
+            gap: 14px;
+            margin-bottom: 1.4rem;
+        }
+
+        .level-overview.box,
+        .dashboard-panel {
+            background: linear-gradient(180deg, #ffffff 0%, #f7fbfc 100%);
+            border: 1px solid var(--dashboard-line);
+            border-radius: 18px;
+            box-shadow: var(--dashboard-shadow);
+        }
+
+        .level-overview.box {
+            margin: 0;
+            padding: 1.6rem 1.8rem;
+        }
+
+        .level-header {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .level-header h3 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--dashboard-ink);
+        }
+
+        .level-progress .progress-bar {
+            height: 10px;
+            background: #dceef1;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .level-progress .progress-fill {
+            background: linear-gradient(90deg, #06bbcc 0%, #0b7688 100%);
+        }
+
+        .progress-text {
+            display: inline-block;
+            margin-top: 0.65rem;
+            color: #58767d;
+            font-size: 1.3rem;
+        }
+
         .stats-overview {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 2rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin: 0;
         }
 
         .stat-item {
-            background: linear-gradient(135deg, #06BBCC 0%, #00A3CC 100%);
+            background: linear-gradient(135deg, #0b7688 0%, #06bbcc 100%);
             color: white;
-            border-radius: 18px;
-            padding: 25px;
-            display: flex;
+            border-radius: 16px;
+            padding: 1.35rem 1.4rem;
+            display: grid;
+            grid-template-columns: 42px minmax(0, 1fr);
+            gap: 12px;
             align-items: center;
-            gap: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            min-height: 104px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .stat-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 22px rgba(6, 105, 118, 0.16);
         }
 
         .stat-icon {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.18);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 1.8rem;
             flex-shrink: 0;
         }
 
         .stat-content {
-            flex: 1;
+            min-width: 0;
             text-align: left;
         }
 
         .stat-number {
-            font-size: 3.5rem;
+            font-size: 2.5rem;
             font-weight: 700;
             line-height: 1;
-            margin-bottom: 5px;
+            margin-bottom: 0.35rem;
             color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .stat-label {
-            font-size: 1.4rem;
-            font-weight: 500;
-            color: #ffffff !important;
+            font-size: 1.12rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9) !important;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.06em;
+            line-height: 1.25;
+        }
+
+        .dashboard-main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+            gap: 14px;
+            align-items: start;
+        }
+
+        .dashboard-stack {
+            display: grid;
+            gap: 14px;
+        }
+
+        .dashboard-panel {
+            overflow: hidden;
+        }
+
+        .dashboard-panel > summary {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            padding: 1.45rem 1.6rem;
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--dashboard-ink);
+            user-select: none;
+        }
+
+        .dashboard-panel > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .dashboard-panel > summary::after {
+            content: "\f107";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 1.4rem;
+            color: #66868d;
+            transition: transform 0.2s ease;
+        }
+
+        .dashboard-panel[open] > summary::after {
+            transform: rotate(180deg);
+        }
+
+        .dashboard-panel__body {
+            padding: 0 1.6rem 1.6rem;
+        }
+
+        .dashboard-panel__subhead {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-panel__subhead h3,
+        .dashboard-panel__subhead h4 {
+            margin: 0;
+            font-size: 1.45rem;
+            color: var(--dashboard-ink);
+        }
+
+        .dashboard-mini-note {
+            color: #688188;
+            font-size: 1.2rem;
+        }
+
+        .dashboard-subgrid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .dashboard-mini-stack {
+            display: grid;
+            gap: 14px;
+        }
+
+        .quiz-performance-section,
+        .recent-activity,
+        .achievements,
+        .learning-path,
+        .progress-charts,
+        .quiz-history {
+            margin: 0;
+        }
+
+        .quiz-performance-section h2,
+        .recent-activity h3,
+        .achievements h3,
+        .learning-path h3,
+        .chart-container h3,
+        .quiz-history h3 {
+            margin: 0 0 1rem;
+            font-size: 1.55rem;
+            color: var(--dashboard-ink);
+        }
+
+        .quiz-history .table-responsive {
+            border: 1px solid var(--dashboard-line);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .quiz-history .table {
+            margin-bottom: 0;
+            font-size: 1.25rem;
+        }
+
+        .quiz-history th,
+        .quiz-history td {
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        .progress-charts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .chart-container {
+            border: 1px solid var(--dashboard-line);
+            border-radius: 14px;
+            padding: 1.25rem;
+            background: #fcfefe;
+            min-height: 260px;
+        }
+
+        .chart-container canvas {
+            max-height: 190px;
+        }
+
+        .path-steps {
+            display: grid;
+            gap: 10px;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+            padding: 1rem 1.1rem;
+            border-radius: 14px;
+            background: #fbfdfd;
+            border: 1px solid var(--dashboard-line);
+        }
+
+        .step-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-content h4 {
+            margin: 0 0 0.2rem;
+            font-size: 1.35rem;
+            color: var(--dashboard-ink);
+        }
+
+        .step-content p {
+            margin: 0;
+            color: #688188;
+            font-size: 1.2rem;
+        }
+
+        .mini-progress {
+            height: 8px;
+            margin-top: 0.8rem;
+            border-radius: 999px;
+            background: #e3eef0;
+            overflow: hidden;
+        }
+
+        .mini-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06bbcc 0%, #0b7688 100%);
+        }
+
+        .activity-list,
+        .badges-container {
+            display: grid;
+            gap: 10px;
+        }
+
+        .activity-item,
+        .badge-item {
+            display: grid;
+            grid-template-columns: 42px minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
+            padding: 1rem 1.1rem;
+            border-radius: 14px;
+            border: 1px solid var(--dashboard-line);
+            background: #fbfdfd;
+        }
+
+        .activity-icon,
+        .badge-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .activity-content h4,
+        .badge-info h4 {
+            margin: 0 0 0.2rem;
+            font-size: 1.3rem;
+            color: var(--dashboard-ink);
+        }
+
+        .activity-time,
+        .badge-info p {
+            color: #688188;
+            font-size: 1.15rem;
+            margin: 0;
+        }
+
+        .dashboard-section-label {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6a868d;
+        }
+
+        @media (max-width: 1080px) {
+            .dashboard-top,
+            .dashboard-main-grid,
+            .dashboard-subgrid,
+            .progress-charts {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
             .stats-overview {
-                grid-template-columns: 1fr;
-                gap: 15px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             .stat-item {
-                padding: 20px;
-                gap: 15px;
-            }
-
-            .stat-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 24px;
+                min-height: 90px;
+                padding: 1.15rem;
             }
 
             .stat-number {
-                font-size: 3rem;
+                font-size: 2.1rem;
             }
 
-            .stat-label {
-                font-size: 1.4rem;
+            .dashboard-panel > summary,
+            .dashboard-panel__body,
+            .level-overview.box {
+                padding-left: 1.25rem;
+                padding-right: 1.25rem;
+            }
+
+            .dashboard-panel__body {
+                padding-bottom: 1.25rem;
             }
         }
 
-        @media (max-width: 480px) {
-            .stat-item {
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-            }
-
-            .stat-content {
-                text-align: center;
+        @media (max-width: 560px) {
+            .stats-overview {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -119,187 +432,252 @@
     <section class="dashboard elearn-page-shell">
         <div class="elearn-page-intro">
             <p class="elearn-page-kicker">Dashboard</p>
-            <h1 class="heading">My Learning Progress</h1>
+            <h1 class="heading">Progres Belajar Saya</h1>
             <p class="elearn-page-copy">
-                Pantau capaian kursus, histori kuis, dan langkah belajar berikutnya dari satu workspace
-                yang konsisten di desktop, tablet, maupun mobile.
+                Ringkasan belajar Anda, disusun padat agar progres inti bisa dibaca tanpa banyak scroll.
             </p>
         </div>
 
-        <div class="level-overview box">
-            <div class="level-header">
-                <h3><i class="fas fa-level-up-alt"></i> Your Level: <span id="dashboard-user-level">BIM Modeller</span></h3>
-                <div class="level-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="level-progress-fill" style="width: 35%;"></div>
+        <div class="dashboard-top">
+            <div class="level-overview box">
+                <div class="level-header">
+                    <div class="dashboard-section-label">Level Snapshot</div>
+                    <h3><i class="fas fa-level-up-alt"></i> <span id="dashboard-user-level">BIM Modeller</span></h3>
+                    <div class="level-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="level-progress-fill" style="width: 35%;"></div>
+                        </div>
+                        <span class="progress-text" id="level-progress-text">35% to BIM Coordinator</span>
                     </div>
-                    <span class="progress-text" id="level-progress-text">35% to BIM Coordinator</span>
                 </div>
             </div>
-        </div>
-
-        <div class="stats-overview">
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number" id="courses-completed">12</div>
-                    <div class="stat-label">Courses Completed</div>
-                </div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <i class="fas fa-edit"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number" id="practice-attempts">28</div>
-                    <div class="stat-label">Practice Attempts</div>
-                </div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number" id="exams-passed">3</div>
-                    <div class="stat-label">Exams Passed</div>
-                </div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <i class="fas fa-certificate"></i>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-number" id="certificates-earned">2</div>
-                    <div class="stat-label">Certificates Earned</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="quiz-performance-section" id="quiz-record">
-            <h2><i class="fas fa-brain"></i> Quiz Performance</h2>
             <div class="stats-overview">
                 <div class="stat-item">
                     <div class="stat-icon">
-                        <i class="fas fa-play-circle"></i>
+                        <i class="fas fa-check-double"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-number" id="total-quiz-attempts">0</div>
-                        <div class="stat-label">Quiz Attempts</div>
+                        <div class="stat-number" id="courses-completed">12</div>
+                        <div class="stat-label">Modul Selesai</div>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">
-                        <i class="fas fa-trophy"></i>
+                        <i class="fas fa-edit"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-number" id="highest-score">0%</div>
-                        <div class="stat-label">Highest Score</div>
+                        <div class="stat-number" id="practice-attempts">28</div>
+                        <div class="stat-label">Practice Attempts</div>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-clipboard-check"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-number" id="average-score">0%</div>
-                        <div class="stat-label">Average Score</div>
+                        <div class="stat-number" id="exams-passed">3</div>
+                        <div class="stat-label">Exams Passed</div>
                     </div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-icon">
-                        <i class="fas fa-calendar-check"></i>
+                        <i class="fas fa-certificate"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-number" id="last-quiz-date">-</div>
-                        <div class="stat-label">Last Quiz</div>
+                        <div class="stat-number" id="certificates-earned">2</div>
+                        <div class="stat-label">Sertifikat Diperoleh</div>
                     </div>
-                </div>
-            </div>
-
-            <div class="quiz-history">
-                <h3><i class="fas fa-history"></i> Recent Quiz Results</h3>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Quiz Name</th>
-                                <th>Category</th>
-                                <th>Score</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="quiz-history-body">
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">
-                                    <i class="fas fa-spinner fa-spin me-2"></i>Loading quiz history...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
 
-        <div class="progress-charts">
-            <div class="chart-container">
-                <h3><i class="fas fa-chart-line"></i> Weekly Progress</h3>
-                <canvas id="weeklyProgressChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3><i class="fas fa-chart-pie"></i> Course Categories</h3>
-                <canvas id="categoriesChart"></canvas>
-            </div>
-        </div>
-
-        <div class="learning-path">
-            <h3><i class="fas fa-map-marked-alt"></i> Your Learning Path</h3>
-            <div class="path-steps">
-                <div class="step completed">
-                    <div class="step-icon"><i class="fas fa-check"></i></div>
-                    <div class="step-content">
-                        <h4>AutoCAD Basics</h4>
-                        <p>Completed 5 courses</p>
-                    </div>
-                </div>
-                <div class="step completed">
-                    <div class="step-icon"><i class="fas fa-check"></i></div>
-                    <div class="step-content">
-                        <h4>Revit Introduction</h4>
-                        <p>Completed 3 courses</p>
-                    </div>
-                </div>
-                <div class="step current">
-                    <div class="step-icon"><i class="fas fa-play"></i></div>
-                    <div class="step-content">
-                        <h4>3D Modeling Intermediate</h4>
-                        <p>2 of 4 courses completed</p>
-                        <div class="mini-progress">
-                            <div class="mini-progress-fill" style="width: 50%;"></div>
+        <div class="dashboard-main-grid">
+            <div class="dashboard-stack">
+                <details class="dashboard-panel" open>
+                    <summary><span><i class="fas fa-book-reader"></i> Aktivitas Belajar</span></summary>
+                    <div class="dashboard-panel__body">
+                        <div class="stats-overview">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="pdf-reads">0</div>
+                                    <div class="stat-label">PDF Reads</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="videos-watched">0</div>
+                                    <div class="stat-label">Videos Watched</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-check-double"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="completed-modules">0</div>
+                                    <div class="stat-label">Finished Modules</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="step locked">
-                    <div class="step-icon"><i class="fas fa-lock"></i></div>
-                    <div class="step-content">
-                        <h4>Advanced BIM Coordination</h4>
-                        <p>Requires BIM Coordinator level</p>
+                </details>
+
+                <details class="dashboard-panel" open>
+                    <summary><span><i class="fas fa-brain"></i> Quiz Snapshot</span></summary>
+                    <div class="dashboard-panel__body">
+                        <div class="stats-overview">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-play-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="total-quiz-attempts">0</div>
+                                    <div class="stat-label">Quiz Attempts</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="highest-score">0%</div>
+                                    <div class="stat-label">Highest Score</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="average-score">0%</div>
+                                    <div class="stat-label">Average Score</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="last-quiz-date">-</div>
+                                    <div class="stat-label">Last Quiz</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </details>
+
+                <details class="dashboard-panel" id="quiz-history-panel">
+                    <summary><span><i class="fas fa-history"></i> Quiz History</span></summary>
+                    <div class="dashboard-panel__body">
+                        <div class="quiz-history">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Quiz Name</th>
+                                            <th>Category</th>
+                                            <th>Score</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="quiz-history-body">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin me-2"></i>Memuat riwayat kuis...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="dashboard-mini-stack">
+                <details class="dashboard-panel" open>
+                    <summary><span><i class="fas fa-clock"></i> Aktivitas Terbaru</span></summary>
+                    <div class="dashboard-panel__body">
+                        <div class="recent-activity">
+                            <div class="activity-list" id="activity-list"></div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="dashboard-panel">
+                    <summary><span><i class="fas fa-trophy"></i> Pencapaian Terbaru</span></summary>
+                    <div class="dashboard-panel__body">
+                        <div class="achievements">
+                            <div class="badges-container" id="badges-container"></div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="dashboard-panel">
+                    <summary><span><i class="fas fa-map-marked-alt"></i> Learning Path</span></summary>
+                    <div class="dashboard-panel__body">
+                        <div class="learning-path">
+                            <div class="path-steps">
+                                <div class="step completed">
+                                    <div class="step-icon"><i class="fas fa-check"></i></div>
+                                    <div class="step-content">
+                                        <h4>AutoCAD Basics</h4>
+                                        <p>Menyelesaikan 5 materi</p>
+                                    </div>
+                                </div>
+                                <div class="step completed">
+                                    <div class="step-icon"><i class="fas fa-check"></i></div>
+                                    <div class="step-content">
+                                        <h4>Revit Introduction</h4>
+                                        <p>Menyelesaikan 3 materi</p>
+                                    </div>
+                                </div>
+                                <div class="step current">
+                                    <div class="step-icon"><i class="fas fa-play"></i></div>
+                                    <div class="step-content">
+                                        <h4>3D Modeling Intermediate</h4>
+                                        <p>2 of 4 courses completed</p>
+                                        <div class="mini-progress">
+                                            <div class="mini-progress-fill" style="width: 50%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="step locked">
+                                    <div class="step-icon"><i class="fas fa-lock"></i></div>
+                                    <div class="step-content">
+                                        <h4>Advanced BIM Coordination</h4>
+                                        <p>Requires BIM Coordinator level</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
         </div>
 
-        <div class="recent-activity">
-            <h3><i class="fas fa-clock"></i> Recent Activity</h3>
-            <div class="activity-list" id="activity-list"></div>
-        </div>
-
-        <div class="achievements">
-            <h3><i class="fas fa-trophy"></i> Recent Achievements</h3>
-            <div class="badges-container" id="badges-container"></div>
-        </div>
+        <details class="dashboard-panel" style="margin-top: 1.4rem;">
+            <summary><span><i class="fas fa-chart-line"></i> Charts & Trends</span></summary>
+            <div class="dashboard-panel__body">
+                <div class="progress-charts">
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-line"></i> Weekly Progress</h3>
+                        <canvas id="weeklyProgressChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-pie"></i> Course Categories</h3>
+                        <canvas id="categoriesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </details>
     </section>
 
     <div class="footer-container"></div>

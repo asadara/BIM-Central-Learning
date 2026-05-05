@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - BCL</title>
-    <meta name="description" content="BCL Admin Panel - Building Information Management System">
+    <title>Panel Admin - BCL</title>
+    <meta name="description" content="BCL Panel Admin - Building Information Management Sistem">
     <meta name="robots" content="noindex, nofollow">
 
     <!-- Favicon -->
@@ -48,7 +48,7 @@
     <!-- Navigation Bar Component -->
     <div id="navbar-container"></div>
 
-    
+
 
     <!-- Modern Admin Login Section -->
     <div id="auth-section" class="auth-container">
@@ -63,47 +63,47 @@
             <form id="admin-login-form">
                 <div class="mb-4">
                     <label for="adminEmail" class="form-label fw-semibold">
-                        <i class="fas fa-envelope me-2"></i>Administrator Email
+                        <i class="fas fa-envelope me-2"></i>Email Administrator
                     </label>
-                    <input type="email" class="form-control" id="adminEmail" placeholder="Enter administrator email"
+                    <input type="email" class="form-control" id="adminEmail" placeholder="Masukkan email administrator"
                         autocomplete="username"
                         required style="padding: 1rem; font-size: 1.1rem;">
                 </div>
 
                 <div class="mb-4">
                     <label for="adminPassword" class="form-label fw-semibold">
-                        <i class="fas fa-lock me-2"></i>Security Password
+                        <i class="fas fa-lock me-2"></i>Kata Sandi Keamanan
                     </label>
-                    <input type="password" class="form-control" id="adminPassword" placeholder="Enter security password"
+                    <input type="password" class="form-control" id="adminPassword" placeholder="Masukkan kata sandi keamanan"
                         autocomplete="current-password"
                         required style="padding: 1rem; font-size: 1.1rem;">
                 </div>
 
                 <div class="mb-4">
                     <button class="btn btn-modern btn-modern-primary w-100 py-3" type="submit">
-                        <i class="fas fa-sign-in-alt me-2"></i>Access Admin Panel
+                        <i class="fas fa-sign-in-alt me-2"></i>Masuk ke Panel Admin
                     </button>
                 </div>
 
                 <div class="text-center">
                     <div class="alert alert-warning py-2" style="font-size: 0.9rem;">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Security Notice:</strong><br>
-                        Contact system administrator for login credentials
+                        <strong>Pemberitahuan Keamanan:</strong><br>
+                        Hubungi administrator sistem untuk mendapatkan kredensial login
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Admin Dashboard (Loaded dynamically after authentication) -->
+    <!-- Admin Dasbor (Loaded dynamically after authentication) -->
     <div id="admin-interface" class="container-fluid d-none">
         <div class="row">
             <!-- Modern Sidebar -->
             <div id="admin-sidebar" class="admin-sidebar col-md-2">
                 <div class="sidebar-title">
                     <i class="fas fa-crown"></i>
-                    Admin Panel
+                    Panel Admin
                     <button class="btn btn-sm ms-auto" onclick="toggleSidebar()" id="sidebar-toggle">
                         <i class="fas fa-bars"></i>
                     </button>
@@ -112,73 +112,73 @@
                 <nav class="mt-4">
                     <a class="nav-link-modern active mb-2" href="#dashboard" onclick="showSection('dashboard')">
                         <i class="fas fa-tachometer-alt"></i>
-                        Dashboard
+                        Dasbor
                     </a>
                     <a class="nav-link-modern mb-2" href="#users" onclick="showSection('users')">
                         <i class="fas fa-users"></i>
-                        Users
+                        Pengguna
                     </a>
                     <a class="nav-link-modern mb-2" href="#questions" onclick="showSection('questions')">
                         <i class="fas fa-question-circle"></i>
-                        BIM Questions
+                        Pertanyaan BIM
                     </a>
                     <a class="nav-link-modern mb-2" href="#videos" onclick="showSection('videos')">
                         <i class="fas fa-video"></i>
-                        Video Tags
+                        Tag Video
                     </a>
                     <a class="nav-link-modern mb-2" href="#video-display"
                         onclick="showSection('video-display'); safeCall('videoDisplay', 'loadVideoDisplayManagement');">
                         <i class="fas fa-tv"></i>
-                        Video Display
+                        Tampilan Video
                     </a>
                     <a class="nav-link-modern mb-2" href="#pdf-management"
                         onclick="showSection('pdf-management'); safeCall('contentManagement', 'loadPDFManagement');">
                         <i class="fas fa-file-pdf"></i>
-                        PDF Management
+                        Manajemen PDF
                     </a>
                     <a class="nav-link-modern mb-2" href="#bim-media"
                         onclick="showSection('bim-media'); safeCall('contentManagement', 'loadBIMMedia');">
                         <i class="fas fa-tags"></i>
-                        BIM Media
+                        Media BIM
                     </a>
 
                     <hr class="my-4 border-secondary">
 
                     <a class="nav-link-modern mb-2" href="#news" onclick="showSection('news')">
                         <i class="fas fa-newspaper"></i>
-                        News
+                        Berita
                     </a>
                     <a class="nav-link-modern mb-2" href="#plugins" onclick="showSection('plugins')">
                         <i class="fas fa-plug"></i>
-                        Plugins
+                        Plugin
                     </a>
                     <a class="nav-link-modern mb-2" href="#library" onclick="showSection('library')">
                         <i class="fas fa-book"></i>
-                        Library
+                        Pustaka
                     </a>
                     <a class="nav-link-modern mb-2" href="#system" onclick="showSection('system')">
                         <i class="fas fa-server"></i>
-                        System
+                        Sistem
                     </a>
 
                     <hr class="my-4 border-secondary">
 
                     <a class="nav-link-modern mb-2" href="#change-password" onclick="showSection('change-password'); loadChangePasswordSection();">
                         <i class="fas fa-key"></i>
-                        Change Password
+                        Ubah Kata Sandi
                     </a>
 
                     <hr class="my-4 border-secondary">
 
                     <a class="nav-link-modern mb-2" href="/" target="_blank">
                         <i class="fas fa-home"></i>
-                        Main Page
+                        Halaman Utama
                     </a>
 
                     <hr class="my-4 border-secondary">
 
                     <button class="btn btn-modern-primary w-100 mt-3" onclick="adminLogout()">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        <i class="fas fa-sign-out-alt me-2"></i>Keluar
                     </button>
                 </nav>
             </div>
@@ -187,16 +187,16 @@
             <div id="admin-content" class="col-md-9">
                 <div class="container-fluid py-4">
 
-                    <!-- Dashboard Section -->
+                    <!-- Dasbor Section -->
                     <div id="dashboard-section" class="admin-section">
-                        <!-- System Overview -->
+                        <!-- Sistem Overview -->
                         <div class="stats-overview mb-5">
                             <div class="stat-card">
                                 <div class="stat-icon">
                                     <i class="fas fa-users" style="color: var(--primary-gradient);"></i>
                                 </div>
                                 <div class="stat-value" id="user-count">0</div>
-                                <div class="stat-label">Total Users</div>
+                                <div class="stat-label">Total Pengguna</div>
                             </div>
 
                             <div class="stat-card">
@@ -204,7 +204,7 @@
                                     <i class="fas fa-question-circle" style="color: var(--success-gradient);"></i>
                                 </div>
                                 <div class="stat-value" id="question-count">0</div>
-                                <div class="stat-label">BIM Questions</div>
+                                <div class="stat-label">Pertanyaan BIM</div>
                             </div>
 
                             <div class="stat-card">
@@ -212,7 +212,7 @@
                                     <i class="fas fa-video" style="color: var(--warning-gradient);"></i>
                                 </div>
                                 <div class="stat-value" id="video-count">0</div>
-                                <div class="stat-label">Video Tutorials</div>
+                                <div class="stat-label">Video Tutorial</div>
                             </div>
 
                             <div class="stat-card">
@@ -220,7 +220,7 @@
                                     <i class="fas fa-tags" style="color: var(--info-gradient);"></i>
                                 </div>
                                 <div class="stat-value" id="media-count">0</div>
-                                <div class="stat-label">Tagged Media</div>
+                                <div class="stat-label">Media Bertag</div>
                             </div>
                         </div>
 
@@ -229,7 +229,7 @@
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-bolt"></i>
-                                    Quick Actions
+                                    Aksi Cepat
                                 </div>
                             </div>
                             <div class="card-body-modern">
@@ -238,7 +238,7 @@
                                         <button class="btn btn-modern-primary w-100 py-3"
                                             onclick="showSection('users')">
                                             <i class="fas fa-users fa-lg mb-2"></i><br>
-                                            <span class="fw-bold">Manage Users</span>
+                                            <span class="fw-bold">Kelola Pengguna</span>
                                         </button>
                                     </div>
                                     <div class="col-md-6 col-lg-3">
@@ -246,7 +246,7 @@
                                             onclick="showSection('questions')"
                                             style="background: var(--success-gradient);">
                                             <i class="fas fa-question-circle fa-lg mb-2"></i><br>
-                                            <span class="fw-bold">BIM Questions</span>
+                                            <span class="fw-bold">Pertanyaan BIM</span>
                                         </button>
                                     </div>
                                     <div class="col-md-6 col-lg-3">
@@ -254,7 +254,7 @@
                                             onclick="showSection('videos')"
                                             style="background: var(--warning-gradient);">
                                             <i class="fas fa-video fa-lg mb-2"></i><br>
-                                            <span class="fw-bold">Video Management</span>
+                                            <span class="fw-bold">Manajemen Video</span>
                                         </button>
                                     </div>
                                     <div class="col-md-6 col-lg-3">
@@ -262,7 +262,7 @@
                                             onclick="showSection('bim-media')"
                                             style="background: var(--info-gradient);">
                                             <i class="fas fa-tags fa-lg mb-2"></i><br>
-                                            <span class="fw-bold">BIM Media Tagging</span>
+                                            <span class="fw-bold">Penandaan Media BIM</span>
                                         </button>
                                     </div>
                                 </div>
@@ -273,19 +273,19 @@
                                     <div class="col-md-4">
                                         <button class="btn btn-outline-secondary w-100 py-2"
                                             onclick="showSection('news')">
-                                            <i class="fas fa-newspaper me-2"></i>News
+                                            <i class="fas fa-newspaper me-2"></i>Berita
                                         </button>
                                     </div>
                                     <div class="col-md-4">
                                         <button class="btn btn-outline-secondary w-100 py-2"
                                             onclick="showSection('plugins')">
-                                            <i class="fas fa-plug me-2"></i>Plugins
+                                            <i class="fas fa-plug me-2"></i>Plugin
                                         </button>
                                     </div>
                                     <div class="col-md-4">
                                         <button class="btn btn-outline-secondary w-100 py-2"
                                             onclick="showSection('system')">
-                                            <i class="fas fa-server me-2"></i>System
+                                            <i class="fas fa-server me-2"></i>Sistem
                                         </button>
                                     </div>
                                 </div>
@@ -293,31 +293,31 @@
                         </div>
                     </div>
 
-                    <!-- Users Section -->
+                    <!-- Pengguna Section -->
                     <div id="users-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-users"></i>
-                                    User Management System
+                                    Sistem Manajemen Pengguna
                                 </div>
                                 <button class="btn btn-modern-primary" onclick="safeCall('users', 'showCreateUserModal')">
-                                    <i class="fas fa-user-plus me-2"></i>Add New User
+                                    <i class="fas fa-user-plus me-2"></i>Tambah Pengguna Baru
                                 </button>
                             </div>
                             <div class="card-body-modern">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div>
-                                        <h5 class="mb-0">Registered Users</h5>
-                                        <small class="text-muted">Manage all BCL platform users</small>
+                                        <h5 class="mb-0">Pengguna Terdaftar</h5>
+                                        <small class="text-muted">Kelola semua pengguna platform BCL</small>
                                         <div class="mt-2">
                                             <span class="badge bg-primary fs-6" id="totalUsersCount">
-                                                <i class="fas fa-users me-1"></i>Total: 0 users
+                                                <i class="fas fa-users me-1"></i>Total: 0 pengguna
                                             </span>
                                         </div>
                                     </div>
                                     <button class="btn btn-outline-primary" onclick="safeCall('users', 'loadUsers')">
-                                        <i class="fas fa-sync-alt me-2"></i>Refresh Users
+                                        <i class="fas fa-sync-alt me-2"></i>Muat Ulang Pengguna
                                     </button>
                                 </div>
 
@@ -325,11 +325,11 @@
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <input type="text" class="form-control" id="userSearchInput"
-                                            placeholder="Search by name or email..." onkeyup="filterUsers()">
+                                            placeholder="Cari berdasarkan nama atau email..." onkeyup="filterUsers()">
                                     </div>
                                     <div class="col-md-3">
                                         <select class="form-select" id="bimLevelFilter" onchange="filterUsers()">
-                                            <option value="">All BIM Levels</option>
+                                            <option value="">Semua Level BIM</option>
                                             <option value="BIM Modeller">BIM Modeller</option>
                                             <option value="BIM Coordinator">BIM Coordinator</option>
                                             <option value="BIM Manager">BIM Manager</option>
@@ -338,43 +338,43 @@
                                     </div>
                                     <div class="col-md-2">
                                         <select class="form-select" id="statusFilter" onchange="filterUsers()">
-                                            <option value="">All Status</option>
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
+                                            <option value="">Semua Status</option>
+                                            <option value="active">Aktif</option>
+                                            <option value="inactive">Tidak Aktif</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-outline-secondary btn-sm"
                                                 onclick="clearUserFilters()">
-                                                <i class="fas fa-times me-1"></i>Clear
+                                                <i class="fas fa-times me-1"></i>Bersihkan
                                             </button>
                                             <button class="btn btn-outline-info btn-sm" onclick="safeCall('users', 'exportUsers')">
-                                                <i class="fas fa-download me-1"></i>Export
+                                                <i class="fas fa-download me-1"></i>Ekspor
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Users Table -->
+                                <!-- Pengguna Table -->
                                 <div class="table-responsive">
                                     <table class="table table-hover">
                                         <thead class="table-dark">
                                             <tr>
                                                 <th style="width: 60px;">No</th>
                                                 <th>ID</th>
-                                                <th>Name</th>
+                                                <th>Nama</th>
                                                 <th>Email</th>
                                                 <th>BIM Level</th>
                                                 <th>Job Role</th>
                                                 <th>Organization</th>
-                                                <th>Password</th>
+                                                <th>Kata Sandi</th>
                                                 <th>Status</th>
-                                                <th>Registered</th>
+                                                <th>Terdaftar</th>
                                                 <th>Mapping Kompetensi Access</th>
-                                                <th>Library Download Access</th>
+                                                <th>Pustaka Download Access</th>
                                                 <th>Download Tanpa Watermark</th>
-                                                <th>Actions</th>
+                                                <th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="usersTableBody">
@@ -382,9 +382,9 @@
                                                 <td colspan="14" class="text-center py-4">
                                                     <div class="d-flex flex-column align-items-center">
                                                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                                                        <p class="text-muted mb-2">No users loaded yet</p>
+                                                        <p class="text-muted mb-2">Belum ada data pengguna yang dimuat</p>
                                                             <button class="btn btn-primary" onclick="safeCall('users', 'loadUsers')">
-                                                            <i class="fas fa-sync-alt me-2"></i>Load Users
+                                                            <i class="fas fa-sync-alt me-2"></i>Muat Pengguna
                                                         </button>
                                                     </div>
                                                 </td>
@@ -407,17 +407,17 @@
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-question-circle"></i>
-                                    BIM Questions Management
+                                    Manajemen Pertanyaan BIM
                                 </div>
                                 <button class="btn btn-modern-primary" onclick="safeCall('questions', 'showCreateQuestionModal')">
-                                    <i class="fas fa-plus me-2"></i>Add Question
+                                    <i class="fas fa-plus me-2"></i>Tambah Pertanyaan
                                 </button>
                             </div>
                             <div class="card-body-modern">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div>
-                                        <h5 class="mb-0">User Questions & Answers</h5>
-                                        <small class="text-muted">Manage BIM questions displayed on bim.html</small>
+                                        <h5 class="mb-0">Pertanyaan & Jawaban Pengguna</h5>
+                                        <small class="text-muted">Kelola pertanyaan BIM yang ditampilkan pada bim.html</small>
                                         <div class="mt-2">
                                             <span class="badge bg-info fs-6" id="totalQuestionsCount">
                                                 <i class="fas fa-question-circle me-1"></i>Total: 0 questions
@@ -433,13 +433,13 @@
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <input type="text" class="form-control" id="questionSearchInput"
-                                            placeholder="Search questions or answers..." onkeyup="filterQuestions()">
+                                            placeholder="Cari pertanyaan atau jawaban..." onkeyup="filterQuestions()">
                                     </div>
                                     <div class="col-md-2">
                                         <select class="form-select" id="questionStatusFilter"
                                             onchange="filterQuestions()">
-                                            <option value="">All Status</option>
-                                            <option value="pending">Pending</option>
+                                            <option value="">Semua Status</option>
+                                            <option value="pending">Menunggu</option>
                                             <option value="answered">Answered</option>
                                             <option value="postponed">Postponed</option>
                                         </select>
@@ -466,10 +466,10 @@
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-outline-secondary btn-sm"
                                                 onclick="clearQuestionFilters()">
-                                                <i class="fas fa-times me-1"></i>Clear
+                                                <i class="fas fa-times me-1"></i>Bersihkan
                                             </button>
                                             <button class="btn btn-outline-info btn-sm" onclick="safeCall('questions', 'exportQuestions')">
-                                                <i class="fas fa-download me-1"></i>Export
+                                                <i class="fas fa-download me-1"></i>Ekspor
                                             </button>
                                         </div>
                                     </div>
@@ -487,7 +487,7 @@
                                                 <th>Tag</th>
                                                 <th>Questioner</th>
                                                 <th>Date</th>
-                                                <th>Actions</th>
+                                                <th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="questionsTableBody">
@@ -520,7 +520,7 @@
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-video"></i>
-                                    Video Tags Management System
+                                    Tag Video Management Sistem
                                 </div>
                                 <button class="btn btn-modern-primary" onclick="window.adminPanel.modules.get('videos').instance.scanVideoSources()">
                                     <i class="fas fa-search me-2"></i>Scan Video Sources
@@ -574,7 +574,7 @@
                                     </div>
                                     <div class="col-md-2">
                                         <select class="form-select" id="videoSortFilter" onchange="safeCall('videos', 'filterVideoTags')">
-                                            <option value="name">Sort by Name</option>
+                                            <option value="name">Sort by Nama</option>
                                             <option value="category">Sort by Category</option>
                                             <option value="views">Sort by Views</option>
                                             <option value="newest">Newest First</option>
@@ -584,10 +584,10 @@
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-outline-secondary btn-sm"
                                                 onclick="safeCall('videos', 'clearVideoFilters')">
-                                                <i class="fas fa-times me-1"></i>Clear
+                                                <i class="fas fa-times me-1"></i>Bersihkan
                                             </button>
                                             <button class="btn btn-outline-info btn-sm" onclick="safeCall('videos', 'exportTaggedVideos')">
-                                                <i class="fas fa-download me-1"></i>Export
+                                                <i class="fas fa-download me-1"></i>Ekspor
                                             </button>
                                         </div>
                                     </div>
@@ -620,7 +620,7 @@
                                             <div class="modal-body">
                                                 <div id="videoInfo" class="mb-4 p-3 bg-light rounded">
                                                     <h6>Selected Video:</h6>
-                                                    <p id="selectedVideoName" class="mb-1 fw-bold"></p>
+                                                    <p id="selectedVideoNama" class="mb-1 fw-bold"></p>
                                                     <small id="selectedVideoPath" class="text-muted"></small>
                                                 </div>
 
@@ -728,19 +728,19 @@
                         </div>
                     </div>
 
-                    <!-- Video Display Section -->
+                    <!-- Tampilan Video Section -->
                     <div id="video-display-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-tv"></i>
-                                    Display Video System
+                                    Display Video Sistem
                                 </div>
                             </div>
                             <div class="card-body-modern">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div>
-                                        <h5 class="mb-0">Display Video System</h5>
+                                        <h5 class="mb-0">Display Video Sistem</h5>
                                         <small class="text-muted">Select which videos appear in the homepage display
                                             system</small>
                                         <div class="mt-2">
@@ -761,8 +761,8 @@
                                         <label class="form-label fw-semibold">Sort by</label>
                                         <select class="form-select" id="videoDisplaySortBy"
                                             onchange="safeCall('videoDisplay', 'sortVideoDisplayTable')">
-                                            <option value="name_asc">Name (A-Z)</option>
-                                            <option value="name_desc">Name (Z-A)</option>
+                                            <option value="name_asc">Nama (A-Z)</option>
+                                            <option value="name_desc">Nama (Z-A)</option>
                                             <option value="date_desc">Date Created (Newest)</option>
                                             <option value="date_asc">Date Created (Oldest)</option>
                                             <option value="category_asc">Category (A-Z)</option>
@@ -809,12 +809,12 @@
                                             <tr>
                                                 <th style="width: 60px;">No</th>
                                                 <th style="width: 80px;">Select</th>
-                                                <th>Name</th>
+                                                <th>Nama</th>
                                                 <th style="width: 100px;">Format</th>
                                                 <th>Duration</th>
                                                 <th>Date</th>
                                                 <th>Views</th>
-                                                <th>Actions</th>
+                                                <th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="videoDisplayTableBody">
@@ -859,7 +859,7 @@
                                             <i class="fas fa-check-square me-1"></i>Select All
                                         </button>
                                         <button class="btn btn-outline-secondary" onclick="clearAllDisplayVideos()">
-                                            <i class="fas fa-square me-1"></i>Clear All
+                                            <i class="fas fa-square me-1"></i>Bersihkan All
                                         </button>
                                         <button class="btn btn-success" onclick="saveVideoDisplaySelection()">
                                             <i class="fas fa-save me-2"></i>Save Selection
@@ -870,22 +870,22 @@
                         </div>
                     </div>
 
-                    <!-- PDF Management Section -->
+                    <!-- Manajemen PDF Section -->
                     <div id="pdf-management-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-file-pdf"></i>
-                                    PDF Management System
+                                    Manajemen PDF Sistem
                                 </div>
                                 <button class="btn btn-modern-primary" onclick="safeCall('contentManagement', 'showPDFUploadModal')">
-                                    <i class="fas fa-plus me-2"></i>Add New PDF
+                                    <i class="fas fa-plus me-2"></i>Tambah PDF Baru
                                 </button>
                             </div>
                             <div class="card-body-modern">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div>
-                                        <h5 class="mb-0">PDF Learning Materials & Display Management</h5>
+                                        <h5 class="mb-0">Manajemen Materi PDF & Tampilan</h5>
                                         <small class="text-muted">Manage PDF materials and control which ones appear on
                                             the courses page</small>
                                         <div class="mt-2">
@@ -902,7 +902,7 @@
                                             <i class="fas fa-sync-alt me-2"></i>Refresh
                                         </button>
                                         <button class="btn btn-outline-success" onclick="window.adminPanel.modules.get('content-management').instance.savePDFDisplaySelection()">
-                                            <i class="fas fa-save me-2"></i>Save Display Settings
+                                            <i class="fas fa-save me-2"></i>Simpan Pengaturan Tampilan
                                         </button>
                                     </div>
                                 </div>
@@ -911,18 +911,16 @@
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <input type="text" class="form-control" id="pdfManagementSearchInput"
-                                            placeholder="Search by title, category, or description..."
+                                            placeholder="Cari berdasarkan judul, kategori, atau deskripsi..."
                                             onkeyup="filterPDFManagement()">
                                     </div>
                                     <div class="col-md-2">
                                         <select class="form-select" id="pdfManagementCategoryFilter"
                                             onchange="filterPDFManagement()">
                                             <option value="">All Categories</option>
-                                            <option value="autocad">AutoCAD</option>
-                                            <option value="revit">Revit BIM</option>
-                                            <option value="sketchup">SketchUp</option>
-                                            <option value="3dsmax">3ds Max</option>
-                                            <option value="general">General BIM</option>
+                                            <option value="bim-modeller">BIM Modeller</option>
+                                            <option value="bim-coordinator">BIM Coordinator</option>
+                                            <option value="bim-manager">BIM Manager</option>
                                         </select>
                                     </div>
                                     <div class="col-md-2">
@@ -950,16 +948,16 @@
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-outline-secondary btn-sm"
                                                 onclick="clearPDFManagementFilters()">
-                                                <i class="fas fa-times me-1"></i>Clear
+                                                <i class="fas fa-times me-1"></i>Bersihkan
                                             </button>
                                             <button class="btn btn-outline-info btn-sm" onclick="safeCall('contentManagement', 'exportPDFMaterials')">
-                                                <i class="fas fa-download me-1"></i>Export
+                                                <i class="fas fa-download me-1"></i>Ekspor
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- PDF Management Table -->
+                                <!-- Manajemen PDF Table -->
                                 <div class="table-responsive">
                                     <table class="table table-hover">
                                         <thead class="table-dark">
@@ -973,7 +971,7 @@
                                                 <th>Pages</th>
                                                 <th>Size</th>
                                                 <th>Description</th>
-                                                <th>Actions</th>
+                                                <th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="pdfManagementTableBody">
@@ -983,7 +981,7 @@
                                                         <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
                                                         <p class="text-muted mb-2">No PDF materials loaded yet</p>
                                                         <button class="btn btn-primary" onclick="window.adminPanel.modules.get('content-management').instance.loadPDFManagement()">
-                                                            <i class="fas fa-sync-alt me-2"></i>Load PDF Management
+                                                            <i class="fas fa-sync-alt me-2"></i>Load Manajemen PDF
                                                         </button>
                                                     </div>
                                                 </td>
@@ -1003,17 +1001,17 @@
                                     <div class="text-muted small">
                                         <i class="fas fa-info-circle me-1"></i>
                                         Check the "Display" column to control which PDFs appear on the courses page.
-                                        Use the Actions column to manage individual PDF materials.
+                                        Use the Aksi column to manage individual PDF materials.
                                     </div>
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-outline-secondary" onclick="safeCall('contentManagement', 'selectAllPDFDisplay')">
                                             <i class="fas fa-check-square me-1"></i>Select All for Display
                                         </button>
                                         <button class="btn btn-outline-secondary" onclick="safeCall('contentManagement', 'clearAllPDFDisplay')">
-                                            <i class="fas fa-square me-1"></i>Clear All Display
+                                            <i class="fas fa-square me-1"></i>Bersihkan All Display
                                         </button>
                                         <button class="btn btn-success" onclick="safeCall('contentManagement', 'savePDFDisplaySelection')">
-                                            <i class="fas fa-save me-2"></i>Save Display Settings
+                                            <i class="fas fa-save me-2"></i>Simpan Pengaturan Tampilan
                                         </button>
                                     </div>
                                 </div>
@@ -1021,95 +1019,95 @@
                         </div>
                     </div>
 
-                    <!-- News Section -->
+                    <!-- Berita Section -->
                     <div id="news-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-newspaper"></i>
-                                    News Management
+                                    Berita Management
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('news', 'loadNews')">
-                                    <i class="fas fa-sync me-2"></i>Load News
+                                <button class="btn btn-modern-primary" onclick="safeCall('news', 'loadBerita')">
+                                    <i class="fas fa-sync me-2"></i>Load Berita
                                 </button>
                             </div>
                             <div class="card-body-modern">
                                 <div id="news-content">
                                     <div class="text-center py-4">
                                         <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">Click "Load News" to initialize news management.</p>
+                                        <p class="text-muted">Click "Load Berita" to initialize news management.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Plugins Section -->
+                    <!-- Plugin Section -->
                     <div id="plugins-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-plug"></i>
-                                    Plugins Management
+                                    Plugin Management
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('plugins', 'loadPlugins')">
-                                    <i class="fas fa-sync me-2"></i>Load Plugins
+                                <button class="btn btn-modern-primary" onclick="safeCall('plugins', 'loadPlugin')">
+                                    <i class="fas fa-sync me-2"></i>Load Plugin
                                 </button>
                             </div>
                             <div class="card-body-modern">
                                 <div id="plugins-content">
                                     <div class="text-center py-4">
                                         <i class="fas fa-plug fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">Click "Load Plugins" to initialize plugins management.</p>
+                                        <p class="text-muted">Click "Load Plugin" to initialize plugins management.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Library Section -->
+                    <!-- Pustaka Section -->
                     <div id="library-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-book"></i>
-                                    Library Management
+                                    Pustaka Management
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('library', 'loadLibrary')">
-                                    <i class="fas fa-sync me-2"></i>Load Library
+                                <button class="btn btn-modern-primary" onclick="safeCall('library', 'loadPustaka')">
+                                    <i class="fas fa-sync me-2"></i>Load Pustaka
                                 </button>
                             </div>
                             <div class="card-body-modern">
                                 <div id="library-content">
                                     <div class="text-center py-4">
                                         <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">Click "Load Library" to initialize file management.</p>
+                                        <p class="text-muted">Click "Load Pustaka" to initialize file management.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- BIM Media Section -->
+                    <!-- Media BIM Section -->
                     <div id="bim-media-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-tags"></i>
-                                    BIM Media Tagging System
+                                    Sistem Penandaan Media BIM
                                 </div>
                             </div>
                             <div class="card-body-modern">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h5 class="mb-0">Media Management Dashboard</h5>
+                                    <h5 class="mb-0">Dasbor Manajemen Media</h5>
                                     <button class="btn btn-modern-primary" onclick="safeCall('contentManagement', 'loadBIMMedia')">
-                                        <i class="fas fa-sync me-2"></i>Load BIM Media
+                                        <i class="fas fa-sync me-2"></i>Load Media BIM
                                     </button>
                                 </div>
                                 <div id="bim-media-content">
                                     <div class="text-center py-4">
                                         <i class="fas fa-tags fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">Click "Load BIM Media" to initialize media tagging.</p>
+                                        <p class="text-muted">Click "Load Media BIM" to initialize media tagging.</p>
                                     </div>
                                 </div>
                             </div>
@@ -1122,7 +1120,7 @@
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-key"></i>
-                                    Change Admin Password
+                                    Change Admin Kata Sandi
                                 </div>
                             </div>
                             <div class="card-body-modern">
@@ -1130,18 +1128,18 @@
                                     <div class="col-md-8">
                                         <div class="alert alert-info">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            <strong>Security Notice:</strong> You can only change the password if you know the current password.
+                                            <strong>Pemberitahuan Keamanan:</strong> You can only change the password if you know the current password.
                                             This ensures account security.
                                         </div>
 
-                                        <form id="changePasswordForm">
+                                        <form id="changeKata SandiForm">
                                             <input type="text" class="d-none" tabindex="-1" aria-hidden="true"
                                                 autocomplete="username" value="admin">
                                             <div class="mb-4">
-                                                <label for="currentPassword" class="form-label fw-semibold">
-                                                    <i class="fas fa-lock me-2"></i>Current Password
+                                                <label for="currentKata Sandi" class="form-label fw-semibold">
+                                                    <i class="fas fa-lock me-2"></i>Current Kata Sandi
                                                 </label>
-                                                <input type="password" class="form-control" id="currentPassword"
+                                                <input type="password" class="form-control" id="currentKata Sandi"
                                                     autocomplete="current-password"
                                                        placeholder="Enter your current password" required>
                                                 <div class="form-text">
@@ -1150,10 +1148,10 @@
                                             </div>
 
                                             <div class="mb-4">
-                                                <label for="newPassword" class="form-label fw-semibold">
-                                                    <i class="fas fa-key me-2"></i>New Password
+                                                <label for="newKata Sandi" class="form-label fw-semibold">
+                                                    <i class="fas fa-key me-2"></i>New Kata Sandi
                                                 </label>
-                                                <input type="password" class="form-control" id="newPassword"
+                                                <input type="password" class="form-control" id="newKata Sandi"
                                                     autocomplete="new-password"
                                                        placeholder="Enter new password" required minlength="8">
                                                 <div class="form-text">
@@ -1162,10 +1160,10 @@
                                             </div>
 
                                             <div class="mb-4">
-                                                <label for="confirmPassword" class="form-label fw-semibold">
-                                                    <i class="fas fa-check-circle me-2"></i>Confirm New Password
+                                                <label for="confirmKata Sandi" class="form-label fw-semibold">
+                                                    <i class="fas fa-check-circle me-2"></i>Confirm New Kata Sandi
                                                 </label>
-                                                <input type="password" class="form-control" id="confirmPassword"
+                                                <input type="password" class="form-control" id="confirmKata Sandi"
                                                     autocomplete="new-password"
                                                        placeholder="Confirm new password" required minlength="8">
                                                 <div class="form-text">
@@ -1180,15 +1178,15 @@
                                                              style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                                         </div>
                                                     </div>
-                                                    <small class="text-muted" id="passwordStrengthText">Password strength: Weak</small>
+                                                    <small class="text-muted" id="passwordStrengthText">Kata Sandi strength: Weak</small>
                                                 </div>
                                             </div>
 
                                             <div class="d-flex gap-3">
                                                 <button type="submit" class="btn btn-success">
-                                                    <i class="fas fa-save me-2"></i>Change Password
+                                                    <i class="fas fa-save me-2"></i>Ubah Kata Sandi
                                                 </button>
-                                                <button type="button" class="btn btn-secondary" onclick="resetChangePasswordForm()">
+                                                <button type="button" class="btn btn-secondary" onclick="resetChangeKata SandiForm()">
                                                     <i class="fas fa-undo me-2"></i>Reset Form
                                                 </button>
                                             </div>
@@ -1212,23 +1210,23 @@
                         </div>
                     </div>
 
-                    <!-- System Section -->
+                    <!-- Sistem Section -->
                     <div id="system-section" class="admin-section d-none">
                         <div class="content-card">
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-server"></i>
-                                    System Information
+                                    Sistem Information
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('system', 'loadSystem')">
-                                    <i class="fas fa-sync me-2"></i>Load System Info
+                                <button class="btn btn-modern-primary" onclick="safeCall('system', 'loadSistem')">
+                                    <i class="fas fa-sync me-2"></i>Load Sistem Info
                                 </button>
                             </div>
                             <div class="card-body-modern">
                                 <div id="system-content">
                                     <div class="text-center py-4">
                                         <i class="fas fa-server fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">Click "Load System Info" to initialize system monitoring.</p>
+                                        <p class="text-muted">Click "Load Sistem Info" to initialize system monitoring.</p>
                                     </div>
                                 </div>
                             </div>
@@ -1272,7 +1270,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <h6>File Information:</h6>
-                                    <p id="previewFileName" class="mb-1"><strong>Name:</strong> <span></span></p>
+                                    <p id="previewFileNama" class="mb-1"><strong>Nama:</strong> <span></span></p>
                                     <p id="previewFileType" class="mb-1"><strong>Type:</strong> <span></span></p>
                                     <p id="previewFileSize" class="mb-1"><strong>Size:</strong> <span></span></p>
                                     <p id="previewFileSource" class="mb-0"><strong>Source:</strong> <span></span></p>
@@ -1287,8 +1285,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div id="previewActions">
-                        <!-- Actions will be populated by JavaScript -->
+                    <div id="previewAksi">
+                        <!-- Aksi will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -1298,7 +1296,7 @@
     <!-- Footer -->
     <div id="footer-container"></div>
 
-    <!-- Load Admin Panel JavaScript -->
+    <!-- Load Panel Admin JavaScript -->
     <script src="adminbcl.js?v=20260313d"></script>
 
     <!-- Back to Top -->
@@ -1317,7 +1315,7 @@
     <script src="../../js/user.js?v=20260313d"></script>
     <script src="../../js/loadComponents.js"></script>
 
-    <!-- Refactored Admin Panel JavaScript (Modular) -->
+    <!-- Refactored Panel Admin JavaScript (Modular) -->
     <script src="../../js/admin/admin-panel.js?v=20260313b"></script>
     <script src="../../js/admin/modules/auth.js"></script>
     <script src="../../js/admin/modules/dashboard.js"></script>
@@ -1337,39 +1335,39 @@
          * Safe function call wrapper for admin panel modules
          * Handles cases where modules haven't been initialized yet
          */
-        function safeCall(moduleName, methodName, ...args) {
+        function safeCall(moduleNama, methodNama, ...args) {
             try {
                 if (!window.adminPanel) {
-                    console.warn(`⚠️ AdminPanel not available for ${moduleName}.${methodName}`);
+                    console.warn(`âš ï¸ AdminPanel not available for ${moduleNama}.${methodNama}`);
                     showAlert('Admin panel is still loading. Please wait a moment and try again.');
                     return;
                 }
 
-                const module = window.adminPanel.modules.get(moduleName);
+                const module = window.adminPanel.modules.get(moduleNama);
                 if (!module) {
-                    console.warn(`⚠️ Module '${moduleName}' not found`);
-                    showAlert(`Module '${moduleName}' is not available.`);
+                    console.warn(`âš ï¸ Module '${moduleNama}' not found`);
+                    showAlert(`Module '${moduleNama}' is not available.`);
                     return;
                 }
 
                 if (!module.instance) {
-                    console.warn(`⚠️ Module '${moduleName}' instance not initialized`);
-                    showAlert(`Module '${moduleName}' is still loading. Please wait a moment and try again.`);
+                    console.warn(`âš ï¸ Module '${moduleNama}' instance not initialized`);
+                    showAlert(`Module '${moduleNama}' is still loading. Please wait a moment and try again.`);
                     return;
                 }
 
-                if (typeof module.instance[methodName] !== 'function') {
-                    console.warn(`⚠️ Method '${methodName}' not found in module '${moduleName}'`);
-                    showAlert(`Function '${methodName}' is not available in module '${moduleName}'.`);
+                if (typeof module.instance[methodNama] !== 'function') {
+                    console.warn(`âš ï¸ Method '${methodNama}' not found in module '${moduleNama}'`);
+                    showAlert(`Function '${methodNama}' is not available in module '${moduleNama}'.`);
                     return;
                 }
 
                 // Call the method with provided arguments
-                return module.instance[methodName](...args);
+                return module.instance[methodNama](...args);
 
             } catch (error) {
-                console.error(`❌ Error calling ${moduleName}.${methodName}:`, error);
-                showAlert(`Error executing ${moduleName}.${methodName}: ${error.message}`);
+                console.error(`âŒ Error calling ${moduleNama}.${methodNama}:`, error);
+                showAlert(`Error executing ${moduleNama}.${methodNama}: ${error.message}`);
             }
         }
 
@@ -1389,7 +1387,7 @@
         function showAlert(message, type = 'warning') {
             // Create alert element
             const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.classNama = `alert alert-${type} alert-dismissible fade show position-fixed`;
             alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
             alertDiv.innerHTML = `
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -1412,48 +1410,48 @@
          * Load Change Password Section
          */
         function loadChangePasswordSection() {
-            console.log('🔐 Loading change password section...');
+            console.log('ðŸ” Loading change password section...');
 
             // Reset form when section is loaded
-            resetChangePasswordForm();
+            resetChangeKata SandiForm();
 
             // Add form submit handler
-            const changePasswordForm = document.getElementById('changePasswordForm');
-            if (changePasswordForm) {
-                changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
+            const changeKata SandiForm = document.getElementById('changeKata SandiForm');
+            if (changeKata SandiForm) {
+                changeKata SandiForm.addEventListener('submit', handleChangeKata SandiSubmit);
             }
 
             // Add password strength checker
-            const newPasswordInput = document.getElementById('newPassword');
-            if (newPasswordInput) {
-                newPasswordInput.addEventListener('input', checkPasswordStrength);
+            const newKata SandiInput = document.getElementById('newKata Sandi');
+            if (newKata SandiInput) {
+                newKata SandiInput.addEventListener('input', checkKata SandiStrength);
             }
 
-            console.log('✅ Change password section loaded');
+            console.log('âœ… Change password section loaded');
         }
 
         /**
          * Handle Change Password Form Submit
          */
-        async function handleChangePasswordSubmit(event) {
+        async function handleChangeKata SandiSubmit(event) {
             event.preventDefault();
 
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const currentKata Sandi = document.getElementById('currentKata Sandi').value;
+            const newKata Sandi = document.getElementById('newKata Sandi').value;
+            const confirmKata Sandi = document.getElementById('confirmKata Sandi').value;
 
             // Client-side validation
-            if (!currentPassword || !newPassword || !confirmPassword) {
+            if (!currentKata Sandi || !newKata Sandi || !confirmKata Sandi) {
                 showAlert('All password fields are required', 'warning');
                 return;
             }
 
-            if (newPassword !== confirmPassword) {
+            if (newKata Sandi !== confirmKata Sandi) {
                 showAlert('New password and confirmation do not match', 'warning');
                 return;
             }
 
-            if (newPassword.length < 8) {
+            if (newKata Sandi.length < 8) {
                 showAlert('New password must be at least 8 characters long', 'warning');
                 return;
             }
@@ -1461,7 +1459,7 @@
             // Show loading state
             const submitButton = event.target.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Changing Password...';
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Changing Kata Sandi...';
             submitButton.disabled = true;
 
             try {
@@ -1472,26 +1470,26 @@
                     },
                     credentials: 'include', // Include session cookies
                     body: JSON.stringify({
-                        currentPassword,
-                        newPassword,
-                        confirmPassword
+                        currentKata Sandi,
+                        newKata Sandi,
+                        confirmKata Sandi
                     })
                 });
 
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    showAlert('Password changed successfully! You will need to use the new password for future logins.', 'success');
+                    showAlert('Kata Sandi changed successfully! You will need to use the new password for future logins.', 'success');
 
                     // Reset form
-                    resetChangePasswordForm();
+                    resetChangeKata SandiForm();
 
                 } else {
                     showAlert(result.error || 'Failed to change password', 'danger');
                 }
 
             } catch (error) {
-                console.error('❌ Change password error:', error);
+                console.error('âŒ Change password error:', error);
                 showAlert('Network error occurred. Please try again.', 'danger');
             } finally {
                 // Reset button state
@@ -1501,17 +1499,17 @@
         }
 
         /**
-         * Check Password Strength
+         * Check Kata Sandi Strength
          */
-        function checkPasswordStrength() {
-            const password = document.getElementById('newPassword').value;
+        function checkKata SandiStrength() {
+            const password = document.getElementById('newKata Sandi').value;
             const strengthBar = document.getElementById('passwordStrengthBar');
             const strengthText = document.getElementById('passwordStrengthText');
 
             if (!password) {
                 strengthBar.style.width = '0%';
-                strengthText.textContent = 'Password strength: Weak';
-                strengthBar.className = 'progress-bar';
+                strengthText.textContent = 'Kata Sandi strength: Weak';
+                strengthBar.classNama = 'progress-bar';
                 return;
             }
 
@@ -1550,17 +1548,17 @@
             strengthBar.style.width = strength + '%';
 
             if (strength < 25) {
-                strengthBar.className = 'progress-bar bg-danger';
-                strengthText.textContent = 'Password strength: Very Weak';
+                strengthBar.classNama = 'progress-bar bg-danger';
+                strengthText.textContent = 'Kata Sandi strength: Very Weak';
             } else if (strength < 50) {
-                strengthBar.className = 'progress-bar bg-warning';
-                strengthText.textContent = 'Password strength: Weak';
+                strengthBar.classNama = 'progress-bar bg-warning';
+                strengthText.textContent = 'Kata Sandi strength: Weak';
             } else if (strength < 75) {
-                strengthBar.className = 'progress-bar bg-info';
-                strengthText.textContent = 'Password strength: Good';
+                strengthBar.classNama = 'progress-bar bg-info';
+                strengthText.textContent = 'Kata Sandi strength: Good';
             } else {
-                strengthBar.className = 'progress-bar bg-success';
-                strengthText.textContent = 'Password strength: Strong';
+                strengthBar.classNama = 'progress-bar bg-success';
+                strengthText.textContent = 'Kata Sandi strength: Strong';
             }
 
             // Show feedback for weak passwords
@@ -1572,8 +1570,8 @@
         /**
          * Reset Change Password Form
          */
-        function resetChangePasswordForm() {
-            const form = document.getElementById('changePasswordForm');
+        function resetChangeKata SandiForm() {
+            const form = document.getElementById('changeKata SandiForm');
             if (form) {
                 form.reset();
             }
@@ -1584,28 +1582,28 @@
 
             if (strengthBar) {
                 strengthBar.style.width = '0%';
-                strengthBar.className = 'progress-bar';
+                strengthBar.classNama = 'progress-bar';
             }
 
             if (strengthText) {
-                strengthText.textContent = 'Password strength: Weak';
+                strengthText.textContent = 'Kata Sandi strength: Weak';
             }
 
-            console.log('🔄 Change password form reset');
+            console.log('ðŸ”„ Change password form reset');
         }
 
         /**
          * Initialize safe onclick handlers when page loads
          */
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Setting up safe onclick handlers...');
+            console.log('ðŸš€ Setting up safe onclick handlers...');
 
             // Wait a bit for modules to initialize
             setTimeout(() => {
                 if (isAdminPanelReady()) {
-                    console.log('✅ Admin panel modules ready');
+                    console.log('âœ… Admin panel modules ready');
                 } else {
-                    console.log('⏳ Admin panel modules still initializing...');
+                    console.log('â³ Admin panel modules still initializing...');
                 }
             }, 2000);
         });
@@ -1613,11 +1611,3 @@
 </body>
 
 </html>
-
-
-
-
-
-
-
-

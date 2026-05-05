@@ -15,6 +15,20 @@ function isTokenExpired(token) {
    }
 }
 
+function normalizeProfileImageUrl(value) {
+   const image = String(value || '').trim();
+   if (!image) return '';
+   if (/^https?:\/\//i.test(image) || image.startsWith('data:')) return image;
+
+   const legacyPrefix = '/uploads/profile-images/';
+   if (image.startsWith(legacyPrefix)) {
+      const filename = image.substring(legacyPrefix.length).split('/').pop();
+      return filename ? `/api/profile-images/${encodeURIComponent(filename)}` : image;
+   }
+
+   return image;
+}
+
 function getUserData() {
    try {
       const userData = localStorage.getItem("user");
@@ -34,6 +48,13 @@ function getUserData() {
          localStorage.removeItem("userimg");
          localStorage.removeItem("token");
          return null;
+      }
+
+      if (parsed.photo) {
+         parsed.photo = normalizeProfileImageUrl(parsed.photo);
+      }
+      if (parsed.profileImage) {
+         parsed.profileImage = normalizeProfileImageUrl(parsed.profileImage);
       }
 
       return parsed;
@@ -60,7 +81,7 @@ function setUserData(data) {
          level: data.level || data.bimLevel || data.bim_level || 'BIM Modeller',
          bimLevel: data.bimLevel || data.level || data.bim_level || 'BIM Modeller',
          organization: data.organization || '',
-         photo: data.photo || data.image || data.img || '/elearning-assets/images/pic-1.jpg',
+         photo: normalizeProfileImageUrl(data.photo || data.image || data.img || '/elearning-assets/images/pic-1.jpg'),
          token: data.token || ""
       };
 
@@ -106,7 +127,11 @@ function updateUserUI() {
    const loginLink = document.getElementById("login-link");
    const logoutLink = document.getElementById("logout-link");
    const registerLink = document.getElementById("register-link");
+   const dashboardLink = document.getElementById("dashboard-link");
    const profileLink = document.getElementById("profile-link");
+   const adminToolsDivider = document.getElementById("admin-tools-divider");
+   const competencyLink = document.getElementById("competency-link");
+   const adminLink = document.getElementById("admin-link");
 
    if (!user) {
       // Not logged in - show guest options
@@ -117,11 +142,15 @@ function updateUserUI() {
       if (guestOptions) guestOptions.style.display = "block";
 
       // Main navbar compatibility
-      if (accountName) accountName.textContent = "Account";
+      if (accountName) accountName.textContent = "Akun";
       if (loginLink) loginLink.hidden = false;
       if (logoutLink) logoutLink.hidden = true;
       if (registerLink) registerLink.hidden = false;
+      if (dashboardLink) dashboardLink.hidden = true;
       if (profileLink) profileLink.hidden = true;
+      if (adminToolsDivider) adminToolsDivider.hidden = true;
+      if (competencyLink) competencyLink.hidden = true;
+      if (adminLink) adminLink.hidden = true;
 
       return;
    }
@@ -130,16 +159,24 @@ function updateUserUI() {
       // Update E-Learning header
       if (headerUserName) headerUserName.textContent = user.name || "User";
       if (headerUserRole) headerUserRole.textContent = user.role || "Student";
-      if (headerUserImg) headerUserImg.src = user.photo || "/elearning-assets/images/pic-1.jpg";
+      if (headerUserImg) {
+         headerUserImg.src = normalizeProfileImageUrl(
+            user.photo || user.profileImage || "/elearning-assets/images/pic-1.jpg"
+         );
+      }
       if (loggedInOptions) loggedInOptions.style.display = "block";
       if (guestOptions) guestOptions.style.display = "none";
 
       // Main navbar compatibility
-      if (accountName) accountName.textContent = user.name || "Account";
+      if (accountName) accountName.textContent = user.name || "Akun";
       if (loginLink) loginLink.hidden = true;
       if (logoutLink) logoutLink.hidden = false;
       if (registerLink) registerLink.hidden = true;
+      if (dashboardLink) dashboardLink.hidden = false;
       if (profileLink) profileLink.hidden = false;
+      if (adminToolsDivider) adminToolsDivider.hidden = true;
+      if (competencyLink) competencyLink.hidden = true;
+      if (adminLink) adminLink.hidden = true;
 
       setupLogoutHandler(user);
       window.currentUser = user;
@@ -167,11 +204,13 @@ function hideAuthButtons() {
    const loginLink = document.getElementById("login-link");
    const registerLink = document.getElementById("register-link");
    const logoutLink = document.getElementById("logout-link");
+   const dashboardLink = document.getElementById("dashboard-link");
    const profileLink = document.getElementById("profile-link");
 
    if (loginLink) loginLink.hidden = true;
    if (registerLink) registerLink.hidden = true;
    if (logoutLink) logoutLink.hidden = false;
+   if (dashboardLink) dashboardLink.hidden = false;
    if (profileLink) profileLink.hidden = false;
 }
 
@@ -179,11 +218,13 @@ function showAuthButtons() {
    const loginLink = document.getElementById("login-link");
    const registerLink = document.getElementById("register-link");
    const logoutLink = document.getElementById("logout-link");
+   const dashboardLink = document.getElementById("dashboard-link");
    const profileLink = document.getElementById("profile-link");
 
    if (loginLink) loginLink.hidden = false;
    if (registerLink) registerLink.hidden = false;
    if (logoutLink) logoutLink.hidden = true;
+   if (dashboardLink) dashboardLink.hidden = true;
    if (profileLink) profileLink.hidden = true;
 }
 
@@ -199,9 +240,18 @@ function setupLogoutHandler(user) {
 
    // Show admin panel for admin users
    const adminLink = document.getElementById("admin-link");
-   if (user.role && user.role.toLowerCase() === "admin" && adminLink) {
-      adminLink.style.display = "block";
-      adminLink.classList.remove("hidden");
+   const competencyLink = document.getElementById("competency-link");
+   const adminToolsDivider = document.getElementById("admin-tools-divider");
+   const isAdminUser = user.isAdmin || (user.role && user.role.toLowerCase() === "admin");
+
+   if (isAdminUser) {
+      if (adminToolsDivider) adminToolsDivider.hidden = false;
+      if (adminLink) adminLink.hidden = false;
+      if (competencyLink) competencyLink.hidden = false;
+   } else {
+      if (adminToolsDivider) adminToolsDivider.hidden = true;
+      if (adminLink) adminLink.hidden = true;
+      if (competencyLink) competencyLink.hidden = true;
    }
 }
 
@@ -211,15 +261,15 @@ function handleLogout() {
       window.currentUser = null;
 
       // Redirect to login page or refresh
-      if (window.location.pathname !== "/login.html") {
-         window.location.href = "/login.html";
+      if (window.location.pathname !== "/pages/login.html") {
+         window.location.href = "/pages/login.html";
       } else {
          window.location.reload();
       }
    } catch (error) {
       console.error('❌ Error during logout:', error);
       // Force redirect even if there's an error
-      window.location.href = "/login.html";
+      window.location.href = "/pages/login.html";
    }
 }
 

@@ -10,7 +10,7 @@ class BIMGallery {
         this.currentPage = 1;
         this.itemsPerPage = 12;
         this.searchQuery = '';
-        this.filterType = 'image';
+        this.filterType = 'all';
         this.sortBy = 'date-desc';
         this.categories = [];
         this.mediaData = [];
@@ -733,7 +733,14 @@ class BIMGallery {
                     await this.loadMedia(selectedCategory, 1, { forceClear: true });
                 }
 
-                if (data.refreshing) {
+                const categoryRefreshError = this.formatRefreshError(
+                    data.refreshError,
+                    'Sinkronisasi kategori gagal. Folder sumber BIM Methode tidak tersedia.'
+                );
+
+                const shouldStopCategoryRetry = !!data.refreshError && this.categories.length === 0;
+
+                if (data.refreshing && !shouldStopCategoryRetry) {
                     if (this.categories.length > 0) {
                         this.updateStatus('category-status', {
                             message: 'Menampilkan data cache kategori. Sinkronisasi berjalan di latar belakang.',
@@ -749,6 +756,15 @@ class BIMGallery {
                         });
                     }
                     this.scheduleRetry(() => this.loadCategories(options), 'categories');
+                } else if (data.refreshError) {
+                    this.clearRetry('categories');
+                    this.updateStatus('category-status', {
+                        message: this.categories.length > 0
+                            ? `Menampilkan cache kategori terakhir. ${categoryRefreshError}`
+                            : categoryRefreshError,
+                        tone: this.categories.length > 0 ? 'warning' : 'error',
+                        spinner: false
+                    });
                 } else {
                     this.clearRetry('categories');
                     this.updateStatus('category-status', { message: '' });
@@ -808,7 +824,14 @@ class BIMGallery {
                 this.mediaData = data.media || [];
                 this.applyFilters();
 
-                if (data.refreshing) {
+                const mediaRefreshError = this.formatRefreshError(
+                    data.refreshError,
+                    'Sinkronisasi media gagal. Folder sumber BIM Methode tidak tersedia.'
+                );
+
+                const shouldStopMediaRetry = !!data.refreshError && this.mediaData.length === 0;
+
+                if (data.refreshing && !shouldStopMediaRetry) {
                     if (this.mediaData.length > 0) {
                         this.updateStatus('media-status', {
                             message: 'Menampilkan data cache media. Sinkronisasi berjalan di latar belakang.',
@@ -824,6 +847,15 @@ class BIMGallery {
                         });
                     }
                     this.scheduleRetry(() => this.loadMedia(category, page), 'media');
+                } else if (data.refreshError) {
+                    this.clearRetry('media');
+                    this.updateStatus('media-status', {
+                        message: this.mediaData.length > 0
+                            ? `Menampilkan cache media terakhir. ${mediaRefreshError}`
+                            : mediaRefreshError,
+                        tone: this.mediaData.length > 0 ? 'warning' : 'error',
+                        spinner: false
+                    });
                 } else {
                     this.clearRetry('media');
                     this.updateStatus('media-status', { message: '' });
@@ -862,10 +894,23 @@ class BIMGallery {
         }
     }
 
+    formatRefreshError(message, fallback) {
+        const text = typeof message === 'string' ? message.trim() : '';
+        if (!text) {
+            return fallback || 'Sinkronisasi server gagal.';
+        }
+
+        if (/root not found/i.test(text)) {
+            return fallback || 'Folder sumber BIM Methode tidak ditemukan di server.';
+        }
+
+        return text;
+    }
+
     normalizeFilterType(value) {
         const allowedTypes = new Set(['all', 'image', 'video', 'document', 'model']);
         const normalized = String(value || '').toLowerCase();
-        return allowedTypes.has(normalized) ? normalized : 'image';
+        return allowedTypes.has(normalized) ? normalized : 'all';
     }
 
     getServerTypeFilter() {

@@ -225,7 +225,7 @@ function buildEditTagButton(videoId) {
 function buildTagBadges(tags) {
     const normalizedTags = normalizeTagList(tags);
     if (normalizedTags.length === 0) {
-        return '<span style="color: #adb5bd; font-size: 11px;">No tags yet</span>';
+        return '<span style="color: #adb5bd; font-size: 11px;">Belum ada tag</span>';
     }
 
     return normalizedTags
@@ -448,7 +448,7 @@ function searchAndFilter() {
 
     if (resultEl) {
         resultEl.innerText = resultCount > 0
-            ? `Hasil Pencarian ditemukan: ${resultCount} file(s)`
+            ? `Hasil pencarian: ${resultCount} file`
             : 'Tidak ada video yang cocok.';
     }
 }
@@ -604,7 +604,7 @@ function fetchVideos(categoryFilter = null, autoPlayVideoId = null) {
                         justify-content: center;
                         transition: background 0.3s;
                         cursor: pointer;
-                    " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'" 
+                    " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'"
                        onmouseout="this.style.background='rgba(0, 0, 0, 0)'"
                        onclick="playVideoFullscreen('${video.id}', '${video.path}')">
                         <i class="fas fa-play-circle" style="font-size: 48px; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></i>
@@ -614,8 +614,8 @@ function fetchVideos(categoryFilter = null, autoPlayVideoId = null) {
                     <p class="video-title">${video.name}</p>
                     <p class="video-size">Size: ${video.size}</p>
                     <p class="view-count">
-                        <i class="fas fa-eye"></i> 
-                        ${video.viewCount || 0} views
+                        <i class="fas fa-eye"></i>
+                        ${video.viewCount || 0} tayangan
                     </p>
                     <!-- Tags/Hashtags Section -->
                     <div style="margin: 8px 0; min-height: 30px;">
@@ -691,8 +691,8 @@ function fetchVideos(categoryFilter = null, autoPlayVideoId = null) {
             });
 
             const resultText = categoryFilter
-                ? `Hasil Pencarian kategori "${categoryFilter}": ${videoSet.size} file(s)`
-                : `Hasil Pencarian ditemukan: ${videoSet.size} file(s)`;
+                ? `Hasil pencarian kategori "${categoryFilter}": ${videoSet.size} file`
+                : `Hasil pencarian: ${videoSet.size} file`;
 
             document.getElementById("searchResults").innerText = resultText;
 
@@ -721,7 +721,7 @@ function fetchVideos(categoryFilter = null, autoPlayVideoId = null) {
                     <h4 class="alert-heading">Gagal memuat video!</h4>
                     <p>Terjadi kesalahan saat mengambil daftar video.</p>
                     <hr>
-                    <p class="mb-0">Error: ${error.message}</p>
+                    <p class="mb-0">Kesalahan: ${error.message}</p>
                     <small class="text-muted">Silakan periksa koneksi server dan coba lagi.</small>
                 </div>
             `;
@@ -1092,17 +1092,17 @@ function sortVideos() {
         let sizeB = parseFloat(b.dataset.sizeMb || '0') || 0;
 
         // Extract view count from view count element
-        let viewCountTextA = a.querySelector(".view-count")?.innerText || "0 views";
-        let viewCountTextB = b.querySelector(".view-count")?.innerText || "0 views";
-        let viewsA = parseInt(viewCountTextA.replace(/\D/g, '')) || 0;
-        let viewsB = parseInt(viewCountTextB.replace(/\D/g, '')) || 0;
+        let viewCountTextA = a.querySelector(".view-count")?.innerText || "0 tayangan";
+        let viewCountTextB = b.querySelector(".view-count")?.innerText || "0 tayangan";
+        let tayanganA = parseInt(viewCountTextA.replace(/\D/g, '')) || 0;
+        let tayanganB = parseInt(viewCountTextB.replace(/\D/g, '')) || 0;
 
         if (sortBy === "name-asc") return titleA.localeCompare(titleB);
         if (sortBy === "name-desc") return titleB.localeCompare(titleA);
         if (sortBy === "size-asc") return sizeA - sizeB;
         if (sortBy === "size-desc") return sizeB - sizeA;
-        if (sortBy === "views-asc") return viewsA - viewsB;
-        if (sortBy === "views-desc") return viewsB - viewsA;
+        if (sortBy === "views-asc") return tayanganA - tayanganB;
+        if (sortBy === "views-desc") return tayanganB - tayanganA;
     });
 
     let container = document.getElementById("videoContainer");
@@ -1209,7 +1209,7 @@ async function saveVideoTags() {
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = originalButtonHtml || '<i class="fas fa-save"></i> Save Tags';
+            saveBtn.innerHTML = originalButtonHtml || '<i class="fas fa-save"></i> Simpan Tag';
         }
     }
 }
@@ -1342,7 +1342,7 @@ function updateVideoViewCountInUI(videoId) {
 
                 // Update the text (preserve the icon)
                 const iconHTML = viewCountElement.querySelector('i') ? viewCountElement.querySelector('i').outerHTML : '<i class="fas fa-eye"></i>';
-                viewCountElement.innerHTML = `${iconHTML} ${newCount} views`;
+                viewCountElement.innerHTML = `${iconHTML} ${newCount} tayangan`;
 
                 console.log(`✅ Updated view count in UI: ${currentCount} → ${newCount}`);
                 break;
@@ -1382,12 +1382,12 @@ function regenerateThumbnails() {
     const originalContent = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
-    
+
     showSpinner();
 
     // Add auth token
     const token = localStorage.getItem('token');
-    
+
     fetch('/api/admin/thumbnails/regenerate', {
         method: 'POST',
         headers: {

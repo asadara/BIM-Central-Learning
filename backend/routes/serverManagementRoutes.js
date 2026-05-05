@@ -94,21 +94,39 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
         const stopEscaped = escapeForPs(stopScript);
         const startEscaped = escapeForPs(startScript);
         const runlockEscaped = escapeForPs(path.join(bclRoot, "runlock"));
+        const logDir = path.resolve(bclRoot, "logs");
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
         const useHiddenStarter = path.basename(startScript).toLowerCase() === "start-bcl-http-hidden.bat";
 
         const startCommand = useHiddenStarter
             ? `& '${startEscaped}'`
             : `& '${startEscaped}' --hidden --boot --no-error-console`;
 
-        const psCommand = `Start-Sleep -Milliseconds 800; & '${stopEscaped}'; Start-Sleep -Seconds 2; if (Test-Path '${runlockEscaped}') { Remove-Item -Recurse -Force '${runlockEscaped}' -ErrorAction SilentlyContinue }; Start-Sleep -Milliseconds 800; ${startCommand}`;
+        const timestamp = Date.now();
+        const wrapperScriptPath = path.join(logDir, `restart-full-${timestamp}.ps1`);
+        const wrapperScriptEscaped = escapeForPs(wrapperScriptPath);
+        const wrapperScriptContent = [
+            "Start-Sleep -Milliseconds 800",
+            `& '${stopEscaped}'`,
+            "Start-Sleep -Seconds 2",
+            `if (Test-Path '${runlockEscaped}') { Remove-Item -Recurse -Force '${runlockEscaped}' -ErrorAction SilentlyContinue }`,
+            "Start-Sleep -Milliseconds 800",
+            startCommand,
+            `Remove-Item -Force '${wrapperScriptEscaped}' -ErrorAction SilentlyContinue`
+        ].join("; ");
 
         try {
+            fs.writeFileSync(wrapperScriptPath, wrapperScriptContent, "utf8");
             appendServerRestartLog(`restart-full accepted via ${auth.method}; start=${path.basename(startScript)}`);
-            const child = spawn("powershell.exe", [
+            const child = spawn("cmd.exe", [
+                "/c",
+                "start",
+                "\"\"",
+                "powershell.exe",
                 "-NoProfile",
                 "-ExecutionPolicy", "Bypass",
                 "-WindowStyle", "Hidden",
-                "-Command", psCommand
+                "-File", wrapperScriptPath
             ], {
                 cwd: bclRoot,
                 detached: true,
@@ -116,6 +134,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
                 windowsHide: true
             });
 
+            appendServerRestartLog(`restart-full launcher pid=${child.pid || "unknown"} wrapper=${path.basename(wrapperScriptPath)}`);
             child.unref();
 
             res.json({
@@ -124,7 +143,8 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
                 authorizedBy: auth.method,
                 scripts: {
                     stop: path.basename(stopScript),
-                    start: path.basename(startScript)
+                    start: path.basename(startScript),
+                    wrapper: path.basename(wrapperScriptPath)
                 },
                 timestamp: new Date().toISOString()
             });

@@ -246,10 +246,10 @@ class AuthGuard {
 
                             <!-- Action Buttons -->
                             <div class="d-grid gap-3 mt-4">
-                                <a href="/elearning-assets/login.html" class="btn btn-primary btn-lg">
+                                <a href="/pages/login.html" class="btn btn-primary btn-lg">
                                     <i class="fas fa-sign-in-alt me-2"></i>Sign In to Existing Account
                                 </a>
-                                <a href="/elearning-assets/register.html" class="btn btn-success btn-lg">
+                                <a href="/pages/signup.html" class="btn btn-success btn-lg">
                                     <i class="fas fa-user-plus me-2"></i>Create New Account
                                 </a>
                             </div>

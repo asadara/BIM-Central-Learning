@@ -8,6 +8,7 @@ function createProjectMediaMountRoutes({
     getStaticMountPath
 }) {
     const router = express.Router();
+    const staticMiddlewareCache = new Map();
 
     router.get('/bim-showroom-metadata.json', (req, res) => {
         try {
@@ -24,24 +25,40 @@ function createProjectMediaMountRoutes({
         }
     });
 
-    const mountStaticMedia = (routePath, targetPath) => {
+    const getStaticMiddleware = (resolvedTargetPath) => {
+        const cacheKey = String(resolvedTargetPath || '');
+        if (!staticMiddlewareCache.has(cacheKey)) {
+            staticMiddlewareCache.set(cacheKey, express.static(resolvedTargetPath));
+        }
+        return staticMiddlewareCache.get(cacheKey);
+    };
+
+    const mountStaticMedia = (routePath, targetPathOrResolver) => {
         router.use(routePath, (req, res, next) => {
             if (req.path.includes('..')) {
                 return res.status(403).json({ error: 'Access denied' });
             }
-            next();
-        }, express.static(targetPath));
+            const resolvedTargetPath = typeof targetPathOrResolver === 'function'
+                ? targetPathOrResolver()
+                : targetPathOrResolver;
+
+            if (!resolvedTargetPath || !fs.existsSync(resolvedTargetPath)) {
+                return next();
+            }
+
+            return getStaticMiddleware(resolvedTargetPath)(req, res, next);
+        });
     };
 
-    mountStaticMedia('/media', baseProjectDir);
-    mountStaticMedia('/media-bim02', getStaticMountPath('pc-bim02', 'X:'));
-    mountStaticMedia('/media-bim02-2026', getStaticMountPath('pc-bim02-2026', 'V:'));
-    mountStaticMedia('/media-bim1-2025', getStaticMountPath('pc-bim1', 'Y:'));
-    mountStaticMedia('/media-bim1-2024', getStaticMountPath('pc-bim1-2024', 'Z:'));
-    mountStaticMedia('/media-bim1-2023', getStaticMountPath('pc-bim1-2023', 'W:'));
-    mountStaticMedia('/media-bim1-2022', getStaticMountPath('pc-bim1-2022', 'U:'));
-    mountStaticMedia('/media-bim1-2021', getStaticMountPath('pc-bim1-2021', 'T:'));
-    mountStaticMedia('/media-bim1-2020', getStaticMountPath('pc-bim1-2020', 'S:'));
+    mountStaticMedia('/media', () => baseProjectDir);
+    mountStaticMedia('/media-bim02', () => getStaticMountPath('pc-bim02', 'X:'));
+    mountStaticMedia('/media-bim02-2026', () => getStaticMountPath('pc-bim02-2026', 'V:'));
+    mountStaticMedia('/media-bim1-2025', () => getStaticMountPath('pc-bim1', 'Y:'));
+    mountStaticMedia('/media-bim1-2024', () => getStaticMountPath('pc-bim1-2024', 'Z:'));
+    mountStaticMedia('/media-bim1-2023', () => getStaticMountPath('pc-bim1-2023', 'W:'));
+    mountStaticMedia('/media-bim1-2022', () => getStaticMountPath('pc-bim1-2022', 'U:'));
+    mountStaticMedia('/media-bim1-2021', () => getStaticMountPath('pc-bim1-2021', 'T:'));
+    mountStaticMedia('/media-bim1-2020', () => getStaticMountPath('pc-bim1-2020', 'S:'));
 
     return router;
 }

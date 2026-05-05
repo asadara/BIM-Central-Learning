@@ -1,603 +1,685 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="utf-8">
-    <title>BIM NKE : Knowledge Hub</title>
+    <title>BIM NKE : BIM Standards</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="" name="keywords">
-    <meta content="" name="description">
+    <meta content="regulasi BIM Indonesia, BIM standards, PUPR, jasa konstruksi, bangunan gedung" name="keywords">
+    <meta content="Ringkasan regulasi BIM di Indonesia dilengkapi dokumen referensi utama BIM NKE." name="description">
 
-    <!-- Favicon -->
     <link href="/img/icons/icon_bcl.ico?v=20260313c" rel="icon">
 
-    <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
         rel="stylesheet">
 
-    <!-- Icon Font Stylesheet -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Libraries Stylesheet -->
     <link href="../lib/animate/animate.min.css" rel="stylesheet">
     <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
 
-    <!-- Customized Bootstrap Stylesheet -->
     <link href="../css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Template Stylesheet -->
     <link href="../css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="../js/loadComponents.js"></script>
 
     <style>
-        .hero-section {
-            background: linear-gradient(rgba(251, 135, 63, 0.9), rgba(251, 135, 63, 0.8)),
-                url('/img/carousel-2.jpg') center center no-repeat;
-            background-size: cover;
-            padding: 100px 0;
-            color: white;
+        .regulasi-header {
             text-align: center;
-        }
-
-        .hero-section h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-
-        .standards-section {
-            padding: 5px 0;
-        }
-
-        .standards-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-            border: 2px solid transparent;
-        }
-
-        .standards-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            border-color: #fb873f;
-        }
-
-        .standards-icon {
-            font-size: 3rem;
-            color: #fb873f;
-            margin-bottom: 20px;
-        }
-
-        .standards-title {
-            color: #fb873f;
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .standards-subsection {
+            margin: 0;
+            padding: clamp(1.5rem, 4vw, 2.4rem) 1rem 0.8rem;
+            color: #333;
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
         }
 
-        .standards-subsection h4 {
-            color: #007bff;
-            margin-bottom: 15px;
+        .regulasi-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
-        .standards-list {
+        .regulasi-header p {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 0;
+        }
+
+        .ringkas-box,
+        .section-card,
+        .reg-card,
+        .table-wrap,
+        .practical-box,
+        .doc-box {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(24, 29, 56, 0.08);
+        }
+
+        .ringkas-box,
+        .section-card,
+        .table-wrap,
+        .practical-box,
+        .doc-box {
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-card h2,
+        .ringkas-box h3,
+        .table-wrap h3,
+        .practical-box h3,
+        .doc-box h3 {
+            color: #fb873f;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .doc-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 0.85rem;
+        }
+
+        .doc-link {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(24, 29, 56, 0.08);
+            background: #f8f9fa;
+            color: #181d38;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .doc-link:hover {
+            color: #181d38;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(24, 29, 56, 0.08);
+            border-color: rgba(251, 135, 63, 0.45);
+        }
+
+        .doc-link i {
+            color: #fb873f;
+            font-size: 1.25rem;
+            margin-top: 0.1rem;
+        }
+
+        .doc-link strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .reference-card {
+            border: 1px solid rgba(24, 29, 56, 0.08);
+            border-radius: 12px;
+            padding: 1.25rem;
+            background: #fff;
+            height: 100%;
+        }
+
+        .reference-card h4 {
+            color: #181d38;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.85rem;
+        }
+
+        .reference-links {
             list-style: none;
             padding: 0;
+            margin: 0;
         }
 
-        .standards-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
+        .reference-links li {
+            margin-bottom: 0.7rem;
         }
 
-        .standards-list li:last-child {
-            border-bottom: none;
+        .reference-links li:last-child {
+            margin-bottom: 0;
         }
 
-        .standards-list li i {
-            color: #28a745;
-            margin-right: 10px;
-            width: 16px;
+        .reference-links a {
+            color: #0d6efd;
+            text-decoration: none;
         }
 
-        .section-title {
+        .reference-links a:hover {
+            text-decoration: underline;
+        }
+
+        .reference-note {
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            background: rgba(251, 135, 63, 0.08);
+            color: #555;
+        }
+
+        .aha-statement {
+            font-size: 1.15rem;
+            font-weight: 600;
             color: #fb873f;
-            font-size: 2.5rem;
-            margin-bottom: 50px;
             text-align: center;
-        }
-
-        .standard-badge {
-            display: inline-block;
-            background: #fb873f;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .compliance-section {
-            background: #f8f9fa;
-            padding: 60px 0;
-        }
-
-        .compliance-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-
-        .standards-links-section {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin: 2rem 0;
+            padding: 1rem 1.2rem;
+            background: rgba(251, 135, 63, 0.08);
+            border-radius: 12px;
             border-left: 4px solid #fb873f;
         }
 
-        .standards-pdf-link {
-            display: inline-block;
-            color: #007bff;
-            text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
+        .hierarchy-flow {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            gap: 0.85rem;
+            margin-top: 1rem;
         }
 
-        .standards-pdf-link:hover {
-            color: #0056b3;
-            background: #e9ecef;
-            border-color: #007bff;
-            text-decoration: none;
-            transform: translateX(5px);
+        .hierarchy-step {
+            flex: 1 1 180px;
+            min-width: 180px;
+            max-width: 220px;
+            background: linear-gradient(135deg, rgba(251, 135, 63, 0.12), rgba(24, 29, 56, 0.05));
+            border: 1px solid rgba(251, 135, 63, 0.18);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
         }
 
-        .standards-pdf-link i {
+        .hierarchy-step .icon {
+            font-size: 1.5rem;
             color: #fb873f;
+            margin-bottom: 0.65rem;
+        }
+
+        .hierarchy-step h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.45rem;
+            color: #181d38;
+        }
+
+        .hierarchy-step p {
+            margin-bottom: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .reg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .reg-card {
+            border: 1px solid rgba(24, 29, 56, 0.08);
+            padding: 1.25rem;
+            height: 100%;
+        }
+
+        .reg-card h4 {
+            font-size: 1.05rem;
+            color: #181d38;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .reg-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .level-badge,
+        .content-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.28rem 0.7rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-right: 0.45rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .level-badge {
+            background: rgba(24, 29, 56, 0.08);
+            color: #181d38;
+        }
+
+        .content-badge.general {
+            background: rgba(148, 163, 184, 0.16);
+            color: #475569;
+        }
+
+        .content-badge.definitif {
+            background: rgba(59, 130, 246, 0.15);
+            color: #1d4ed8;
+        }
+
+        .content-badge.eksplisit {
+            background: rgba(34, 197, 94, 0.14);
+            color: #15803d;
+        }
+
+        .content-badge.detail {
+            background: rgba(168, 85, 247, 0.14);
+            color: #7e22ce;
+        }
+
+        .pijakan-note {
+            background: #f8f9fa;
+            border-left: 4px solid #fb873f;
+            padding: 0.85rem 1rem;
+            color: #555;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .reg-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reg-table th,
+        .reg-table td {
+            padding: 0.85rem 0.9rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: top;
+            font-size: 0.92rem;
+        }
+
+        .reg-table th {
+            color: #181d38;
+            font-weight: 700;
+            background: #f8f9fa;
+        }
+
+        .practical-list li,
+        .ringkas-box li,
+        .section-card li {
+            margin-bottom: 0.55rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .regulasi-header h1 {
+                font-size: 1.55rem;
+                letter-spacing: 1px;
+            }
+
+            .ringkas-box,
+            .section-card,
+            .table-wrap,
+            .practical-box,
+            .doc-box {
+                padding: 1.15rem;
+            }
+
+            .reg-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
         }
     </style>
-
 </head>
 
 <body>
 
-    <!-- Navbar Start -->
     <div id="navbar-container"></div>
-    <!-- Navbar End -->
 
-    <div class="page-title-header">
-        <h1><i class="fas fa-shield-alt text-primary me-2"></i>BIM Standards</h1>
-        <p>Panduan lengkap standar dan regulasi Building Information Modeling internasional dan nasional</p>
+    <div class="regulasi-header">
+        <h1><i class="fas fa-landmark me-3"></i>BIM Standards</h1>
+        <p>Konten halaman ini disinkronkan dengan ringkasan regulasi BIM Indonesia dan dokumen referensi utama BIM NKE</p>
     </div>
 
-    <!-- Standards Section Start -->
-    <div class="container-xxl standards-section">
+    <div class="container-xxl py-5">
         <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.2s">
 
-            <!-- International Standards Section -->
-            <div class="row mb-5">
-                <div class="col-12">
-                    <h2 class="section-title">International BIM Standards</h2>
-                </div>
-                <div class="col-12 mb-4">
-                    <div class="standards-links-section">
-                        <h5 class="text-primary mb-3"><i class="fas fa-file-pdf me-2"></i>ISO Standards Documents</h5>
-                        <div class="d-flex flex-column gap-2">
-                            <a href="/public/reader.html?file=/data/iso19650/bs-en-iso-19650-1-2018%20-%20Phase%201.pdf&return=/pages/standards.html" class="standards-pdf-link">
-                                <i class="fas fa-external-link-alt me-2"></i>
-                                <strong>ISO 19650-1:</strong> Concepts and principles (Phase 1)
+                    <section class="doc-box">
+                        <h3>Dokumen Referensi Utama</h3>
+                        <div class="doc-links">
+                            <a href="/public/reader.html?file=/data/iso19650/bs-en-iso-19650-1-2018%20-%20Phase%201.pdf&return=/pages/standards.html"
+                                class="doc-link">
+                                <i class="fas fa-file-pdf"></i>
+                                <div>
+                                    <strong>ISO 19650-1</strong>
+                                    <span>Concepts and principles (Phase 1)</span>
+                                </div>
                             </a>
-                            <a href="/public/reader.html?file=/data/iso19650/bs-en-iso-10855-2-2018%20-%20Phase%202.pdf&return=/pages/standards.html" class="standards-pdf-link">
-                                <i class="fas fa-external-link-alt me-2"></i>
-                                <strong>ISO 19650-2:</strong> Concepts and principles (Phase 2)
+                            <a href="/public/reader.html?file=/data/iso19650/bs-en-iso-10855-2-2018%20-%20Phase%202.pdf&return=/pages/standards.html"
+                                class="doc-link">
+                                <i class="fas fa-file-pdf"></i>
+                                <div>
+                                    <strong>ISO 19650-2</strong>
+                                    <span>Delivery phase of assets (Phase 2)</span>
+                                </div>
                             </a>
-                            <a href="/public/reader.html?file=/data/iso19650/S-PM-02_IQ211_Prosedur_Perencanaan_dan_Implementasi_BIM.pdf&return=/pages/standards.html" class="standards-pdf-link">
-                                <i class="fas fa-external-link-alt me-2"></i>
-                                <strong>IQ-211:</strong> Panduan Implementasi BIM NKE
+                            <a href="/public/reader.html?file=/data/iso19650/IQ111.4_Kebijakan_BIM_RevA_0822.pdf&return=/pages/standards.html"
+                                class="doc-link">
+                                <i class="fas fa-file-pdf"></i>
+                                <div>
+                                    <strong>IQ-111.4</strong>
+                                    <span>Kebijakan BIM perusahaan</span>
+                                </div>
+                            </a>
+                            <a href="/public/reader.html?file=/data/iso19650/S-PM-02_IQ211_Prosedur_Perencanaan_dan_Implementasi_BIM.pdf&return=/pages/standards.html"
+                                class="doc-link">
+                                <i class="fas fa-file-pdf"></i>
+                                <div>
+                                    <strong>IQ-211</strong>
+                                    <span>Panduan implementasi BIM NKE</span>
+                                </div>
                             </a>
                         </div>
-                    </div>
-                </div>
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <div class="standard-badge">ISO 19650</div>
-                        <i class="fas fa-globe-americas standards-icon"></i>
-                        <h3 class="standards-title">ISO 19650 - Organization and Digitization of Information</h3>
+                    </section>
 
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
-                            <p>Seri standar internasional untuk manajemen informasi konstruksi, yang mengatur framework
-                                untuk implementasi BIM secara efektif.</p>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-file-alt me-2"></i>Key Standards</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-1:</strong> Concepts and
-                                    principles - <a href="https://www.iso.org/standard/68093.html"
-                                        target="_blank">ISO</a></li>
-                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-2:</strong> Delivery phase of
-                                    assets - <a href="https://www.iso.org/standard/68094.html" target="_blank">ISO</a>
-                                </li>
-                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-3:</strong> Operational phase
-                                    of assets - <a href="https://www.iso.org/standard/81848.html"
-                                        target="_blank">ISO</a></li>
-                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-4:</strong> Information
-                                    containers - <a href="https://www.iso.org/standard/81849.html"
-                                        target="_blank">ISO</a></li>
-                                <li><i class="fas fa-check-circle"></i><strong>ISO 19650-5:</strong> Security-minded
-                                    approach - <a href="https://www.iso.org/standard/74528.html" target="_blank">ISO</a>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-cog me-2"></i>Requirements</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>Common Data Environment (CDE)</li>
-                                <li><i class="fas fa-check-circle"></i>Information management process</li>
-                                <li><i class="fas fa-check-circle"></i>Information delivery planning</li>
-                                <li><i class="fas fa-check-circle"></i>Master Information Delivery Plan (MIDP)</li>
-                                <li><i class="fas fa-check-circle"></i>Audit trails and version control</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <div class="standard-badge">BS 1192</div>
-                        <i class="fas fa-flag-usa standards-icon"></i>
-                        <h3 class="standards-title">BS 1192 - BIM Standards & PAS 1192</h3>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
-                            <p>Seri standar BIM dari British Standards Institution yang menjadi dasar implementasi BIM
-                                di berbagai negara.</p>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-file-alt me-2"></i>Key Standards</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i><strong>BS 1192-4:</strong> Collaborative
-                                    production of info - <a
-                                        href="https://shop.bsigroup.com/products/collaborative-production-of-information-part-4-foundation-and-core-information-requirements-for-buildings-and-linear-infrastructure-project-delivery-using-building-information-modelling-bim-requirement"
-                                        target="_blank">BSI</a></li>
-                                <li><i class="fas fa-check-circle"></i><strong>PAS 1192-2:</strong> Construction info
-                                    management - <a
-                                        href="https://shop.bsigroup.com/products/specification-for-information-management-for-the-capital-delivery-phase-of-construction-projects"
-                                        target="_blank">BSI</a></li>
-                                <li><i class="fas fa-check-circle"></i><strong>PAS 1192-3:</strong> Operational info
-                                    management - <a
-                                        href="https://shop.bsigroup.com/products/specification-for-information-management-for-the-operational-phase-of-assets"
-                                        target="_blank">BSI</a></li>
-                                <li><i class="fas fa-check-circle"></i><strong>PAS 1192-5:</strong> Security-minded
-                                    approach - <a
-                                        href="https://shop.bsigroup.com/products/specification-for-security-minded-building-information-modelling-bim-information-management-and-delivery"
-                                        target="_blank">BSI</a></li>
-                                <li><i class="fas fa-check-circle"></i><strong>BS 8536:</strong> Briefing for design &
-                                    construction - <a
-                                        href="https://shop.bsigroup.com/products/facility-information-provision-standard"
-                                        target="_blank">BSI</a></li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-users me-2"></i>Collaboration Framework</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>Level of detail (LOD) specifications</li>
-                                <li><i class="fas fa-check-circle"></i>Level of information (LOI) requirements</li>
-                                <li><i class="fas fa-check-circle"></i>Work-in-progress (WIP) processes</li>
-                                <li><i class="fas fa-check-circle"></i>Technical sanctions & reviews</li>
-                                <li><i class="fas fa-check-circle"></i>Project Information Model (PIM)</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <div class="standard-badge">NBIMS-US</div>
-                        <i class="fas fa-landmark standards-icon"></i>
-                        <h3 class="standards-title">NBIMS-US - National BIM Standard</h3>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
-                            <p>Standar BIM nasional Amerika Serikat yang dikembangkan oleh buildingSMART Alliance.</p>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-layer-group me-2"></i>LOB Standards</h4>
-                            <p>Berbasis Lines of Business (LOB) - <a href="https://www.nationalbimstandard.org/lob"
-                                    target="_blank">NBIMS-US</a></p>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i><strong>GUIDE:</strong> BIM Project Execution
-                                    Planning</li>
-                                <li><i class="fas fa-check-circle"></i><strong>BRIDGE:</strong> IFC Model View
-                                    Definition</li>
-                                <li><i class="fas fa-check-circle"></i><strong>FACILITIES MGMT:</strong> Facility
-                                    Handover</li>
-                                <li><i class="fas fa-check-circle"></i><strong>INFRASTRUCTURE:</strong> Linear
-                                    infrastructure</li>
-                                <li><i class="fas fa-check-circle"></i><strong>GEOTECHNICAL:</strong> Subsurface
-                                    modeling</li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-tasks me-2"></i>BIM Execution Planning</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>BIM Model Progression Specifications</li>
-                                <li><i class="fas fa-check-circle"></i>Digital Data Interoperability</li>
-                                <li><i class="fas fa-check-circle"></i>BIM Project Execution Planning Guide</li>
-                                <li><i class="fas fa-check-circle"></i>Model Element Authoring Guidelines</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <i class="fas fa-shield-alt standards-icon"></i>
-                        <h3 class="standards-title">IFC Standards - Industry Foundation Classes</h3>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-info-circle me-2"></i>Overview</h4>
-                            <p>Standar data terbuka untuk pertukaran informasi BIM antara aplikasi yang berbeda,
-                                dikelola oleh <a href="https://www.buildingsmart.org/standards/ifc/"
-                                    target="_blank">buildingSMART</a>.</p>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-file-code me-2"></i>IFC Versions</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i><strong>IFC 4.3:</strong> Latest GCC version
-                                    (2024)</li>
-                                <li><i class="fas fa-check-circle"></i><strong>IFC 4.2:</strong> Formal release (2017)
-                                </li>
-                                <li><i class="fas fa-check-circle"></i><strong>IFC 4.1:</strong> Extension release
-                                    (2014)</li>
-                                <li><i class="fas fa-check-circle"></i><strong>IFC 4:</strong> Major update (2013)</li>
-                                <li><i class="fas fa-check-circle"></i><strong>IFC 2x3:</strong> koordinasi release</li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-exchange-alt me-2"></i>Model View Definitions</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>Reference View (RV) - architectural</li>
-                                <li><i class="fas fa-check-circle"></i>Design Transfer View (DTV)</li>
-                                <li><i class="fas fa-check-circle"></i>Coordination View (CV)</li>
-                                <li><i class="fas fa-check-circle"></i>Presentation View (PV)</li>
-                                <li><i class="fas fa-check-circle"></i>Quantity Takeoff (QTO)</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Indonesian Standards Section -->
-            <div class="row mb-5">
-                <div class="col-12">
-                    <h2 class="section-title">Standar BIM Indonesia</h2>
-                </div>
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <div class="standard-badge">Permen PU</div>
-                        <i class="fas fa-landmark standards-icon"></i>
-                        <h3 class="standards-title">Keputusan Menteri Pekerjaan Umum</h3>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-gavel me-2"></i>Regulasi Utama</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i><strong>Peraturan Menteri PU No.
-                                        12/PRT/M/2010:</strong> Standar Konstruksi Bangunan</li>
-                                <li><i class="fas fa-check-circle"></i><strong>Peraturan Menteri PU No.
-                                        14/PRT/M/2010:</strong> Pedoman Penggunaan BIM</li>
-                                <li><i class="fas fa-check-circle"></i><strong>Peraturan Menteri PU No.
-                                        29/PRT/M/2018:</strong> Standardisasi BIM Infrastruktur</li>
-                                <li><i class="fas fa-check-circle"></i><strong>Keputusan Menteri PU No.
-                                        294/KPTS/M/2015:</strong> BIM Implementation Roadmap</li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-list-check me-2"></i>Mandatory Requirements</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>BIM mandatory untuk proyek ≥ 50 Milyar</li>
-                                <li><i class="fas fa-check-circle"></i>Standard LOD 100, 200, 300, 400, 500</li>
-                                <li><i class="fas fa-check-circle"></i>Common Data Environment (CDE) wajib</li>
-                                <li><i class="fas fa-check-circle"></i>Format file IFC untuk handover</li>
-                                <li><i class="fas fa-check-circle"></i>Level of Development (LOD) specifications</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <div class="standard-badge">SNI</div>
-                        <i class="fas fa-certificate standards-icon"></i>
-                        <h3 class="standards-title">Standar Nasional Indonesia (SNI)</h3>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-info-circle me-2"></i>Relevant BIM Standards</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i><strong>SNI ISO 19650-1:</strong> BIM Concepts &
-                                    Principles</li>
-                                <li><i class="fas fa-check-circle"></i><strong>SNI ISO 19650-2:</strong> Asset Delivery
-                                    Phase</li>
-                                <li><i class="fas fa-check-circle"></i><strong>SNI 8433:2017:</strong> BIM
-                                    Classification Systems</li>
-                                <li><i class="fas fa-check-circle"></i><strong>SNI 8434:2017:</strong> BIM Model
-                                    Production</li>
-                                <li><i class="fas fa-check-circle"></i><strong>SNI 8435:2017:</strong> BIM Data
-                                    Management</li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-building me-2"></i>BSN BIM Standards</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>SNI 8436:2017 - Level of Detail (LOD)</li>
-                                <li><i class="fas fa-check-circle"></i>SNI 8437:2017 - Model Organization</li>
-                                <li><i class="fas fa-check-circle"></i>SNI 8438:2017 - Quality Assurance</li>
-                                <li><i class="fas fa-check-circle"></i>SNI 8439:2017 - Facility Management</li>
-                                <li><i class="fas fa-check-circle"></i>SNI 8440:2017 - Information Exchange</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <i class="fas fa-graduation-cap standards-icon"></i>
-                        <h3 class="standards-title">Pedoman Akademis & Sertifikasi</h3>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-university me-2"></i>Universitas & Akademi</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>Permenristekdikti No. 55/2018 tentang BIM di
-                                    Pendidikan</li>
-                                <li><i class="fas fa-check-circle"></i>Kurikulum BIM untuk Arsitektur & Teknik Sipil
-                                </li>
-                                <li><i class="fas fa-check-circle"></i>Program Magister BIM Management</li>
-                                <li><i class="fas fa-check-circle"></i>Sertifikasi Kompetensi BIM</li>
-                                <li><i class="fas fa-check-circle"></i>KKNI Level 6 untuk BIM Specialist</li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-award me-2"></i>Sertifikasi Profesional</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>Sertifikasi BIM Manager BNSP</li>
-                                <li><i class="fas fa-check-circle"></i>BIM Coordinator Professional</li>
-                                <li><i class="fas fa-check-circle"></i>BIM Modeler Certification</li>
-                                <li><i class="fas fa-check-circle"></i>LPJK BIM Competency Standard</li>
-                                <li><i class="fas fa-check-circle"></i>IQ BIM Professional Accreditation</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-6 col-md-6">
-                    <div class="standards-card">
-                        <i class="fas fa-city standards-icon"></i>
-                        <h3 class="standards-title">Standar Lainnya & Industri</h3>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-industry me-2"></i>Pemerintah Daerah</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>DKI Jakarta BIM Guideline (2022)</li>
-                                <li><i class="fas fa-check-circle"></i>Jawa Barat BIM Standard</li>
-                                <li><i class="fas fa-check-circle"></i>Bali BIM Implementation</li>
-                                <li><i class="fas fa-check-circle"></i>Smart City BIM Integration</li>
-                            </ul>
-                        </div>
-
-                        <div class="standards-subsection">
-                            <h4><i class="fas fa-users-cog me-2"></i>Asosiasi & Industri</h4>
-                            <ul class="standards-list">
-                                <li><i class="fas fa-check-circle"></i>IAI (Ikatan Arsitek Indonesia) BIM Standards</li>
-                                <li><i class="fas fa-check-circle"></i>HAKI (Himpunan Ahli Konstruksi Indonesia)</li>
-                                <li><i class="fas fa-check-circle"></i>GAPENSI BIM Guidelines</li>
-                                <li><i class="fas fa-check-circle"></i>Material Indonesia BIM Library</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Implementation Guidelines Section -->
-            <div class="compliance-section">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-12">
-                            <h2 class="section-title text-dark">Framework Implementasi & Compliance</h2>
-                        </div>
-                        <div class="col-lg-4 col-md-6">
-                            <div class="compliance-card">
-                                <i class="fas fa-clipboard-check text-primary mb-3" style="font-size: 2rem;"></i>
-                                <h4 class="text-primary">BIM Protocol Indonesia</h4>
-                                <ul class="standards-list mt-3">
-                                    <li><i class="fas fa-check-circle"></i>Mandatory BIM untuk proyek strategis</li>
-                                    <li><i class="fas fa-check-circle"></i>Standardization of naming conventions</li>
-                                    <li><i class="fas fa-check-circle"></i>Template model dan sheet standards</li>
-                                    <li><i class="fas fa-check-circle"></i>Quality gates & approval processes</li>
-                                    <li><i class="fas fa-check-circle"></i>Audit trails & documentation</li>
+                    <section class="section-card">
+                        <h2>Referensi Standar Internasional</h2>
+                        <div class="reg-grid">
+                            <article class="reference-card">
+                                <h4>ISO 19650 Series</h4>
+                                <ul class="reference-links">
+                                    <li><a href="https://www.iso.org/standard/68093.html" target="_blank" rel="noopener noreferrer">ISO 19650-1: Concepts and principles</a></li>
+                                    <li><a href="https://www.iso.org/standard/68080.html" target="_blank" rel="noopener noreferrer">ISO 19650-2: Delivery phase of assets</a></li>
+                                    <li><a href="https://www.iso.org/standard/81848.html" target="_blank" rel="noopener noreferrer">ISO 19650-3: Operational phase of assets</a></li>
+                                    <li><a href="https://www.iso.org/standard/81849.html" target="_blank" rel="noopener noreferrer">ISO 19650-4: Information containers</a></li>
+                                    <li><a href="https://www.iso.org/standard/74528.html" target="_blank" rel="noopener noreferrer">ISO 19650-5: Security-minded approach</a></li>
                                 </ul>
+                            </article>
+                            <article class="reference-card">
+                                <h4>BS 1192 &amp; PAS 1192</h4>
+                                <ul class="reference-links">
+                                    <li><a href="https://shop.bsigroup.com/products/collaborative-production-of-information-part-4-foundation-and-core-information-requirements-for-buildings-and-linear-infrastructure-project-delivery-using-building-information-modelling-bim-requirement" target="_blank" rel="noopener noreferrer">BS 1192-4</a></li>
+                                    <li><a href="https://shop.bsigroup.com/products/specification-for-information-management-for-the-capital-delivery-phase-of-construction-projects" target="_blank" rel="noopener noreferrer">PAS 1192-2</a></li>
+                                    <li><a href="https://shop.bsigroup.com/products/specification-for-information-management-for-the-operational-phase-of-assets" target="_blank" rel="noopener noreferrer">PAS 1192-3</a></li>
+                                    <li><a href="https://shop.bsigroup.com/products/specification-for-security-minded-building-information-modelling-bim-information-management-and-delivery" target="_blank" rel="noopener noreferrer">PAS 1192-5</a></li>
+                                    <li><a href="https://shop.bsigroup.com/products/facility-information-provision-standard" target="_blank" rel="noopener noreferrer">BS 8536</a></li>
+                                </ul>
+                            </article>
+                            <article class="reference-card">
+                                <h4>NBIMS-US</h4>
+                                <ul class="reference-links">
+                                    <li><a href="https://nibs.org/nbims" target="_blank" rel="noopener noreferrer">National BIM Standard - United States</a></li>
+                                </ul>
+                            </article>
+                            <article class="reference-card">
+                                <h4>IFC Standards</h4>
+                                <ul class="reference-links">
+                                    <li><a href="https://www.buildingsmart.org/standards/ifc/" target="_blank" rel="noopener noreferrer">buildingSMART IFC Standards</a></li>
+                                </ul>
+                            </article>
+                        </div>
+                        <div class="reference-note">
+                            Link ISO 19650-2 pada halaman lama mengarah ke URL yang sudah tidak aktif. Di sini saya ganti ke halaman ISO yang masih hidup.
+                        </div>
+                    </section>
+
+                    <div class="ringkas-box">
+                        <h3>Ringkas</h3>
+                        <ul class="mb-0">
+                            <li>BIM di Indonesia tidak lahir dari satu aturan tunggal, tetapi dari rangkaian aturan yang saling menguatkan.</li>
+                            <li>UU dan PP memberi landasan hukum serta kerangka pelaksanaan, sedangkan Permen, SE, dan pedoman membawa BIM ke level teknis operasional.</li>
+                            <li>Titik paling eksplisit dalam daftar ini adalah <strong>Permen PUPR No. 22/PRT/M/2018</strong> untuk Bangunan Gedung Negara tertentu.</li>
+                            <li>Untuk sektor jalan dan jembatan, penguatan implementasi muncul melalui <strong>SE Dirjen Bina Marga No. 11/SE/Db/2021</strong> dan <strong>Pedoman No. 12/P/BM/2023</strong>.</li>
+                            <li>Cara membaca regulasi BIM yang paling aman adalah melihat level aturannya, lalu menilai apakah muatannya masih umum, sudah definitif, sudah eksplisit, atau sudah detail tata kelola.</li>
+                        </ul>
+                    </div>
+
+                    <p class="aha-statement">
+                        BIM di Indonesia lebih tepat dipahami sebagai sistem yang tumbuh dari landasan hukum umum menuju aturan teknis yang makin operasional.
+                    </p>
+
+                    <section class="section-card">
+                        <h2>Cara Membaca Hierarki Regulasi</h2>
+                        <div class="pijakan-note">
+                            <strong>Pijakan pembacaan:</strong> Undang-Undang &rarr; Peraturan Pemerintah &rarr; Peraturan Menteri &rarr; instrumen sektoral seperti Surat Edaran dan pedoman teknis.
+                        </div>
+                        <div class="hierarchy-flow">
+                            <div class="hierarchy-step">
+                                <div class="icon"><i class="fas fa-balance-scale"></i></div>
+                                <h4>Undang-Undang</h4>
+                                <p>Memberi landasan normatif paling tinggi untuk sektor konstruksi dan bangunan gedung.</p>
+                            </div>
+                            <div class="hierarchy-step">
+                                <div class="icon"><i class="fas fa-sitemap"></i></div>
+                                <h4>Peraturan Pemerintah</h4>
+                                <p>Menerjemahkan dasar hukum pada tingkat undang-undang menjadi kerangka pelaksanaan yang lebih jelas.</p>
+                            </div>
+                            <div class="hierarchy-step">
+                                <div class="icon"><i class="fas fa-file-signature"></i></div>
+                                <h4>Peraturan Menteri</h4>
+                                <p>Membawa aturan ke ranah teknis-operasional dan bisa menjadi titik kewajiban BIM yang eksplisit.</p>
+                            </div>
+                            <div class="hierarchy-step">
+                                <div class="icon"><i class="fas fa-road"></i></div>
+                                <h4>SE dan Pedoman</h4>
+                                <p>Bukan hierarki formal utama, tetapi sangat penting untuk arahan sektoral dan implementasi lapangan.</p>
                             </div>
                         </div>
+                    </section>
 
-                        <div class="col-lg-4 col-md-6">
-                            <div class="compliance-card">
-                                <i class="fas fa-balance-scale text-primary mb-3" style="font-size: 2rem;"></i>
-                                <h4 class="text-primary">Legal Framework</h4>
-                                <ul class="standards-list mt-3">
-                                    <li><i class="fas fa-check-circle"></i>Contract terms for BIM deliverables</li>
-                                    <li><i class="fas fa-check-circle"></i>Liability for model accuracy</li>
-                                    <li><i class="fas fa-check-circle"></i>Intellectual property rights</li>
-                                    <li><i class="fas fa-check-circle"></i>Data security & confidentiality</li>
-                                    <li><i class="fas fa-check-circle"></i>Dispute resolution mechanisms</li>
-                                </ul>
-                            </div>
-                        </div>
+                    <section class="section-card">
+                        <h2>Peta Muatan BIM per Level Regulasi</h2>
+                        <p>Supaya lebih mudah dipahami, muatan BIM dapat dibaca dalam empat tingkat berikut:</p>
+                        <ul class="mb-0">
+                            <li><strong>General:</strong> regulasi menjadi dasar umum sektor, tetapi belum menyebut BIM secara langsung.</li>
+                            <li><strong>Definitif:</strong> regulasi memperjelas kerangka pelaksanaan dan menjadi jembatan ke implementasi BIM.</li>
+                            <li><strong>Eksplisit:</strong> BIM sudah disebut langsung sebagai bagian dari norma atau kebijakan teknis.</li>
+                            <li><strong>Detail Tata Kelola:</strong> aturan sudah berbicara soal organisasi, SDM, anggaran, data, dan serah terima aset digital.</li>
+                        </ul>
+                    </section>
 
-                        <div class="col-lg-4 col-md-12">
-                            <div class="compliance-card">
-                                <i class="fas fa-chart-line text-primary mb-3" style="font-size: 2rem;"></i>
-                                <h4 class="text-primary">Adoption Roadmap</h4>
-                                <ul class="standards-list mt-3">
-                                    <li><i class="fas fa-check-circle"></i>Phase 1: Pilot projects (2020-2022)</li>
-                                    <li><i class="fas fa-check-circle"></i>Phase 2: Mandatory implementation (2023-2025)
-                                    </li>
-                                    <li><i class="fas fa-check-circle"></i>Phase 3: Full digital transformation (2026+)
-                                    </li>
-                                    <li><i class="fas fa-check-circle"></i>Capacity building programs</li>
-                                    <li><i class="fas fa-check-circle"></i>Industry collaboration initiatives</li>
-                                </ul>
-                            </div>
+                    <section class="section-card">
+                        <h2>Regulasi Kunci</h2>
+                        <div class="reg-grid">
+                            <article class="reg-card">
+                                <span class="level-badge">UU</span>
+                                <span class="content-badge general">General</span>
+                                <h4>UU No. 2 Tahun 2017 tentang Jasa Konstruksi</h4>
+                                <p>Menjadi dasar umum untuk pembinaan, mutu, efisiensi, dan modernisasi jasa konstruksi.</p>
+                                <p class="mb-0"><strong>Tafsir ringkas:</strong> dasar transformasi industri konstruksi, tetapi belum menjadi norma teknis BIM.</p>
+                            </article>
+                            <article class="reg-card">
+                                <span class="level-badge">UU</span>
+                                <span class="content-badge general">General</span>
+                                <h4>UU No. 28 Tahun 2002 tentang Bangunan Gedung</h4>
+                                <p>Menjadi fondasi kerangka pengaturan bangunan gedung yang kemudian dijabarkan lewat aturan pelaksana.</p>
+                                <p class="mb-0"><strong>Tafsir ringkas:</strong> BIM berjalan di bawah kerangka hukum ini sebagai perkembangan teknis, bukan dari bunyi eksplisit UU.</p>
+                            </article>
+                            <article class="reg-card">
+                                <span class="level-badge">PP</span>
+                                <span class="content-badge definitif">Definitif</span>
+                                <h4>PP No. 14 Tahun 2021</h4>
+                                <p>Menguatkan tata kelola pelaksanaan jasa konstruksi pada level aturan turunan.</p>
+                                <p class="mb-0"><strong>Tafsir ringkas:</strong> belum teknis BIM, tetapi penting sebagai jembatan dari UU ke pelaksanaan yang lebih operasional.</p>
+                            </article>
+                            <article class="reg-card">
+                                <span class="level-badge">PP</span>
+                                <span class="content-badge definitif">Definitif</span>
+                                <h4>PP No. 16 Tahun 2021</h4>
+                                <p>Mengokohkan kerangka penyelenggaraan bangunan gedung modern pada tahap pelaksanaan.</p>
+                                <p class="mb-0"><strong>Tafsir ringkas:</strong> belum paling eksplisit untuk BIM, namun menjadi penghubung penting ke aturan teknis kementerian.</p>
+                            </article>
+                            <article class="reg-card">
+                                <span class="level-badge">Permen</span>
+                                <span class="content-badge eksplisit">Eksplisit</span>
+                                <h4>Permen PUPR No. 22/PRT/M/2018</h4>
+                                <p>Mengatur pembangunan Bangunan Gedung Negara dan menjadi titik pengikatan BIM yang paling tegas dalam daftar ini.</p>
+                                <p class="mb-0"><strong>Tafsir ringkas:</strong> BIM disebut langsung dan diwajibkan pada BGN tertentu, termasuk keluaran desain yang harus disiapkan.</p>
+                            </article>
+                            <article class="reg-card">
+                                <span class="level-badge">SE</span>
+                                <span class="content-badge eksplisit">Eksplisit</span>
+                                <h4>SE Dirjen Bina Marga No. 11/SE/Db/2021</h4>
+                                <p>Menegaskan penerapan BIM pada perencanaan teknis, konstruksi, dan pemeliharaan jalan serta jembatan.</p>
+                                <p class="mb-0"><strong>Tafsir ringkas:</strong> penting sebagai penguat sektoral, walau bobot formalnya di bawah UU, PP, dan Permen.</p>
+                            </article>
+                            <article class="reg-card">
+                                <span class="level-badge">Pedoman</span>
+                                <span class="content-badge detail">Detail Tata Kelola</span>
+                                <h4>Pedoman No. 12/P/BM/2023</h4>
+                                <p>Masuk ke aspek organisasi, sumber daya, anggaran, pengelolaan data, hingga serah terima aset digital BIM.</p>
+                                <p class="mb-0"><strong>Tafsir ringkas:</strong> ini yang paling implementatif karena sudah berbicara detail tata kelola BIM secara operasional.</p>
+                            </article>
                         </div>
-                    </div>
+                    </section>
+
+                    <section class="table-wrap">
+                        <h3>Tabel Cepat Regulasi BIM Indonesia</h3>
+                        <div class="table-responsive">
+                            <table class="reg-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Regulasi</th>
+                                        <th>Level</th>
+                                        <th>Muatan BIM</th>
+                                        <th>Sifat Pengaturan</th>
+                                        <th>Catatan Singkat</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>UU No. 2 Tahun 2017 tentang Jasa Konstruksi</td>
+                                        <td>UU</td>
+                                        <td>General</td>
+                                        <td>Implisit / Dasar Hukum</td>
+                                        <td>Dasar umum sektor jasa konstruksi; belum menyebut BIM secara langsung.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>UU No. 28 Tahun 2002 tentang Bangunan Gedung</td>
+                                        <td>UU</td>
+                                        <td>General</td>
+                                        <td>Implisit / Dasar Hukum</td>
+                                        <td>Dasar umum sektor bangunan gedung; BIM dibaca sebagai perkembangan teknis di bawah kerangka hukum ini.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>PP No. 14 Tahun 2021</td>
+                                        <td>PP</td>
+                                        <td>Definitif</td>
+                                        <td>Pelaksanaan</td>
+                                        <td>Menguatkan kerangka pelaksanaan jasa konstruksi; belum teknis BIM.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>PP No. 16 Tahun 2021</td>
+                                        <td>PP</td>
+                                        <td>Definitif</td>
+                                        <td>Pelaksanaan</td>
+                                        <td>Mengokohkan penyelenggaraan bangunan gedung modern; jembatan ke aturan teknis.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>Permen PUPR No. 22/PRT/M/2018</td>
+                                        <td>Permen</td>
+                                        <td>Eksplisit</td>
+                                        <td>Teknis / Normatif</td>
+                                        <td>BIM disebut langsung dan diwajibkan pada BGN tertentu melalui Lampiran IV.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6</td>
+                                        <td>SE Dirjen Bina Marga No. 11/SE/Db/2021</td>
+                                        <td>SE</td>
+                                        <td>Eksplisit</td>
+                                        <td>Sektoral / Operasional</td>
+                                        <td>BIM disebut langsung untuk jalan dan jembatan.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>7</td>
+                                        <td>Pedoman No. 12/P/BM/2023</td>
+                                        <td>Pedoman</td>
+                                        <td>Detail Tata Kelola</td>
+                                        <td>Teknis / Implementatif</td>
+                                        <td>Sudah masuk organisasi, SDM, anggaran, data, dan serah terima aset digital BIM.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="practical-box">
+                        <h3>Apa Artinya untuk Praktik BIM?</h3>
+                        <ul class="practical-list mb-0">
+                            <li>Jika Anda menyusun strategi BIM perusahaan, mulai dari landasan hukum utamanya dulu: jasa konstruksi dan bangunan gedung.</li>
+                            <li>Jika Anda menyusun prosedur proyek, lihat aturan pelaksanaan dan aturan teknis yang lebih operasional.</li>
+                            <li>Jika proyek terkait Bangunan Gedung Negara, perhatian utama ada pada kewajiban yang lebih eksplisit di Permen PUPR No. 22/PRT/M/2018.</li>
+                            <li>Jika proyek Anda di sektor jalan dan jembatan, rujukan implementasi paling praktis ada pada SE Dirjen Bina Marga 2021 dan Pedoman 2023.</li>
+                            <li>Jangan hanya bertanya "apakah BIM disebut?", tetapi juga "seberapa jauh pengaturannya sudah mengatur tata kelola, peran, data, dan serah terima?".</li>
+                        </ul>
+                    </section>
+
+                    <section class="section-card">
+                        <h2>Checklist Belajar Cepat</h2>
+                        <ul class="mb-0">
+                            <li>Pahami dulu urutan level regulasi: UU, PP, Permen, lalu instrumen sektoral.</li>
+                            <li>Bedakan antara aturan yang masih bersifat umum dengan aturan yang sudah memerintahkan praktik teknis.</li>
+                            <li>Catat bahwa kewajiban BIM yang paling eksplisit dalam daftar ini ada pada Permen PUPR No. 22/PRT/M/2018.</li>
+                            <li>Untuk sektor jalan dan jembatan, lanjutkan membaca SE Dirjen Bina Marga 2021 dan Pedoman 2023.</li>
+                            <li>Gunakan tabel ringkas di halaman ini sebagai peta awal sebelum membaca naskah regulasi lengkap.</li>
+                        </ul>
+                    </section>
+
+                    <section class="section-card">
+                        <h2>Daftar Referensi pada Dokumen Sumber</h2>
+                        <ul class="mb-0">
+                            <li>
+                                <a href="https://www.peraturan.go.id/id/uu-no-12-tahun-2011" target="_blank" rel="noopener noreferrer">UU No. 12 Tahun 2011 tentang Pembentukan Peraturan Perundang-undangan</a>
+                            </li>
+                            <li>
+                                <a href="https://peraturan.go.id/id/uu-no-2-tahun-2017" target="_blank" rel="noopener noreferrer">UU No. 2 Tahun 2017 tentang Jasa Konstruksi</a>
+                            </li>
+                            <li>
+                                <a href="https://peraturan.go.id/id/uu-no-28-tahun-2002" target="_blank" rel="noopener noreferrer">UU No. 28 Tahun 2002 tentang Bangunan Gedung</a>
+                            </li>
+                            <li>
+                                <a href="https://peraturan.go.id/id/pp-no-14-tahun-2021" target="_blank" rel="noopener noreferrer">PP No. 14 Tahun 2021</a>,
+                                <a href="https://peraturan.bpk.go.id/Details/161844/pp-no-14-tahun-2021" target="_blank" rel="noopener noreferrer">alternatif BPK</a>
+                            </li>
+                            <li>
+                                <a href="https://peraturan.go.id/id/pp-no-16-tahun-2021" target="_blank" rel="noopener noreferrer">PP No. 16 Tahun 2021</a>,
+                                <a href="https://peraturan.bpk.go.id/Details/161846/pp-no-16-tahun-2021" target="_blank" rel="noopener noreferrer">alternatif BPK</a>
+                            </li>
+                            <li>
+                                <a href="https://peraturan.bpk.go.id/Details/159730/permen-pupr-no-22prtm2018-tahun-2018" target="_blank" rel="noopener noreferrer">Permen PUPR No. 22/PRT/M/2018 tentang Pembangunan Bangunan Gedung Negara</a>
+                            </li>
+                            <li>
+                                <a href="https://binamarga.pu.go.id/index.php/peraturan/detail/surat-edaran-direktur-jenderal-bina-marga-nomor-11sedb2021" target="_blank" rel="noopener noreferrer">SE Dirjen Bina Marga No. 11/SE/Db/2021</a>,
+                                <a href="https://binamarga.pu.go.id/uploads/files/997/a34567138a999ac36e408bc0a086729f.pdf" target="_blank" rel="noopener noreferrer">PDF langsung</a>
+                            </li>
+                            <li>
+                                <a href="https://binamarga.pu.go.id/index.php/nspk/detail/12pbm2023-pedoman-implementasi-building-information-modelling-bim-pada-lingkup-pekerjaan-konstruksi-jalan-dan-jembatan-" target="_blank" rel="noopener noreferrer">Pedoman No. 12/P/BM/2023</a>,
+                                <a href="https://binamarga.pu.go.id/uploads/files/1968/12PBM2023-Pedoman-Implementasi-Building-Information-Modelling-BIM-pada-Lingkup-Pekerjaan-Konstruksi-Jalan-dan-Jembatan.pdf" target="_blank" rel="noopener noreferrer">PDF langsung</a>
+                            </li>
+                        </ul>
+                    </section>
+
                 </div>
             </div>
-
         </div>
     </div>
-    <!-- Standards Section End -->
 
-
-    <!-- Footer Start -->
     <div id="footer-container"></div>
-    <!-- Footer End -->
 
-    <!-- Back to Top -->
     <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
 
-    <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../lib/wow/wow.min.js"></script>
@@ -605,11 +687,8 @@
     <script src="../lib/waypoints/waypoints.min.js"></script>
     <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
 
-    <!-- Template Javascript -->
     <script src="../js/main.js"></script>
-    <script src="../js/loadComponents.js"></script>
     <script src="../js/user.js" defer></script>
-
 
 </body>
 

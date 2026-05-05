@@ -2,6 +2,219 @@
 const courseIndex = new Map();
 const categoryVideoIndex = new Map();
 let tutorialCache = null;
+const COURSE_DISPLAY_PRIORITY = new Map([
+    ['revit', 10],
+    ['navisworks', 20],
+    ['civil-3d', 30]
+]);
+
+function normalizeCategorySlug(value) {
+    return (value || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+}
+
+function getCourseCategoryMeta(course, courseIdOverride = '') {
+    const rawCategory = course && course.category && typeof course.category === 'object'
+        ? (course.category.id || course.category.key || course.category.name || '')
+        : (course ? (course.categoryKey || course.category || courseIdOverride || course.id || course.title || '') : '');
+
+    const slug = normalizeCategorySlug(rawCategory) || normalizeCategorySlug(courseIdOverride) || 'general';
+    const label = (course && (course.title || course.categoryKey || course.category)) || courseIdOverride || 'General';
+    const icon = (course && course.icon) || detectVideoCategory(label).icon;
+
+    return {
+        slug,
+        label: label.toString().trim() || 'General',
+        icon
+    };
+}
+
+function parseLearningJsonSafe(value, fallback) {
+    try {
+        if (!value) return fallback;
+        return JSON.parse(value);
+    } catch (error) {
+        return fallback;
+    }
+}
+
+function rememberLearningMarker(prefix, id, payload = {}) {
+    const normalizedId = String(id || '').trim();
+    if (!normalizedId) return;
+
+    const key = `${prefix}${normalizedId}`;
+    const existing = parseLearningJsonSafe(localStorage.getItem(key), {});
+    localStorage.setItem(key, JSON.stringify({
+        ...existing,
+        ...payload,
+        id: normalizedId,
+        updatedAt: new Date().toISOString()
+    }));
+}
+
+function toNonNegativeInt(value, fallback = 0) {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 0) return fallback;
+    return Math.floor(number);
+}
+
+function getLearningActivityAuthToken() {
+    const directToken = localStorage.getItem('token');
+    if (directToken) return directToken;
+
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (user && user.token) return user.token;
+    } catch (error) {
+        // ignore
+    }
+
+    return '';
+}
+
+function countCompletedLearningModules() {
+    let count = 0;
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key) continue;
+
+        if (key.startsWith('bcl_completed_') || key.startsWith('bcl_video_completed_')) {
+            count += 1;
+        }
+    }
+
+    return count;
+}
+
+function buildLearningProgressSnapshot() {
+    const storedUser = parseLearningJsonSafe(localStorage.getItem('user'), {});
+    const userData = parseLearningJsonSafe(localStorage.getItem('userData'), {});
+    const userProgress = userData && typeof userData.progress === 'object' ? userData.progress : {};
+    const practiceHistory = Array.isArray(userData.practiceHistory) ? userData.practiceHistory : [];
+    const gamificationProgress = parseLearningJsonSafe(localStorage.getItem('gamification_userProgress'), {});
+    const completedModules = countCompletedLearningModules();
+
+    return {
+        coursesCompleted: Math.max(
+            completedModules,
+            toNonNegativeInt(userProgress.coursesCompleted, 0),
+            toNonNegativeInt(userData.coursesCompleted, 0),
+            toNonNegativeInt(gamificationProgress.coursesCompleted, 0),
+            toNonNegativeInt(storedUser?.progress?.coursesCompleted, 0)
+        ),
+        practiceAttempts: Math.max(
+            toNonNegativeInt(userProgress.practiceAttempts, 0),
+            toNonNegativeInt(userData.practiceAttempts, 0),
+            practiceHistory.length
+        ),
+        examsPassed: Math.max(
+            toNonNegativeInt(userProgress.examsPassed, 0),
+            toNonNegativeInt(userData.examsPassed, 0),
+            toNonNegativeInt(gamificationProgress.examsPassed, 0),
+            toNonNegativeInt(storedUser?.progress?.examsPassed, 0)
+        ),
+        certificatesEarned: Math.max(
+            toNonNegativeInt(userProgress.certificatesEarned, 0),
+            toNonNegativeInt(userData.certificatesEarned, 0),
+            toNonNegativeInt(gamificationProgress.certificatesEarned, 0),
+            toNonNegativeInt(storedUser?.progress?.certificatesEarned, 0)
+        ),
+        currentLevel: String(
+            userProgress.currentLevel ||
+            storedUser.level ||
+            storedUser.bimLevel ||
+            localStorage.getItem('level') ||
+            'BIM Modeller'
+        ).trim(),
+        toNextLevel: toNonNegativeInt(
+            userProgress.toNextLevel ?? storedUser?.progress?.toNextLevel ?? userData.toNextLevel ?? 0,
+            0
+        )
+    };
+}
+
+function persistLearningProgressSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return;
+
+    const storedUser = parseLearningJsonSafe(localStorage.getItem('user'), {});
+    storedUser.progress = {
+        ...(storedUser.progress || {}),
+        ...snapshot
+    };
+    storedUser.coursesCompleted = snapshot.coursesCompleted;
+    localStorage.setItem('user', JSON.stringify(storedUser));
+
+    const userData = parseLearningJsonSafe(localStorage.getItem('userData'), {});
+    userData.progress = {
+        ...(userData.progress || {}),
+        ...snapshot
+    };
+    userData.coursesCompleted = snapshot.coursesCompleted;
+    localStorage.setItem('userData', JSON.stringify(userData));
+
+    const gamificationProgress = parseLearningJsonSafe(localStorage.getItem('gamification_userProgress'), {});
+    gamificationProgress.coursesCompleted = snapshot.coursesCompleted;
+    localStorage.setItem('gamification_userProgress', JSON.stringify(gamificationProgress));
+}
+
+async function syncLearningProgressSnapshot() {
+    const token = getLearningActivityAuthToken();
+    if (!token) return null;
+
+    const snapshot = buildLearningProgressSnapshot();
+    persistLearningProgressSnapshot(snapshot);
+
+    try {
+        const response = await fetch('/api/elearning/progress/sync', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(snapshot)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Progress sync failed (${response.status})`);
+        }
+
+        return snapshot;
+    } catch (error) {
+        console.warn('Failed to sync learning progress:', error.message);
+        return null;
+    }
+}
+
+async function trackLearningActivity(payload) {
+    const token = getLearningActivityAuthToken();
+    if (!token) return null;
+
+    try {
+        const response = await fetch('/api/elearning/activity/track', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Activity track failed (${response.status})`);
+        }
+
+        return response.json().catch(() => null);
+    } catch (error) {
+        console.warn('Failed to track learning activity:', error.message);
+        return null;
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     fetchCourses();
 });
@@ -42,7 +255,20 @@ function fetchCourses() {
             // Bersihkan container dan generate course cards
             container.innerHTML = "";
 
-            courses.forEach(course => {
+            const sortedCourses = [...courses].sort((left, right) => {
+                const leftMeta = getCourseCategoryMeta(left, normalizeCourseId(left));
+                const rightMeta = getCourseCategoryMeta(right, normalizeCourseId(right));
+                const leftPriority = COURSE_DISPLAY_PRIORITY.get(leftMeta.slug) ?? 1000;
+                const rightPriority = COURSE_DISPLAY_PRIORITY.get(rightMeta.slug) ?? 1000;
+
+                if (leftPriority !== rightPriority) {
+                    return leftPriority - rightPriority;
+                }
+
+                return (leftMeta.label || '').localeCompare(rightMeta.label || '');
+            });
+
+            sortedCourses.forEach(course => {
                 const courseId = normalizeCourseId(course);
                 if (courseId) {
                     courseIndex.set(courseId, course);
@@ -50,6 +276,26 @@ function fetchCourses() {
                 const courseCard = createCourseCard(course, courseId);
                 container.appendChild(courseCard);
             });
+
+            const normalizedCourses = sortedCourses.map(course => {
+                const courseId = normalizeCourseId(course);
+                const categoryMeta = getCourseCategoryMeta(course, courseId);
+                return {
+                    id: courseId,
+                    title: course.title || categoryMeta.label,
+                    categorySlug: categoryMeta.slug,
+                    categoryLabel: categoryMeta.label,
+                    icon: categoryMeta.icon,
+                    videoCount: Number(course.videoCount || 0)
+                };
+            });
+
+            window.bclCourseCatalog = normalizedCourses;
+            document.dispatchEvent(new CustomEvent('bcl:courses-loaded', {
+                detail: {
+                    courses: normalizedCourses
+                }
+            }));
 
             console.log('âœ… Courses loaded successfully');
         })
@@ -82,15 +328,8 @@ function createCourseCard(course, courseIdOverride = '') {
     card.className = 'box';
 
     const courseId = courseIdOverride || normalizeCourseId(course);
-    const rawCategory = course.category && typeof course.category === 'object'
-        ? course.category.id
-        : course.category;
-    const categorySlug = (rawCategory || courseId || '')
-        .toString()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') || 'general';
-    card.setAttribute('data-category', categorySlug);
+    const categoryMeta = getCourseCategoryMeta(course, courseId);
+    card.setAttribute('data-category', categoryMeta.slug);
 
     const courseThumbMap = {
         'bim-fundamentals-101': '/img/course-1.jpg',
@@ -263,7 +502,7 @@ function fetchFilteredVideos(categoryId, categoryTitle, course = null) {
     container.innerHTML = `
         <div class="loading-videos" style="text-align: center; padding: 2rem; grid-column: 1 / -1;">
             <i class="fas fa-spinner fa-spin fa-2x"></i>
-            <p>Loading ${categoryTitle} videos...</p>
+            <p>Memuat video ${categoryTitle}...</p>
         </div>
     `;
 
@@ -306,7 +545,7 @@ function fetchFilteredVideos(categoryId, categoryTitle, course = null) {
                         <h3>No Videos Found</h3>
                         <p>Tidak ada video tutorial untuk kategori ${categoryTitle} saat ini.</p>
                         <button class="btn" onclick="location.reload()" style="margin-top: 1rem;">
-                            <i class="fas fa-arrow-left"></i> Back to Courses
+                            <i class="fas fa-arrow-left"></i> Kembali ke Materi
                         </button>
                     </div>
                 `;
@@ -325,7 +564,7 @@ function fetchFilteredVideos(categoryId, categoryTitle, course = null) {
                     <p>Terjadi kesalahan saat mengambil daftar videos.</p>
                     <p><small>Error: ${error.message}</small></p>
                     <button class="btn" onclick="location.reload()" style="margin-top: 1rem;">
-                        <i class="fas fa-arrow-left"></i> Back to Courses
+                        <i class="fas fa-arrow-left"></i> Kembali ke Materi
                     </button>
                 </div>
             `;
@@ -455,6 +694,43 @@ async function incrementVideoViewCount(videoId) {
         console.warn('Failed to increment video view count:', error.message);
     }
 }
+
+function markVideoModuleCompleted(videoId, videoName, categoryLabel) {
+    const normalizedId = String(videoId || '').trim();
+    if (!normalizedId) return;
+
+    const completionKey = `bcl_video_completed_${normalizedId}`;
+    const alreadyCompleted = !!localStorage.getItem(completionKey);
+
+    if (!alreadyCompleted) {
+        const completionData = {
+            videoId: normalizedId,
+            title: videoName || 'Video Learning',
+            category: categoryLabel || '',
+            completedAt: new Date().toISOString()
+        };
+        localStorage.setItem(completionKey, JSON.stringify(completionData));
+    }
+
+    rememberLearningMarker('bcl_video_completed_', normalizedId, {
+        title: videoName || 'Video Learning',
+        category: categoryLabel || '',
+        completedAt: new Date().toISOString()
+    });
+
+    trackLearningActivity({
+        moduleId: normalizedId,
+        moduleType: 'video',
+        eventType: 'completed',
+        title: videoName || 'Video Learning',
+        category: categoryLabel || '',
+        source: 'courses',
+        progressPercent: 100
+    });
+
+    syncLearningProgressSnapshot();
+}
+
 function playVideo(videoPath, videoName, videoId = '') {
     if (!videoPath) {
         alert('Video path tidak tersedia untuk video ini.');
@@ -462,6 +738,19 @@ function playVideo(videoPath, videoName, videoId = '') {
     }
     console.log('ðŸŽ¬ Playing video:', videoName, videoPath);
     incrementVideoViewCount(videoId);
+    rememberLearningMarker('bcl_video_opened_', videoId || videoPath || videoName, {
+        title: videoName || 'Video Learning',
+        category: detectVideoCategory(videoName || '').name || ''
+    });
+    trackLearningActivity({
+        moduleId: String(videoId || videoPath || videoName || '').trim(),
+        moduleType: 'video',
+        eventType: 'opened',
+        title: videoName || 'Video Learning',
+        category: detectVideoCategory(videoName || '').name || '',
+        source: 'courses',
+        progressPercent: 0
+    });
 
     // Buat modal untuk memutar video
     const modal = document.createElement('div');
@@ -484,11 +773,32 @@ function playVideo(videoPath, videoName, videoId = '') {
     // Tambahkan error handling untuk video
     const videoElement = modal.querySelector('video');
     const errorDiv = modal.querySelector('#video-error');
+    const normalizedVideoId = String(videoId || videoPath || videoName || '').trim();
+    const categoryLabel = detectVideoCategory(videoName || '').name || '';
+    let completionTracked = false;
+
+    function evaluateVideoCompletion(forceComplete = false) {
+        if (completionTracked || !normalizedVideoId) return;
+
+        const duration = Number(videoElement.duration || 0);
+        if (!forceComplete && (!Number.isFinite(duration) || duration <= 0)) {
+            return;
+        }
+
+        const progressPercent = forceComplete
+            ? 100
+            : Math.round((Number(videoElement.currentTime || 0) / duration) * 100);
+
+        if (forceComplete || progressPercent >= 90) {
+            completionTracked = true;
+            markVideoModuleCompleted(normalizedVideoId, videoName, categoryLabel);
+        }
+    }
 
     videoElement.addEventListener('error', function (e) {
         console.error('âŒ Video error:', e);
         errorDiv.style.display = 'block';
-        errorDiv.textContent = `Error loading video: ${e.target.error ? e.target.error.message : 'Unknown error'}. Path: ${videoPath}`;
+        errorDiv.textContent = `Gagal memuat video: ${e.target.error ? e.target.error.message : 'Kesalahan tidak diketahui'}. Path: ${videoPath}`;
     });
 
     videoElement.addEventListener('loadstart', function () {
@@ -497,6 +807,14 @@ function playVideo(videoPath, videoName, videoId = '') {
 
     videoElement.addEventListener('loadeddata', function () {
         console.log('ðŸ“¹ Video loaded successfully');
+    });
+
+    videoElement.addEventListener('timeupdate', function () {
+        evaluateVideoCompletion(false);
+    });
+
+    videoElement.addEventListener('ended', function () {
+        evaluateVideoCompletion(true);
     });
 
     // Tutup modal saat klik di luar
@@ -523,22 +841,12 @@ function previewCourse(courseId) {
     startLearning(courseId, course ? course.title : '');
 }
 
-function getAuthTokenForPdfTracking() {
-    const directToken = localStorage.getItem('token');
-    if (directToken) return directToken;
-
-    try {
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        if (user && user.token) return user.token;
-    } catch (error) {
-        // ignore
-    }
-
-    return '';
-}
-
-async function trackPdfReadOpen(materialId) {
-    const token = getAuthTokenForPdfTracking();
+async function trackPdfReadOpen(materialId, materialTitle = '') {
+    const token = getLearningActivityAuthToken();
+    rememberLearningMarker('bcl_pdf_opened_', materialId, {
+        title: materialTitle || 'Materi PDF',
+        openedAt: new Date().toISOString()
+    });
     if (!token) return;
 
     try {
@@ -553,11 +861,21 @@ async function trackPdfReadOpen(materialId) {
     } catch (error) {
         console.warn('Failed to track PDF read from courses.js:', error.message);
     }
+
+    trackLearningActivity({
+        moduleId: String(materialId || '').trim(),
+        moduleType: 'pdf',
+        eventType: 'opened',
+        title: materialTitle || 'Materi PDF',
+        category: '',
+        source: 'courses',
+        progressPercent: 0
+    });
 }
 
 function openPDFReader(materialId, materialTitle) {
     console.log('ðŸ“– Opening PDF reader for material:', materialId, materialTitle);
-    trackPdfReadOpen(materialId);
+    trackPdfReadOpen(materialId, materialTitle);
 
     // Create modal for PDF reader
     const modal = document.createElement('div');
@@ -566,12 +884,12 @@ function openPDFReader(materialId, materialTitle) {
     modal.innerHTML = `
         <div class="modal-content pdf-modal-content" style="width: 95%; height: 90%; max-width: none;">
             <span class="close" onclick="this.parentElement.parentElement.remove()" style="z-index: 10001;">&times;</span>
-            <h3 style="margin-bottom: 1rem; color: var(--black);"><i class="fas fa-book"></i> ${materialTitle} - PDF Learning Material</h3>
+            <h3 style="margin-bottom: 1rem; color: var(--black);"><i class="fas fa-book"></i> ${materialTitle} - Materi PDF</h3>
             <iframe src="${window.location.origin}/public/reader.html?material=${encodeURIComponent(materialId)}"
                     style="width: 100%; height: calc(100% - 60px); border: none; border-radius: 8px;"
-                    title="PDF Learning Reader">
+                    title="Pembaca Materi PDF">
                 <p>Your browser does not support iframes.
-                   <a href="${window.location.origin}/public/reader.html?material=${encodeURIComponent(materialId)}" target="_blank">Click here to open PDF reader</a>
+                    <a href="${window.location.origin}/public/reader.html?material=${encodeURIComponent(materialId)}" target="_blank">Klik di sini untuk membuka pembaca PDF</a>
                 </p>
             </iframe>
             <div id="pdf-error" style="color: red; margin-top: 10px; display: none;"></div>
@@ -588,9 +906,9 @@ function openPDFReader(materialId, materialTitle) {
         console.error('âŒ PDF iframe error:', e);
         errorDiv.style.display = 'block';
         errorDiv.innerHTML = `
-            Error loading PDF reader.
+            Gagal memuat pembaca PDF.
             <a href="${window.location.origin}/public/reader.html?material=${encodeURIComponent(materialId)}" target="_blank" style="color: var(--main-color);">
-                Click here to open in new tab
+                Klik di sini untuk membuka di tab baru
             </a>
         `;
     });
@@ -619,7 +937,7 @@ function backToCourses() {
     // Reset judul halaman ke original
     const pageTitle = document.querySelector('h1.heading');
     if (pageTitle) {
-        pageTitle.innerHTML = '<i class="fas fa-play-circle"></i> Video Learning Courses';
+        pageTitle.innerHTML = '<i class="fas fa-play-circle"></i> Materi Video';
     }
 
     // Reset deskripsi ke original
@@ -808,7 +1126,7 @@ function ensureBackToCoursesButton(introElement = null) {
     const icon = document.createElement('i');
     icon.className = 'fas fa-arrow-left';
     backBtn.appendChild(icon);
-    backBtn.appendChild(document.createTextNode(' Back to Courses'));
+    backBtn.appendChild(document.createTextNode(' Kembali ke Materi'));
 
     backBtn.addEventListener('click', backToCourses);
     introInfo.intro.appendChild(backBtn);

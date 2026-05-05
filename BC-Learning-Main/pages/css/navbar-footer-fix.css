@@ -1,0 +1,91 @@
+/* BCL Navbar dan Footer Fixed Styles */
+/* Memastikan navbar dan footer konsisten di semua halaman */
+
+/* Scoped navbar handling for the shared BCL navbar component */
+#navbar-container .bcl-main-navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    z-index: 1030 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: none !important;
+    transform: none !important;
+    min-height: 82px !important;
+}
+
+#navbar-container .bcl-main-navbar.navbar-light.sticky-top {
+    top: 0 !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* Keep page/footer layout stable without resizing the shared navbar */
+body.page-projects-explorer {
+    padding-top: 100px !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Preserve the component logo sizing while keeping blend treatment */
+#navbar-container .bcl-main-navbar .bcl-brand-logo {
+    mix-blend-mode: multiply !important;
+}
+
+/* Footer compact styling */
+.footer {
+    margin-top: auto !important;
+    position: relative !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    clear: both !important;
+}
+
+.footer h5 {
+    font-size: 16px !important;
+    margin-bottom: 10px !important;
+}
+
+.footer p,
+.footer a {
+    font-size: 13px !important;
+    margin-bottom: 5px !important;
+}
+
+.footer .btn.btn-social {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+}
+
+/* Main content flex */
+#navbar-container,
+#footer-container {
+    flex: 0 0 auto;
+}
+
+#footer-container {
+    margin-top: auto !important;
+    width: 100% !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    body.page-projects-explorer {
+        padding-top: 84px !important;
+    }
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Dropdown menus z-index */
+#navbar-container .navbar .dropdown-menu {
+    z-index: 1040 !important;
+}

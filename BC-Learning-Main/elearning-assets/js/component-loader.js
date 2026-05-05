@@ -38,6 +38,25 @@ function isStoredTokenExpired(token) {
     }
 }
 
+function normalizeProfileImageUrl(value) {
+    const image = String(value || '').trim();
+    if (!image) {
+        return '';
+    }
+
+    if (/^https?:\/\//i.test(image) || image.startsWith('data:')) {
+        return image;
+    }
+
+    const legacyPrefix = '/uploads/profile-images/';
+    if (image.startsWith(legacyPrefix)) {
+        const filename = image.substring(legacyPrefix.length).split('/').pop();
+        return filename ? `/api/profile-images/${encodeURIComponent(filename)}` : image;
+    }
+
+    return image;
+}
+
 class ComponentLoader {
 
     constructor() {
@@ -50,6 +69,7 @@ class ComponentLoader {
     // Load all components
     async loadAllComponents() {
         this.ensureFavicon();
+        this.applyPageTitle();
 
         // Load authentication guard first for e-learning pages
         await this.loadAuthGuard();
@@ -75,6 +95,7 @@ class ComponentLoader {
 
         // Initialize global content management functions after components are loaded
         this.initializeContentManagementFunctions();
+        this.applyPageTitle();
     }
 
     // Initialize global content management functions for sidebar access
@@ -383,10 +404,14 @@ class ComponentLoader {
         const loginLink = rootElement.querySelector('#login-link');
         const logoutLink = rootElement.querySelector('#logout-link');
         const registerLink = rootElement.querySelector('#register-link');
+        const dashboardLink = rootElement.querySelector('#dashboard-link');
         const profileLink = rootElement.querySelector('#profile-link');
+        const adminToolsDivider = rootElement.querySelector('#admin-tools-divider');
+        const competencyLink = rootElement.querySelector('#competency-link');
+        const adminLink = rootElement.querySelector('#admin-link');
 
         if (accountName) {
-            accountName.textContent = isLoggedIn ? displayName : 'Account';
+            accountName.textContent = isLoggedIn ? displayName : 'Akun';
         }
 
         if (loginLink) {
@@ -401,8 +426,24 @@ class ComponentLoader {
             registerLink.hidden = isLoggedIn;
         }
 
+        if (dashboardLink) {
+            dashboardLink.hidden = !isLoggedIn;
+        }
+
         if (profileLink) {
             profileLink.hidden = !isLoggedIn;
+        }
+
+        if (adminToolsDivider) {
+            adminToolsDivider.hidden = true;
+        }
+
+        if (competencyLink) {
+            competencyLink.hidden = true;
+        }
+
+        if (adminLink) {
+            adminLink.hidden = true;
         }
     }
 
@@ -506,7 +547,9 @@ class ComponentLoader {
         // Prioritas data: individual keys > user object > userData object
         const finalUsername = username || user.username || userData.name;
         const finalRole = role || user.role || userData.role || 'student';
-        const finalImage = userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg';
+        const finalImage = normalizeProfileImageUrl(
+            userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg'
+        );
 
 
         // Update header elements
@@ -520,7 +563,11 @@ class ComponentLoader {
         const loginLink = document.getElementById('login-link');
         const logoutLink = document.getElementById('logout-link');
         const registerLink = document.getElementById('register-link');
+        const dashboardLink = document.getElementById('dashboard-link');
         const profileLink = document.getElementById('profile-link');
+        const adminToolsDivider = document.getElementById('admin-tools-divider');
+        const competencyLink = document.getElementById('competency-link');
+        const adminLink = document.getElementById('admin-link');
 
         // Update user info
         if (headerUserName) {
@@ -556,22 +603,37 @@ class ComponentLoader {
             if (accountName) accountName.textContent = finalUsername;
             if (loginLink) loginLink.hidden = true;
             if (registerLink) registerLink.hidden = true;
+            if (dashboardLink) dashboardLink.hidden = false;
             if (profileLink) profileLink.hidden = false;
             if (logoutLink) logoutLink.hidden = false;
+            if (adminToolsDivider) adminToolsDivider.hidden = true;
+            if (competencyLink) competencyLink.hidden = true;
+            if (adminLink) adminLink.hidden = true;
+
+            const isAdminUser = finalRole && finalRole.toLowerCase() === 'admin';
+            if (isAdminUser) {
+                if (adminToolsDivider) adminToolsDivider.hidden = false;
+                if (competencyLink) competencyLink.hidden = false;
+                if (adminLink) adminLink.hidden = false;
+            }
         } else {
             // User belum login
             if (loggedInOptions) loggedInOptions.style.display = 'none';
             if (guestOptions) guestOptions.style.display = 'block';
-            if (accountName) accountName.textContent = 'Account';
+            if (accountName) accountName.textContent = 'Akun';
             if (loginLink) loginLink.hidden = false;
             if (registerLink) registerLink.hidden = false;
+            if (dashboardLink) dashboardLink.hidden = true;
             if (profileLink) profileLink.hidden = true;
             if (logoutLink) logoutLink.hidden = true;
+            if (adminToolsDivider) adminToolsDivider.hidden = true;
+            if (competencyLink) competencyLink.hidden = true;
+            if (adminLink) adminLink.hidden = true;
         }
     }
 
     ensureFavicon() {
-        const faviconHref = '/img/icons/icon_bcl.ico?v=20260313c';
+        const faviconHref = '/logos/fav_logo_BCL.ico?v=20260424b';
         const iconRels = ['icon', 'shortcut icon', 'apple-touch-icon'];
 
         document
@@ -585,6 +647,82 @@ class ComponentLoader {
             link.type = 'image/x-icon';
             document.head.appendChild(link);
         });
+    }
+
+    normalizePageTitleText(value) {
+        return String(value || '')
+            .replace(/\s+/g, ' ')
+            .replace(/\bBIM NKE\s*:\s*/gi, '')
+            .replace(/\bBCL\s*-\s*BIM Central Learning\b/gi, '')
+            .replace(/\bBIM Central Learning\b/gi, '')
+            .replace(/\bBC Learning\b/gi, '')
+            .replace(/\|\s*BCL\b/gi, '')
+            .replace(/-\s*BCL\b/gi, '')
+            .replace(/\bBCL\b\s*-\s*/gi, '')
+            .replace(/\bBCL\b/gi, '')
+            .replace(/\s*[-|:]\s*$/g, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+    }
+
+    toTitleCase(value) {
+        return String(value || '').replace(/\w\S*/g, (word) => {
+            if (word === word.toUpperCase() && word.length > 1) {
+                return word;
+            }
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        });
+    }
+
+    isGenericPageTitle(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return normalized === '' || normalized === 'redirecting...' || normalized === 'redirecting' || normalized === 'loading...';
+    }
+
+    deriveTitleFromPath() {
+        const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+        const routeName = pathname.split('/').pop() || '';
+
+        if (pathname === '/' || routeName === 'index.html' || routeName === 'home.html') {
+            return 'Home';
+        }
+
+        return this.toTitleCase(
+            routeName
+                .replace(/\.html?$/i, '')
+                .replace(/[-_]+/g, ' ')
+                .trim()
+        );
+    }
+
+    resolvePreferredPageTitle() {
+        const cleanedDocumentTitle = this.toTitleCase(this.normalizePageTitleText(document.title));
+        if (!this.isGenericPageTitle(cleanedDocumentTitle)) {
+            return cleanedDocumentTitle;
+        }
+
+        const headingSelectors = [
+            '.page-title-header h1',
+            '.page-header h1',
+            'main h1',
+            '.heading',
+            'h1'
+        ];
+
+        for (const selector of headingSelectors) {
+            const element = document.querySelector(selector);
+            const text = this.normalizePageTitleText(element && element.textContent);
+            if (text) {
+                return this.toTitleCase(text);
+            }
+        }
+
+        return this.deriveTitleFromPath() || 'BCL';
+    }
+
+    applyPageTitle() {
+        const preferredTitle = this.resolvePreferredPageTitle();
+        document.title = preferredTitle === 'BCL' ? 'BCL' : `${preferredTitle} | BCL`;
     }
 
     // Handle logout functionality
@@ -673,8 +811,10 @@ class ComponentLoader {
         const finalUsername = username || user.username || userData.name || '';
         const finalRole = role || user.role || userData.role || 'student';
         const finalLevel = level || user.level || userData.level || '';
-        const finalImage = userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg';
-        const isGuest = !finalUsername || finalUsername === 'Account' || finalUsername === 'Guest User';
+        const finalImage = normalizeProfileImageUrl(
+            userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg'
+        );
+        const isGuest = !finalUsername || finalUsername === 'Account' || finalUsername === 'Akun' || finalUsername === 'Guest User';
 
         return {
             username: isGuest ? 'Guest User' : finalUsername,
@@ -682,7 +822,7 @@ class ComponentLoader {
                 ? 'Silakan login untuk membuka seluruh fitur belajar'
                 : (finalLevel ? `${finalRole} - ${finalLevel}` : finalRole),
             image: finalImage,
-            profileHref: isGuest ? '/elearning-assets/login.html' : '/elearning-assets/profile.html',
+            profileHref: isGuest ? '/pages/login.html' : '/elearning-assets/profile.html',
             profileText: isGuest ? 'Login to Start Learning' : 'View Profile',
             finalUsername,
             finalRole
@@ -746,7 +886,9 @@ class ComponentLoader {
         // Prioritas data: individual keys > user object > userData object
         const finalUsername = username || user.username || userData.name;
         const finalRole = role || user.role || userData.role || 'student';
-        const finalImage = userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg';
+        const finalImage = normalizeProfileImageUrl(
+            userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg'
+        );
 
 
         // Update sidebar elements dengan struktur baru
@@ -883,7 +1025,7 @@ class ComponentLoader {
             const userData = {
                 name: username,
                 role: role || 'student',
-                image: userimg || '',
+                image: normalizeProfileImageUrl(userimg || ''),
                 token: localStorage.getItem('token') || ''
             };
 

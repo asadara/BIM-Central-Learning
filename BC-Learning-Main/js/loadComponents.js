@@ -66,10 +66,14 @@ function hydrateNavbarAuthState(rootElement) {
     const loginLink = rootElement.querySelector('#login-link');
     const logoutLink = rootElement.querySelector('#logout-link');
     const registerLink = rootElement.querySelector('#register-link');
+    const dashboardLink = rootElement.querySelector('#dashboard-link');
     const profileLink = rootElement.querySelector('#profile-link');
+    const adminToolsDivider = rootElement.querySelector('#admin-tools-divider');
+    const competencyLink = rootElement.querySelector('#competency-link');
+    const adminLink = rootElement.querySelector('#admin-link');
 
     if (accountName) {
-        accountName.textContent = isLoggedIn ? displayName : 'Account';
+        accountName.textContent = isLoggedIn ? displayName : 'Akun';
     }
 
     if (loginLink) {
@@ -84,8 +88,24 @@ function hydrateNavbarAuthState(rootElement) {
         registerLink.hidden = isLoggedIn;
     }
 
+    if (dashboardLink) {
+        dashboardLink.hidden = !isLoggedIn;
+    }
+
     if (profileLink) {
         profileLink.hidden = !isLoggedIn;
+    }
+
+    if (adminToolsDivider) {
+        adminToolsDivider.hidden = true;
+    }
+
+    if (competencyLink) {
+        competencyLink.hidden = true;
+    }
+
+    if (adminLink) {
+        adminLink.hidden = true;
     }
 }
 
@@ -161,7 +181,7 @@ function loadFooter() {
 }
 
 function ensureFavicon() {
-    const faviconHref = '/img/icons/icon_bcl.ico?v=20260313c';
+    const faviconHref = '/logos/fav_logo_BCL.ico?v=20260424b';
     const iconRels = ['icon', 'shortcut icon', 'apple-touch-icon'];
 
     document
@@ -175,6 +195,82 @@ function ensureFavicon() {
         link.type = 'image/x-icon';
         document.head.appendChild(link);
     });
+}
+
+function normalizePageTitleText(value) {
+    return String(value || '')
+        .replace(/\s+/g, ' ')
+        .replace(/\bBIM NKE\s*:\s*/gi, '')
+        .replace(/\bBCL\s*-\s*BIM Central Learning\b/gi, '')
+        .replace(/\bBIM Central Learning\b/gi, '')
+        .replace(/\bBC Learning\b/gi, '')
+        .replace(/\|\s*BCL\b/gi, '')
+        .replace(/-\s*BCL\b/gi, '')
+        .replace(/\bBCL\b\s*-\s*/gi, '')
+        .replace(/\bBCL\b/gi, '')
+        .replace(/\s*[-|:]\s*$/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+}
+
+function toTitleCase(value) {
+    return String(value || '').replace(/\w\S*/g, (word) => {
+        if (word === word.toUpperCase() && word.length > 1) {
+            return word;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    });
+}
+
+function isGenericPageTitle(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    return normalized === '' || normalized === 'redirecting...' || normalized === 'redirecting' || normalized === 'loading...';
+}
+
+function deriveTitleFromPath() {
+    const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+    const routeName = pathname.split('/').pop() || '';
+
+    if (pathname === '/' || routeName === 'index.html' || routeName === 'home.html') {
+        return 'Home';
+    }
+
+    return toTitleCase(
+        routeName
+            .replace(/\.html?$/i, '')
+            .replace(/[-_]+/g, ' ')
+            .trim()
+    );
+}
+
+function resolvePreferredPageTitle() {
+    const cleanedDocumentTitle = toTitleCase(normalizePageTitleText(document.title));
+    if (!isGenericPageTitle(cleanedDocumentTitle)) {
+        return cleanedDocumentTitle;
+    }
+
+    const headingSelectors = [
+        '.page-title-header h1',
+        '.page-header h1',
+        'main h1',
+        '.heading',
+        'h1'
+    ];
+
+    for (const selector of headingSelectors) {
+        const element = document.querySelector(selector);
+        const text = normalizePageTitleText(element && element.textContent);
+        if (text) {
+            return toTitleCase(text);
+        }
+    }
+
+    return deriveTitleFromPath() || 'BCL';
+}
+
+function applyPageTitle() {
+    const preferredTitle = resolvePreferredPageTitle();
+    document.title = preferredTitle === 'BCL' ? 'BCL' : `${preferredTitle} | BCL`;
 }
 
 // Function to adjust account submenu links based on current page path
@@ -217,6 +313,8 @@ function setupDropdownListener() {
 
 window.addEventListener("DOMContentLoaded", () => {
     ensureFavicon();
+    applyPageTitle();
     loadNavbar();
     loadFooter();
+    setTimeout(applyPageTitle, 300);
 });

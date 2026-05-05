@@ -148,7 +148,7 @@ function syncSidebarUserInfo() {
     const level = localStorage.getItem('level') || '';
     const img = localStorage.getItem('userimg') || '/elearning-assets/images/pic-1.jpg';
     const isGuest = !username || username === 'Account' || username === 'Guest User';
-    const profileHref = isGuest ? '/elearning-assets/login.html' : '/elearning-assets/profile.html';
+    const profileHref = isGuest ? '/pages/login.html' : '/elearning-assets/profile.html';
 
     const sidebarImg = document.getElementById('sidebar-user-img');
     const sidebarName = document.getElementById('sidebar-user-name');

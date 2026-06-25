@@ -285,27 +285,24 @@
                     <section class="content-explanation">
                         <h2>Proses Manajemen Issue</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (collaboration/coordination workflow; info
-                            exchange/approval concept); Indonesia: prosedur RFI/koordinasi proyek (PUPR/kontrak)
-                            <!-- TODO: Verify specific RFI procedures -->
+                            <strong>Pijakan narasi:</strong> koordinasi BIM harus mengelola issue lifecycle, pertukaran informasi, approval, dan traceability.
                         </div>
-                        <p>Manajemen issue terstruktur memastikan koordinasi efektif antar disiplin.</p>
+                        <p>Manajemen issue terstruktur memastikan koordinasi efektif antar disiplin. Issue bukan hanya clash pada model; issue adalah masalah informasi yang perlu pemilik, keputusan, tenggat waktu, status, dan bukti penyelesaian.</p>
                         <ul>
-                            <li><strong>Detection:</strong> Issue ditemukan melalui automated tools atau manual review
-                            </li>
-                            <li><strong>Assignment:</strong> Owner ditentukan berdasarkan kompetensi dan workload</li>
-                            <li><strong>Resolution:</strong> Solusi dikembangkan dengan konsultasi lintas disiplin</li>
-                            <li><strong>Implementation:</strong> Perubahan diterapkan dengan kontrol versi</li>
+                            <li><strong>Detection:</strong> issue ditemukan melalui clash detection, review teknis, RFI, atau temuan lapangan.</li>
+                            <li><strong>Assignment:</strong> owner ditentukan berdasarkan disiplin, kewenangan, dan dampak keputusan.</li>
+                            <li><strong>Resolution:</strong> solusi dikembangkan melalui koordinasi lintas disiplin dengan catatan keputusan.</li>
+                            <li><strong>Implementation:</strong> perubahan diterapkan dengan kontrol versi, update model/dokumen, dan recheck.</li>
+                            <li><strong>Closure:</strong> issue ditutup hanya jika bukti penyelesaian dan approval sudah tercatat.</li>
                         </ul>
 
                         <h2>Tools Kolaborasi</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (information exchange mechanisms); Indonesia: SNI
-                            8440:2017 (Information Exchange) <!-- TODO: Verify collaboration tool standards -->
+                            <strong>Pijakan narasi:</strong> tools mendukung proses, tetapi tidak menggantikan aturan koordinasi dan tanggung jawab informasi.
                         </div>
-                        <p>Tools modern memfasilitasi koordinasi real-time antar tim.</p>
+                        <p>Tools memfasilitasi koordinasi antar tim, tetapi nilai utamanya muncul jika issue, file, status, dan keputusan dikelola dalam alur yang disiplin.</p>
                         <ul>
-                            <li><strong>CDE Platforms:</strong> Centralized document management</li>
+                            <li><strong>CDE Platforms:</strong> platform/proses untuk mengelola status, versi, approval, akses, distribusi, dan audit trail informasi</li>
                             <li><strong>Clash Detection:</strong> Automated interference checking</li>
                             <li><strong>Meeting Tools:</strong> Virtual coordination meetings</li>
                             <li><strong>Issue Trackers:</strong> Digital issue management systems</li>
@@ -313,16 +310,32 @@
 
                         <h2>Metode Integrasi Model</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650 (information container integration); Indonesia: SNI
-                            8434:2017 (BIM Model Production) <!-- TODO: Verify integration standards -->
+                            <strong>Pijakan narasi:</strong> model federation dan pertukaran informasi harus mengikuti aturan koordinat, format, status, dan tujuan review.
                         </div>
-                        <p>Integrasi model memastikan konsistensi dan akurasi informasi.</p>
+                        <p>Integrasi model membantu melihat hubungan antar disiplin, tetapi tidak otomatis menjamin informasi benar. Setiap model yang digabung harus jelas sumber, status, versi, dan batas penggunaannya.</p>
                         <ul>
                             <li><strong>Federated Model:</strong> Model terpisah dengan koordinasi referensi</li>
                             <li><strong>Integrated Model:</strong> Single model dengan worksets/sharing</li>
                             <li><strong>Linked Models:</strong> Model induk dengan sub-model terkait</li>
                             <li><strong>IFC Exchange:</strong> Standard format untuk interoperability</li>
                         </ul>
+
+                        <h2>Yang Perlu Dipahami</h2>
+                        <p>Koordinasi BIM adalah proses mengambil keputusan lintas disiplin berdasarkan informasi yang bisa dipercaya. Rapat koordinasi harus menghasilkan owner, aksi, tenggat, status, dan bukti, bukan hanya daftar masalah.</p>
+
+                        <h2>Kesalahan Umum yang Perlu Dihindari</h2>
+                        <ul>
+                            <li>Menganggap clash detection otomatis menyelesaikan koordinasi.</li>
+                            <li>Menutup issue tanpa update model, dokumen, schedule, atau approval yang diperlukan.</li>
+                            <li>Menggabungkan model WIP tanpa memahami status dan batas penggunaannya.</li>
+                            <li>Membahas issue berulang tanpa decision log dan tanggung jawab yang jelas.</li>
+                        </ul>
+
+                        <h2>Implikasi di Proyek</h2>
+                        <p>BIM coordinator perlu menjaga issue log dan model federation; engineer memberi keputusan teknis; planner dan QS menilai dampak waktu/biaya; QA/QC memastikan closure punya bukti; site team memberi feedback kondisi aktual.</p>
+
+                        <h2>Ringkasan Pendek</h2>
+                        <p>Koordinasi BIM bukan sekadar mencari clash. Koordinasi adalah mengelola issue sampai ada keputusan, update informasi, verifikasi ulang, dan bukti penutupan.</p>
                     </section>
 
                     <section class="example">
@@ -351,9 +364,7 @@
                         <ul>
                             <li>ISO 19650-1 (Information Management)</li>
                             <li>ISO 19650-2 (Collaboration & Coordination)</li>
-                            <li>SNI 8434:2017 (BIM Model Production)</li>
-                            <li>SNI 8440:2017 (Information Exchange)</li>
-                            <li>Prosedur RFI/koordinasi proyek (PUPR/kontrak) <!-- TODO --></li>
+                            <li>Prosedur RFI, issue management, CDE, dan koordinasi proyek</li>
                         </ul>
                     </section>
                 </div>

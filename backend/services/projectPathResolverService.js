@@ -11,6 +11,30 @@ function createProjectPathResolverService({
     const NETWORK_PCBIM02_PROJECT_2026_ROOT = '\\\\pc-bim02\\PROJECT BIM 2026';
     const LOCAL_PCBIM1_ROOT = path.resolve('G:/');
 
+    function getNetworkRootForMountId(mountId) {
+        if (mountId === 'pc-bim02') {
+            return NETWORK_PCBIM02_PROJECT_2025_ROOT;
+        }
+
+        if (mountId === 'pc-bim02-2026') {
+            return NETWORK_PCBIM02_PROJECT_2026_ROOT;
+        }
+
+        return null;
+    }
+
+    function getLocalMirrorRootForMountId(mountId) {
+        if (mountId === 'pc-bim02') {
+            return LOCAL_PCBIM02_PROJECT_2025_ROOT;
+        }
+
+        if (mountId === 'pc-bim02-2026') {
+            return LOCAL_PCBIM02_PROJECT_2026_ROOT;
+        }
+
+        return null;
+    }
+
     function escapeRegex(input = '') {
         return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
@@ -90,28 +114,6 @@ function createProjectPathResolverService({
     }
 
     function getStaticMountPath(mountId, fallbackPath) {
-        if (mountId === 'pc-bim02') {
-            try {
-                const localCacheStats = fs.statSync(LOCAL_PCBIM02_PROJECT_2025_ROOT);
-                if (localCacheStats.isDirectory()) {
-                    return LOCAL_PCBIM02_PROJECT_2025_ROOT;
-                }
-            } catch (error) {
-                // Ignore local cache failures and continue.
-            }
-        }
-
-        if (mountId === 'pc-bim02-2026') {
-            try {
-                const localCacheStats = fs.statSync(LOCAL_PCBIM02_PROJECT_2026_ROOT);
-                if (localCacheStats.isDirectory()) {
-                    return LOCAL_PCBIM02_PROJECT_2026_ROOT;
-                }
-            } catch (error) {
-                // Ignore local cache failures and continue.
-            }
-        }
-
         if (String(mountId || '').startsWith('pc-bim1')) {
             try {
                 const localPcBim1Stats = fs.statSync(LOCAL_PCBIM1_ROOT);
@@ -120,6 +122,18 @@ function createProjectPathResolverService({
                 }
             } catch (error) {
                 // Ignore local PC-BIM1 path failures and continue.
+            }
+        }
+
+        const networkRoot = getNetworkRootForMountId(mountId);
+        if (networkRoot) {
+            try {
+                const networkStats = fs.statSync(networkRoot);
+                if (networkStats.isDirectory()) {
+                    return networkRoot;
+                }
+            } catch (error) {
+                // Ignore direct UNC failures and continue.
             }
         }
 
@@ -147,25 +161,15 @@ function createProjectPathResolverService({
             // Ignore and use fallback.
         }
 
-        if (mountId === 'pc-bim02') {
+        const localMirrorRoot = getLocalMirrorRootForMountId(mountId);
+        if (localMirrorRoot) {
             try {
-                const networkStats = fs.statSync(NETWORK_PCBIM02_PROJECT_2025_ROOT);
-                if (networkStats.isDirectory()) {
-                    return NETWORK_PCBIM02_PROJECT_2025_ROOT;
+                const localMirrorStats = fs.statSync(localMirrorRoot);
+                if (localMirrorStats.isDirectory()) {
+                    return localMirrorRoot;
                 }
             } catch (error) {
-                // Ignore direct UNC failures and continue.
-            }
-        }
-
-        if (mountId === 'pc-bim02-2026') {
-            try {
-                const networkStats = fs.statSync(NETWORK_PCBIM02_PROJECT_2026_ROOT);
-                if (networkStats.isDirectory()) {
-                    return NETWORK_PCBIM02_PROJECT_2026_ROOT;
-                }
-            } catch (error) {
-                // Ignore direct UNC failures and continue.
+                // Ignore local mirror failures and continue.
             }
         }
 
@@ -176,6 +180,8 @@ function createProjectPathResolverService({
         if (!source) {
             return null;
         }
+
+        const allowLocalMirrorFallback = options.allowLocalMirrorFallback !== false;
 
         const resolveLocalFallbackPath = () => {
             if (!source.path) {
@@ -198,10 +204,44 @@ function createProjectPathResolverService({
             return resolveLocalFallbackPath();
         }
 
+        const resolveLocalMirrorFallback = () => {
+            if (!allowLocalMirrorFallback) {
+                return null;
+            }
+
+            const localMirrorRoot = getLocalMirrorRootForMountId(source.mountId);
+            if (!localMirrorRoot) {
+                return null;
+            }
+
+            try {
+                const stats = fs.statSync(localMirrorRoot);
+                if (stats.isDirectory()) {
+                    console.warn(`Falling back to local mirror for ${source.id}: ${localMirrorRoot}`);
+                    return localMirrorRoot;
+                }
+            } catch (error) {
+                // Ignore unavailable local mirror.
+            }
+
+            return null;
+        };
+
         const mount = lanManager.getMountById(source.mountId);
         if (!mount) {
             console.warn(`LAN mount configuration not found for ${source.id}: ${source.mountId}`);
-            return resolveLocalFallbackPath();
+            const existingNetworkPath = getNetworkRootForMountId(source.mountId);
+            if (existingNetworkPath) {
+                try {
+                    const stats = fs.statSync(existingNetworkPath);
+                    if (stats.isDirectory()) {
+                        return existingNetworkPath;
+                    }
+                } catch (error) {
+                    // Ignore inaccessible UNC path and use the configured fallback below.
+                }
+            }
+            return resolveLocalFallbackPath() || resolveLocalMirrorFallback();
         }
 
         const markConnectedAndReturn = (resolvedPath) => {
@@ -317,6 +357,11 @@ function createProjectPathResolverService({
         if (fallbackPath) {
             console.warn(`Falling back to local source.path for ${source.id}: ${fallbackPath}`);
             return fallbackPath;
+        }
+
+        const localMirrorFallback = resolveLocalMirrorFallback();
+        if (localMirrorFallback) {
+            return localMirrorFallback;
         }
 
         return null;

@@ -217,11 +217,20 @@
                                 keputusan</li>
                         </ul>
 
+                        <h2>Yang Perlu Dipahami</h2>
+                        <p>Satu orang dapat memegang lebih dari satu peran, tetapi fungsi author, reviewer, approver, dan user tetap harus dibedakan. Pemisahan ini menjaga kontrol kualitas, traceability, dan akuntabilitas informasi.</p>
+                        <ul>
+                            <li>Author tidak otomatis berwenang menyetujui informasi yang dibuatnya sendiri.</li>
+                            <li>Reviewer memeriksa substansi sesuai kompetensi teknis, bukan hanya format file.</li>
+                            <li>Approver menyatakan informasi boleh dipakai untuk tujuan tertentu.</li>
+                            <li>User wajib memeriksa status dan batasan penggunaan sebelum memakai informasi.</li>
+                        </ul>
+
                         <h2>Output dari Setiap Peran</h2>
                         <p>Setiap peran dalam BIM harus menghasilkan output yang dapat dilacak dan diverifikasi. Output
                             ini menjadi bukti bahwa peran telah dijalankan dengan benar.</p>
                         <ul>
-                            <li><strong>Author Output:</strong> File BIM, metadata, dan dokumentasi perubahan</li>
+                            <li><strong>Author Output:</strong> model, drawing, data, atau dokumen BIM, metadata, dan dokumentasi perubahan</li>
                             <li><strong>Reviewer Output:</strong> Laporan review, catatan pemeriksaan, dan rekomendasi perbaikan
                             </li>
                             <li><strong>Approver Output:</strong> Bukti persetujuan, nomor revisi, dan release note</li>
@@ -245,8 +254,9 @@
                         <p>Dalam proyek gedung bertingkat, gambar kerja revisi ke-3 tidak jelas pihak yang mereview dan
                             menyetujuinya. Akibatnya, gambar tersebut digunakan untuk pengadaan material namun ternyata
                             masih ada kesalahan dimensi yang menyebabkan rework struktur dan biaya tambahan 25%. Setelah
-                            kejadian ini, proyek menetapkan peran BIM Manager sebagai approver untuk semua gambar
-                            struktur, dengan reviewer dari tim QA/QC.</p>
+                            kejadian ini, proyek menetapkan engineer struktur yang berwenang sebagai approver teknis,
+                            BIM coordinator sebagai pengelola status dan distribusi informasi, serta QA/QC sebagai
+                            pemeriksa bukti review sebelum gambar dirilis.</p>
                     </section>
 
                     <section class="quick-checklist">
@@ -257,7 +267,7 @@
                             <li>Berikan training kepada semua stakeholder tentang peran masing-masing</li>
                             <li>Lacak output dari setiap peran menggunakan sistem manajemen dokumen</li>
                             <li>Review dan update penetapan peran minimal setiap fase proyek</li>
-                            <li>Gunakan software BIM yang mendukung role-based access control</li>
+                            <li>Gunakan CDE atau sistem dokumen yang mendukung kontrol akses berbasis peran</li>
                             <li>Komunikasikan perubahan peran kepada seluruh tim proyek</li>
                         </ul>
                     </section>

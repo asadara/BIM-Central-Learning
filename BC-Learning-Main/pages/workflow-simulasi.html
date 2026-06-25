@@ -269,7 +269,7 @@
                             <li>4D simulasi menghubungkan model dengan schedule waktu</li>
                             <li>5D simulasi menambahkan aspek biaya (cost)</li>
                             <li>Progress tracking memantau kemajuan aktual vs baseline</li>
-                            <li>Hasil simulasi menjadi dasar pengambilan keputusan</li>
+                            <li>Hasil simulasi menjadi salah satu input pengambilan keputusan</li>
                             <li>Model yang belum approved di-hold sampai verifikasi selesai</li>
                         </ul>
                     </section>
@@ -277,42 +277,55 @@
                     <section class="content-explanation">
                         <h2>Gate Approval Simulasi</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (information suitability before use; approval gates);
-                            Indonesia: praktik pelaporan kemajuan & baseline proyek (verifikasi internal)
-                            <!-- TODO: Verify internal progress reporting standards -->
+                            <strong>Pijakan narasi:</strong> simulasi hanya bernilai jika input model, schedule, cost, dan baseline memiliki status yang jelas.
                         </div>
-                        <p>Simulasi hanya boleh dilakukan pada informasi yang sudah memenuhi standar kualitas.</p>
+                        <p>Simulasi hanya boleh dijadikan dasar keputusan jika informasi inputnya sesuai tujuan dan sudah melewati gate yang diperlukan. Simulasi dari model atau jadwal yang belum valid dapat memberi kesan presisi yang menyesatkan.</p>
                         <ul>
                             <li><strong>Quality Gate:</strong> Model harus approved sebelum simulasi</li>
                             <li><strong>Data Validation:</strong> Pastikan semua parameter akurat</li>
                             <li><strong>Version Control:</strong> Gunakan versi model yang konsisten</li>
+                            <li><strong>Purpose Check:</strong> Pastikan simulasi menjawab pertanyaan proyek yang spesifik</li>
                         </ul>
 
                         <h2>4D dan 5D Simulation</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650 (information requirements for construction); Indonesia:
-                            SNI 8434:2017 (BIM Model Production) <!-- TODO: Verify simulation standards -->
+                            <strong>Pijakan narasi:</strong> 4D dan 5D menghubungkan model dengan waktu, metode kerja, kuantitas, dan biaya sesuai kebutuhan proyek.
                         </div>
-                        <p>Simulasi dimensi waktu dan biaya meningkatkan akurasi perencanaan.</p>
+                        <p>Simulasi dimensi waktu dan biaya membantu menguji skenario, tetapi tidak otomatis meningkatkan akurasi. Akurasi tetap bergantung pada kualitas model, WBS, quantity, unit rate, metode pelaksanaan, dan baseline yang dipakai.</p>
                         <ul>
-                            <li><strong>4D Simulation:</strong> Model + Time (schedule visualization)</li>
-                            <li><strong>5D Simulation:</strong> Model + Time + Cost (quantity takeoff)</li>
-                            <li><strong>Progress Analysis:</strong> Compare actual vs planned progress</li>
+                            <li><strong>4D Simulation:</strong> menghubungkan elemen model dengan aktivitas, sequence, durasi, dan constraint lapangan.</li>
+                            <li><strong>5D Simulation:</strong> menghubungkan model dengan kuantitas, item biaya, perubahan scope, dan kontrol komersial.</li>
+                            <li><strong>Progress Analysis:</strong> membandingkan progres aktual dengan baseline dan bukti lapangan.</li>
                         </ul>
 
                         <h2>Progress Tracking</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (progress information management); Indonesia: praktik
-                            baseline & progress reporting (verifikasi internal)
-                            <!-- TODO: Verify progress tracking procedures -->
+                            <strong>Pijakan narasi:</strong> progress tracking membutuhkan baseline, data aktual, status update, dan bukti yang dapat diaudit.
                         </div>
-                        <p>Tracking progress memastikan proyek sesuai dengan baseline.</p>
+                        <p>Tracking progress tidak memastikan proyek sesuai baseline; tracking memberi bukti apakah proyek sesuai, menyimpang, atau membutuhkan keputusan korektif.</p>
                         <ul>
                             <li><strong>WBS Mapping:</strong> Hubungkan elemen model dengan work breakdown</li>
                             <li><strong>Activity Linking:</strong> Kaitkan dengan schedule activities</li>
                             <li><strong>Progress Update:</strong> Update status berdasarkan actual progress</li>
                             <li><strong>Variance Analysis:</strong> Analisis deviasi dari baseline</li>
                         </ul>
+
+                        <h2>Yang Perlu Dipahami</h2>
+                        <p>Simulasi adalah alat bantu keputusan, bukan ramalan pasti. Output simulasi harus dibaca bersama asumsi, sumber data, versi, dan batas akurasi.</p>
+
+                        <h2>Kesalahan Umum yang Perlu Dihindari</h2>
+                        <ul>
+                            <li>Menganggap animasi 4D otomatis membuktikan metode kerja aman dan feasible.</li>
+                            <li>Menggunakan quantity dari model yang belum lengkap atau belum disetujui.</li>
+                            <li>Membandingkan progres aktual dengan baseline yang sudah tidak berlaku.</li>
+                            <li>Mengambil keputusan biaya/waktu tanpa mencatat asumsi simulasi.</li>
+                        </ul>
+
+                        <h2>Implikasi di Proyek</h2>
+                        <p>Planner, QS, engineer, site team, dan manajemen perlu menyepakati input simulasi, asumsi, status, dan cara membaca hasilnya. Tanpa itu, simulasi dapat terlihat meyakinkan tetapi tidak kuat sebagai dasar keputusan.</p>
+
+                        <h2>Ringkasan Pendek</h2>
+                        <p>Simulasi BIM berguna ketika inputnya valid, tujuannya jelas, dan hasilnya dipakai bersama bukti serta batasan. Simulasi mendukung keputusan, bukan menggantikan judgment proyek.</p>
                     </section>
 
                     <section class="example">
@@ -342,8 +355,7 @@
                         <ul>
                             <li>ISO 19650-1 (Information Requirements)</li>
                             <li>ISO 19650-2 (Information Suitability & Progress)</li>
-                            <li>SNI 8434:2017 (BIM Model Production)</li>
-                            <li>Praktik pelaporan kemajuan & baseline proyek <!-- TODO --></li>
+                            <li>BEP, baseline schedule, WBS, quantity basis, dan prosedur progress reporting proyek</li>
                         </ul>
                     </section>
                 </div>

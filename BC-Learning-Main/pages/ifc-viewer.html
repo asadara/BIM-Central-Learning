@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <title>IFC Viewer - BIM Central Learning</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="IFC Viewer, BIM Model Viewer, BCL Knowledge Center" name="keywords">
+    <meta content="Viewer model IFC berbasis web untuk review model BIM di BCL Knowledge Center" name="description">
+
+    <link href="/img/icons/icon_bcl.ico?v=20260313c" rel="icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <link href="../css/navbar-footer-fix.css" rel="stylesheet">
+    <link href="../css/ifc-viewer.css?v=20260625a" rel="stylesheet">
+</head>
+
+<body class="page-ifc-viewer">
+    <div id="navbar-container"></div>
+
+    <main class="ifc-shell" aria-label="IFC Viewer workspace">
+        <section class="ifc-topbar">
+            <div class="ifc-title-block">
+                <span class="ifc-kicker">Knowledge Center</span>
+                <h1>IFC Viewer</h1>
+                <p id="ifc-context">Pilih file IFC dari Projects Explorer atau masukkan URL media BCL.</p>
+            </div>
+            <div class="ifc-topbar-actions">
+                <a class="ifc-button ifc-button-secondary" href="#" id="ifc-download-original" download hidden>
+                    <i class="fas fa-download" aria-hidden="true"></i>
+                    Download
+                </a>
+            </div>
+        </section>
+
+        <section class="ifc-workspace">
+            <aside class="ifc-panel" aria-label="IFC model controls">
+                <div class="ifc-panel-section">
+                    <label class="ifc-label" for="ifc-url-input">Model URL</label>
+                    <div class="ifc-url-row">
+                        <input type="text" id="ifc-url-input" class="ifc-input"
+                            placeholder="/media-bim02/path/model.ifc">
+                        <button type="button" class="ifc-load-button" id="ifc-load-url" title="Load IFC dari URL">
+                            <i class="fas fa-play" aria-hidden="true"></i>
+                            Load
+                        </button>
+                    </div>
+                </div>
+
+                <div class="ifc-panel-section">
+                    <label class="ifc-label" for="ifc-file-input">Select IFC File</label>
+                    <div class="ifc-file-row">
+                        <input type="file" id="ifc-file-input" class="ifc-file-input" accept=".ifc">
+                        <label class="ifc-file-button" for="ifc-file-input">
+                            <i class="fas fa-folder-open" aria-hidden="true"></i>
+                            Browse IFC
+                        </label>
+                    </div>
+                    <p class="ifc-field-note" id="ifc-selected-file">Belum ada file lokal dipilih.</p>
+                </div>
+
+                <div class="ifc-panel-section ifc-status-panel">
+                    <div class="ifc-status-row">
+                        <span>Status</span>
+                        <strong id="ifc-status">Idle</strong>
+                    </div>
+                    <div class="ifc-progress" aria-label="Loading progress">
+                        <span id="ifc-progress-bar"></span>
+                    </div>
+                    <p id="ifc-progress-text">Menunggu file IFC.</p>
+                </div>
+
+                <div class="ifc-panel-section">
+                    <h2>View Tools</h2>
+                    <div class="ifc-control-grid ifc-control-grid-2">
+                        <button type="button" class="ifc-mini-button" id="ifc-fit-model">
+                            <i class="fas fa-compress-arrows-alt" aria-hidden="true"></i>
+                            Fit
+                        </button>
+                        <button type="button" class="ifc-mini-button" id="ifc-toggle-grid">
+                            <i class="fas fa-border-all" aria-hidden="true"></i>
+                            Grid
+                        </button>
+                        <button type="button" class="ifc-mini-button" data-ifc-view="top">Top</button>
+                        <button type="button" class="ifc-mini-button" data-ifc-view="front">Front</button>
+                        <button type="button" class="ifc-mini-button" data-ifc-view="left">Left</button>
+                        <button type="button" class="ifc-mini-button" data-ifc-view="right">Right</button>
+                    </div>
+                </div>
+
+                <div class="ifc-panel-section">
+                    <h2>Measurement</h2>
+                    <div class="ifc-control-grid ifc-control-grid-2">
+                        <button type="button" class="ifc-mini-button" id="ifc-toggle-measure">
+                            <i class="fas fa-ruler" aria-hidden="true"></i>
+                            Measure
+                        </button>
+                        <button type="button" class="ifc-mini-button" id="ifc-clear-measures">
+                            <i class="fas fa-eraser" aria-hidden="true"></i>
+                            Clear
+                        </button>
+                    </div>
+                    <p class="ifc-field-note" id="ifc-measure-note">Aktifkan Measure lalu klik dua titik pada model.</p>
+                    <ol class="ifc-measure-list" id="ifc-measure-list"></ol>
+                </div>
+
+                <div class="ifc-panel-section">
+                    <h2>Section Cut</h2>
+                    <div class="ifc-control-grid ifc-control-grid-3">
+                        <button type="button" class="ifc-mini-button" data-ifc-clip="x">X</button>
+                        <button type="button" class="ifc-mini-button" data-ifc-clip="y">Y</button>
+                        <button type="button" class="ifc-mini-button" data-ifc-clip="z">Z</button>
+                    </div>
+                    <button type="button" class="ifc-wide-button" id="ifc-clear-clips">
+                        <i class="fas fa-scissors" aria-hidden="true"></i>
+                        Clear Cuts
+                    </button>
+                    <p class="ifc-field-note" id="ifc-clip-count">0 section cuts active.</p>
+                </div>
+
+                <div class="ifc-panel-section">
+                    <h2>Category Visibility</h2>
+                    <select id="ifc-category-select" class="ifc-select" disabled>
+                        <option value="">Load a model first</option>
+                    </select>
+                    <div class="ifc-control-grid ifc-control-grid-3 ifc-category-actions">
+                        <button type="button" class="ifc-mini-button" id="ifc-isolate-category" disabled>Isolate</button>
+                        <button type="button" class="ifc-mini-button" id="ifc-hide-category" disabled>Hide</button>
+                        <button type="button" class="ifc-mini-button" id="ifc-show-all" disabled>Show All</button>
+                    </div>
+                    <p class="ifc-field-note" id="ifc-category-note">Kategori model akan muncul setelah IFC selesai dimuat.</p>
+                </div>
+
+                <div class="ifc-panel-section ifc-selected-panel">
+                    <h2>Selected Element</h2>
+                    <div class="ifc-selected-summary" id="ifc-selected-summary">
+                        Klik elemen model untuk melihat data IFC.
+                    </div>
+                    <div class="ifc-control-grid ifc-control-grid-3 ifc-selected-actions">
+                        <button type="button" class="ifc-mini-button" id="ifc-isolate-selected" disabled>Isolate</button>
+                        <button type="button" class="ifc-mini-button" id="ifc-hide-selected" disabled>Hide</button>
+                        <button type="button" class="ifc-mini-button" id="ifc-clear-selected" disabled>Clear</button>
+                    </div>
+                    <dl class="ifc-property-list" id="ifc-property-list">
+                        <div>
+                            <dt>Status</dt>
+                            <dd>No element selected</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div class="ifc-panel-section">
+                    <h2>Model Info</h2>
+                    <dl class="ifc-meta-list">
+                        <div>
+                            <dt>Nama</dt>
+                            <dd id="ifc-meta-name">-</dd>
+                        </div>
+                        <div>
+                            <dt>Proyek</dt>
+                            <dd id="ifc-meta-project">-</dd>
+                        </div>
+                        <div>
+                            <dt>Tahun</dt>
+                            <dd id="ifc-meta-year">-</dd>
+                        </div>
+                        <div>
+                            <dt>Sumber</dt>
+                            <dd id="ifc-meta-source">-</dd>
+                        </div>
+                        <div>
+                            <dt>Models</dt>
+                            <dd id="ifc-meta-models">-</dd>
+                        </div>
+                        <div>
+                            <dt>Kategori</dt>
+                            <dd id="ifc-meta-categories">-</dd>
+                        </div>
+                    </dl>
+                </div>
+            </aside>
+
+            <section class="ifc-viewer-stage" aria-label="3D IFC viewport">
+                <div class="ifc-toolbar" aria-label="Viewer controls">
+                    <button type="button" class="ifc-tool-button" id="ifc-reset-camera" title="Reset camera">
+                        <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="ifc-tool-button" id="ifc-fullscreen" title="Fullscreen">
+                        <i class="fas fa-expand" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div id="ifc-viewport" class="ifc-viewport"></div>
+                <div id="ifc-overlay" class="ifc-overlay">
+                    <i class="fas fa-cube" aria-hidden="true"></i>
+                    <strong>IFC Viewer siap</strong>
+                    <span>Buka model dari Projects Explorer atau gunakan URL media BCL.</span>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+    <script src="../js/loadComponents.js"></script>
+    <script src="../js/ifc-viewer.bundle.js?v=20260625a" defer></script>
+    <script src="../js/track-last-page.js"></script>
+</body>
+
+</html>

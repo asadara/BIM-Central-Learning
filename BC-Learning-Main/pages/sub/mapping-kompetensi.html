@@ -644,6 +644,9 @@
                         <a class="nav-link sidebar-link" href="#reports" onclick="showCompetencySection('reports', this)">
                             <i class="fas fa-file-alt me-2"></i>Reports
                         </a>
+                        <a class="nav-link sidebar-link" href="#user-history" onclick="showCompetencySection('user-history', this)">
+                            <i class="fas fa-user-clock me-2"></i>Riwayat User
+                        </a>
                         <a class="nav-link sidebar-link" href="#analytics" onclick="showCompetencySection('analytics', this)">
                             <i class="fas fa-chart-bar me-2"></i>Analytics
                         </a>
@@ -1012,6 +1015,42 @@
                     </div>
                 </div>
 
+                <!-- User History Section -->
+                <div id="user-history-section" class="competency-section d-none">
+                    <div class="competency-card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-clock me-2"></i>Riwayat dan Rekaman Pembelajaran User
+                            </h5>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadSelectedUserHistory(true)">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-8">
+                                    <label class="form-label">Pilih User</label>
+                                    <select class="form-select" id="historyUserSelect">
+                                        <option value="">Pilih user...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary w-100" onclick="loadSelectedUserHistory()">
+                                        <i class="fas fa-search me-2"></i>Tampilkan Riwayat
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="selectedUserHistoryContent">
+                        <div class="empty-state-box">
+                            <i class="fas fa-user-graduate fa-2x text-muted mb-3"></i>
+                            <p class="mb-0">Pilih user untuk melihat data kompetensi, history quiz/practice/exam, dan rekaman pembelajarannya.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Analytics Section -->
                 <div id="analytics-section" class="competency-section d-none">
                     <div class="competency-card">
@@ -1343,6 +1382,268 @@
             dashboardFiltersBound = true;
         }
 
+        function populateHistoryUserSelect(users = getCompetencyUsers()) {
+            const select = document.getElementById('historyUserSelect');
+            if (!select) return;
+
+            const currentValue = select.value;
+            const sortedUsers = [...(users || [])].sort((a, b) => {
+                const nameA = String(a.username || a.name || a.email || '');
+                const nameB = String(b.username || b.name || b.email || '');
+                return nameA.localeCompare(nameB);
+            });
+
+            select.innerHTML = '<option value="">Pilih user...</option>' + sortedUsers.map(user => `
+                <option value="${escapeHtml(user.id)}">
+                    ${escapeHtml(user.username || user.name || user.email || 'User')} - ${escapeHtml(user.organization || 'N/A')} (${Number(user.competencyScore || 0)})
+                </option>
+            `).join('');
+
+            if (sortedUsers.some(user => String(user.id) === String(currentValue))) {
+                select.value = currentValue;
+            }
+        }
+
+        function renderUserHistoryMetric(label, value, icon, variant = 'primary') {
+            return `
+                <div class="col-md-3">
+                    <div class="competency-metric-small">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-value-small">${escapeHtml(value)}</div>
+                                <div class="metric-label-small">${escapeHtml(label)}</div>
+                            </div>
+                            <div class="metric-icon-small">
+                                <i class="fas ${escapeHtml(icon)} text-${escapeHtml(variant)}"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAttemptRows(attempts) {
+            if (!Array.isArray(attempts) || attempts.length === 0) {
+                return '<div class="text-center text-muted py-3">Belum ada attempt quiz/practice/exam.</div>';
+            }
+
+            return `
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Aktivitas</th>
+                                <th>Tipe</th>
+                                <th>Kategori</th>
+                                <th>Score</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${attempts.slice(0, 30).map(attempt => `
+                                <tr>
+                                    <td>${escapeHtml(formatDateTime(attempt.submittedAt))}</td>
+                                    <td>${escapeHtml(attempt.quizName || attempt.quizId || 'Quiz')}</td>
+                                    <td><span class="badge bg-secondary">${escapeHtml(attempt.sourceType || '-')}</span></td>
+                                    <td>${escapeHtml(attempt.quizCategory || '-')}</td>
+                                    <td><strong>${Number(attempt.percentage || 0)}%</strong></td>
+                                    <td>${attempt.passed ? '<span class="badge bg-success">Lulus</span>' : '<span class="badge bg-light text-dark">Selesai</span>'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderLearningActivityRows(events) {
+            if (!Array.isArray(events) || events.length === 0) {
+                return '<div class="text-center text-muted py-3">Belum ada rekaman buka/selesai materi.</div>';
+            }
+
+            return `
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Materi</th>
+                                <th>Tipe</th>
+                                <th>Event</th>
+                                <th>Kategori</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${events.slice(0, 30).map(event => `
+                                <tr>
+                                    <td>${escapeHtml(formatDateTime(event.createdAt))}</td>
+                                    <td>${escapeHtml(event.title || event.moduleId || 'Learning activity')}</td>
+                                    <td><span class="badge bg-info">${escapeHtml(event.moduleType || '-')}</span></td>
+                                    <td>${escapeHtml(event.eventType || '-')}</td>
+                                    <td>${escapeHtml(event.category || '-')}</td>
+                                    <td>${Number(event.progressPercent || 0)}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderTimelineRows(timeline) {
+            if (!Array.isArray(timeline) || timeline.length === 0) {
+                return '<div class="text-center text-muted py-3">Belum ada timeline pembelajaran.</div>';
+            }
+
+            return `
+                <div class="list-group list-group-flush">
+                    ${timeline.slice(0, 40).map(item => `
+                        <div class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">${escapeHtml(item.title || 'Aktivitas')}</div>
+                                <div class="text-muted small">
+                                    ${escapeHtml(item.type || '-')} ${item.category ? `- ${escapeHtml(item.category)}` : ''}
+                                    ${typeof item.score === 'number' ? `- Score ${Number(item.score)}%` : ''}
+                                    ${typeof item.progressPercent === 'number' ? `- Progress ${Number(item.progressPercent)}%` : ''}
+                                </div>
+                            </div>
+                            <small class="text-muted">${escapeHtml(formatDateTime(item.occurredAt))}</small>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderCategorySummaryRows(categories) {
+            if (!Array.isArray(categories) || categories.length === 0) {
+                return '<div class="text-center text-muted py-3">Belum ada kategori yang tercatat.</div>';
+            }
+
+            return `
+                <div class="row g-3">
+                    ${categories.map(category => `
+                        <div class="col-md-4">
+                            <div class="competency-card p-3 h-100">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="mb-2">${escapeHtml(category.category || '-')}</h6>
+                                    <span class="badge bg-primary">${Number(category.bestScore || 0)}%</span>
+                                </div>
+                                <div class="small text-muted">Attempts: ${Number(category.attempts || 0)}</div>
+                                <div class="small text-muted">Passed: ${Number(category.passed || 0)}</div>
+                                <div class="small text-muted">Average: ${Number(category.averageScore || 0)}%</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderSelectedUserHistory(detail) {
+            const container = document.getElementById('selectedUserHistoryContent');
+            if (!container) return;
+
+            const user = detail.user || {};
+            const progress = user.progress || {};
+            const attemptSummary = detail.attemptSummary || {};
+            const activitySummary = detail.activitySummary || {};
+
+            container.innerHTML = `
+                <div class="competency-card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">${escapeHtml(user.username || user.email || 'User')}</h5>
+                            <div class="text-muted small">${escapeHtml(user.email || '-')} - ${escapeHtml(user.organization || 'N/A')}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fs-4 fw-bold">${Number(user.competencyScore || 0)}</div>
+                            <span class="badge bg-primary">${escapeHtml(user.competencyLevel || 'Novice')}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            ${renderUserHistoryMetric('Courses', Number(progress.coursesCompleted || 0), 'fa-book-open', 'primary')}
+                            ${renderUserHistoryMetric('Quiz Attempts', Number(progress.quizAttempts || 0), 'fa-question-circle', 'info')}
+                            ${renderUserHistoryMetric('Practice', Number(progress.practiceAttempts || 0), 'fa-pen-to-square', 'success')}
+                            ${renderUserHistoryMetric('Exam Attempts', Number(progress.examAttempts || 0), 'fa-clipboard-check', 'warning')}
+                            ${renderUserHistoryMetric('Avg Score', `${Number(progress.averageAttemptScore || attemptSummary.averageScore || 0)}%`, 'fa-chart-line', 'success')}
+                            ${renderUserHistoryMetric('Theory Coverage', `${Number(progress.theoryCategoriesAttempted || 0)}/3`, 'fa-layer-group', 'primary')}
+                            ${renderUserHistoryMetric('PDF Reads', Number(activitySummary.pdfReads || 0), 'fa-file-pdf', 'danger')}
+                            ${renderUserHistoryMetric('Completed Modules', Number(activitySummary.completedModules || 0), 'fa-check-circle', 'success')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="competency-card h-100">
+                            <div class="card-header"><h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Ringkasan Kategori</h6></div>
+                            <div class="card-body">${renderCategorySummaryRows(detail.categorySummary)}</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="competency-card h-100">
+                            <div class="card-header"><h6 class="mb-0"><i class="fas fa-timeline me-2"></i>Timeline Gabungan</h6></div>
+                            <div class="card-body p-0">${renderTimelineRows(detail.timeline)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="competency-card mt-4">
+                    <div class="card-header"><h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>History Quiz / Practice / Exam</h6></div>
+                    <div class="card-body p-0">${renderAttemptRows(detail.attempts)}</div>
+                </div>
+
+                <div class="competency-card mt-4">
+                    <div class="card-header"><h6 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Rekaman Pembelajaran Materi</h6></div>
+                    <div class="card-body p-0">${renderLearningActivityRows(detail.activityEvents)}</div>
+                </div>
+            `;
+        }
+
+        async function loadSelectedUserHistory(force = false) {
+            const select = document.getElementById('historyUserSelect');
+            const container = document.getElementById('selectedUserHistoryContent');
+            if (!select || !container) return;
+
+            const userId = select.value;
+            if (!userId) {
+                container.innerHTML = `
+                    <div class="empty-state-box">
+                        <i class="fas fa-user-graduate fa-2x text-muted mb-3"></i>
+                        <p class="mb-0">Pilih user untuk melihat data kompetensi, history quiz/practice/exam, dan rekaman pembelajarannya.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p>Memuat riwayat user...</p>
+                </div>
+            `;
+
+            try {
+                const response = await authFetch(`/api/competency/users/${encodeURIComponent(userId)}/detail${force ? '?refresh=1' : ''}`);
+                if (!response.ok) {
+                    throw new Error(`USER_HISTORY_${response.status}`);
+                }
+
+                const detail = await response.json();
+                renderSelectedUserHistory(detail);
+            } catch (error) {
+                console.error('Error loading selected user history:', error);
+                container.innerHTML = `
+                    <div class="empty-state-box">
+                        <i class="fas fa-triangle-exclamation fa-2x text-warning mb-3"></i>
+                        <p class="mb-0">Riwayat user tidak dapat dimuat saat ini.</p>
+                    </div>
+                `;
+            }
+        }
+
         async function fetchReports(force = false) {
             if (!force && reportsCache.length > 0) {
                 return reportsCache;
@@ -1372,8 +1673,13 @@
                 <table class="table table-sm report-preview-table mb-0">
                     <tbody>
                         <tr><th>Courses Completed</th><td>${Number(safeProgress.coursesCompleted || 0)}</td></tr>
+                        <tr><th>Quiz Attempts</th><td>${Number(safeProgress.quizAttempts || 0)}</td></tr>
+                        <tr><th>Practice Attempts</th><td>${Number(safeProgress.practiceAttempts || 0)}</td></tr>
+                        <tr><th>Exam Attempts</th><td>${Number(safeProgress.examAttempts || 0)}</td></tr>
                         <tr><th>Exams Passed</th><td>${Number(safeProgress.examsPassed || 0)}</td></tr>
                         <tr><th>Certificates Earned</th><td>${Number(safeProgress.certificatesEarned || 0)}</td></tr>
+                        <tr><th>Average Attempt Score</th><td>${Number(safeProgress.averageAttemptScore || 0)}%</td></tr>
+                        <tr><th>Theory Categories</th><td>${Number(safeProgress.theoryCategoriesAttempted || 0)}/3</td></tr>
                     </tbody>
                 </table>
             `;
@@ -1932,6 +2238,9 @@
                 case 'reports':
                     loadReportsList();
                     break;
+                case 'user-history':
+                    populateHistoryUserSelect();
+                    break;
                 case 'analytics':
                     loadAnalyticsData();
                     break;
@@ -1965,6 +2274,7 @@
 
                 // Load charts and additional data
                 populateDashboardOrganizationFilter(getCompetencyUsers());
+                populateHistoryUserSelect(getCompetencyUsers());
                 applyDashboardFilters();
                 loadRecentReports(competencyData.recentReports);
                 loadCompetencyInsights(competencyData);
@@ -3216,10 +3526,6 @@
 </body>
 
 </html>
-
-
-
-
 
 
 

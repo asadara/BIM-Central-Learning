@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build:ifc-viewer": "esbuild BC-Learning-Main/src/ifc-viewer.js --bundle --format=iife --target=es2020 --outfile=BC-Learning-Main/js/ifc-viewer.bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -10,10 +11,14 @@
   "license": "ISC",
   "description": "BIM Central Learning (`BCL`) adalah portal pembelajaran, knowledge management, dan eksplorasi konten BIM untuk ekosistem NKE. Aplikasi ini menggabungkan materi pembelajaran, galeri metode kerja BIM, dokumentasi proyek, knowledge assets, dan modul training dalam satu pengalaman web yang terhubung ke backend Node.js dan data internal perusahaan.",
   "dependencies": {
+    "@thatopen/components": "3.4.6",
+    "@thatopen/fragments": "3.4.5",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
+    "camera-controls": "3.1.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "esbuild": "0.28.1",
     "express": "^4.21.2",
     "express-rate-limit": "^8.2.1",
     "express-session": "^1.18.2",
@@ -21,12 +26,13 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
-    "pg": "^8.17.1"
+    "pg": "^8.17.1",
+    "three": "0.184.0",
+    "web-ifc": "0.0.77"
   },
   "directories": {
     "doc": "docs"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/asadara/BIM-Central-Learning.git"

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : BIM NKE Workflow</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="Penjelasan alur BIM NKE Workflow berdasarkan bagan implementasi BIM NKE." name="description">
+
+    <!-- Favicon -->
+    <link href="/img/icon.png" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="../css/style.css" rel="stylesheet">
+
+    <script src="../js/loadComponents.js"></script>
+
+    <style>
+        .workflow-nk-header {
+            text-align: center;
+            margin: 0;
+            padding: clamp(1.4rem, 3.6vw, 2.2rem) 1rem 0.8rem;
+            color: #333;
+            border-radius: 0;
+            background: #f8f9fa;
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            position: relative;
+            top: 0;
+        }
+
+        .workflow-nk-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .workflow-nk-header p {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .workflow-main-figure {
+            margin: 0 0 2.5rem;
+        }
+
+        .workflow-main-image-wrap {
+            width: 100%;
+            overflow-x: auto;
+            padding: 1rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+
+        .workflow-main-image {
+            display: block;
+            width: 100%;
+            min-width: 980px;
+            height: auto;
+        }
+
+        .workflow-caption {
+            margin-top: 0.75rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .workflow-lead {
+            max-width: 920px;
+            margin: 0 auto 2rem;
+            color: #4b5563;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            text-align: center;
+        }
+
+        .flow-summary {
+            background: #f8f9fa;
+            border-left: 4px solid #fb873f;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            padding: 1.25rem 1.4rem;
+        }
+
+        .flow-summary h2,
+        .workflow-section h2,
+        .workflow-stage h3 {
+            color: #fb873f;
+            font-weight: 700;
+        }
+
+        .flow-summary h2,
+        .workflow-section h2 {
+            font-size: 1.45rem;
+            margin-bottom: 1rem;
+        }
+
+        .workflow-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .workflow-stage {
+            display: grid;
+            grid-template-columns: minmax(58px, 76px) 1fr;
+            gap: 1rem;
+            padding: 1.25rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .workflow-stage:last-child {
+            border-bottom: 0;
+        }
+
+        .stage-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #fb873f;
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.15rem;
+            box-shadow: 0 8px 18px rgba(251, 135, 63, 0.18);
+        }
+
+        .workflow-stage h3 {
+            font-size: 1.16rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .workflow-stage p {
+            margin-bottom: 0.55rem;
+            color: #4b5563;
+            line-height: 1.7;
+        }
+
+        .workflow-stage ul,
+        .flow-summary ul,
+        .workflow-section ul {
+            margin-bottom: 0;
+            padding-left: 1.15rem;
+        }
+
+        .workflow-stage li,
+        .flow-summary li,
+        .workflow-section li {
+            margin-bottom: 0.45rem;
+            color: #4b5563;
+        }
+
+        .workflow-note {
+            padding: 1rem 1.15rem;
+            background: rgba(251, 135, 63, 0.1);
+            border-radius: 8px;
+            color: #4b5563;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .workflow-nk-header h1 {
+                font-size: 1.45rem;
+                letter-spacing: 1px;
+            }
+
+            .workflow-stage {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow-main-image {
+                min-width: 860px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar Start -->
+    <div id="navbar-container"></div>
+    <!-- Navbar End -->
+
+    <!-- Header Start -->
+    <div class="workflow-nk-header">
+        <h1><i class="fas fa-project-diagram me-3"></i>BIM NKE Workflow</h1>
+        <p>Alur implementasi BIM dari perencanaan, kesiapan sumber daya, implementasi proyek, supervisi, sampai knowledge asset</p>
+    </div>
+    <!-- Header End -->
+
+    <!-- Content Start -->
+    <div class="container-xxl py-5">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-12 wow fadeInUp" data-wow-delay="0.3s">
+
+                    <figure class="workflow-main-figure">
+                        <div class="workflow-main-image-wrap">
+                            <img src="/pages/img/bim-nke-workflow.png" alt="Bagan BIM NKE Workflow" class="workflow-main-image" loading="eager">
+                        </div>
+                        <figcaption class="workflow-caption">Bagan utama BIM NKE Workflow sebagai acuan alur implementasi, evaluasi, supervisi, dan penguatan knowledge asset.</figcaption>
+                    </figure>
+
+                    <p class="workflow-lead">
+                        BIM NKE Workflow membaca implementasi BIM sebagai siklus manajemen informasi proyek. Alurnya dimulai dari respon terhadap kebutuhan informasi owner, dilanjutkan dengan penyusunan BEP dan analisis kebutuhan, pengecekan kesiapan tools, jaringan, dan manpower, lalu masuk ke implementasi proyek BIM yang disupervisi dan dikembalikan menjadi aset pengetahuan perusahaan.
+                    </p>
+
+                    <section class="flow-summary">
+                        <h2>Inti Alur</h2>
+                        <ul>
+                            <li>LEAP/NKE merespon EIR owner sesuai paket pekerjaan yang disyaratkan oleh appointing party.</li>
+                            <li>Jika BIM tidak disyaratkan dalam tender, NKE dapat memutuskan implementasi BIM melalui kontrak proyek dan Surat Keputusan Implementasi BIM.</li>
+                            <li>BEP menjadi dasar fase perencanaan, kemudian diterjemahkan menjadi analisis kebutuhan sumber daya.</li>
+                            <li>Tools, jaringan, dan manpower harus melalui check atau identifikasi sebelum proyek masuk tahap implementasi.</li>
+                            <li>Output implementasi, supervisi, dan produk BIM dikembalikan menjadi knowledge asset untuk mendukung bisnis dan proyek berikutnya.</li>
+                        </ul>
+                    </section>
+
+                    <section class="workflow-section">
+                        <h2>Penjelasan Tahap Workflow</h2>
+
+                        <article class="workflow-stage">
+                            <div><span class="stage-number">1</span></div>
+                            <div>
+                                <h3>Mulai dari EIR, BEP, dan analisis kebutuhan</h3>
+                                <p>Alur dimulai ketika LEAP/NKE merespon EIR owner sesuai paket pekerjaan yang diminta. Pada kondisi BIM tidak tercantum sebagai syarat tender, keputusan implementasi BIM tetap dapat dibuat secara internal melalui kontrak proyek dan dokumen keputusan implementasi.</p>
+                                <ul>
+                                    <li>Fase perencanaan menghasilkan BEP sebagai pedoman implementasi.</li>
+                                    <li>Analisis kebutuhan menentukan lingkup informasi, target proyek, sumber daya, tools, jaringan, dan personel.</li>
+                                    <li>BEP menjadi basis pengadaan, pelaksanaan, supervisi, dan evaluasi.</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="workflow-stage">
+                            <div><span class="stage-number">2</span></div>
+                            <div>
+                                <h3>Sumber daya dibagi menjadi tools, jaringan, dan manpower</h3>
+                                <p>Setelah analisis kebutuhan, workflow memecah kebutuhan implementasi BIM menjadi tiga jalur kesiapan: tools, jaringan, dan manpower. Ketiganya perlu dicek karena implementasi tidak hanya bergantung pada software, tetapi juga infrastruktur kerja dan kompetensi tim.</p>
+                                <ul>
+                                    <li>Tools mencakup software dan hardware yang diperlukan untuk memenuhi spesifikasi BEP.</li>
+                                    <li>Jaringan memastikan kolaborasi, akses data, dan pertukaran informasi berjalan stabil.</li>
+                                    <li>Manpower memastikan peran BIM tersedia dan mampu menjalankan pekerjaan sesuai kebutuhan proyek.</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="workflow-stage">
+                            <div><span class="stage-number">3</span></div>
+                            <div>
+                                <h3>Check/identifikasi kesiapan tools dan jaringan</h3>
+                                <p>Tools dan jaringan masuk ke proses check atau identifikasi. Jika memenuhi spesifikasi BEP dan standar perusahaan, alur dapat langsung diteruskan ke implementasi proyek BIM. Jika tidak memenuhi, workflow mengarahkan proses ke tahap upgrade.</p>
+                                <ul>
+                                    <li>Pengadaan software dan hardware dilakukan oleh tim proyek bersama Divisi Pengadaan dengan arahan Divisi BIM.</li>
+                                    <li>Upgrade dilakukan sampai hardware, software, dan jaringan memenuhi spesifikasi BEP serta standar perusahaan.</li>
+                                    <li>Hasil check menjadi gate sebelum proyek menggunakan tools tersebut untuk produksi informasi BIM.</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="workflow-stage">
+                            <div><span class="stage-number">4</span></div>
+                            <div>
+                                <h3>Check/identifikasi manpower dan jalur training</h3>
+                                <p>Manpower juga melalui check atau identifikasi. Jika kompetensi memenuhi kebutuhan proyek, alur masuk ke implementasi. Jika tidak memenuhi, personel diarahkan ke training, kemudian dievaluasi melalui audio visual learning atau bentuk evaluasi pembelajaran lain.</p>
+                                <ul>
+                                    <li>Training menutup gap kompetensi antara kebutuhan BEP dan kemampuan personel.</li>
+                                    <li>Evaluasi memastikan hasil training benar-benar dapat diterapkan dalam pekerjaan proyek.</li>
+                                    <li>Jika hasil evaluasi belum oke, personel kembali ke training sampai siap mendukung implementasi.</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="workflow-stage">
+                            <div><span class="stage-number">5</span></div>
+                            <div>
+                                <h3>Implementasi project BIM</h3>
+                                <p>Jika tools, jaringan, dan manpower memenuhi kebutuhan, proyek masuk ke tahap implementasi project BIM. Bagan menekankan target implementasi seperti 3D untuk dua gedung dan dua infrastruktur, serta 5D untuk satu gedung dan satu infrastruktur sesuai target proyek yang dirujuk dalam RKAP Divisi BIM 2025.</p>
+                                <ul>
+                                    <li>Implementasi harus mengikuti BEP, standar internal, dan target proyek yang ditetapkan.</li>
+                                    <li>3D berfokus pada representasi model dan koordinasi informasi geometris.</li>
+                                    <li>5D menghubungkan model dengan informasi biaya atau quantity untuk kebutuhan pengendalian proyek.</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="workflow-stage">
+                            <div><span class="stage-number">6</span></div>
+                            <div>
+                                <h3>Supervisi, feedback, dan kepatuhan ISO 19650</h3>
+                                <p>Implementasi BIM tidak berhenti saat model diproduksi. Supervisi memastikan proses berjalan sesuai standar dan dilaporkan melalui dokumen laporan progress implementasi BIM. Dari supervisi, feedback dapat kembali ke implementasi agar perbaikan dilakukan selama proyek berjalan.</p>
+                                <ul>
+                                    <li>Supervisi memantau kesesuaian progres terhadap BEP, target proyek, dan standar perusahaan.</li>
+                                    <li>Feedback menjadi mekanisme koreksi sebelum output digunakan lebih jauh.</li>
+                                    <li>Hasil akhir diarahkan pada kepatuhan terhadap standar ISO 19650 sebagai prinsip tata kelola informasi.</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="workflow-stage">
+                            <div><span class="stage-number">7</span></div>
+                            <div>
+                                <h3>Knowledge asset dan business support</h3>
+                                <p>Produk BIM, hasil evaluasi, dan pengalaman implementasi dikembalikan menjadi knowledge asset. Aset pengetahuan ini menjadi sumber pembelajaran, mendukung BIM uses to business support, dan memberi masukan untuk new project berikutnya.</p>
+                                <ul>
+                                    <li>Knowledge asset menyimpan pembelajaran dari training, evaluasi, implementasi, supervisi, dan produk BIM.</li>
+                                    <li>BIM uses to business support mengubah hasil BIM menjadi dukungan nyata bagi keputusan bisnis dan proyek.</li>
+                                    <li>New project memanfaatkan kembali lesson learned agar fase perencanaan dan analisis kebutuhan semakin matang.</li>
+                                </ul>
+                            </div>
+                        </article>
+                    </section>
+
+                    <section class="workflow-section">
+                        <h2>Makna Garis Balik pada Bagan</h2>
+                        <p>Garis putus-putus dan jalur feedback menunjukkan bahwa workflow ini bukan proses satu arah. Hasil training, evaluasi, knowledge asset, business support, new project, dan asseting product BIM kembali mempengaruhi fase perencanaan. Dengan begitu, setiap proyek menjadi sumber peningkatan standar, kompetensi, dan kesiapan implementasi berikutnya.</p>
+                    </section>
+
+                    <section class="workflow-section">
+                        <h2>Dokumen dan Referensi Internal yang Disebut dalam Bagan</h2>
+                        <ul>
+                            <li>FRM.NKE.01.44 untuk rujukan Surat Keputusan Implementasi BIM.</li>
+                            <li>FlowChart Support BIM, IQ-211 sebagai rujukan prosedur support BIM.</li>
+                            <li>RKAP Divisi BIM 2025 sebagai rujukan target proyek implementasi BIM.</li>
+                            <li>FRM Dokumen Laporan Progress Implementasi BIM sebagai media pelaporan supervisi.</li>
+                            <li>BEP dan standar perusahaan sebagai dasar spesifikasi tools, hardware, software, jaringan, dan pelaksanaan proyek.</li>
+                        </ul>
+                    </section>
+
+                    <div class="workflow-note">
+                        Ringkasnya, BIM NKE Workflow memastikan keputusan implementasi BIM, kesiapan sumber daya, pelaksanaan proyek, supervisi, dan pengelolaan knowledge asset berada dalam satu siklus yang terkontrol.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Content End -->
+
+    <!-- Footer Start -->
+    <div id="footer-container"></div>
+    <!-- Footer End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/user.js" defer></script>
+
+</body>
+
+</html>

@@ -196,6 +196,33 @@ body {
     overflow-x: hidden;
 }
 
+.bcl-page-transition-ready body {
+    opacity: 1;
+}
+
+.bcl-page-transition-ready body.bcl-page-is-ready {
+    opacity: 1;
+    transition: opacity 160ms ease;
+}
+
+.bcl-page-transition-ready body.bcl-page-is-leaving {
+    opacity: 0.08;
+    transition: opacity 140ms ease;
+}
+
+.bcl-page-transition-ready body.bcl-page-is-leaving #navbar-container {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bcl-page-transition-ready body,
+    .bcl-page-transition-ready body.bcl-page-is-ready,
+    .bcl-page-transition-ready body.bcl-page-is-leaving {
+        opacity: 1;
+        transition: none;
+    }
+}
+
 /* Keep WOW fade-in reveals from temporarily extending document height. */
 @keyframes bcl-wow-fade-in-up {
     from {

@@ -1774,6 +1774,335 @@ const enhancedPracticeQuestions = {
   }
 };
 
+const theoryPracticeQuestionBank = {
+    "bim-mindset": {
+        title: "BIM Mindset",
+        description: "BIM sebagai sistem manajemen informasi, bukan sekadar software atau model 3D",
+        difficulty: "Beginner",
+        questions: [
+            {
+                id: "theory-mindset-practice-001",
+                question: "Dalam konteks proyek konstruksi, apa tanda bahwa tim sudah memakai mindset BIM dengan benar?",
+                type: "multiple-choice",
+                options: [
+                    "Model terlihat realistis dan detail",
+                    "Informasi yang dipakai jelas status, versi, pemilik, dan tujuan penggunaannya",
+                    "Semua pekerjaan dilakukan di software 3D",
+                    "Semua komunikasi dipindahkan ke file model"
+                ],
+                correctAnswer: 1,
+                explanation: "Mindset BIM menempatkan informasi sebagai dasar keputusan. Visual 3D membantu, tetapi status, versi, otoritas, dan tujuan penggunaan yang menentukan kelayakan informasi.",
+                learningObjective: "Membedakan BIM sebagai manajemen informasi dari sekadar pemodelan 3D",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-mindset-practice-002",
+                question: "Mengapa informasi berstatus draft tidak boleh langsung dipakai untuk keputusan lapangan?",
+                type: "multiple-choice",
+                options: [
+                    "Karena draft selalu salah",
+                    "Karena draft belum melewati otorisasi penggunaan dan dapat berubah",
+                    "Karena draft hanya boleh dibuka oleh BIM modeller",
+                    "Karena draft tidak dapat disimpan di CDE"
+                ],
+                correctAnswer: 1,
+                explanation: "Draft dapat berguna untuk koordinasi awal, tetapi belum sah sebagai dasar instruksi, procurement, atau pekerjaan lapangan.",
+                learningObjective: "Memahami konsekuensi status informasi",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-mindset-practice-003",
+                question: "Apa risiko utama jika tim menilai BIM hanya dari kemampuan software?",
+                type: "multiple-choice",
+                options: [
+                    "Software menjadi terlalu cepat",
+                    "Proses informasi, otoritas, dan kontrol keputusan diabaikan",
+                    "Model tidak dapat dibuat 3D",
+                    "Semua disiplin otomatis bekerja lebih disiplin"
+                ],
+                correctAnswer: 1,
+                explanation: "Fokus software saja membuat tim mudah melewatkan aturan informasi, siapa yang boleh menyetujui, dan kapan informasi boleh dipakai.",
+                learningObjective: "Mengidentifikasi risiko BIM yang terlalu software-centric",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-mindset-practice-004",
+                question: "Sebuah drawing dikirim melalui chat, tetapi belum ada status approved di CDE. Sikap yang paling tepat adalah...",
+                type: "multiple-choice",
+                options: [
+                    "Memakai drawing karena sudah dikirim oleh rekan proyek",
+                    "Menunggu atau meminta rilis resmi dengan status dan versi yang jelas",
+                    "Mencetak dan membagikannya ke lapangan agar tidak terlambat",
+                    "Mengubah sendiri statusnya menjadi approved"
+                ],
+                correctAnswer: 1,
+                explanation: "Media pengiriman informal bukan pengganti status informasi. Keputusan harus merujuk ke sumber resmi dan versi yang sah.",
+                learningObjective: "Menerapkan prinsip sumber informasi resmi",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            },
+            {
+                id: "theory-mindset-practice-005",
+                question: "Apa makna paling tepat dari 'single source of truth' dalam BIM?",
+                type: "multiple-choice",
+                options: [
+                    "Hanya ada satu orang yang boleh membuat model",
+                    "Ada sumber rujukan resmi yang mengontrol versi, status, dan jejak informasi",
+                    "Semua file harus digabung menjadi satu file besar",
+                    "Semua keputusan harus menunggu BIM Manager"
+                ],
+                correctAnswer: 1,
+                explanation: "Single source of truth bukan berarti satu file atau satu orang, tetapi satu sumber rujukan resmi untuk informasi yang valid dan terlacak.",
+                learningObjective: "Memahami konsep sumber informasi resmi",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            },
+            {
+                id: "theory-mindset-practice-006",
+                question: "Dalam evaluasi kesiapan BIM, indikator yang paling kuat adalah...",
+                type: "multiple-choice",
+                options: [
+                    "Jumlah software yang dimiliki",
+                    "Konsistensi tim memakai status, versi, approval, dan jejak keputusan",
+                    "Banyaknya rendering yang dibuat",
+                    "Kecepatan membuat family"
+                ],
+                correctAnswer: 1,
+                explanation: "Kesiapan BIM terlihat dari disiplin pengelolaan informasi dan keputusan, bukan hanya dari aset software atau output visual.",
+                learningObjective: "Menilai kesiapan BIM dari perilaku informasi",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            }
+        ]
+    },
+    "bim-governance": {
+        title: "BIM Governance",
+        description: "Authority, responsibility, status, decision gate, dan quality gate",
+        difficulty: "Intermediate",
+        questions: [
+            {
+                id: "theory-governance-practice-001",
+                question: "Tujuan utama BIM Governance dalam proyek adalah...",
+                type: "multiple-choice",
+                options: [
+                    "Membatasi kreativitas tim desain",
+                    "Memastikan keputusan berbasis informasi yang sah, jelas otoritasnya, dan terlacak",
+                    "Mengganti semua prosedur proyek dengan software",
+                    "Membuat model menjadi lebih detail"
+                ],
+                correctAnswer: 1,
+                explanation: "Governance menjaga agar informasi yang dipakai untuk keputusan memiliki status, pemilik, otoritas, dan jejak yang jelas.",
+                learningObjective: "Memahami tujuan governance",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-governance-practice-002",
+                question: "Perbedaan paling tepat antara responsibility dan authority adalah...",
+                type: "multiple-choice",
+                options: [
+                    "Responsibility mengerjakan, authority mengesahkan atau memberi izin penggunaan",
+                    "Responsibility hanya milik BIM team, authority hanya milik site team",
+                    "Responsibility berarti jabatan, authority berarti software",
+                    "Keduanya selalu sama dalam setiap proyek"
+                ],
+                correctAnswer: 0,
+                explanation: "Orang yang membuat informasi belum tentu orang yang berwenang mengesahkannya untuk digunakan.",
+                learningObjective: "Membedakan peran produksi dan otorisasi",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-governance-practice-003",
+                question: "Decision gate diperlukan terutama untuk...",
+                type: "multiple-choice",
+                options: [
+                    "Menunda pekerjaan tanpa alasan",
+                    "Menentukan kapan informasi cukup sah untuk menjadi dasar keputusan berikutnya",
+                    "Menghapus kebutuhan koordinasi",
+                    "Mengganti review teknis dengan checklist administratif"
+                ],
+                correctAnswer: 1,
+                explanation: "Decision gate mencegah keputusan prematur dan memastikan informasi sudah layak untuk tahap berikutnya.",
+                learningObjective: "Memahami fungsi decision gate",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-governance-practice-004",
+                question: "Quality gate BIM sebaiknya memeriksa...",
+                type: "multiple-choice",
+                options: [
+                    "Apakah visual model cukup bagus untuk presentasi",
+                    "Apakah informasi fit-for-purpose, sesuai standar, lengkap untuk tujuannya, dan dapat ditelusuri",
+                    "Apakah semua file berada di komputer modeller",
+                    "Apakah jumlah meeting sudah cukup banyak"
+                ],
+                correctAnswer: 1,
+                explanation: "Quality gate menilai kelayakan informasi untuk tujuan tertentu, bukan sekadar tampilan visual.",
+                learningObjective: "Menentukan cakupan quality gate",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            },
+            {
+                id: "theory-governance-practice-005",
+                question: "Jika dua file memiliki informasi berbeda tetapi sama-sama beredar, governance yang baik menuntut...",
+                type: "multiple-choice",
+                options: [
+                    "Memakai file yang paling baru namanya",
+                    "Menentukan sumber resmi, status, versi, dan otoritas rilis sebelum dipakai",
+                    "Memakai file yang paling kecil ukurannya",
+                    "Menggabungkan keduanya tanpa approval"
+                ],
+                correctAnswer: 1,
+                explanation: "Konflik informasi harus diselesaikan melalui kontrol versi dan otoritas, bukan asumsi informal.",
+                learningObjective: "Menangani konflik versi",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            },
+            {
+                id: "theory-governance-practice-006",
+                question: "Mengapa audit trail penting dalam BIM Governance?",
+                type: "multiple-choice",
+                options: [
+                    "Agar file terlihat lebih profesional",
+                    "Agar asal keputusan, perubahan, approval, dan penggunaan informasi dapat ditelusuri",
+                    "Agar model otomatis lebih ringan",
+                    "Agar semua orang bisa mengubah status file"
+                ],
+                correctAnswer: 1,
+                explanation: "Audit trail melindungi proyek saat terjadi perubahan, klaim, rework, atau perlu klarifikasi keputusan.",
+                learningObjective: "Memahami fungsi audit trail",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            }
+        ]
+    },
+    "delivery-workflow": {
+        title: "BIM Delivery Workflow",
+        description: "Alur informasi dari kebutuhan, produksi, koordinasi, validasi, rilis, hingga penggunaan",
+        difficulty: "Intermediate",
+        questions: [
+            {
+                id: "theory-workflow-practice-001",
+                question: "Langkah awal BIM Delivery Workflow yang paling benar adalah...",
+                type: "multiple-choice",
+                options: [
+                    "Langsung membuat model sedetail mungkin",
+                    "Menentukan kebutuhan informasi, tujuan penggunaan, dan pihak yang membutuhkan",
+                    "Menunggu clash detection selesai",
+                    "Membuat rendering untuk semua area"
+                ],
+                correctAnswer: 1,
+                explanation: "Workflow dimulai dari kebutuhan informasi. Tanpa kebutuhan yang jelas, produksi model mudah salah arah.",
+                learningObjective: "Memahami awal alur delivery",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-workflow-practice-002",
+                question: "Produksi model dalam delivery workflow seharusnya mengikuti...",
+                type: "multiple-choice",
+                options: [
+                    "Kebiasaan masing-masing modeller",
+                    "Kebutuhan informasi, standar, level informasi, dan milestone delivery",
+                    "Urutan menu software",
+                    "Permintaan informal yang paling cepat"
+                ],
+                correctAnswer: 1,
+                explanation: "Produksi informasi harus terarah pada kebutuhan dan standar yang disepakati.",
+                learningObjective: "Menghubungkan produksi dengan kebutuhan delivery",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-workflow-practice-003",
+                question: "Koordinasi BIM dilakukan untuk...",
+                type: "multiple-choice",
+                options: [
+                    "Mencari siapa yang salah",
+                    "Menyelaraskan informasi lintas disiplin sebelum dipakai pada keputusan berikutnya",
+                    "Menghapus semua clash tanpa mempertimbangkan prioritas",
+                    "Membuat semua model menjadi satu file"
+                ],
+                correctAnswer: 1,
+                explanation: "Koordinasi adalah proses menyelaraskan informasi agar konflik dapat dipahami, diprioritaskan, dan diselesaikan sesuai dampak.",
+                learningObjective: "Memahami tujuan koordinasi",
+                difficulty: "Beginner",
+                timeToComplete: 60
+            },
+            {
+                id: "theory-workflow-practice-004",
+                question: "Validasi dalam delivery workflow berarti...",
+                type: "multiple-choice",
+                options: [
+                    "Memastikan informasi layak untuk tujuan tertentu",
+                    "Memastikan semua objek memiliki warna yang sama",
+                    "Memastikan file selalu paling besar",
+                    "Memastikan tidak ada komentar dari reviewer"
+                ],
+                correctAnswer: 0,
+                explanation: "Validasi bersifat fit-for-purpose: informasi dinilai terhadap tujuan penggunaan, standar, dan konteks keputusan.",
+                learningObjective: "Memahami validasi fit-for-purpose",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            },
+            {
+                id: "theory-workflow-practice-005",
+                question: "Rilis informasi untuk konstruksi sebaiknya dilakukan ketika...",
+                type: "multiple-choice",
+                options: [
+                    "Model sudah terlihat lengkap",
+                    "Informasi sudah divalidasi, disetujui oleh otoritas yang tepat, dan diberi status yang jelas",
+                    "Tim site meminta secepatnya",
+                    "File sudah dikirim lewat chat"
+                ],
+                correctAnswer: 1,
+                explanation: "Rilis adalah pemberian izin penggunaan. Karena itu status, approval, dan tujuan release harus jelas.",
+                learningObjective: "Memahami syarat rilis informasi",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            },
+            {
+                id: "theory-workflow-practice-006",
+                question: "Apa risiko terbesar jika tahap kebutuhan informasi dilewati?",
+                type: "multiple-choice",
+                options: [
+                    "Model menjadi terlalu ringan",
+                    "Tim menghasilkan informasi yang tidak sesuai keputusan yang dibutuhkan",
+                    "Software tidak bisa dibuka",
+                    "Semua disiplin otomatis sinkron"
+                ],
+                correctAnswer: 1,
+                explanation: "Tanpa kebutuhan informasi, output bisa terlihat lengkap tetapi tidak menjawab keputusan proyek.",
+                learningObjective: "Mengidentifikasi risiko workflow yang dilompati",
+                difficulty: "Intermediate",
+                timeToComplete: 75
+            }
+        ]
+    }
+};
+
+Object.entries(enhancedPracticeQuestions).forEach(([level, levelData]) => {
+    const levelSuffix = level.toLowerCase().replace(/\s+/g, '-');
+    levelData.categories = levelData.categories || {};
+
+    Object.entries(theoryPracticeQuestionBank).forEach(([categoryKey, categoryData]) => {
+        levelData.categories[categoryKey] = {
+            ...categoryData,
+            questions: categoryData.questions.map(question => ({
+                ...question,
+                id: `${question.id}-${levelSuffix}`,
+                relatedTopics: [categoryData.title, "Information Management", "BCL Theory"],
+                references: ["BCL BIM Mindset", "BCL BIM Governance", "BCL BIM Delivery Workflow"]
+            }))
+        };
+    });
+});
+
 // Adaptive difficulty system
 const adaptiveDifficultySystem = {
     adjustDifficulty: function (userPerformance, currentLevel) {

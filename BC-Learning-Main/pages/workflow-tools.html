@@ -284,44 +284,57 @@
                     <section class="content-explanation">
                         <h2>Toolchain BIM Workflow</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650: tool-agnostic principle (process over tools; cite
-                            generally); Indonesia: kebijakan internal perusahaan & spesifikasi owner
-                            <!-- TODO: Verify company tool policies -->
+                            <strong>Pijakan narasi:</strong> BIM bersifat tool-agnostic; tools dipilih untuk mendukung proses informasi yang sudah ditetapkan.
                         </div>
-                        <p>Tools dipilih berdasarkan kebutuhan workflow, bukan sebaliknya.</p>
+                        <p>Tools dipilih berdasarkan kebutuhan workflow, bukan sebaliknya. Software authoring, coordination, simulation, documentation, dan CDE harus mendukung kebutuhan informasi, kontrol versi, approval, dan pertukaran data proyek.</p>
                         <ul>
-                            <li><strong>Authoring Tools:</strong> Software untuk membuat model 3D</li>
-                            <li><strong>Coordination Tools:</strong> Platform untuk kolaborasi dan clash detection</li>
-                            <li><strong>Simulation Tools:</strong> Software untuk analisis struktur, MEP, energi</li>
-                            <li><strong>Documentation Tools:</strong> Tools untuk generate drawings dan reports</li>
-                            <li><strong>Archive Tools:</strong> Sistem penyimpanan dan retrieval informasi</li>
+                            <li><strong>Authoring tools:</strong> membuat model dan data sesuai scope disiplin.</li>
+                            <li><strong>Coordination tools:</strong> menggabungkan informasi, mencatat issue, dan memantau resolusi.</li>
+                            <li><strong>Simulation tools:</strong> menguji skenario berdasarkan input yang tervalidasi.</li>
+                            <li><strong>Documentation tools:</strong> menghasilkan drawing, report, quantity, dan paket deliverable.</li>
+                            <li><strong>CDE/archive tools:</strong> mengelola status, versi, akses, audit trail, dan distribusi informasi.</li>
                         </ul>
 
                         <h2>Minimum vs Advanced Toolset</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650 (information management requirements); Indonesia:
-                            spesifikasi minimum BIM proyek <!-- TODO: Verify minimum tool requirements -->
+                            <strong>Pijakan narasi:</strong> kebutuhan minimum tools harus diturunkan dari BIM use, kompleksitas proyek, dan kemampuan tim.
                         </div>
-                        <p>Pemilihan tools disesuaikan dengan kompleksitas proyek dan anggaran.</p>
+                        <p>Pemilihan tools disesuaikan dengan kompleksitas proyek, anggaran, risiko, dan kemampuan tim. Toolset sederhana dapat cukup jika kebutuhan informasinya sederhana; proyek kompleks membutuhkan toolchain yang lebih terintegrasi.</p>
                         <ul>
-                            <li><strong>Minimum Toolset:</strong> Open-source dan free tools untuk proyek sederhana</li>
-                            <li><strong>Advanced Toolset:</strong> Commercial software untuk proyek kompleks</li>
+                            <li><strong>Minimum Toolset:</strong> tools dasar yang masih mampu membuat, membaca, menukar, dan mengarsipkan informasi secara terkendali.</li>
+                            <li><strong>Advanced Toolset:</strong> tools berbayar atau terintegrasi untuk kebutuhan koordinasi, simulasi, dan CDE yang lebih kompleks.</li>
                             <li><strong>Interoperability:</strong> Kemampuan exchange data antar tools</li>
                             <li><strong>Training:</strong> Kompetensi tim dalam menggunakan tools</li>
                         </ul>
 
                         <h2>Tool Selection Criteria</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (information container capabilities); Indonesia:
-                            standar kompetensi BIM LPJK <!-- TODO: Verify LPJK BIM standards -->
+                            <strong>Pijakan narasi:</strong> kriteria tools harus mencakup capability, compatibility, governance, security, support, dan cost.
                         </div>
-                        <p>Tools dipilih berdasarkan capability, compatibility, dan cost-effectiveness.</p>
+                        <p>Tools dipilih berdasarkan capability, compatibility, governance, dan cost-effectiveness. Tools yang kuat tetapi tidak dipakai secara disiplin tetap dapat menghasilkan informasi yang salah status, salah versi, atau tidak dapat ditelusuri.</p>
                         <ul>
                             <li><strong>Capability:</strong> Mendukung requirements informasi proyek</li>
                             <li><strong>Compatibility:</strong> IFC compliance dan interoperability</li>
                             <li><strong>Cost-Effectiveness:</strong> ROI dan total cost of ownership</li>
                             <li><strong>Support:</strong> Training, documentation, dan vendor support</li>
                         </ul>
+
+                        <h2>Yang Perlu Dipahami</h2>
+                        <p>Software tidak membuat proyek otomatis menjadi BIM. BIM terjadi ketika tools dipakai dalam proses yang memiliki peran, standar, CDE, status, versioning, approval, dan audit trail.</p>
+
+                        <h2>Kesalahan Umum yang Perlu Dihindari</h2>
+                        <ul>
+                            <li>Membeli software sebelum mendefinisikan kebutuhan informasi dan workflow.</li>
+                            <li>Mengukur keberhasilan BIM dari jumlah tools, bukan kualitas informasi yang dihasilkan.</li>
+                            <li>Mengabaikan interoperability sehingga data terkunci di satu platform.</li>
+                            <li>Menggunakan CDE hanya sebagai folder online tanpa status, approval, dan audit trail.</li>
+                        </ul>
+
+                        <h2>Implikasi di Proyek</h2>
+                        <p>Project manager perlu memastikan tools mendukung cara kerja proyek; BIM team mengelola setup dan standar; engineer, QS, planner, QA/QC, dan site team harus tahu tool mana dipakai untuk membuat, memeriksa, menyetujui, dan mengambil informasi.</p>
+
+                        <h2>Ringkasan Pendek</h2>
+                        <p>Tools adalah enabler, bukan inti BIM. Toolchain yang tepat adalah toolchain yang membuat informasi proyek lebih terkendali, dapat dipertukarkan, dan dapat dipertanggungjawabkan.</p>
                     </section>
 
                     <section class="example">
@@ -331,6 +344,7 @@
                             menggunakan Revit untuk authoring, Navisworks untuk coordination, Robot Structural untuk
                             analysis, dan integrated CDE untuk collaboration. Pemilihan tools selalu didasarkan pada
                             kebutuhan spesifik proyek dan kemampuan tim.</p>
+                        <p>Nama tools hanya contoh; prinsip utamanya tetap mengikuti kebutuhan informasi proyek.</p>
                     </section>
 
                     <section class="quick-checklist">
@@ -350,9 +364,8 @@
                         <h3>Daftar Pijakan</h3>
                         <ul>
                             <li>ISO 19650-1 (Information Management)</li>
-                            <li>ISO 19650-2 (Information Container)</li>
-                            <li>Standar kompetensi BIM LPJK <!-- TODO --></li>
-                            <li>Kebijakan internal perusahaan & spesifikasi owner <!-- TODO --></li>
+                            <li>ISO 19650-2 (Information Container and delivery concepts)</li>
+                            <li>Kebijakan internal perusahaan, spesifikasi owner, BEP, dan kebutuhan CDE proyek</li>
                         </ul>
                     </section>
                 </div>

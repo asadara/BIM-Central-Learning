@@ -31,7 +31,7 @@
         integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 
     <!-- Custom Admin Styles -->
-    <link href="adminbcl.css?v=20260303b" rel="stylesheet">
+    <link href="adminbcl.css?v=20260608b" rel="stylesheet">
     <script>
         window.BCL_SKIP_GLOBAL_ADMIN_SESSION_UI_PROBE = true;
         window.BCL_SKIP_ADMIN_PANEL_SESSION_CHECK = true;
@@ -117,6 +117,11 @@
                     <a class="nav-link-modern mb-2" href="#users" onclick="showSection('users')">
                         <i class="fas fa-users"></i>
                         Pengguna
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#messages"
+                        onclick="showSection('messages'); safeCall('messages', 'loadMessages');">
+                        <i class="fas fa-comments"></i>
+                        Pesan
                     </a>
                     <a class="nav-link-modern mb-2" href="#questions" onclick="showSection('questions')">
                         <i class="fas fa-question-circle"></i>
@@ -243,6 +248,14 @@
                                     </div>
                                     <div class="col-md-6 col-lg-3">
                                         <button class="btn btn-modern-primary w-100 py-3"
+                                            onclick="showSection('messages'); safeCall('messages', 'loadMessages');"
+                                            style="background: var(--info-gradient);">
+                                            <i class="fas fa-comments fa-lg mb-2"></i><br>
+                                            <span class="fw-bold">Inbox Pesan</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-modern-primary w-100 py-3"
                                             onclick="showSection('questions')"
                                             style="background: var(--success-gradient);">
                                             <i class="fas fa-question-circle fa-lg mb-2"></i><br>
@@ -357,8 +370,8 @@
                                 </div>
 
                                 <!-- Pengguna Table -->
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
+                                <div class="table-responsive users-access-table-wrap">
+                                    <table class="table table-hover align-middle users-access-table">
                                         <thead class="table-dark">
                                             <tr>
                                                 <th style="width: 60px;">No</th>
@@ -371,15 +384,17 @@
                                                 <th>Kata Sandi</th>
                                                 <th>Status</th>
                                                 <th>Terdaftar</th>
-                                                <th>Mapping Kompetensi Access</th>
-                                                <th>Pustaka Download Access</th>
-                                                <th>Download Tanpa Watermark</th>
+                                                <th class="access-column">Mapping<br><small>Kompetensi</small></th>
+                                                <th class="access-column">Dokumen<br><small>Navbar</small></th>
+                                                <th class="access-column">Audit<br><small>2026</small></th>
+                                                <th class="access-column">Pustaka<br><small>Download</small></th>
+                                                <th class="access-column">Tanpa<br><small>Watermark</small></th>
                                                 <th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="usersTableBody">
                                             <tr>
-                                                <td colspan="14" class="text-center py-4">
+                                                <td colspan="16" class="text-center py-4">
                                                     <div class="d-flex flex-column align-items-center">
                                                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                                         <p class="text-muted mb-2">Belum ada data pengguna yang dimuat</p>
@@ -397,6 +412,29 @@
                                 <nav id="usersPagination" class="mt-4" style="display: none;">
                                     <ul class="pagination justify-content-center" id="usersPaginationControls"></ul>
                                 </nav>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages Section -->
+                    <div id="messages-section" class="admin-section d-none">
+                        <div class="content-card">
+                            <div class="card-header-modern">
+                                <div class="card-title-modern">
+                                    <i class="fas fa-comments"></i>
+                                    Inbox & Pesan User
+                                </div>
+                                <button class="btn btn-modern-primary" onclick="safeCall('messages', 'loadMessages')">
+                                    <i class="fas fa-sync-alt me-2"></i>Muat Ulang
+                                </button>
+                            </div>
+                            <div class="card-body-modern" id="messages-content">
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary mb-3" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="text-muted mb-0">Memuat inbox pesan...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1120,7 +1158,7 @@
                             <div class="card-header-modern">
                                 <div class="card-title-modern">
                                     <i class="fas fa-key"></i>
-                                    Change Admin Kata Sandi
+                                    Change Admin Password
                                 </div>
                             </div>
                             <div class="card-body-modern">
@@ -1132,14 +1170,14 @@
                                             This ensures account security.
                                         </div>
 
-                                        <form id="changeKata SandiForm">
+                                        <form id="changePasswordForm">
                                             <input type="text" class="d-none" tabindex="-1" aria-hidden="true"
                                                 autocomplete="username" value="admin">
                                             <div class="mb-4">
-                                                <label for="currentKata Sandi" class="form-label fw-semibold">
-                                                    <i class="fas fa-lock me-2"></i>Current Kata Sandi
+                                                <label for="currentPassword" class="form-label fw-semibold">
+                                                    <i class="fas fa-lock me-2"></i>Current Password
                                                 </label>
-                                                <input type="password" class="form-control" id="currentKata Sandi"
+                                                <input type="password" class="form-control" id="currentPassword"
                                                     autocomplete="current-password"
                                                        placeholder="Enter your current password" required>
                                                 <div class="form-text">
@@ -1148,10 +1186,10 @@
                                             </div>
 
                                             <div class="mb-4">
-                                                <label for="newKata Sandi" class="form-label fw-semibold">
-                                                    <i class="fas fa-key me-2"></i>New Kata Sandi
+                                                <label for="newPassword" class="form-label fw-semibold">
+                                                    <i class="fas fa-key me-2"></i>New Password
                                                 </label>
-                                                <input type="password" class="form-control" id="newKata Sandi"
+                                                <input type="password" class="form-control" id="newPassword"
                                                     autocomplete="new-password"
                                                        placeholder="Enter new password" required minlength="8">
                                                 <div class="form-text">
@@ -1160,10 +1198,10 @@
                                             </div>
 
                                             <div class="mb-4">
-                                                <label for="confirmKata Sandi" class="form-label fw-semibold">
-                                                    <i class="fas fa-check-circle me-2"></i>Confirm New Kata Sandi
+                                                <label for="confirmPassword" class="form-label fw-semibold">
+                                                    <i class="fas fa-check-circle me-2"></i>Confirm New Password
                                                 </label>
-                                                <input type="password" class="form-control" id="confirmKata Sandi"
+                                                <input type="password" class="form-control" id="confirmPassword"
                                                     autocomplete="new-password"
                                                        placeholder="Confirm new password" required minlength="8">
                                                 <div class="form-text">
@@ -1178,15 +1216,15 @@
                                                              style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                                         </div>
                                                     </div>
-                                                    <small class="text-muted" id="passwordStrengthText">Kata Sandi strength: Weak</small>
+                                                    <small class="text-muted" id="passwordStrengthText">Password strength: Weak</small>
                                                 </div>
                                             </div>
 
                                             <div class="d-flex gap-3">
                                                 <button type="submit" class="btn btn-success">
-                                                    <i class="fas fa-save me-2"></i>Ubah Kata Sandi
+                                                    <i class="fas fa-save me-2"></i>Ubah Password
                                                 </button>
-                                                <button type="button" class="btn btn-secondary" onclick="resetChangeKata SandiForm()">
+                                                <button type="button" class="btn btn-secondary" onclick="resetChangePasswordForm()">
                                                     <i class="fas fa-undo me-2"></i>Reset Form
                                                 </button>
                                             </div>
@@ -1319,7 +1357,8 @@
     <script src="../../js/admin/admin-panel.js?v=20260313b"></script>
     <script src="../../js/admin/modules/auth.js"></script>
     <script src="../../js/admin/modules/dashboard.js"></script>
-    <script src="../../js/admin/modules/users.js"></script>
+    <script src="../../js/admin/modules/users.js?v=20260608b"></script>
+    <script src="../../js/admin/modules/messages.js?v=20260604a"></script>
     <script src="../../js/admin/modules/questions.js?v=20260313b"></script>
     <script src="../../js/admin/modules/videos.js?v=20260313b"></script>
     <script src="../../js/admin/modules/video-display.js"></script>
@@ -1387,7 +1426,7 @@
         function showAlert(message, type = 'warning') {
             // Create alert element
             const alertDiv = document.createElement('div');
-            alertDiv.classNama = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
             alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
             alertDiv.innerHTML = `
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -1413,18 +1452,18 @@
             console.log('ðŸ” Loading change password section...');
 
             // Reset form when section is loaded
-            resetChangeKata SandiForm();
+            resetChangePasswordForm();
 
             // Add form submit handler
-            const changeKata SandiForm = document.getElementById('changeKata SandiForm');
-            if (changeKata SandiForm) {
-                changeKata SandiForm.addEventListener('submit', handleChangeKata SandiSubmit);
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            if (changePasswordForm) {
+                changePasswordForm.addEventListener('submit', handleChangePasswordSubmit);
             }
 
             // Add password strength checker
-            const newKata SandiInput = document.getElementById('newKata Sandi');
-            if (newKata SandiInput) {
-                newKata SandiInput.addEventListener('input', checkKata SandiStrength);
+            const newPasswordInput = document.getElementById('newPassword');
+            if (newPasswordInput) {
+                newPasswordInput.addEventListener('input', checkPasswordStrength);
             }
 
             console.log('âœ… Change password section loaded');
@@ -1433,25 +1472,25 @@
         /**
          * Handle Change Password Form Submit
          */
-        async function handleChangeKata SandiSubmit(event) {
+        async function handleChangePasswordSubmit(event) {
             event.preventDefault();
 
-            const currentKata Sandi = document.getElementById('currentKata Sandi').value;
-            const newKata Sandi = document.getElementById('newKata Sandi').value;
-            const confirmKata Sandi = document.getElementById('confirmKata Sandi').value;
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
 
             // Client-side validation
-            if (!currentKata Sandi || !newKata Sandi || !confirmKata Sandi) {
+            if (!currentPassword || !newPassword || !confirmPassword) {
                 showAlert('All password fields are required', 'warning');
                 return;
             }
 
-            if (newKata Sandi !== confirmKata Sandi) {
+            if (newPassword !== confirmPassword) {
                 showAlert('New password and confirmation do not match', 'warning');
                 return;
             }
 
-            if (newKata Sandi.length < 8) {
+            if (newPassword.length < 8) {
                 showAlert('New password must be at least 8 characters long', 'warning');
                 return;
             }
@@ -1459,7 +1498,7 @@
             // Show loading state
             const submitButton = event.target.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Changing Kata Sandi...';
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Changing password...';
             submitButton.disabled = true;
 
             try {
@@ -1470,19 +1509,19 @@
                     },
                     credentials: 'include', // Include session cookies
                     body: JSON.stringify({
-                        currentKata Sandi,
-                        newKata Sandi,
-                        confirmKata Sandi
+                        currentPassword,
+                        newPassword,
+                        confirmPassword
                     })
                 });
 
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    showAlert('Kata Sandi changed successfully! You will need to use the new password for future logins.', 'success');
+                    showAlert('Password changed successfully! You will need to use the new password for future logins.', 'success');
 
                     // Reset form
-                    resetChangeKata SandiForm();
+                    resetChangePasswordForm();
 
                 } else {
                     showAlert(result.error || 'Failed to change password', 'danger');
@@ -1499,17 +1538,17 @@
         }
 
         /**
-         * Check Kata Sandi Strength
+         * Check Password Strength
          */
-        function checkKata SandiStrength() {
-            const password = document.getElementById('newKata Sandi').value;
+        function checkPasswordStrength() {
+            const password = document.getElementById('newPassword').value;
             const strengthBar = document.getElementById('passwordStrengthBar');
             const strengthText = document.getElementById('passwordStrengthText');
 
             if (!password) {
                 strengthBar.style.width = '0%';
-                strengthText.textContent = 'Kata Sandi strength: Weak';
-                strengthBar.classNama = 'progress-bar';
+                strengthText.textContent = 'Password strength: Weak';
+                strengthBar.className = 'progress-bar';
                 return;
             }
 
@@ -1548,17 +1587,17 @@
             strengthBar.style.width = strength + '%';
 
             if (strength < 25) {
-                strengthBar.classNama = 'progress-bar bg-danger';
-                strengthText.textContent = 'Kata Sandi strength: Very Weak';
+                strengthBar.className = 'progress-bar bg-danger';
+                strengthText.textContent = 'Password strength: Very Weak';
             } else if (strength < 50) {
-                strengthBar.classNama = 'progress-bar bg-warning';
-                strengthText.textContent = 'Kata Sandi strength: Weak';
+                strengthBar.className = 'progress-bar bg-warning';
+                strengthText.textContent = 'Password strength: Weak';
             } else if (strength < 75) {
-                strengthBar.classNama = 'progress-bar bg-info';
-                strengthText.textContent = 'Kata Sandi strength: Good';
+                strengthBar.className = 'progress-bar bg-info';
+                strengthText.textContent = 'Password strength: Good';
             } else {
-                strengthBar.classNama = 'progress-bar bg-success';
-                strengthText.textContent = 'Kata Sandi strength: Strong';
+                strengthBar.className = 'progress-bar bg-success';
+                strengthText.textContent = 'Password strength: Strong';
             }
 
             // Show feedback for weak passwords
@@ -1570,8 +1609,8 @@
         /**
          * Reset Change Password Form
          */
-        function resetChangeKata SandiForm() {
-            const form = document.getElementById('changeKata SandiForm');
+        function resetChangePasswordForm() {
+            const form = document.getElementById('changePasswordForm');
             if (form) {
                 form.reset();
             }
@@ -1582,11 +1621,11 @@
 
             if (strengthBar) {
                 strengthBar.style.width = '0%';
-                strengthBar.classNama = 'progress-bar';
+                strengthBar.className = 'progress-bar';
             }
 
             if (strengthText) {
-                strengthText.textContent = 'Kata Sandi strength: Weak';
+                strengthText.textContent = 'Password strength: Weak';
             }
 
             console.log('ðŸ”„ Change password form reset');

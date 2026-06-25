@@ -36,6 +36,7 @@ watchdog.lock/
 # Local IDE / tool state
 .vs/
 .cline/
+.codex/
 .playwright-cli/
 
 # Backup and migration artifacts
@@ -70,6 +71,7 @@ backend/courses.json
 backend/data.json
 backend/exam-materials.json
 backend/learning-materials.json
+backend/messages.json
 backend/competency-data.json
 backend/competency-reports.json
 
@@ -113,3 +115,7 @@ BC-Learning-Main/img/icons/trimmed/*
 # OS junk
 Thumbs.db
 Desktop.ini
+
+# .NET build output
+**/bin/
+**/obj/

@@ -3,8 +3,11 @@ const path = require('path');
 const { Pool } = require('pg');
 const { getRequestUser } = require('../../utils/auth');
 const { createPgConfig } = require('../../config/runtimeConfig');
+const { getExamCertificateRequirements } = require('../services/learningPathService');
 
 const quizzesPath = path.join(__dirname, '../data/quizzes.json');
+
+const LEVEL_ORDER = ['BIM Modeller', 'BIM Coordinator', 'BIM Manager'];
 
 const pool = new Pool(createPgConfig({
     max: 10,
@@ -116,6 +119,11 @@ function toNullableInt(value) {
     const number = Number(value);
     if (!Number.isFinite(number) || number < 0) return null;
     return Math.floor(number);
+}
+
+function getLevelIndex(level) {
+    const index = LEVEL_ORDER.indexOf(String(level || '').trim());
+    return index === -1 ? 0 : index;
 }
 
 function normalizeSourceType(value) {
@@ -269,6 +277,79 @@ async function refreshUserProgress(userContext) {
     return { practiceAttempts, examsPassed, certificatesEarned };
 }
 
+async function validateExamCertificateReadiness(userContext, quizId) {
+    const requirements = getExamCertificateRequirements()[quizId];
+    if (!requirements) {
+        return { eligible: true };
+    }
+
+    const userLevelIndex = getLevelIndex(userContext?.currentLevel);
+    const requiredLevelIndex = getLevelIndex(requirements.requiredLevel);
+    if (userLevelIndex < requiredLevelIndex) {
+        return {
+            eligible: false,
+            reason: 'level',
+            requiredLevel: requirements.requiredLevel
+        };
+    }
+
+    const targetCategories = Array.isArray(requirements.targetCategories)
+        ? requirements.targetCategories.filter(Boolean)
+        : [];
+
+    if (targetCategories.length === 0) {
+        return { eligible: true };
+    }
+
+    const identifier = trimText(userContext?.userIdentifier, 255).toLowerCase();
+    const email = trimText(userContext?.userEmail, 255).toLowerCase();
+    const name = trimText(userContext?.userName, 120).toLowerCase();
+
+    const result = await pool.query(
+        `SELECT
+            quiz_category,
+            COUNT(*)::int AS attempts,
+            COALESCE(ROUND(AVG(percentage)), 0)::int AS average_score
+         FROM learning_attempts
+         WHERE source_type = 'practice'
+           AND quiz_category = ANY($1::text[])
+           AND (
+                ($2::int IS NOT NULL AND user_id = $2)
+                OR ($3::text <> '' AND lower(COALESCE(user_identifier, '')) = $3)
+                OR ($4::text <> '' AND lower(COALESCE(user_email, '')) = $4)
+                OR ($5::text <> '' AND lower(COALESCE(user_name, '')) = $5)
+           )
+         GROUP BY quiz_category`,
+        [
+            targetCategories,
+            userContext?.userId || null,
+            identifier,
+            email,
+            name
+        ]
+    );
+
+    const coveredCategories = result.rows.filter((row) => targetCategories.includes(row.quiz_category));
+    const attempts = coveredCategories.reduce((sum, row) => sum + toNonNegativeInt(row.attempts, 0), 0);
+    const accuracy = coveredCategories.length
+        ? Math.round(coveredCategories.reduce((sum, row) => sum + toNonNegativeInt(row.average_score, 0), 0) / coveredCategories.length)
+        : 0;
+    const coverage = coveredCategories.length / targetCategories.length;
+
+    const eligible = accuracy >= requirements.minAccuracy &&
+        attempts >= requirements.minAttempts &&
+        coverage >= requirements.coverageTarget;
+
+    return {
+        eligible,
+        reason: eligible ? null : 'readiness',
+        accuracy,
+        attempts,
+        coverage,
+        requirements
+    };
+}
+
 async function issueCertificateIfEligible({ userContext, payload, attemptData }) {
     if (!attemptData.passed) return null;
 
@@ -289,6 +370,13 @@ async function issueCertificateIfEligible({ userContext, payload, attemptData })
         500
     ) || null;
     const issuer = trimText(payload.issuer, 120) || 'BC Learning Academy';
+
+    if (attemptData.sourceType === 'exam') {
+        const readiness = await validateExamCertificateReadiness(userContext, quizId);
+        if (!readiness.eligible) {
+            return null;
+        }
+    }
 
     const result = await pool.query(
         `INSERT INTO user_certificates (

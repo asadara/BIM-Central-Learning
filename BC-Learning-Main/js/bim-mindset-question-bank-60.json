@@ -63,11 +63,11 @@
         "choices": [
             "Paling detail dan lengkap",
             "Sudah dibahas informal di lapangan",
-            "Sudah approved/published dan jelas versinya",
+            "Sudah approved/published, jelas versinya, dan sesuai tujuan release",
             "Sudah dikirim via WA grup"
         ],
         "answer_index": 2,
-        "explanation": "Keputusan harus bersandar pada informasi sah (approved/published) dengan versi/riwayat jelas."
+        "explanation": "Keputusan harus bersandar pada informasi sah (approved/published) dengan versi/riwayat jelas dan sesuai tujuan release."
     },
     {
         "id": "BM-006",
@@ -412,12 +412,12 @@
         "prompt": "Mana pernyataan paling tepat?",
         "choices": [
             "Jika model sudah 3D maka pasti benar",
-            "Jika info sudah approved maka boleh jadi basis keputusan",
+            "Jika info sudah approved maka boleh jadi basis keputusan sesuai tujuan penggunaan yang telah ditentukan",
             "Jika file terbaru maka pasti berlaku",
             "Jika BIM team setuju maka cukup"
         ],
         "answer_index": 1,
-        "explanation": "Approved/published adalah syarat minimal informasi dipakai untuk keputusan/eksekusi."
+        "explanation": "Approved/published adalah syarat minimal informasi dipakai untuk keputusan/eksekusi, tetapi penggunaannya tetap harus sesuai tujuan penggunaan yang telah ditentukan."
     },
     {
         "id": "BM-031",
@@ -773,7 +773,7 @@
         "id": "BM-056",
         "level": "intermediate",
         "type": "single",
-        "prompt": "Dalam proyek kompleks, alasan BIM 'wajib' bukan karena...",
+        "prompt": "Dalam proyek kompleks, alasan BIM diperlukan adalah...",
         "choices": [
             "Banyak disiplin",
             "Banyak perubahan",
@@ -888,7 +888,7 @@
         "prompt": "Dalam konteks BIM Mindset: Tujuan utama WIP (Work in Progress) adalah...",
         "choices": [
             "koordinasi antar tim memakai informasi yang sudah disetujui.",
-            "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+            "digunakan sebagai dasar keputusan atau konstruksi hanya untuk tujuan penggunaan yang diotorisasi pada milestone tersebut.",
             "mengembangkan informasi internal sebelum QA dan review.",
             "menyediakan audit trail dan referensi operasi atau maintenance."
         ],
@@ -949,7 +949,7 @@
             "mengendalikan versi resmi yang dipakai lintas tim."
         ],
         "answer_index": 0,
-        "explanation": "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+        "explanation": "Published state dapat digunakan sebagai dasar keputusan/konstruksi hanya untuk tujuan penggunaan yang diotorisasi pada milestone tersebut."
     },
     {
         "id": "BM-069",

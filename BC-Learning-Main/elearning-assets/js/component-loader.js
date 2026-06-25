@@ -360,6 +360,7 @@ class ComponentLoader {
                         document.body.appendChild(newScript);
                     });
 
+                    this.refreshNavbarAccessControls(navbarContainer);
                 } else {
                     console.warn('❌ Navbar container not found in header component');
                 }
@@ -410,6 +411,8 @@ class ComponentLoader {
         const competencyLink = rootElement.querySelector('#competency-link');
         const adminLink = rootElement.querySelector('#admin-link');
 
+        this.applyNavbarAccessProfile(rootElement, null);
+
         if (accountName) {
             accountName.textContent = isLoggedIn ? displayName : 'Akun';
         }
@@ -444,6 +447,67 @@ class ComponentLoader {
 
         if (adminLink) {
             adminLink.hidden = true;
+        }
+    }
+
+    getStoredAccessToken() {
+        const storedUser = safeReadStoredJson('user');
+        const storedUserData = safeReadStoredJson('userData');
+        return localStorage.getItem('token') || storedUser.token || storedUserData.token || '';
+    }
+
+    async fetchCurrentUserAccessProfile() {
+        const token = this.getStoredAccessToken();
+        const headers = {};
+
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await fetch('/api/users/me/access', {
+            headers,
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        return response.json();
+    }
+
+    setAccessLinksVisibility(rootElement, selector, isVisible) {
+        const root = rootElement || document;
+        root.querySelectorAll(selector).forEach((element) => {
+            element.hidden = !isVisible;
+        });
+    }
+
+    applyNavbarAccessProfile(rootElement, accessProfile) {
+        const profile = accessProfile || {};
+        const root = rootElement || document;
+        this.setAccessLinksVisibility(rootElement, '.dokumen-access-link', !!profile.dokumenAccess);
+        this.setAccessLinksVisibility(rootElement, '.audit-2026-access-link', !!profile.audit2026Access);
+        const competencyLink = root.querySelector('#competency-link');
+        if (competencyLink) {
+            competencyLink.hidden = !profile.mappingKompetensiAccess;
+        }
+    }
+
+    async refreshNavbarAccessControls(rootElement = document) {
+        this.applyNavbarAccessProfile(rootElement, null);
+
+        if (typeof window.BCLRefreshNavbarAccessControls === 'function') {
+            window.BCLRefreshNavbarAccessControls(rootElement);
+            return;
+        }
+
+        try {
+            const accessProfile = await this.fetchCurrentUserAccessProfile();
+            this.applyNavbarAccessProfile(rootElement, accessProfile);
+        } catch (error) {
+            this.applyNavbarAccessProfile(rootElement, null);
         }
     }
 
@@ -616,6 +680,7 @@ class ComponentLoader {
                 if (competencyLink) competencyLink.hidden = false;
                 if (adminLink) adminLink.hidden = false;
             }
+            this.refreshNavbarAccessControls(document);
         } else {
             // User belum login
             if (loggedInOptions) loggedInOptions.style.display = 'none';
@@ -629,6 +694,7 @@ class ComponentLoader {
             if (adminToolsDivider) adminToolsDivider.hidden = true;
             if (competencyLink) competencyLink.hidden = true;
             if (adminLink) adminLink.hidden = true;
+            this.applyNavbarAccessProfile(document, null);
         }
     }
 

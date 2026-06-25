@@ -15,6 +15,8 @@ const { exec, spawn } = require("child_process");
 const os = require("os");
 const { Pool } = require("pg");
 const { getPreferredServerIPv4 } = require("./utils/networkIdentity");
+const { getRequestUser } = require("./utils/auth");
+const { resolveAccessProfile } = require("./utils/userAccess");
 const {
     createPgConfig,
     getDefaultAdminPassword,
@@ -57,6 +59,7 @@ try {
 }
 
 const app = express();
+app.set('trust proxy', 'loopback, linklocal, uniquelocal');
 const HTTP_PORT = process.env.HTTP_PORT || 5052;
 const USE_HTTPS = false; // Force HTTP only for consistency
 
@@ -130,6 +133,7 @@ if (useHttps) {
 // âœ… Fixed: Consolidated constants (removed redundancy)
 const BASE_DIR = process.env.BASE_DIR || "G:/BIM CENTRAL LEARNING/";
 const BASE_PROJECT_DIR = process.env.BASE_PROJECT_DIR || "G:/";
+const LEARNING_ROOT_DIR = path.join(__dirname, "..", "BC-Learning-Main");
 const VIDEO_DIR = path.join(BASE_DIR); // Video directory is the same as BASE_DIR
 const THUMBNAIL_DIR = path.join(__dirname, "public/thumbnails");
 const PLUGIN_PACKAGES_DIR = path.join(__dirname, "plugin-packages");
@@ -195,6 +199,88 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions)); // CORS should be early
+
+async function requireUserFeatureAccess(req, res, next, accessKey) {
+    try {
+        const isApiRequest = String(req.originalUrl || req.path || '').startsWith('/api/');
+        const authUser = getRequestUser(req);
+        if (!authUser) {
+            if (req.accepts('html') && !isApiRequest) {
+                return res.redirect(`/pages/login.html?redirect=${encodeURIComponent(req.originalUrl)}`);
+            }
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const accessProfile = await resolveAccessProfile(authUser);
+        if (!accessProfile[accessKey]) {
+            if (req.accepts('html') && !isApiRequest) {
+                return res.status(403).send('Akses ditolak. Hubungi admin BCL untuk membuka akses halaman ini.');
+            }
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        req.authUser = authUser;
+        req.user = authUser;
+        return next();
+    } catch (error) {
+        console.error('ERROR: Failed to verify feature access:', error);
+        return res.status(500).json({ error: 'Failed to verify access' });
+    }
+}
+
+function requireFeatureAccess(accessKey) {
+    return (req, res, next) => requireUserFeatureAccess(req, res, next, accessKey);
+}
+
+function normalizeAccessPath(value) {
+    try {
+        return decodeURIComponent(String(value || ''))
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '')
+            .toLowerCase();
+    } catch (error) {
+        return String(value || '').replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+    }
+}
+
+function isManualBookPath(value) {
+    const normalized = normalizeAccessPath(value).replace(/^files\//, '');
+    return normalized.startsWith('6. manual books/') ||
+        normalized.startsWith('bahan pembelajaran/manual book/') ||
+        normalized.startsWith('bim guidance & manual books/') ||
+        normalized.includes('/6. manual books/') ||
+        normalized.includes('/bahan pembelajaran/manual book/') ||
+        normalized.includes('/bim guidance & manual books/');
+}
+
+function requireDokumenForManualFile(req, res, next) {
+    const requestedPath = req.query.path || req.query.file || req.path;
+    if (!isManualBookPath(requestedPath)) {
+        return next();
+    }
+    return requireUserFeatureAccess(req, res, next, 'dokumenAccess');
+}
+
+app.get(
+    ['/pages/manual-books.html', '/manual-books.html'],
+    (req, res) => res.sendFile(path.join(LEARNING_ROOT_DIR, 'pages', 'manual-books.html'))
+);
+
+app.get(
+    ['/pages/audit-2026.html', '/audit-2026.html'],
+    (req, res) => res.sendFile(path.join(LEARNING_ROOT_DIR, 'pages', 'audit-2026.html'))
+);
+
+app.use('/api/manual-books', requireFeatureAccess('dokumenAccess'));
+app.use('/api/file', requireDokumenForManualFile);
+app.use('/preview', requireDokumenForManualFile);
+app.use('/files', requireDokumenForManualFile);
+app.use((req, res, next) => {
+    if (!isManualBookPath(req.path)) {
+        return next();
+    }
+    return requireUserFeatureAccess(req, res, next, 'dokumenAccess');
+});
 
 // âœ… SECURITY: JWT Authentication middleware for API endpoints
 function requireAuth(req, res, next) {
@@ -374,6 +460,7 @@ const courseAdminRoutes = require('./routes/courseAdminRoutes'); // âœ… NEW:
 const lanMountRoutes = require('./routes/lanMountRoutes'); // âœ… NEW: LAN Mount Management
 const learningMaterialsAdminRoutes = require('./routes/learningMaterialsAdmin');
 const learningMaterialsPublicRoutes = require('./routes/learningMaterialsPublic');
+const lessonLearnRoutes = require('./routes/lessonLearnRoutes');
 const examMaterialsAdminRoutes = require('./routes/examMaterialsAdmin');
 const examMaterialsPublicRoutes = require('./routes/examMaterialsPublic');
 const levelRequestsPublicRoutes = require('./routes/levelRequestsPublic');
@@ -383,6 +470,7 @@ const videoDisplayRoutes = require('./routes/videoDisplayRoutes');
 const competencyRoutes = require('./routes/competencyRoutes');
 const organizationsRoutes = require('./routes/organizations');
 const pluginsRoutes = require('./routes/plugins');
+const messagesRoutes = require('./routes/messages');
 const videosAdminRoutes = require('./routes/videos');
 const createSystemStatusRoutes = require('./routes/systemStatusRoutes');
 const createActiveUserTracking = require('./modules/activeUserTracking');
@@ -396,11 +484,23 @@ const createAccessRequestRoutes = require('./routes/accessRequests');
 const createProjectCatalogRoutes = require('./routes/projectCatalogRoutes');
 const createProjectMediaMountRoutes = require('./routes/projectMediaMountRoutes');
 const createProjectMediaUtilityRoutes = require('./routes/projectMediaUtilityRoutes');
+const createAudit2026Routes = require('./routes/audit2026Routes');
 const createProjectCatalogService = require('./services/projectCatalogService');
 const createProjectPathResolverService = require('./services/projectPathResolverService');
 const createUserAuthService = require('./services/userAuthService');
 const createProjectMediaUtilityService = require('./services/projectMediaUtilityService');
 const createVideoCatalogService = require('./services/videoCatalogService');
+
+const AUDIT_2026_ROOT = process.env.AUDIT_2026_ROOT || "\\\\pc-bim02\\Dokumen Audit 2026";
+
+function isLoopbackRequest(req) {
+    const remoteAddress = String(req.ip || req.socket?.remoteAddress || '');
+    return (
+        remoteAddress === '127.0.0.1' ||
+        remoteAddress === '::1' ||
+        remoteAddress === '::ffff:127.0.0.1'
+    );
+}
 
 // E-learning modular backend routes
 const moduleRoutes = require('./elearning/routes/moduleRoutes');
@@ -424,6 +524,7 @@ app.use('/api/tutorials', tutorialRoutes);
 // Learning materials (admin & public)
 app.use('/api/admin/learning-materials', learningMaterialsAdminRoutes);
 app.use('/api/learning-materials', learningMaterialsPublicRoutes);
+app.use('/api/lesson-learn', lessonLearnRoutes);
 app.use('/api/admin/exam-materials', examMaterialsAdminRoutes);
 app.use('/api/exam-materials', examMaterialsPublicRoutes);
 app.use('/api/level-requests', levelRequestsPublicRoutes);
@@ -436,7 +537,22 @@ app.use('/api/competency', competencyRoutes);
 app.use('/api/competency-reports', competencyRoutes);
 app.use('/api/organizations', organizationsRoutes);
 app.use('/api/plugins', pluginsRoutes);
+app.use(messagesRoutes);
 app.use('/api/admin/videos', videosAdminRoutes);
+app.get('/api/audit-2026/status', (req, res, next) => {
+    if (!isLoopbackRequest(req)) {
+        return next();
+    }
+
+    return res.json({
+        root: AUDIT_2026_ROOT,
+        rootExists: fs.existsSync(AUDIT_2026_ROOT),
+        localHealthcheck: true
+    });
+});
+app.use('/api/audit-2026', requireFeatureAccess('audit2026Access'), createAudit2026Routes({
+    auditRoot: AUDIT_2026_ROOT
+}));
 
 // âœ… SECURITY: Apply optional auth to courses endpoint (allows access but logs)
 app.use('/api/courses', optionalAuth, (req, res) => {
@@ -597,7 +713,7 @@ const PROJECT_SOURCES = [
     {
         id: 'pc-bim02-2025',
         name: 'PC-BIM02 PROJECT BIM 2025',
-        path: path.resolve(__dirname, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2025'),
+        path: '\\\\pc-bim02\\PROJECT BIM 2025',
         mountId: 'pc-bim02', // Reference to LAN mount
         priority: 2,
         enabled: true, // âœ… ENABLED by default, will auto-disable if mount fails
@@ -611,7 +727,7 @@ const PROJECT_SOURCES = [
     {
         id: 'pc-bim02-2026',
         name: 'PC-BIM02 PROJECT BIM 2026',
-        path: path.resolve(__dirname, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2026'),
+        path: '\\\\pc-bim02\\PROJECT BIM 2026',
         mountId: 'pc-bim02-2026',
         priority: 3,
         enabled: true,
@@ -699,7 +815,8 @@ const PROJECT_SOURCES = [
 
 const PROJECT_PREFIX = 'PROJECT ';
 const VALID_IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
-const VALID_VIDEO_EXT = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.wmv'];
+const VALID_VIDEO_EXT = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.wmv', '.m4v'];
+const VALID_MODEL_EXT = ['.ifc'];
 const EXCLUDED_FOLDERS = VIDEO_SCAN_EXCLUDED_FOLDERS;
 const PROJECT_MEDIA_PROXY_CACHE_DIR = path.resolve(__dirname, 'public', 'cache', 'project-media-proxy');
 const PROJECT_MEDIA_PROXY_TIMEOUT_MS = Number(process.env.PROJECT_MEDIA_PROXY_TIMEOUT_MS) || 3000;
@@ -713,7 +830,10 @@ const PROJECT_MEDIA_PROXY_MIME = {
     '.gif': 'image/gif',
     '.bmp': 'image/bmp',
     '.svg': 'image/svg+xml',
-    '.pdf': 'application/pdf'
+    '.pdf': 'application/pdf',
+    '.ifc': 'application/octet-stream',
+    '.frag': 'application/octet-stream',
+    '.wasm': 'application/wasm'
 };
 
 try {
@@ -748,6 +868,7 @@ const projectCatalogService = createProjectCatalogService({
     projectSources: PROJECT_SOURCES,
     resolveSourcePath: projectPathResolverService.resolveSourcePath,
     validImageExt: VALID_IMAGE_EXT,
+    validModelExt: VALID_MODEL_EXT,
     validVideoExt: VALID_VIDEO_EXT
 });
 app.use(createProjectMediaMountRoutes({

@@ -414,15 +414,7 @@ class BIMShowroomPlayer {
         }
 
         if (/^\\\\pc-bim02\\/i.test(normalizedPath)) {
-            const publicRelativePath = normalizedPath
-                .replace(/^\\\\pc-bim02\\+/i, '')
-                .replace(/\\/g, '/')
-                .split('/')
-                .filter(Boolean)
-                .map((segment) => encodeURIComponent(segment))
-                .join('/');
-
-            return `/data/bim-media-public/pc-bim02/${publicRelativePath}`;
+            return `/api/bim-media/file?path=${encodeURIComponent(normalizedPath.replace(/\\/g, '/'))}`;
         }
 
         if (/^G:[\\/]/i.test(normalizedPath)) {

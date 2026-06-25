@@ -4,15 +4,31 @@ let sidebarElement = null;
 
 const SIDEBAR_SCROLL_KEY = 'elearnSidebarScrollTop';
 const ACTIVE_SIDEBAR_CHECK_DELAYS = [120, 260, 520];
+const SIDEBAR_TOP_LOCK_PATHS = new Set([
+    '/elearning-assets/profile.html'
+]);
 
 let ensureActiveSidebarVisibilityFrame = null;
 let ensureActiveSidebarVisibilityTimers = [];
+
+function getNormalizedSidebarPath() {
+    return window.location.pathname.replace(/\/+$/, '') || '/';
+}
+
+function shouldKeepSidebarAtTop() {
+    return SIDEBAR_TOP_LOCK_PATHS.has(getNormalizedSidebarPath());
+}
 
 function persistSidebarScrollPosition() {
     const sideBar = document.querySelector('.side-bar');
     if (!sideBar) return;
 
     try {
+        if (shouldKeepSidebarAtTop()) {
+            sessionStorage.removeItem(SIDEBAR_SCROLL_KEY);
+            return;
+        }
+
         sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(sideBar.scrollTop || 0));
     } catch (error) {
         console.warn('Failed to persist sidebar scroll position:', error);
@@ -22,6 +38,18 @@ function persistSidebarScrollPosition() {
 function restoreSidebarScrollPosition() {
     const sideBar = document.querySelector('.side-bar');
     if (!sideBar) return;
+
+    if (shouldKeepSidebarAtTop()) {
+        sideBar.scrollTop = 0;
+
+        try {
+            sessionStorage.removeItem(SIDEBAR_SCROLL_KEY);
+        } catch (error) {
+            console.warn('Failed to clear sidebar scroll position:', error);
+        }
+
+        return;
+    }
 
     let savedScrollTop = 0;
 
@@ -45,6 +73,11 @@ function ensureActiveSidebarItemVisible() {
     const sideBar = document.querySelector('.side-bar');
     const activeLink = document.querySelector('.side-bar .navbar a.is-active');
     if (!sideBar || !activeLink) return;
+
+    if (shouldKeepSidebarAtTop()) {
+        sideBar.scrollTop = 0;
+        return;
+    }
 
     const topBuffer = 12;
     const bottomBuffer = 16;

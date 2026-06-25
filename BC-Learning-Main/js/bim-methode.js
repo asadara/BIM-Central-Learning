@@ -61,7 +61,7 @@ class BIMGallery {
         this.refreshAccessRequestState();
 
         // Load initial data
-        this.loadCategories({ preloadSelectedOnly: true });
+        this.loadCategories({ preloadSelectedOnly: true, forceRefresh: true });
     }
 
     getInitialCategoryPreference() {
@@ -472,6 +472,17 @@ class BIMGallery {
             }
         });
 
+        document.addEventListener('click', (e) => {
+            const downloadLink = e.target.closest('.btn-download, #download-btn');
+            if (!downloadLink) return;
+
+            const href = downloadLink.getAttribute('href');
+            if (!href || href === '#') return;
+
+            e.preventDefault();
+            this.handleDownloadLink(downloadLink);
+        });
+
         // Search input
         const searchInput = document.getElementById('search-input');
         if (searchInput) {
@@ -721,7 +732,15 @@ class BIMGallery {
         this.startSlowLoadingTimers('category', 'Memuat kategori... mohon tunggu.');
 
         try {
-            const data = await this.fetchJsonWithFallback('/api/bim-methode/categories');
+            const categoryParams = new URLSearchParams();
+            if (options && options.forceRefresh) {
+                categoryParams.set('refresh', '1');
+                categoryParams.set('_ts', Date.now().toString());
+            }
+            const categoryUrl = categoryParams.toString()
+                ? `/api/bim-methode/categories?${categoryParams.toString()}`
+                : '/api/bim-methode/categories';
+            const data = await this.fetchJsonWithFallback(categoryUrl, { cache: 'no-store' });
 
             if (data.success) {
                 this.categories = data.categories || [];
@@ -811,6 +830,10 @@ class BIMGallery {
             if (serverType !== 'all') {
                 params.set('type', serverType);
             }
+            if (options && options.forceRefresh) {
+                params.set('refresh', '1');
+                params.set('_ts', Date.now().toString());
+            }
 
             const queryString = params.toString();
             let url = '/api/bim-methode/media';
@@ -818,7 +841,7 @@ class BIMGallery {
                 url += `?${queryString}`;
             }
 
-            const data = await this.fetchJsonWithFallback(url);
+            const data = await this.fetchJsonWithFallback(url, { cache: 'no-store' });
 
             if (data.success) {
                 this.mediaData = data.media || [];
@@ -1255,6 +1278,75 @@ class BIMGallery {
             url: this.getMediaUrl(item, { download: true }),
             filename: item && item.name ? item.name : null
         };
+    }
+
+    async handleDownloadLink(linkElement) {
+        const url = linkElement.getAttribute('href');
+        const fallbackFilename = linkElement.getAttribute('download') || 'bim-methode-file';
+        const originalText = linkElement.innerHTML;
+
+        try {
+            linkElement.setAttribute('aria-busy', 'true');
+            linkElement.classList.add('disabled');
+            linkElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading';
+
+            await this.downloadWithAuth(url, fallbackFilename);
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert(`Gagal download file: ${error.message}`);
+        } finally {
+            linkElement.removeAttribute('aria-busy');
+            linkElement.classList.remove('disabled');
+            linkElement.innerHTML = originalText;
+        }
+    }
+
+    async downloadWithAuth(url, fallbackFilename) {
+        const response = await fetch(url, {
+            headers: this.getAuthHeaders(),
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Sesi login tidak terbaca. Silakan login ulang lalu coba download lagi.');
+            }
+            if (response.status === 403) {
+                throw new Error('Akses download original belum aktif untuk akun ini.');
+            }
+            throw new Error(`Server mengembalikan HTTP ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const filename = this.getFilenameFromResponse(response) || fallbackFilename || 'bim-methode-file';
+        const objectUrl = URL.createObjectURL(blob);
+
+        try {
+            const anchor = document.createElement('a');
+            anchor.href = objectUrl;
+            anchor.download = filename;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+        } finally {
+            setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        }
+    }
+
+    getFilenameFromResponse(response) {
+        const disposition = response.headers.get('Content-Disposition') || '';
+        const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+        if (utf8Match && utf8Match[1]) {
+            try {
+                return decodeURIComponent(utf8Match[1].trim());
+            } catch (error) {
+                return utf8Match[1].trim();
+            }
+        }
+
+        const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+        return plainMatch && plainMatch[1] ? plainMatch[1].trim() : '';
     }
 
     shouldShowWatermarkRequestButton(item) {

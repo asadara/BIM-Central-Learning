@@ -120,7 +120,7 @@ class SPARouter {
 
         // Handle root path
         if (path === '/' || path === '') {
-            return '/elearning-assets/home.html';
+            return '/elearning-assets/dashboard.html';
         }
 
         // Handle pages directory

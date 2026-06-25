@@ -289,6 +289,39 @@ node "%~dp0backend\scripts\db-ping.js" >nul 2>nul
 if errorlevel 1 exit /b 1
 exit /b 0
 
+:wait_for_pc_bim02_audit_unc
+echo [INFO] Checking PC-BIM02 Audit 2026 UNC readiness before backend start...
+for /l %%i in (1,1,24) do (
+    node -e "process.exit(require('fs').existsSync('\\\\pc-bim02\\Dokumen Audit 2026') ? 0 : 1)" >nul 2>nul
+    if not errorlevel 1 (
+        echo [OK] PC-BIM02 Audit 2026 UNC is accessible
+        exit /b 0
+    )
+    echo [INFO] Waiting for PC-BIM02 Audit 2026 UNC ^(attempt %%i/24^)...
+    call :sleep 5
+)
+echo [WARNING] PC-BIM02 Audit 2026 UNC is still unavailable; backend will start and watchdog will retry recovery later
+exit /b 0
+
+:recycle_stale_audit_backend
+node -e "process.exit(require('fs').existsSync('\\\\pc-bim02\\Dokumen Audit 2026') ? 0 : 1)" >nul 2>nul
+if errorlevel 1 exit /b 0
+
+node -e "fetch('http://127.0.0.1:%BACKEND_PORT%/api/audit-2026/status').then(r=>r.json()).then(j=>process.exit(j && j.rootExists ? 0 : 1)).catch(()=>process.exit(1))" >nul 2>nul
+if not errorlevel 1 exit /b 0
+
+echo [WARNING] Existing backend cannot read PC-BIM02 while user context can; recycling backend on port %BACKEND_PORT%.
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%BACKEND_PORT%.*LISTENING"') do (
+    taskkill /PID %%p /F >nul 2>&1
+    if errorlevel 1 (
+        wmic process where "ProcessId=%%p" call terminate >nul 2>&1
+    )
+)
+call :sleep 3
+set "BACKEND_ALREADY_RUNNING=0"
+set "BACKEND_PORT_LISTENING=0"
+exit /b 0
+
 :sleep
 set "SLEEP_SECS=%~1"
 if not defined SLEEP_SECS set "SLEEP_SECS=1"
@@ -553,6 +586,10 @@ if "%BOOT_DELAY%"=="1" (
     call :sleep 20
 )
 
+if not "%RUN_AS_SYSTEM%"=="1" (
+    call :wait_for_pc_bim02_audit_unc
+)
+
 :: Reset mode: perform targeted cleanup if requested
 if "%RESET_MODE%"=="1" (
     echo [INFO] Reset mode activated - performing targeted cleanup...
@@ -606,6 +643,10 @@ if not errorlevel 1 set "BACKEND_PORT_LISTENING=1"
 curl.exe -s http://127.0.0.1:%BACKEND_PORT%/ping -m 3 >nul 2>&1
 if not errorlevel 1 set "BACKEND_ALREADY_RUNNING=1"
 if "%BACKEND_ALREADY_RUNNING%"=="0" if "%BACKEND_PORT_LISTENING%"=="1" set "BACKEND_ALREADY_RUNNING=1"
+
+if not "%RUN_AS_SYSTEM%"=="1" if "%BACKEND_ALREADY_RUNNING%"=="1" (
+    call :recycle_stale_audit_backend
+)
 
 if "%BACKEND_ALREADY_RUNNING%"=="1" (
     if "%BACKEND_PORT_LISTENING%"=="1" (

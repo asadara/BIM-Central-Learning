@@ -54,6 +54,12 @@ const LEARNING_SECTION_CARDS = [
     }
 ];
 
+function shouldUseOfficialCourseGuide() {
+    return window.BCL_OFFICIAL_COURSE_GUIDE === true ||
+        !!document.getElementById('learning-guide-section') ||
+        !!document.getElementById('official-paths-section');
+}
+
 function humanizePdfCategory(value) {
     return String(value || '')
         .split('-')
@@ -72,7 +78,9 @@ function getPdfCategoryLabel(material) {
 
 function getPdfThumbnailUrl(material) {
     if (!material?.id) return '';
-    return `/api/learning-materials/thumbnail/${encodeURIComponent(material.id)}`;
+    const version = material.thumbnailVersion || material.updatedAt || material.size || material.id;
+    const query = version ? `?v=${encodeURIComponent(version)}` : '';
+    return `/api/learning-materials/thumbnail/${encodeURIComponent(material.id)}${query}`;
 }
 
 function getPdfCardMetaLabel(material) {
@@ -356,6 +364,8 @@ function syncPdfFilterButtons() {
 }
 
 function renderPdfRoleCards() {
+    if (shouldUseOfficialCourseGuide()) return;
+
     const host = document.querySelector('.pdf-role-entry');
     if (!host) return;
 
@@ -408,6 +418,8 @@ function renderPdfRoleCards() {
 }
 
 function renderLearningSectionsGuide() {
+    if (shouldUseOfficialCourseGuide()) return;
+
     const host = document.querySelector('.learning-sections-guide');
     if (!host) return;
 
@@ -462,6 +474,7 @@ function renderLearningSectionsGuide() {
 }
 
 function ensureLearningSectionsGuide() {
+    if (shouldUseOfficialCourseGuide()) return;
     if (learningSectionsGuideBuilt) return;
 
     const anchor = document.querySelector('.pdf-role-entry') || document.getElementById('pdf-section');
@@ -479,6 +492,7 @@ function syncLearningSectionsGuide() {
 }
 
 function ensurePdfRoleEntry() {
+    if (shouldUseOfficialCourseGuide()) return;
     if (pdfRoleCardsBuilt) return;
 
     const pdfSection = document.getElementById('pdf-section');
@@ -491,6 +505,8 @@ function ensurePdfRoleEntry() {
 }
 
 function applyDefaultLearningSectionLayout() {
+    if (shouldUseOfficialCourseGuide()) return;
+
     const pdfSection = getSectionElement('pdf-section');
     const videoSection = getSectionElement('video-section');
     if (!pdfSection || !videoSection) return;
@@ -546,8 +562,10 @@ function renderPdfRoleEmptyState(category) {
 }
 
 function syncPdfRoleUi() {
-    ensurePdfRoleEntry();
-    renderPdfRoleCards();
+    if (!shouldUseOfficialCourseGuide()) {
+        ensurePdfRoleEntry();
+        renderPdfRoleCards();
+    }
     syncPdfFilterButtons();
 }
 

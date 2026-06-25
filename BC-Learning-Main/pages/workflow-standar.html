@@ -264,23 +264,19 @@
                     <section class="content-explanation">
                         <h2>Status & Penggunaan Informasi</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (information delivery & CDE workflow concepts);
-                            Indonesia: SNI ISO 19650-2 (Asset Delivery Phase)
-                            <!-- TODO: Verify PUPR/LPJK/SNI specific regulations -->
+                            <strong>Pijakan narasi:</strong> prinsip CDE, status informasi, dan kontrol container yang selaras dengan praktik ISO 19650.
                         </div>
-                        <p>Status informasi menunjukkan kesiapan dan kepercayaan data untuk digunakan dalam pengambilan
-                            keputusan.</p>
+                        <p>Status informasi menunjukkan kesiapan data untuk digunakan. Status bukan label administrasi; status menentukan apakah informasi masih untuk kerja internal, siap direview, sudah boleh dipakai, atau hanya menjadi arsip.</p>
                         <ul>
                             <li><strong>Draft/WIP:</strong> Dalam pengerjaan, belum siap untuk sharing</li>
                             <li><strong>Review/Shared:</strong> Dibagikan untuk review, feedback diterima</li>
-                            <li><strong>Approved/Published:</strong> Disetujui, siap digunakan untuk keputusan</li>
+                            <li><strong>Approved/Published:</strong> Disetujui, siap digunakan sesuai tujuan release atau tujuan penggunaan yang telah ditentukan</li>
                             <li><strong>Archived:</strong> Disimpan untuk referensi, tidak lagi aktif</li>
                         </ul>
 
                         <h2>Naming & Version Rules</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (information container management); Indonesia: SNI
-                            8435:2017 (BIM Data Management) <!-- TODO: Verify internal company standards -->
+                            <strong>Pijakan narasi:</strong> aturan penamaan, revisi, versi, dan metadata proyek harus ditetapkan di BEP atau standar internal proyek.
                         </div>
                         <p>Konvensi naming dan versioning memastikan informasi mudah ditemukan dan dilacak perubahannya.
                         </p>
@@ -292,16 +288,32 @@
 
                         <h2>Release Package Minimum</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (information deliverables); Indonesia: SNI 8434:2017
-                            (BIM Model Production) <!-- TODO: Verify contract specifications -->
+                            <strong>Pijakan narasi:</strong> release package harus mengikuti scope, kebutuhan informasi, dan kontrak proyek.
                         </div>
-                        <p>Package release harus memuat semua elemen yang diperlukan untuk penggunaan yang dimaksud.</p>
+                        <p>Package release harus memuat semua elemen yang diperlukan untuk penggunaan yang dimaksud, bukan sekadar kumpulan file. Setiap paket perlu menjelaskan status, tujuan pemakaian, versi, batasan, dan pihak yang menyetujui.</p>
                         <ul>
-                            <li><strong>Model Files:</strong> IFC atau native format dengan LOD sesuai</li>
+                            <li><strong>Model files:</strong> IFC atau native format sesuai kebutuhan pertukaran informasi</li>
                             <li><strong>Documentation:</strong> Drawing, schedule, specifications</li>
                             <li><strong>Metadata:</strong> Status, approval, change log</li>
                             <li><strong>Supporting Data:</strong> QA reports, clash detection results</li>
                         </ul>
+
+                        <h2>Yang Perlu Dipahami</h2>
+                        <p>Standar dan aturan main menjaga konsistensi, traceability, dan accountability. Tujuannya bukan membuat pekerjaan lebih birokratis, tetapi memastikan setiap orang memakai informasi yang sama, dengan status dan batasan yang sama.</p>
+
+                        <h2>Kesalahan Umum yang Perlu Dihindari</h2>
+                        <ul>
+                            <li>Mengubah nama file, versi, atau folder secara bebas karena dianggap hanya urusan admin.</li>
+                            <li>Overwrite file tanpa version history sehingga bukti perubahan hilang.</li>
+                            <li>Menganggap file di folder bersama otomatis boleh dipakai untuk konstruksi.</li>
+                            <li>Melepas paket informasi tanpa release note, status, atau daftar perubahan.</li>
+                        </ul>
+
+                        <h2>Implikasi di Proyek</h2>
+                        <p>Planner, QS, engineer, QA/QC, dan site team harus dapat melihat dengan cepat informasi mana yang berlaku. Jika naming, versioning, dan status tidak konsisten, koordinasi proyek akan bergantung pada ingatan personal, bukan sistem informasi.</p>
+
+                        <h2>Ringkasan Pendek</h2>
+                        <p>Standar BIM adalah bahasa kerja bersama untuk memastikan informasi mudah ditemukan, jelas statusnya, dan dapat dipertanggungjawabkan saat dipakai untuk keputusan proyek.</p>
                     </section>
 
                     <section class="example">
@@ -330,10 +342,7 @@
                         <ul>
                             <li>ISO 19650-1 (Concepts & Principles)</li>
                             <li>ISO 19650-2 (Asset Delivery Phase)</li>
-                            <li>SNI 8434:2017 (BIM Model Production)</li>
-                            <li>SNI 8435:2017 (BIM Data Management)</li>
-                            <li>Regulasi PUPR/LPJK terkait BIM (cek nomor/peraturan internal perusahaan) <!-- TODO -->
-                            </li>
+                            <li>Dokumen kontrak, BEP, standar internal, dan prosedur CDE proyek</li>
                         </ul>
                     </section>
                 </div>

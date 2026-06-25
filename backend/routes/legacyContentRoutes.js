@@ -50,20 +50,27 @@ function createLegacyContentRoutes({
 
     function buildManualBookKeywords(...parts) {
         const stopWords = new Set([
-            "manual", "book", "books", "pdf", "dan", "the", "with", "for", "bim", "nke"
+            "manual", "book", "books", "pdf", "dan", "the", "with", "for", "bim", "nke", "guidance"
         ]);
 
         const tokenSet = new Set();
         parts
             .filter(Boolean)
             .join(" ")
-            .replace(/[()&/_-]+/g, " ")
+            .replace(/\.[a-z0-9]+$/gi, " ")
+            .replace(/[()&/_.,-]+/g, " ")
             .split(/\s+/)
             .map((token) => token.trim())
             .filter(Boolean)
             .forEach((token) => {
                 const normalized = token.toLowerCase();
-                if (normalized.length < 2 || stopWords.has(normalized)) {
+                const isDimensionToken = /^[3-7]d$/i.test(token);
+                if (
+                    normalized.length < 2 ||
+                    normalized.length > 24 ||
+                    stopWords.has(normalized) ||
+                    (!isDimensionToken && (/\d/.test(token) || /\s/.test(token)))
+                ) {
                     return;
                 }
                 tokenSet.add(token);
@@ -72,12 +79,56 @@ function createLegacyContentRoutes({
         return Array.from(tokenSet).slice(0, 12);
     }
 
+    function normalizeManualBookTitle(title) {
+        const exactTitleMap = new Map([
+            ["HARDWARE TEST & ASSESMENT", "HARDWARE TEST & ASSESSMENT"],
+            ["MANAJEMEN & ORGANISASI MODEL - SHEET & TITTLE BLOCK", "MANAJEMEN & ORGANISASI MODEL - SHEET & TITLE BLOCK"],
+            ["QUIZIONER FORM", "QUESTIONNAIRE FORM"],
+            ["UNIT MEASEUREMENT STANDARD", "UNIT MEASUREMENT STANDARD"],
+            ["LESSON LEARN", "Lesson Learned"]
+        ]);
+
+        const normalized = String(title || "").replace(/\s+/g, " ").trim();
+        return exactTitleMap.get(normalized.toUpperCase()) || normalized || "Manual Book";
+    }
+
     function toManualBookTitle(folderName) {
-        return String(folderName || "")
+        const title = String(folderName || "")
             .replace(/^\d+\.\s*/i, "")
             .replace(/^manual books?\s*-\s*/i, "")
             .replace(/^manual book\s*-\s*/i, "")
-            .trim() || "Manual Book";
+            .trim();
+
+        return normalizeManualBookTitle(title);
+    }
+
+    function mergeManualBookGroups(groups) {
+        const groupMap = new Map();
+
+        groups.forEach((group) => {
+            const key = group.displayTitle.toLowerCase();
+            const existing = groupMap.get(key);
+
+            if (!existing) {
+                groupMap.set(key, {
+                    ...group,
+                    sourceRoots: [group.sourceRoot],
+                    folderNames: [group.folderName]
+                });
+                return;
+            }
+
+            existing.sourceRoots = Array.from(new Set([...existing.sourceRoots, group.sourceRoot]));
+            existing.folderNames = Array.from(new Set([...existing.folderNames, group.folderName]));
+            existing.folderName = existing.folderNames.join(" / ");
+            existing.keywords = Array.from(new Set([...existing.keywords, ...group.keywords])).slice(0, 12);
+            existing.files = [...existing.files, ...group.files]
+                .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: "base" }));
+            existing.fileCount = existing.files.length;
+            existing.description = `${existing.fileCount} PDF tersedia di ${existing.displayTitle}.`;
+        });
+
+        return Array.from(groupMap.values());
     }
 
     function resolveExistingManualBookRoots() {
@@ -164,12 +215,13 @@ function createLegacyContentRoutes({
                 });
         });
 
-        groups.sort((left, right) => left.displayTitle.localeCompare(right.displayTitle, undefined, { sensitivity: "base" }));
+        const mergedGroups = mergeManualBookGroups(groups)
+            .sort((left, right) => left.displayTitle.localeCompare(right.displayTitle, undefined, { sensitivity: "base" }));
 
         return {
             roots: existingRoots.map((rootDir) => path.relative(baseDir, rootDir).replace(/\\/g, "/")),
-            quickFilters: groups.map((group) => group.displayTitle),
-            groups
+            quickFilters: mergedGroups.map((group) => group.displayTitle),
+            groups: mergedGroups
         };
     }
 

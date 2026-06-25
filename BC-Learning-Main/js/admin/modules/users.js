@@ -66,7 +66,7 @@ class UsersModule {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="14" class="text-center py-4">
+                <td colspan="16" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                         <div class="spinner-border text-primary mb-2" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -127,7 +127,7 @@ class UsersModule {
                 console.error('❌ Users API failed:', response.status, errorText);
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="14" class="text-center py-4">
+                        <td colspan="16" class="text-center py-4">
                             <div class="alert alert-danger mb-0">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 Failed to load users: ${response.status} ${response.statusText}
@@ -139,7 +139,7 @@ class UsersModule {
             console.error('❌ Error loading users:', error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="14" class="text-center py-4">
+                    <td colspan="16" class="text-center py-4">
                         <div class="alert alert-danger mb-0">
                             <i class="fas fa-exclamation-circle me-2"></i>
                             Error loading users: ${error.message}
@@ -158,7 +158,7 @@ class UsersModule {
         if (users.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="14" class="text-center py-4">
+                    <td colspan="16" class="text-center py-4">
                         <div class="d-flex flex-column align-items-center">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                             <p class="text-muted mb-2">No users found</p>
@@ -210,6 +210,8 @@ class UsersModule {
             const organization = user.organization || 'N/A';
             const isActive = user.is_active !== undefined ? user.is_active : (user.isActive !== undefined ? user.isActive : true);
             const mappingAccess = !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
+            const dokumenAccess = !!(user.dokumenAccess || user.dokumen_access);
+            const audit2026Access = !!(user.audit2026Access || user.audit_2026_access);
             const libraryDownloadAccess = !!(user.libraryDownloadAccess || user.library_download_access);
             const watermarkFreeDownloadAccess = !!(user.watermarkFreeDownloadAccess || user.watermark_free_download_access);
             const statusBadge = isActive ?
@@ -261,8 +263,8 @@ class UsersModule {
                     </td>
                     <td>${statusBadge}</td>
                     <td>${regDate}</td>
-                    <td class="text-center">
-                        <div class="form-check">
+                    <td class="text-center access-check-cell" title="Mapping Kompetensi">
+                        <div class="form-check access-checkbox-wrap">
                             <input class="form-check-input mapping-access-checkbox" type="checkbox"
                                    id="mappingAccess_${userId}"
                                    ${mappingAccess ? 'checked' : ''}
@@ -270,8 +272,26 @@ class UsersModule {
                             <label class="form-check-label" for="mappingAccess_${userId}"></label>
                         </div>
                     </td>
-                    <td class="text-center">
-                        <div class="form-check">
+                    <td class="text-center access-check-cell" title="Dokumen">
+                        <div class="form-check access-checkbox-wrap">
+                            <input class="form-check-input mapping-access-checkbox" type="checkbox"
+                                   id="dokumenAccess_${userId}"
+                                   ${dokumenAccess ? 'checked' : ''}
+                                   onchange="window.adminPanel.modules.get('users').instance.toggleDokumenAccess('${userId}', this.checked, this)">
+                            <label class="form-check-label" for="dokumenAccess_${userId}"></label>
+                        </div>
+                    </td>
+                    <td class="text-center access-check-cell" title="Audit 2026">
+                        <div class="form-check access-checkbox-wrap">
+                            <input class="form-check-input mapping-access-checkbox" type="checkbox"
+                                   id="audit2026Access_${userId}"
+                                   ${audit2026Access ? 'checked' : ''}
+                                   onchange="window.adminPanel.modules.get('users').instance.toggleAudit2026Access('${userId}', this.checked, this)">
+                            <label class="form-check-label" for="audit2026Access_${userId}"></label>
+                        </div>
+                    </td>
+                    <td class="text-center access-check-cell" title="Pustaka Download">
+                        <div class="form-check access-checkbox-wrap">
                             <input class="form-check-input mapping-access-checkbox" type="checkbox"
                                    id="libraryDownloadAccess_${userId}"
                                    ${libraryDownloadAccess ? 'checked' : ''}
@@ -279,8 +299,8 @@ class UsersModule {
                             <label class="form-check-label" for="libraryDownloadAccess_${userId}"></label>
                         </div>
                     </td>
-                    <td class="text-center">
-                        <div class="form-check">
+                    <td class="text-center access-check-cell" title="Download Tanpa Watermark">
+                        <div class="form-check access-checkbox-wrap">
                             <input class="form-check-input mapping-access-checkbox" type="checkbox"
                                    id="watermarkFreeAccess_${userId}"
                                    ${watermarkFreeDownloadAccess ? 'checked' : ''}
@@ -992,21 +1012,34 @@ class UsersModule {
     }
 
     async toggleLibraryDownloadAccess(userId, isChecked, checkboxElement) {
-        return this.updateBooleanAccess(userId, 'libraryDownloadAccess', isChecked, checkboxElement, 'Library download access');
+        return this.updateBooleanAccess(userId, 'libraryDownloadAccess', isChecked, checkboxElement, 'Library download access', 'library_download_access');
+    }
+
+    async toggleDokumenAccess(userId, isChecked, checkboxElement) {
+        return this.updateBooleanAccess(userId, 'dokumenAccess', isChecked, checkboxElement, 'Dokumen access', 'dokumen_access');
+    }
+
+    async toggleAudit2026Access(userId, isChecked, checkboxElement) {
+        return this.updateBooleanAccess(userId, 'audit2026Access', isChecked, checkboxElement, 'Audit 2026 access', 'audit_2026_access');
     }
 
     async toggleWatermarkFreeDownloadAccess(userId, isChecked, checkboxElement) {
-        return this.updateBooleanAccess(userId, 'watermarkFreeDownloadAccess', isChecked, checkboxElement, 'Watermark-free download access');
+        return this.updateBooleanAccess(userId, 'watermarkFreeDownloadAccess', isChecked, checkboxElement, 'Watermark-free download access', 'watermark_free_download_access');
     }
 
-    async updateBooleanAccess(userId, fieldName, isChecked, checkboxElement, label) {
+    async updateBooleanAccess(userId, fieldName, isChecked, checkboxElement, label, legacyFieldName = null) {
         try {
             console.log('ðŸ”„ Toggling user access for user:', userId, fieldName, 'to:', isChecked);
+
+            const payload = { [fieldName]: isChecked };
+            if (legacyFieldName) {
+                payload[legacyFieldName] = isChecked;
+            }
 
             const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ [fieldName]: isChecked })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
@@ -1046,7 +1079,7 @@ class UsersModule {
         }
 
         // Create CSV content
-        const headers = ['ID', 'Username', 'Email', 'BIM Level', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Library Download Access', 'Watermark-Free Download Access'];
+        const headers = ['ID', 'Username', 'Email', 'BIM Level', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Library Download Access', 'Watermark-Free Download Access'];
         const csvContent = [
             headers.join(','),
             ...this.allUsers.map(user => [
@@ -1059,6 +1092,8 @@ class UsersModule {
                 (user.is_active !== undefined ? user.is_active : user.isActive !== undefined ? user.isActive : true) ? 'Active' : 'Inactive',
                 user.registrationDate || user.registration_date || user.created_at,
                 (user.mappingKompetensiAccess || user.mapping_kompetensi_access) ? 'Yes' : 'No',
+                (user.dokumenAccess || user.dokumen_access) ? 'Yes' : 'No',
+                (user.audit2026Access || user.audit_2026_access) ? 'Yes' : 'No',
                 (user.libraryDownloadAccess || user.library_download_access) ? 'Yes' : 'No',
                 (user.watermarkFreeDownloadAccess || user.watermark_free_download_access) ? 'Yes' : 'No'
             ].map(field => `"${field || ''}"`).join(','))

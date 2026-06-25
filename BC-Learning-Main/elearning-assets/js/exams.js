@@ -7,6 +7,90 @@ document.addEventListener('DOMContentLoaded', function () {
 
 const examData = [
     {
+        id: 'bim-mindset-theory-exam',
+        title: 'BIM Mindset Theory Exam',
+        category: 'bim-mindset',
+        level: 'beginner',
+        requiredLevel: 'BIM Modeller',
+        duration: 30,
+        questionCount: 10,
+        passingScore: 80,
+        prerequisites: ['bim-mindset-quiz', 'bim-mindset-practice'],
+        description: 'Ujian teori non-software tentang BIM sebagai sistem manajemen informasi, status, versi, otoritas, dan keputusan.',
+        syllabus: [
+            'BIM sebagai manajemen informasi',
+            'Status dan versi informasi',
+            'Sumber informasi resmi',
+            'Risiko salah pakai informasi',
+            'Single source of truth'
+        ],
+        attempts: 0,
+        maxAttempts: 3,
+        retakePeriod: 7,
+        lastAttempt: null,
+        certification: {
+            title: 'BIM Mindset Theory',
+            issuer: 'BC Learning Academy',
+            validFor: 24
+        }
+    },
+    {
+        id: 'bim-governance-theory-exam',
+        title: 'BIM Governance Theory Exam',
+        category: 'bim-governance',
+        level: 'intermediate',
+        requiredLevel: 'BIM Coordinator',
+        duration: 35,
+        questionCount: 10,
+        passingScore: 80,
+        prerequisites: ['bim-governance-quiz', 'bim-governance-practice'],
+        description: 'Ujian teori non-software tentang authority, responsibility, decision gate, quality gate, dan audit trail.',
+        syllabus: [
+            'Responsibility dan authority',
+            'Decision gate',
+            'Quality gate',
+            'Kontrol status dan versi',
+            'Audit trail dan risiko keputusan'
+        ],
+        attempts: 0,
+        maxAttempts: 3,
+        retakePeriod: 7,
+        lastAttempt: null,
+        certification: {
+            title: 'BIM Governance Theory',
+            issuer: 'BC Learning Academy',
+            validFor: 24
+        }
+    },
+    {
+        id: 'bim-delivery-workflow-theory-exam',
+        title: 'BIM Delivery Workflow Theory Exam',
+        category: 'delivery-workflow',
+        level: 'intermediate',
+        requiredLevel: 'BIM Coordinator',
+        duration: 35,
+        questionCount: 10,
+        passingScore: 80,
+        prerequisites: ['bim-delivery-workflow-quiz', 'delivery-workflow-practice'],
+        description: 'Ujian teori non-software tentang alur delivery informasi BIM dari kebutuhan hingga penggunaan di proyek.',
+        syllabus: [
+            'Kebutuhan informasi',
+            'Produksi model terarah',
+            'Koordinasi lintas disiplin',
+            'Validasi fit-for-purpose',
+            'Rilis dan penggunaan informasi'
+        ],
+        attempts: 0,
+        maxAttempts: 3,
+        retakePeriod: 7,
+        lastAttempt: null,
+        certification: {
+            title: 'BIM Delivery Workflow Theory',
+            issuer: 'BC Learning Academy',
+            validFor: 24
+        }
+    },
+    {
         id: 'autocad-certification',
         title: 'AutoCAD Certified User Exam',
         category: 'autocad',
@@ -94,6 +178,462 @@ const examData = [
 ];
 
 const examQuestions = {
+    'bim-mindset-theory-exam': [
+        {
+            id: 'mindset-exam-001',
+            question: 'Apa definisi BIM yang paling tepat untuk konteks pengambilan keputusan proyek?',
+            type: 'multiple-choice',
+            options: [
+                'Metode membuat model 3D yang lebih realistis',
+                'Sistem untuk mengelola informasi proyek agar keputusan memakai data yang sah dan terlacak',
+                'Software pengganti koordinasi proyek',
+                'Cara mempercepat gambar kerja tanpa proses approval'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'easy',
+            explanation: 'BIM menekankan pengelolaan informasi proyek, termasuk status, versi, otoritas, dan jejak keputusan.'
+        },
+        {
+            id: 'mindset-exam-002',
+            question: 'Informasi yang belum memiliki status approved sebaiknya diperlakukan sebagai...',
+            type: 'multiple-choice',
+            options: [
+                'Informasi final jika sudah terlihat lengkap',
+                'Referensi kerja terbatas yang belum menjadi dasar keputusan resmi',
+                'Informasi yang otomatis boleh dipakai site',
+                'Informasi yang tidak perlu dicek lagi'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'easy',
+            explanation: 'Status approved atau published menunjukkan informasi sudah mendapat otorisasi penggunaan.'
+        },
+        {
+            id: 'mindset-exam-003',
+            question: 'Apa risiko utama dari budaya kerja yang mengandalkan file kiriman chat sebagai sumber keputusan?',
+            type: 'multiple-choice',
+            options: [
+                'File menjadi terlalu kecil',
+                'Status, versi, dan otoritas informasi tidak jelas',
+                'Model tidak bisa dibuka',
+                'Semua review menjadi otomatis'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'medium',
+            explanation: 'Pengiriman informal tidak menjamin kontrol versi, status, atau approval.'
+        },
+        {
+            id: 'mindset-exam-004',
+            question: 'Single source of truth paling tepat dipahami sebagai...',
+            type: 'multiple-choice',
+            options: [
+                'Satu file model untuk semua kebutuhan',
+                'Satu sumber rujukan resmi untuk status, versi, dan jejak informasi',
+                'Satu modeller yang menjadi sumber semua data',
+                'Satu software wajib untuk seluruh proyek'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'medium',
+            explanation: 'Single source of truth adalah mekanisme rujukan resmi, bukan selalu satu file atau satu orang.'
+        },
+        {
+            id: 'mindset-exam-005',
+            question: 'Indikator kuat bahwa BIM sudah dipahami sebagai mindset adalah...',
+            type: 'multiple-choice',
+            options: [
+                'Semua orang bisa membuat family kompleks',
+                'Tim konsisten bertanya status, versi, otoritas, dan tujuan informasi sebelum memakai data',
+                'Rendering proyek semakin banyak',
+                'Semua koordinasi dilakukan tanpa catatan'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'medium',
+            explanation: 'Mindset BIM terlihat dari disiplin memakai informasi yang sah dan terlacak.'
+        },
+        {
+            id: 'mindset-exam-006',
+            question: 'Mengapa BIM tidak boleh dipahami hanya sebagai 3D?',
+            type: 'multiple-choice',
+            options: [
+                'Karena 3D tidak pernah berguna',
+                'Karena 3D adalah wadah, sedangkan nilai utamanya ada pada informasi dan proses penggunaannya',
+                'Karena BIM hanya untuk dokumen 2D',
+                'Karena semua proyek harus tanpa model'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'easy',
+            explanation: 'Model 3D adalah salah satu media informasi. Nilai BIM muncul saat informasi dikelola dan dipakai dengan benar.'
+        },
+        {
+            id: 'mindset-exam-007',
+            question: 'Keputusan procurement sebaiknya memakai informasi yang...',
+            type: 'multiple-choice',
+            options: [
+                'Paling cepat diterima',
+                'Sudah dirilis resmi, jelas versi, status, dan tujuan penggunaannya',
+                'Paling detail secara visual',
+                'Paling sering dibagikan di grup'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'medium',
+            explanation: 'Procurement berdampak biaya dan waktu, sehingga harus berbasis informasi resmi.'
+        },
+        {
+            id: 'mindset-exam-008',
+            question: 'Jika informasi terlihat lengkap tetapi tidak jelas sumber resminya, tindakan terbaik adalah...',
+            type: 'multiple-choice',
+            options: [
+                'Langsung dipakai agar tidak terlambat',
+                'Meminta klarifikasi sumber, status, versi, dan otoritas sebelum dipakai',
+                'Mengubah sendiri status file',
+                'Membuat salinan baru lalu dipakai'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'medium',
+            explanation: 'Kelengkapan visual tidak menggantikan validasi sumber dan status informasi.'
+        },
+        {
+            id: 'mindset-exam-009',
+            question: 'Apa yang paling dilindungi oleh disiplin informasi BIM?',
+            type: 'multiple-choice',
+            options: [
+                'Tampilan model',
+                'Keputusan proyek dari risiko salah informasi',
+                'Jumlah software',
+                'Kecepatan membuat render'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'easy',
+            explanation: 'Disiplin informasi BIM menurunkan risiko keputusan salah akibat data yang tidak sah atau tidak mutakhir.'
+        },
+        {
+            id: 'mindset-exam-010',
+            question: 'Dalam budaya BIM yang sehat, pertanyaan pertama sebelum memakai data adalah...',
+            type: 'multiple-choice',
+            options: [
+                'Apakah file ini bagus untuk presentasi?',
+                'Apakah informasi ini boleh dipakai untuk tujuan keputusan saat ini?',
+                'Apakah model ini paling detail?',
+                'Apakah file ini dibuat dengan software terbaru?'
+            ],
+            correct: 1,
+            category: 'bim-mindset',
+            difficulty: 'easy',
+            explanation: 'Kelayakan penggunaan informasi harus dikaitkan dengan tujuan keputusan, status, dan otoritas rilis.'
+        }
+    ],
+    'bim-governance-theory-exam': [
+        {
+            id: 'governance-exam-001',
+            question: 'BIM Governance paling tepat berfungsi untuk...',
+            type: 'multiple-choice',
+            options: [
+                'Mengatur warna model',
+                'Menjaga keputusan proyek berbasis informasi sah, berotoritas, dan terlacak',
+                'Menghapus kebutuhan review',
+                'Membuat semua orang memakai software yang sama'
+            ],
+            correct: 1,
+            category: 'bim-governance',
+            difficulty: 'easy',
+            explanation: 'Governance mengatur bagaimana informasi dibuat, dicek, disetujui, dirilis, dan dipakai.'
+        },
+        {
+            id: 'governance-exam-002',
+            question: 'Authority dalam manajemen informasi berarti...',
+            type: 'multiple-choice',
+            options: [
+                'Pihak yang paling cepat membuat file',
+                'Pihak yang berwenang mengesahkan atau mengizinkan penggunaan informasi',
+                'Pihak yang memiliki komputer paling kuat',
+                'Pihak yang selalu melakukan modelling'
+            ],
+            correct: 1,
+            category: 'bim-governance',
+            difficulty: 'easy',
+            explanation: 'Authority terkait hak pengesahan atau izin penggunaan, bukan sekadar pembuat informasi.'
+        },
+        {
+            id: 'governance-exam-003',
+            question: 'Decision gate sebaiknya ditempatkan pada titik ketika...',
+            type: 'multiple-choice',
+            options: [
+                'Tim butuh keputusan untuk lanjut ke tahap berikutnya',
+                'File sudah terlalu banyak',
+                'Software perlu diperbarui',
+                'Meeting sudah selesai'
+            ],
+            correct: 0,
+            category: 'bim-governance',
+            difficulty: 'medium',
+            explanation: 'Decision gate memastikan informasi cukup layak sebelum keputusan tahap berikutnya diambil.'
+        },
+        {
+            id: 'governance-exam-004',
+            question: 'Quality gate yang baik menilai informasi berdasarkan...',
+            type: 'multiple-choice',
+            options: [
+                'Kesesuaian terhadap tujuan, standar, kelengkapan, status, dan traceability',
+                'Jumlah objek 3D',
+                'Kualitas rendering',
+                'Ukuran file'
+            ],
+            correct: 0,
+            category: 'bim-governance',
+            difficulty: 'medium',
+            explanation: 'Quality gate menilai fit-for-purpose dan kelayakan penggunaan.'
+        },
+        {
+            id: 'governance-exam-005',
+            question: 'Risiko terbesar jika responsibility dan authority tidak dibedakan adalah...',
+            type: 'multiple-choice',
+            options: [
+                'File menjadi terlalu rapi',
+                'Informasi dapat dipakai tanpa pengesahan yang tepat',
+                'Model menjadi tidak berwarna',
+                'Software tidak bisa sinkron'
+            ],
+            correct: 1,
+            category: 'bim-governance',
+            difficulty: 'medium',
+            explanation: 'Pembuat informasi belum tentu berwenang merilisnya sebagai dasar keputusan.'
+        },
+        {
+            id: 'governance-exam-006',
+            question: 'Audit trail dibutuhkan agar proyek dapat...',
+            type: 'multiple-choice',
+            options: [
+                'Melihat siapa mengubah apa, kapan, mengapa, dan dengan status apa',
+                'Menyembunyikan perubahan',
+                'Menghapus semua versi lama tanpa catatan',
+                'Mengurangi kebutuhan approval'
+            ],
+            correct: 0,
+            category: 'bim-governance',
+            difficulty: 'easy',
+            explanation: 'Audit trail membuat perubahan dan keputusan dapat ditelusuri.'
+        },
+        {
+            id: 'governance-exam-007',
+            question: 'Jika status file berbeda antara folder kerja dan folder published, yang harus dipakai untuk keputusan adalah...',
+            type: 'multiple-choice',
+            options: [
+                'Folder kerja karena paling baru diedit',
+                'Sumber published/resmi sesuai status dan tujuan rilis',
+                'File yang paling kecil',
+                'File yang paling mudah dibuka'
+            ],
+            correct: 1,
+            category: 'bim-governance',
+            difficulty: 'medium',
+            explanation: 'Folder published atau sumber resmi adalah rujukan untuk penggunaan informasi yang sudah disahkan.'
+        },
+        {
+            id: 'governance-exam-008',
+            question: 'Governance yang baik membantu tim site karena...',
+            type: 'multiple-choice',
+            options: [
+                'Site tidak perlu membaca dokumen',
+                'Site tahu informasi mana yang boleh dipakai dan mana yang masih koordinasi',
+                'Semua perubahan dapat dilakukan langsung di lapangan',
+                'Semua model otomatis benar'
+            ],
+            correct: 1,
+            category: 'bim-governance',
+            difficulty: 'easy',
+            explanation: 'Kejelasan status membantu site menghindari instruksi berbasis informasi yang belum sah.'
+        },
+        {
+            id: 'governance-exam-009',
+            question: 'Ketika ada konflik informasi lintas disiplin, governance mengharuskan...',
+            type: 'multiple-choice',
+            options: [
+                'Memilih informasi dari disiplin yang paling dominan',
+                'Mencatat konflik, menentukan pemilik aksi, melakukan review, dan merilis keputusan resmi',
+                'Menghapus salah satu model',
+                'Menunggu sampai proyek selesai'
+            ],
+            correct: 1,
+            category: 'bim-governance',
+            difficulty: 'medium',
+            explanation: 'Konflik harus diselesaikan melalui proses yang jelas dan terdokumentasi.'
+        },
+        {
+            id: 'governance-exam-010',
+            question: 'Kontrol versi dalam BIM Governance penting karena...',
+            type: 'multiple-choice',
+            options: [
+                'Mencegah penggunaan informasi lama untuk keputusan baru',
+                'Membuat nama file lebih panjang',
+                'Mengurangi kebutuhan komunikasi',
+                'Mengganti koordinasi teknis'
+            ],
+            correct: 0,
+            category: 'bim-governance',
+            difficulty: 'easy',
+            explanation: 'Kontrol versi mencegah keputusan memakai informasi yang sudah diganti atau belum disahkan.'
+        }
+    ],
+    'bim-delivery-workflow-theory-exam': [
+        {
+            id: 'workflow-exam-001',
+            question: 'BIM Delivery Workflow dimulai dari...',
+            type: 'multiple-choice',
+            options: [
+                'Membuat model secepat mungkin',
+                'Menentukan kebutuhan informasi dan tujuan penggunaannya',
+                'Melakukan render',
+                'Menggabungkan semua file'
+            ],
+            correct: 1,
+            category: 'delivery-workflow',
+            difficulty: 'easy',
+            explanation: 'Delivery workflow harus dimulai dari kebutuhan informasi agar produksi terarah.'
+        },
+        {
+            id: 'workflow-exam-002',
+            question: 'Produksi informasi yang baik adalah produksi yang...',
+            type: 'multiple-choice',
+            options: [
+                'Paling detail tanpa batas',
+                'Sesuai kebutuhan, standar, milestone, dan level informasi yang diminta',
+                'Selalu memakai semua fitur software',
+                'Tidak perlu divalidasi'
+            ],
+            correct: 1,
+            category: 'delivery-workflow',
+            difficulty: 'easy',
+            explanation: 'Produksi harus menjawab kebutuhan delivery, bukan sekadar membuat model detail.'
+        },
+        {
+            id: 'workflow-exam-003',
+            question: 'Koordinasi lintas disiplin bertujuan untuk...',
+            type: 'multiple-choice',
+            options: [
+                'Mencari pihak yang salah',
+                'Menyelaraskan informasi dan menyelesaikan konflik sebelum rilis atau keputusan',
+                'Membuat semua file menjadi satu',
+                'Menghapus semua komentar'
+            ],
+            correct: 1,
+            category: 'delivery-workflow',
+            difficulty: 'easy',
+            explanation: 'Koordinasi menyelesaikan konflik informasi dan memastikan input siap untuk tahap berikutnya.'
+        },
+        {
+            id: 'workflow-exam-004',
+            question: 'Validasi fit-for-purpose berarti informasi dicek berdasarkan...',
+            type: 'multiple-choice',
+            options: [
+                'Apakah informasi layak untuk tujuan penggunaan tertentu',
+                'Apakah model terlihat menarik',
+                'Apakah ukuran file kecil',
+                'Apakah semua objek memiliki material'
+            ],
+            correct: 0,
+            category: 'delivery-workflow',
+            difficulty: 'medium',
+            explanation: 'Validasi selalu dikaitkan dengan tujuan penggunaan informasi.'
+        },
+        {
+            id: 'workflow-exam-005',
+            question: 'Rilis informasi menandakan bahwa...',
+            type: 'multiple-choice',
+            options: [
+                'Model sudah selesai selamanya',
+                'Informasi sudah diberi status dan izin penggunaan sesuai tujuan rilis',
+                'Semua masalah proyek sudah selesai',
+                'Tidak perlu ada audit trail'
+            ],
+            correct: 1,
+            category: 'delivery-workflow',
+            difficulty: 'medium',
+            explanation: 'Rilis memberikan konteks penggunaan: untuk review, koordinasi, procurement, konstruksi, atau record.'
+        },
+        {
+            id: 'workflow-exam-006',
+            question: 'Apa akibat umum jika kebutuhan informasi tidak didefinisikan di awal?',
+            type: 'multiple-choice',
+            options: [
+                'Output dapat lengkap secara visual tetapi tidak menjawab keputusan proyek',
+                'Semua keputusan menjadi lebih cepat',
+                'Koordinasi tidak diperlukan',
+                'Quality gate otomatis lulus'
+            ],
+            correct: 0,
+            category: 'delivery-workflow',
+            difficulty: 'medium',
+            explanation: 'Tanpa kebutuhan, output mudah salah sasaran walaupun terlihat detail.'
+        },
+        {
+            id: 'workflow-exam-007',
+            question: 'Delivery workflow yang baik menghubungkan...',
+            type: 'multiple-choice',
+            options: [
+                'Kebutuhan, produksi, koordinasi, validasi, rilis, dan penggunaan informasi',
+                'Software, hardware, dan rendering',
+                'Model, warna, dan animasi',
+                'Folder pribadi setiap modeller'
+            ],
+            correct: 0,
+            category: 'delivery-workflow',
+            difficulty: 'easy',
+            explanation: 'Workflow adalah alur end-to-end informasi, bukan daftar software.'
+        },
+        {
+            id: 'workflow-exam-008',
+            question: 'Dalam tahap koordinasi, isu sebaiknya diprioritaskan berdasarkan...',
+            type: 'multiple-choice',
+            options: [
+                'Urutan siapa yang menemukan',
+                'Dampak terhadap keputusan, konstruksi, biaya, waktu, dan keselamatan',
+                'Warna clash',
+                'Ukuran file model'
+            ],
+            correct: 1,
+            category: 'delivery-workflow',
+            difficulty: 'medium',
+            explanation: 'Tidak semua isu bernilai sama. Prioritas harus mengikuti dampak proyek.'
+        },
+        {
+            id: 'workflow-exam-009',
+            question: 'Informasi as-built atau record sebaiknya berbeda dari informasi koordinasi karena...',
+            type: 'multiple-choice',
+            options: [
+                'Tujuan penggunaan dan status rilisnya berbeda',
+                'Harus selalu dibuat dengan software lain',
+                'Tidak perlu validasi',
+                'Tidak perlu riwayat perubahan'
+            ],
+            correct: 0,
+            category: 'delivery-workflow',
+            difficulty: 'medium',
+            explanation: 'Setiap jenis delivery punya tujuan, standar, dan status penggunaan yang berbeda.'
+        },
+        {
+            id: 'workflow-exam-010',
+            question: 'Jika workflow dilompati dari produksi langsung ke penggunaan lapangan, risiko terbesar adalah...',
+            type: 'multiple-choice',
+            options: [
+                'Informasi belum terkoordinasi, belum tervalidasi, atau belum sah untuk dipakai',
+                'File menjadi terlalu kecil',
+                'Rendering tidak tersedia',
+                'Software berjalan lebih cepat'
+            ],
+            correct: 0,
+            category: 'delivery-workflow',
+            difficulty: 'medium',
+            explanation: 'Tanpa koordinasi, validasi, dan rilis resmi, penggunaan lapangan berisiko memakai informasi yang belum layak.'
+        }
+    ],
     'autocad-certification': [
         {
             id: 1,
@@ -140,7 +680,6 @@ let examAnswers = [];
 let examStartTime = null;
 let examTimer = null;
 let currentModalExamId = null;
-let bypassReadinessGate = false;
 let isExamReviewMode = false;
 let proctoringListenersAttached = false;
 let markedForReview = new Set();
@@ -160,8 +699,13 @@ function shuffleArray(array) {
 }
 
 function safeParse(value, fallback) {
+    if (value === null || typeof value === 'undefined' || value === '') {
+        return fallback;
+    }
+
     try {
-        return JSON.parse(value);
+        const parsed = JSON.parse(value);
+        return parsed === null ? fallback : parsed;
     } catch (error) {
         return fallback;
     }
@@ -210,6 +754,54 @@ function getExamHistory() {
 
 function getExamBlueprint(examId) {
     return window.LearningReadiness?.EXAM_BLUEPRINTS?.[examId] || null;
+}
+
+function getLocalPracticeHistory() {
+    const userData = safeParse(localStorage.getItem('userData'), {});
+    return Array.isArray(userData.practiceHistory) ? userData.practiceHistory : [];
+}
+
+function getPracticeCategoriesForAttempt(attempt) {
+    if (Array.isArray(attempt?.categories) && attempt.categories.length) {
+        return attempt.categories;
+    }
+
+    if (typeof attempt?.category === 'string' && attempt.category) {
+        return [attempt.category];
+    }
+
+    if (typeof attempt?.sourceCategory === 'string' && attempt.sourceCategory) {
+        return [attempt.sourceCategory];
+    }
+
+    return [];
+}
+
+function hasPracticeAttempt(category, minScore = 0) {
+    return getLocalPracticeHistory().some((attempt) => {
+        const categories = getPracticeCategoriesForAttempt(attempt);
+        return categories.includes(category) && Number(attempt.score || 0) >= minScore;
+    });
+}
+
+function hasCompletedLearningMarker(matchers) {
+    const matcherList = Array.isArray(matchers) ? matchers : [matchers];
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index) || '';
+        if (!key.startsWith('bcl_completed_') && !key.startsWith('bcl_video_completed_') && !key.startsWith('bcl_page_completed_')) {
+            continue;
+        }
+
+        const value = String(localStorage.getItem(key) || '');
+        const haystack = `${key} ${value}`.toLowerCase();
+
+        if (matcherList.some((matcher) => haystack.includes(String(matcher || '').toLowerCase()))) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function hydrateExamStateFromHistory() {
@@ -360,11 +952,32 @@ function checkPrerequisiteCompleted(prerequisite, userData) {
         ? userData.completedPrerequisites
         : [];
 
-    if (completed.length > 0) {
-        return completed.includes(prerequisite);
+    if (completed.includes(prerequisite)) {
+        return true;
     }
 
-    return true;
+    const prerequisiteRules = {
+        'bim-mindset-quiz': () => hasPracticeAttempt('bim-mindset', 70),
+        'bim-mindset-practice': () => hasPracticeAttempt('bim-mindset', 70),
+        'bim-governance-quiz': () => hasPracticeAttempt('bim-governance', 70),
+        'bim-governance-practice': () => hasPracticeAttempt('bim-governance', 70),
+        'bim-delivery-workflow-quiz': () => hasPracticeAttempt('delivery-workflow', 70),
+        'delivery-workflow-practice': () => hasPracticeAttempt('delivery-workflow', 70),
+        'autocad-basics-course': () => hasCompletedLearningMarker(['autocad', 'acad']),
+        'autocad-practice-80': () => hasPracticeAttempt('autocad', 80),
+        'revit-basics-course': () => hasCompletedLearningMarker('revit'),
+        'revit-advanced-course': () => hasPracticeAttempt('revit-modeling', 70) || hasPracticeAttempt('intermediate-modeling', 70),
+        'bim-coordination-course': () => hasPracticeAttempt('clash-detection', 70) || hasPracticeAttempt('project-coordination', 70),
+        'bim-strategy-course': () => hasPracticeAttempt('bim-fundamentals', 70),
+        'project-management-course': () => hasPracticeAttempt('project-coordination', 70),
+        'leadership-training': () => hasPracticeAttempt('advanced-modeling', 70)
+    };
+
+    if (typeof prerequisiteRules[prerequisite] === 'function') {
+        return prerequisiteRules[prerequisite]();
+    }
+
+    return false;
 }
 
 function checkExamEligibility(exam, userData) {
@@ -457,8 +1070,8 @@ function createExamCardMarkup(model) {
             <a class="exam-primary-btn" href="${practiceHref}">
                 <i class="fas fa-chart-line"></i> Continue Preparation
             </a>
-            <button class="exam-secondary-btn" type="button" onclick="prepareExam('${exam.id}', true)">
-                <i class="fas fa-forward"></i> Take Exam Anyway
+            <button class="exam-secondary-btn" type="button" onclick="showPrerequisites('${exam.id}', 'readiness')">
+                <i class="fas fa-lock"></i> View Requirements
             </button>
         `;
     } else {
@@ -786,7 +1399,7 @@ function showPrerequisites(examId, reason) {
     modal.style.display = 'flex';
 }
 
-function prepareExam(examId, bypassReadiness = false) {
+function prepareExam(examId) {
     const exam = examData.find(item => item.id === examId);
     const dashboard = getReadinessDashboard();
     const readiness = dashboard.exams.find(item => item.examId === examId);
@@ -801,13 +1414,12 @@ function prepareExam(examId, bypassReadiness = false) {
         return;
     }
 
-    if (!bypassReadiness && readiness && readiness.status !== 'ready') {
+    if (readiness && readiness.status !== 'ready') {
         showPrerequisites(examId, 'readiness');
         return;
     }
 
     currentExam = exam;
-    bypassReadinessGate = bypassReadiness;
     isExamReviewMode = false;
     markedForReview = new Set();
 
@@ -848,7 +1460,6 @@ function prepareExam(examId, bypassReadiness = false) {
                 </ul>
             </div>
             ${readiness ? `<p><strong>Kesiapan:</strong> ${readiness.recommendation}</p>` : ''}
-            ${bypassReadiness ? '<p><strong>Peringatan:</strong> Anda masuk sebelum jalur ini benar-benar siap.</p>' : ''}
         </div>
     `;
 
@@ -1169,8 +1780,7 @@ function updateExamAttempt(results) {
             percentage: results.percentage,
             passed: results.passed,
             timeTaken: Math.round(results.timeTaken / 1000),
-            attemptedAt,
-            bypassReadinessGate
+            attemptedAt
         });
     }
 
@@ -1182,6 +1792,7 @@ async function syncExamAttemptToServer(results) {
     try {
         const authUser = getAuthenticatedUser() || {};
         const token = getAuthToken();
+        const readiness = getReadinessDashboard().exams.find(item => item.examId === currentExam.id);
         const headers = {
             'Content-Type': 'application/json'
         };
@@ -1201,15 +1812,17 @@ async function syncExamAttemptToServer(results) {
             passed: results.passed,
             answers: examAnswers,
             timeTaken: Math.round(results.timeTaken / 1000),
-            issueCertificate: results.passed,
+            issueCertificate: results.passed && readiness?.status === 'ready',
             certificateTitle: currentExam?.certification?.title || `${currentExam.title} Certificate`,
             userId: authUser.id || authUser.userId || authUser.email || authUser.username || authUser.name || null,
             userName: authUser.name || authUser.username || null,
             userEmail: authUser.email || null,
+            currentLevel: authUser.level || authUser.bimLevel || null,
             metadata: {
                 violations: Array.isArray(results.violations) ? results.violations.length : 0,
                 requiredLevel: currentExam.requiredLevel || null,
-                bypassReadinessGate
+                readinessStatus: readiness?.status || 'unknown',
+                readinessScore: readiness?.readinessScore ?? null
             }
         };
 

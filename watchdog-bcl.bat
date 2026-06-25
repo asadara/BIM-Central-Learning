@@ -2,6 +2,9 @@
 setlocal EnableDelayedExpansion
 set "RUN_AS_SYSTEM=0"
 if /I "%USERNAME%"=="SYSTEM" set "RUN_AS_SYSTEM=1"
+set "WHOAMI_VALUE="
+for /f "usebackq delims=" %%u in (`whoami 2^>nul`) do set "WHOAMI_VALUE=%%u"
+if /I "%WHOAMI_VALUE%"=="nt authority\system" set "RUN_AS_SYSTEM=1"
 set "NATIVE_PG_SERVICE="
 set "BACKEND_PORT=%BCL_BACKEND_PORT%"
 if not defined BACKEND_PORT set "BACKEND_PORT=5052"
@@ -11,7 +14,8 @@ if not exist "logs" mkdir "logs"
 
 set "DATESTAMP=%date:~-4,4%%date:~-10,2%%date:~-7,2%"
 set "LOGFILE=logs\watchdog-%DATESTAMP%.log"
-set "LOCKDIR=watchdog.lock"
+set "LOCKDIR=watchdog-user.lock"
+if "%RUN_AS_SYSTEM%"=="1" set "LOCKDIR=watchdog-system.lock"
 set "FORCE_BACKEND_RELOAD_FLAG=force-backend-reload.flag"
 
 if exist "%LOCKDIR%" rmdir "%LOCKDIR%" >nul 2>&1
@@ -29,6 +33,8 @@ if exist "%FORCE_BACKEND_RELOAD_FLAG%" (
 set "HTTP_OK=0"
 set "BACKEND_OK=0"
 set "DB_OK=0"
+set "AUDIT_API_OK=1"
+set "AUDIT_UNC_OK=0"
 set "HTTP_CODE=000"
 set "BACKEND_CODE=000"
 
@@ -43,15 +49,36 @@ if "%BACKEND_CODE%"=="200" set "BACKEND_OK=1"
 node "%~dp0backend\scripts\db-ping.js" >nul 2>nul
 if not errorlevel 1 set "DB_OK=1"
 
-if "%HTTP_OK%"=="1" if "%BACKEND_OK%"=="1" if "%DB_OK%"=="1" goto :healthy
+if not "%RUN_AS_SYSTEM%"=="1" if "%BACKEND_OK%"=="1" (
+    node -e "process.exit(require('fs').existsSync('\\\\pc-bim02\\Dokumen Audit 2026') ? 0 : 1)" >nul 2>nul
+    if not errorlevel 1 set "AUDIT_UNC_OK=1"
+    if "!AUDIT_UNC_OK!"=="1" (
+        node -e "fetch('http://127.0.0.1:%BACKEND_PORT%/api/audit-2026/status').then(r=>r.json()).then(j=>process.exit(j && j.rootExists ? 0 : 1)).catch(()=>process.exit(1))" >nul 2>nul
+        if errorlevel 1 set "AUDIT_API_OK=0"
+    )
+)
+
+if "%HTTP_OK%"=="1" if "%BACKEND_OK%"=="1" if "%DB_OK%"=="1" if "%AUDIT_API_OK%"=="1" goto :healthy
 
 set "REASON="
 if not "%HTTP_OK%"=="1" set "REASON=!REASON! http=!HTTP_CODE!"
 if not "%BACKEND_OK%"=="1" set "REASON=!REASON! backend=!BACKEND_CODE!"
 if not "%DB_OK%"=="1" set "REASON=!REASON! postgres=down"
+if not "%AUDIT_API_OK%"=="1" set "REASON=!REASON! audit_unc_stale=1"
 
 if exist "runlock" (
     call :log "[INFO] Watchdog detected degraded state but startup already in progress:%REASON%"
+    goto :end
+)
+
+if "%RUN_AS_SYSTEM%"=="1" (
+    call :log "[INFO] SYSTEM watchdog skipped recovery because BCL backend needs interactive user access to PC-BIM02 UNC shares:%REASON%"
+    goto :end
+)
+
+if "%AUDIT_API_OK%"=="0" if "%AUDIT_UNC_OK%"=="1" (
+    call :log "[WARNING] Backend recycle triggered because Audit 2026 API cannot read PC-BIM02 UNC while user context can:%REASON%"
+    call :recycle_backend
     goto :end
 )
 
@@ -134,6 +161,11 @@ if "%RECYCLE_OK%"=="0" (
     call :log "[INFO] Forced recycle did not find an active backend listener on port %BACKEND_PORT%"
 )
 
+if "%RUN_AS_SYSTEM%"=="1" (
+    call :log "[INFO] SYSTEM watchdog completed backend stop but skipped restart; backend must be started by logged-in user"
+    exit /b 0
+)
+
 call :sleep 3
 call "%~dp0start-backend-public.bat" >> "%LOGFILE%" 2>&1
 if errorlevel 1 (
@@ -154,4 +186,14 @@ exit /b 0
 :log
 set "MSG=%~1"
 >> "%LOGFILE%" echo [%DATE% %TIME%] %MSG%
+exit /b 0
+
+:sleep
+set "SLEEP_SECS=%~1"
+if not defined SLEEP_SECS set "SLEEP_SECS=1"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds %SLEEP_SECS%" >nul 2>&1
+if errorlevel 1 (
+    set /a SLEEP_PINGS=%SLEEP_SECS%+1
+    ping 127.0.0.1 -n !SLEEP_PINGS! >nul
+)
 exit /b 0

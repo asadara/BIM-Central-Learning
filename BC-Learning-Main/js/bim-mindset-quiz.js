@@ -137,23 +137,20 @@ class BIMMindsetQuiz {
     }
 
     prepareQuestions() {
-        const pool = this.dedupeQuestions(
-            this.questions.filter(q => q.level === 'basic' || q.level === 'intermediate')
-        );
-
-        const basicPool = this.shuffleArray(pool.filter(q => q.level === 'basic'));
-        const intermediatePool = this.shuffleArray(pool.filter(q => q.level === 'intermediate'));
-
-        const targetBasic = Math.ceil(this.maxQuestions * 0.6);
-        const targetIntermediate = this.maxQuestions - targetBasic;
+        const pool = this.dedupeQuestions(this.questions);
+        const basicPool = this.shuffleArray(pool.filter(q => this.getLevelGroup(q.level) === 'basic'));
+        const intermediatePool = this.shuffleArray(pool.filter(q => this.getLevelGroup(q.level) === 'intermediate'));
+        const advancedPool = this.shuffleArray(pool.filter(q => this.getLevelGroup(q.level) === 'advanced'));
 
         const selected = [
-            ...basicPool.splice(0, targetBasic),
-            ...intermediatePool.splice(0, targetIntermediate)
+            ...basicPool.splice(0, Math.ceil(this.maxQuestions * 0.4)),
+            ...intermediatePool.splice(0, Math.ceil(this.maxQuestions * 0.4)),
+            ...advancedPool.splice(0, Math.floor(this.maxQuestions * 0.2))
         ];
 
         if (selected.length < this.maxQuestions) {
-            const remainderPool = this.shuffleArray([...basicPool, ...intermediatePool]);
+            const selectedIds = new Set(selected.map(q => q.id || q.prompt));
+            const remainderPool = this.shuffleArray(pool.filter(q => !selectedIds.has(q.id || q.prompt)));
             selected.push(...remainderPool.slice(0, this.maxQuestions - selected.length));
         }
 
@@ -163,6 +160,20 @@ class BIMMindsetQuiz {
         });
 
         this.selectedQuestions = this.shuffleArray(selected).slice(0, this.maxQuestions);
+    }
+
+    getLevelGroup(level) {
+        const normalized = String(level || '').toLowerCase();
+        if (['basic', 'easy', 'dasar', 'beginner'].includes(normalized)) return 'basic';
+        if (['advanced', 'hard', 'advance', 'lanjutan'].includes(normalized)) return 'advanced';
+        return 'intermediate';
+    }
+
+    getLevelLabel(level) {
+        const group = this.getLevelGroup(level);
+        if (group === 'basic') return 'Dasar';
+        if (group === 'advanced') return 'Lanjutan';
+        return 'Menengah';
     }
 
     resetQuiz() {
@@ -182,7 +193,7 @@ class BIMMindsetQuiz {
 
         // Update header
         this.elements.questionCounter.textContent = `Pertanyaan ${this.currentQuestionIndex + 1} dari ${this.selectedQuestions.length}`;
-        this.elements.questionLevel.textContent = question.level === 'basic' ? 'Dasar' : 'Menengah';
+        this.elements.questionLevel.textContent = this.getLevelLabel(question.level);
 
         // Update question text
         this.elements.questionText.textContent = question.prompt;
@@ -252,6 +263,7 @@ class BIMMindsetQuiz {
         const newCorrectIndex = choiceObjects.findIndex(choice => choice.originalIndex === question.answer_index);
         question.shuffledCorrectIndex = newCorrectIndex;
         question.shuffledChoices = choiceObjects.map(choice => choice.text);
+        question.shuffledChoiceOriginalIndices = choiceObjects.map(choice => choice.originalIndex);
     }
 
     shuffleArray(array) {
@@ -352,7 +364,7 @@ class BIMMindsetQuiz {
             userAnswerDiv.innerHTML = `
                 <strong>Jawaban Anda:</strong>
                 <span class="${isCorrect ? 'text-success' : 'text-danger'}">
-                    ${question.choices[userAnswerIndex] || 'Tidak dijawab'}
+                    ${question.shuffledChoices[userAnswerIndex] || 'Tidak dijawab'}
                 </span>
             `;
             questionDiv.appendChild(userAnswerDiv);
@@ -362,7 +374,7 @@ class BIMMindsetQuiz {
             correctAnswerDiv.className = 'mb-2';
             correctAnswerDiv.innerHTML = `
                 <strong>Jawaban Benar:</strong>
-                <span class="text-success">${question.choices[question.answer_index]}</span>
+                <span class="text-success">${question.shuffledChoices[question.shuffledCorrectIndex]}</span>
             `;
             questionDiv.appendChild(correctAnswerDiv);
 
@@ -410,15 +422,19 @@ class BIMMindsetQuiz {
                     quizName: 'BIM Mindset Quiz',
                     quizCategory: 'mindset',
                     sourceType: 'quiz',
-                    answers: this.userAnswers, // Array of selected choice indices
+                    answers: this.toOriginalAnswerIndices(),
                     score: this.score,
                     totalQuestions: this.selectedQuestions.length,
                     percentage,
                     passed,
                     timeTaken: 0,
+                    passingScore: 70,
                     userId: userData.id || userData.userId || userData.email || userData.username || userData.name || null,
                     userName: userData.name || userData.username || 'Anonymous User',
-                    userEmail: userData.email || null
+                    userEmail: userData.email || null,
+                    metadata: {
+                        questionIds: this.selectedQuestions.map(question => question.id)
+                    }
                 };
 
                 const response = await fetch('/api/elearning/quiz/submit', {
@@ -459,6 +475,16 @@ class BIMMindsetQuiz {
             console.error('Error parsing user data:', e);
         }
         return null;
+    }
+
+    toOriginalAnswerIndices() {
+        return this.selectedQuestions.map((question, index) => {
+            const selectedIndex = this.userAnswers[index];
+            if (selectedIndex === null || selectedIndex === undefined) {
+                return null;
+            }
+            return question.shuffledChoiceOriginalIndices?.[selectedIndex] ?? selectedIndex;
+        });
     }
 
     showNotification(message, type = 'info') {

@@ -58,8 +58,14 @@
         .practice-menu,
         .practice-filter-bar {
             display: flex;
-            flex-wrap: wrap;
             gap: 1rem;
+        }
+
+        .practice-filter-bar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: .2rem 0 1rem;
+            scrollbar-width: thin;
         }
 
         .practice-pill,
@@ -73,6 +79,23 @@
             font-size: 1.3rem;
             font-weight: 700;
             padding: 1rem 1.6rem;
+        }
+
+        .practice-filter-btn {
+            flex: 0 0 auto;
+            padding: .8rem 1.2rem;
+            white-space: nowrap;
+        }
+
+        .practice-filter-btn.theory {
+            border-color: rgba(142, 68, 173, 0.35);
+            background: rgba(142, 68, 173, 0.08);
+            color: var(--main-color);
+        }
+
+        .practice-filter-btn.tools {
+            background: rgba(15, 23, 42, 0.04);
+            color: #475569;
         }
 
         .practice-menu-btn.active,

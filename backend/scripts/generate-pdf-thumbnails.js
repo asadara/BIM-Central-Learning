@@ -74,6 +74,8 @@ const MATERIALS_FILE = path.join(__dirname, '../learning-materials.json');
 const MATERIALS_DIR = path.join(__dirname, '../../BC-Learning-Main/elearning-assets/materials');
 const THUMBNAILS_DIR = path.join(__dirname, '../public/thumbnails/pdf');
 const STANDARD_FONTS_DIR = path.join(__dirname, '../node_modules/pdfjs-dist/standard_fonts/');
+const THUMBNAIL_TARGET_WIDTH = 1200;
+const THUMBNAIL_JPEG_QUALITY = 0.92;
 
 function getStandardFontsUrl() {
     let dir = STANDARD_FONTS_DIR;
@@ -211,8 +213,7 @@ async function generatePDFThumbnailWithPdfJs(pdfPath, outputPath) {
         const page = await pdfDocument.getPage(1);
         
         const viewport = page.getViewport({ scale: 1.0 });
-        // Scale to width 400px
-        const scale = 400 / viewport.width;
+        const scale = THUMBNAIL_TARGET_WIDTH / viewport.width;
         const scaledViewport = page.getViewport({ scale });
         
         const canvas = createCanvas(scaledViewport.width, scaledViewport.height);
@@ -223,7 +224,7 @@ async function generatePDFThumbnailWithPdfJs(pdfPath, outputPath) {
             viewport: scaledViewport
         }).promise;
         
-        const buffer = canvas.toBuffer('image/jpeg', { quality: 0.8 });
+        const buffer = canvas.toBuffer('image/jpeg', { quality: THUMBNAIL_JPEG_QUALITY });
         fs.writeFileSync(outputPath, buffer);
         console.log(`✅ Generated thumbnail with PDF.js: ${path.basename(outputPath)}`);
         return true;
@@ -241,7 +242,7 @@ async function generatePDFThumbnailWithPoppler(pdfPath, outputPath) {
     return new Promise((resolve, reject) => {
         // Try using pdftoppm from poppler-utils
         const outputBase = outputPath.replace(/\.(jpg|png)$/i, '');
-        const command = `pdftoppm -jpeg -f 1 -l 1 -scale-to 400 "${pdfPath}" "${outputBase}"`;
+        const command = `pdftoppm -jpeg -f 1 -l 1 -scale-to ${THUMBNAIL_TARGET_WIDTH} "${pdfPath}" "${outputBase}"`;
         
         exec(command, (error, stdout, stderr) => {
             if (error) {
@@ -342,7 +343,7 @@ function generatePlaceholderThumbnail(outputPath, title, category) {
 async function generatePDFThumbnailWithImageMagick(pdfPath, outputPath) {
     return new Promise((resolve, reject) => {
         // ImageMagick command to convert first page of PDF to JPG
-        const command = `magick convert -density 150 "${pdfPath}[0]" -resize 400x300 -quality 85 "${outputPath}"`;
+        const command = `magick convert -density 200 "${pdfPath}[0]" -resize ${THUMBNAIL_TARGET_WIDTH}x1600 -quality 92 "${outputPath}"`;
         
         exec(command, (error, stdout, stderr) => {
             if (error) {
@@ -412,17 +413,75 @@ async function generatePDFThumbnailWithPuppeteer(materialId, readerUrl, outputPa
     }
 }
 
+async function generatePDFThumbnailWithChromeNative(pdfPath, outputPath) {
+    if (!puppeteerLib || !sharpLib) {
+        if (VERBOSE_PDF_THUMBNAIL_LOG && puppeteerLoadError) {
+            console.warn(`puppeteer not available for Chrome PDF thumbnail fallback: ${puppeteerLoadError.message}`);
+        }
+        return false;
+    }
+
+    const executablePath = getChromeExecutablePath();
+    if (!executablePath) {
+        return false;
+    }
+
+    let browser;
+    try {
+        browser = await puppeteerLib.launch({
+            headless: true,
+            executablePath,
+            args: ['--no-sandbox', '--disable-gpu', '--hide-scrollbars']
+        });
+
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1200, height: 1600, deviceScaleFactor: 2 });
+        await page.goto(pathToFileURL(pdfPath).href, { waitUntil: 'networkidle2', timeout: 60000 });
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+
+        const screenshot = await page.screenshot({ type: 'jpeg', quality: 92, fullPage: false });
+        const metadata = await sharpLib(screenshot).metadata();
+        const width = metadata.width || 2400;
+        const height = metadata.height || 3200;
+
+        const crop = {
+            left: Math.floor(width * 0.285),
+            top: Math.floor(height * 0.035),
+            width: Math.floor(width * 0.68),
+            height: Math.floor(height * 0.68)
+        };
+
+        await sharpLib(screenshot)
+            .extract(crop)
+            .resize({ width: THUMBNAIL_TARGET_WIDTH, withoutEnlargement: true })
+            .jpeg({ quality: 92 })
+            .toFile(outputPath);
+
+        console.log(`✅ Generated thumbnail with Chrome PDF viewer: ${path.basename(outputPath)}`);
+        return true;
+    } catch (error) {
+        console.warn(`⚠️ Chrome PDF thumbnail generation failed for ${path.basename(pdfPath)}: ${error.message}`);
+        return false;
+    } finally {
+        if (browser) {
+            await browser.close().catch(() => {});
+        }
+    }
+}
+
 async function generateValidatedThumbnail({ materialId, pdfPath, outputPath, title, category, readerUrl }) {
     const attempts = [
-        () => generatePDFThumbnailWithPdfJs(pdfPath, outputPath),
-        () => generatePDFThumbnailWithPoppler(pdfPath, outputPath),
-        () => generatePDFThumbnailWithImageMagick(pdfPath, outputPath),
-        () => generatePDFThumbnailWithPuppeteer(materialId, readerUrl, outputPath)
+        { run: () => generatePDFThumbnailWithPdfJs(pdfPath, outputPath), validate: true },
+        { run: () => generatePDFThumbnailWithPoppler(pdfPath, outputPath), validate: true },
+        { run: () => generatePDFThumbnailWithImageMagick(pdfPath, outputPath), validate: true },
+        { run: () => generatePDFThumbnailWithPuppeteer(materialId, readerUrl, outputPath), validate: true },
+        { run: () => generatePDFThumbnailWithChromeNative(pdfPath, outputPath), validate: false }
     ];
 
     for (const attempt of attempts) {
-        const success = await attempt();
+        const success = await attempt.run();
         if (!success) continue;
+        if (!attempt.validate) return true;
 
         const invalid = await isLikelyInvalidThumbnail(outputPath);
         if (!invalid) {
@@ -580,5 +639,6 @@ module.exports = {
     generatePDFThumbnailWithPoppler,
     generatePDFThumbnailWithImageMagick,
     generatePDFThumbnailWithPuppeteer,
+    generatePDFThumbnailWithChromeNative,
     isLikelyInvalidThumbnail
 };

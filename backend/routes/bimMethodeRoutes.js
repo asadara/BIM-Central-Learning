@@ -26,7 +26,7 @@ const MODEL_EXTS = new Set(['.dwg', '.dxf', '.rvt', '.rfa', '.skp', '.fbx', '.tm
 const DOCUMENT_TYPES = new Set(['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx']);
 const MODEL_TYPES = new Set(['dwg', 'dxf', 'rvt', 'rfa', 'skp', 'fbx', 'tm']);
 
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_TTL_MS = Number(process.env.BIM_METHODE_CACHE_TTL_MS) || (60 * 1000);
 const REFRESH_RETRY_COOLDOWN_MS = 15 * 1000;
 const THUMB_CACHE_DIR = path.resolve(__dirname, '..', 'public', 'cache', 'bim-methode-thumbnails');
 const THUMB_STABLE_CACHE_DIR = path.resolve(__dirname, '..', 'public', 'cache', 'bim-methode-thumbnails-stable');
@@ -74,10 +74,10 @@ function getPcbim02Candidates() {
         candidates.push(process.env.PCBIM02_ROOT);
     }
 
-    // Prefer the local synchronized workspace first. It is the most stable
-    // source and avoids selecting an empty cache mirror when the live share
-    // is still available.
-    candidates.push(LOCAL_PCBIM02_ROOT);
+    // Prefer the live PC-BIM02 share so directory updates appear without
+    // waiting for a local mirror sync. If the share is unavailable, the local
+    // mirror below remains the fallback.
+    candidates.push(NETWORK_PCBIM02_ROOT);
 
     try {
         const lanManager = new LANMountManager();
@@ -92,21 +92,11 @@ function getPcbim02Candidates() {
     } catch (error) {
         // Ignore LAN mount resolution errors; fallback to network path
     }
-    candidates.push(NETWORK_PCBIM02_ROOT);
+    candidates.push(LOCAL_PCBIM02_ROOT);
 
     const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
-    const localRootNormalized = normalizePathValue(LOCAL_PCBIM02_ROOT);
 
     return uniqueCandidates.sort((left, right) => {
-        const leftNormalized = normalizePathValue(left);
-        const rightNormalized = normalizePathValue(right);
-        const leftIsLocal = leftNormalized === localRootNormalized ? 0 : 1;
-        const rightIsLocal = rightNormalized === localRootNormalized ? 0 : 1;
-
-        if (leftIsLocal !== rightIsLocal) {
-            return leftIsLocal - rightIsLocal;
-        }
-
         const leftIsCacheMirror = /pc-bim02-cache/i.test(String(left));
         const rightIsCacheMirror = /pc-bim02-cache/i.test(String(right));
         if (leftIsCacheMirror !== rightIsCacheMirror) {
@@ -634,9 +624,9 @@ function shouldScheduleRefresh() {
 }
 
 function getCachedData() {
-    const hasCache = bimMethodeCache.lastUpdated > 0;
-    const isFresh = hasCache && (Date.now() - bimMethodeCache.lastUpdated < CACHE_TTL_MS);
     const cacheHasContent = (bimMethodeCache.categories?.length || 0) > 0 || (bimMethodeCache.allMedia?.length || 0) > 0;
+    const hasCache = bimMethodeCache.lastUpdated > 0 || cacheHasContent;
+    const isFresh = hasCache && (Date.now() - bimMethodeCache.lastUpdated < CACHE_TTL_MS);
     const canScheduleRefresh = shouldScheduleRefresh();
 
     if (isFresh && !cacheHasContent) {
@@ -695,6 +685,29 @@ function getCachedData() {
     };
 }
 
+function shouldForceRefresh(req) {
+    return req.query.refresh === '1' || req.query.refresh === 'true';
+}
+
+async function getCachedDataForRequest(req) {
+    if (shouldForceRefresh(req)) {
+        bimMethodeCache.lastUpdated = 0;
+        if (shouldScheduleRefresh()) {
+            await scheduleRefresh().catch(() => {});
+        } else if (refreshInProgress && refreshPromise) {
+            await refreshPromise.catch(() => {});
+        }
+    }
+
+    return getCachedData();
+}
+
+function setNoStore(res) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+}
+
 function sanitizeCategoryName(value) {
     if (!value || typeof value !== 'string') return '';
     return value
@@ -745,18 +758,20 @@ const upload = multer({
     }
 });
 
-router.get('/categories', (req, res) => {
+router.get('/categories', async (req, res) => {
     try {
-        const { categories, root, stale, refreshing, refreshError } = getCachedData();
+        setNoStore(res);
+        const { categories, root, stale, refreshing, refreshError } = await getCachedDataForRequest(req);
         res.json({ success: true, categories, root, stale, refreshing, refreshError });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-router.get('/media', (req, res) => {
+router.get('/media', async (req, res) => {
     try {
-        const { categories, mediaByCategory, allMedia, stale, refreshing, refreshError } = getCachedData();
+        setNoStore(res);
+        const { categories, mediaByCategory, allMedia, stale, refreshing, refreshError } = await getCachedDataForRequest(req);
         const category = req.query.category;
         const typeFilter = normalizeMediaTypeFilter(req.query.type);
 

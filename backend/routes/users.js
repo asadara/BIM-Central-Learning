@@ -93,6 +93,34 @@ router.get('/check-mapping-access', requireAuthenticated, async (req, res) => {
     }
 });
 
+router.get('/check-dokumen-access', requireAuthenticated, async (req, res) => {
+    try {
+        const authUser = req.authUser || req.user;
+        const accessProfile = await resolveAccessProfile(authUser);
+        return res.json({ hasAccess: !!accessProfile.dokumenAccess });
+    } catch (error) {
+        console.error('ERROR: Error checking dokumen access:', error);
+        res.status(500).json({
+            hasAccess: false,
+            error: 'Failed to check dokumen access'
+        });
+    }
+});
+
+router.get('/check-audit-2026-access', requireAuthenticated, async (req, res) => {
+    try {
+        const authUser = req.authUser || req.user;
+        const accessProfile = await resolveAccessProfile(authUser);
+        return res.json({ hasAccess: !!accessProfile.audit2026Access });
+    } catch (error) {
+        console.error('ERROR: Error checking Audit 2026 access:', error);
+        res.status(500).json({
+            hasAccess: false,
+            error: 'Failed to check Audit 2026 access'
+        });
+    }
+});
+
 router.get('/me/access', requireAuthenticated, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
@@ -120,7 +148,8 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
             const query = `
                 SELECT id, username, email, bim_level, job_role, organization,
                        registration_date, last_login, login_count, is_active,
-                       mapping_kompetensi_access, library_download_access,
+                       mapping_kompetensi_access, dokumen_access, audit_2026_access,
+                       library_download_access,
                        watermark_free_download_access
                 FROM users
                 ORDER BY registration_date DESC
@@ -142,6 +171,8 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 loginCount: user.login_count || 0,
                 isActive: user.is_active,
                 mappingKompetensiAccess: user.mapping_kompetensi_access || false,
+                dokumenAccess: user.dokumen_access || false,
+                audit2026Access: user.audit_2026_access || false,
                 libraryDownloadAccess: user.library_download_access || false,
                 watermarkFreeDownloadAccess: user.watermark_free_download_access || false
             }));
@@ -166,6 +197,8 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 loginCount: user.loginCount || user.login_count || 0,
                 isActive: user.isActive !== undefined ? user.isActive : true,
                 mappingKompetensiAccess: user.mappingKompetensiAccess || false,
+                dokumenAccess: user.dokumenAccess || user.dokumen_access || false,
+                audit2026Access: user.audit2026Access || user.audit_2026_access || false,
                 libraryDownloadAccess: user.libraryDownloadAccess || user.library_download_access || false,
                 watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false
             }));
@@ -387,6 +420,8 @@ router.post('/create', requireAdmin, async (req, res) => {
                 registrationDate: newUser.registration_date,
                 isActive: newUser.is_active,
                 mappingKompetensiAccess: false,
+                dokumenAccess: false,
+                audit2026Access: false,
                 libraryDownloadAccess: false,
                 watermarkFreeDownloadAccess: false
             };
@@ -428,6 +463,10 @@ router.post('/create', requireAdmin, async (req, res) => {
                 isActive: true,
                 mappingKompetensiAccess: false,
                 mapping_kompetensi_access: false,
+                dokumenAccess: false,
+                dokumen_access: false,
+                audit2026Access: false,
+                audit_2026_access: false,
                 libraryDownloadAccess: false,
                 library_download_access: false,
                 watermarkFreeDownloadAccess: false,
@@ -470,6 +509,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
             // Build dynamic update query based on provided fields
             const updateFields = [];
             const values = [];
+            const seenUpdateColumns = new Set();
             let paramIndex = 1;
 
             // Map frontend field names to database column names
@@ -481,14 +521,23 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 organization: 'organization',
                 isActive: 'is_active',
                 mappingKompetensiAccess: 'mapping_kompetensi_access',
+                mapping_kompetensi_access: 'mapping_kompetensi_access',
+                dokumenAccess: 'dokumen_access',
+                dokumen_access: 'dokumen_access',
+                audit2026Access: 'audit_2026_access',
+                audit_2026_access: 'audit_2026_access',
                 libraryDownloadAccess: 'library_download_access',
-                watermarkFreeDownloadAccess: 'watermark_free_download_access'
+                library_download_access: 'library_download_access',
+                watermarkFreeDownloadAccess: 'watermark_free_download_access',
+                watermark_free_download_access: 'watermark_free_download_access'
             };
 
             // Build SET clause and values array
             Object.keys(updates).forEach(key => {
-                if (fieldMapping[key] && key !== 'password') { // Exclude password updates
-                    updateFields.push(`${fieldMapping[key]} = $${paramIndex}`);
+                const columnName = fieldMapping[key];
+                if (columnName && key !== 'password' && !seenUpdateColumns.has(columnName)) {
+                    seenUpdateColumns.add(columnName);
+                    updateFields.push(`${columnName} = $${paramIndex}`);
                     values.push(updates[key]);
                     paramIndex++;
                 }
@@ -505,10 +554,13 @@ router.put('/:id', requireAdmin, async (req, res) => {
             const updateQuery = `
                 UPDATE users
                 SET ${updateFields.join(', ')}
-                WHERE id = $${paramIndex}
+                WHERE id::text = $${paramIndex}
+                   OR username = $${paramIndex}
+                   OR lower(email) = lower($${paramIndex})
                 RETURNING id, username, email, bim_level, job_role, organization,
                          registration_date, last_login, login_count, is_active,
-                         mapping_kompetensi_access, library_download_access,
+                         mapping_kompetensi_access, dokumen_access, audit_2026_access,
+                         library_download_access,
                          watermark_free_download_access
             `;
 
@@ -534,6 +586,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 loginCount: updatedUser.login_count || 0,
                 isActive: updatedUser.is_active,
                 mappingKompetensiAccess: updatedUser.mapping_kompetensi_access || false,
+                dokumenAccess: updatedUser.dokumen_access || false,
+                audit2026Access: updatedUser.audit_2026_access || false,
                 libraryDownloadAccess: updatedUser.library_download_access || false,
                 watermarkFreeDownloadAccess: updatedUser.watermark_free_download_access || false
             };
@@ -548,7 +602,17 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
             // Fallback to JSON
             const users = readUsers();
-            const userIndex = users.findIndex(u => u.id === userId);
+            const requestedId = String(userId || '').trim();
+            const userIndex = users.findIndex((user) => {
+                const candidateIds = [
+                    user.id,
+                    user.user_id,
+                    user.username,
+                    user.email
+                ].filter(Boolean).map((value) => String(value).trim());
+
+                return candidateIds.includes(requestedId);
+            });
 
             if (userIndex === -1) {
                 return res.status(404).json({ error: 'User not found' });
@@ -559,15 +623,37 @@ router.put('/:id', requireAdmin, async (req, res) => {
             delete safeUpdates.password; // Don't allow password updates via this endpoint
 
             const accessUpdates = normalizeAccessProfile(safeUpdates);
-            const hasMappingUpdate = Object.prototype.hasOwnProperty.call(safeUpdates, 'mappingKompetensiAccess');
-            const hasLibraryUpdate = Object.prototype.hasOwnProperty.call(safeUpdates, 'libraryDownloadAccess');
-            const hasWatermarkUpdate = Object.prototype.hasOwnProperty.call(safeUpdates, 'watermarkFreeDownloadAccess');
+            const hasMappingUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'mappingKompetensiAccess') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'mapping_kompetensi_access');
+            const hasDokumenUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'dokumenAccess') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'dokumen_access');
+            const hasAudit2026Update =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'audit2026Access') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'audit_2026_access');
+            const hasLibraryUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'libraryDownloadAccess') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'library_download_access');
+            const hasWatermarkUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'watermarkFreeDownloadAccess') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'watermark_free_download_access');
 
             users[userIndex] = { ...users[userIndex], ...safeUpdates };
 
             if (hasMappingUpdate) {
                 users[userIndex].mappingKompetensiAccess = accessUpdates.mappingKompetensiAccess;
                 users[userIndex].mapping_kompetensi_access = accessUpdates.mappingKompetensiAccess;
+            }
+
+            if (hasDokumenUpdate) {
+                users[userIndex].dokumenAccess = accessUpdates.dokumenAccess;
+                users[userIndex].dokumen_access = accessUpdates.dokumenAccess;
+            }
+
+            if (hasAudit2026Update) {
+                users[userIndex].audit2026Access = accessUpdates.audit2026Access;
+                users[userIndex].audit_2026_access = accessUpdates.audit2026Access;
             }
 
             if (hasLibraryUpdate) {

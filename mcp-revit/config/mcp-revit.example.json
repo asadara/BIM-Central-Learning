@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "revit": {
+      "command": "C:\\Program Files\\Autodesk\\Revit 2027 MCP Server Technical Preview\\RevitMCPServer.exe"
+    }
+  },
+  "openai": {
+    "model": "gpt-5.5",
+    "fallbackModel": "gpt-5"
+  },
+  "bridge": {
+    "endpoint": "http://127.0.0.1:17827"
+  }
+}

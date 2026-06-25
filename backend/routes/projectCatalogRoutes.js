@@ -1,6 +1,7 @@
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
-const { requireAuthenticated } = require("../utils/auth");
+const { getRequestUser } = require("../utils/auth");
 
 function createProjectCatalogRoutes({
     backendDir,
@@ -9,6 +10,74 @@ function createProjectCatalogRoutes({
 }) {
     const router = express.Router();
     let activeSync = null;
+
+    function isPcbim02SourceId(sourceId) {
+        return String(sourceId || '').toLowerCase().startsWith('pc-bim02');
+    }
+
+    function sourceSupportsYear(source, year) {
+        if (!source || !Array.isArray(source.fixedYears) || source.fixedYears.length === 0) {
+            return true;
+        }
+
+        const normalizedYear = String(year || '').trim();
+        return source.fixedYears.map(value => String(value || '').trim()).includes(normalizedYear);
+    }
+
+    function readProjectsExplorerCache(year) {
+        const cachePath = path.resolve(backendDir, '..', 'data', 'projects-explorer-cache', `projects-${year}.json`);
+        try {
+            if (!fs.existsSync(cachePath)) {
+                return null;
+            }
+
+            const parsed = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+            return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function getCachedProjectsForSource(year, sourceId) {
+        const cached = readProjectsExplorerCache(year);
+        if (!cached) {
+            return { projects: [], hiddenProjects: [] };
+        }
+
+        const projects = Array.isArray(cached.projects)
+            ? cached.projects.filter(project => project && project.sourceId === sourceId)
+            : [];
+        const hiddenProjects = Array.isArray(cached.hiddenProjects)
+            ? cached.hiddenProjects.filter(project => project && project.sourceId === sourceId)
+            : [];
+
+        return { projects, hiddenProjects };
+    }
+
+    function restoreMissingPcbim02SourcesFromCache(year, projects, hiddenProjects) {
+        const projectList = Array.isArray(projects) ? projects : [];
+        const hiddenList = Array.isArray(hiddenProjects) ? hiddenProjects : [];
+        const existingSourceIds = new Set(projectList.map(project => project && project.sourceId).filter(Boolean));
+
+        for (const source of projectCatalogService.getEnabledSources()) {
+            if (!source || !isPcbim02SourceId(source.id) || !sourceSupportsYear(source, year)) {
+                continue;
+            }
+            if (existingSourceIds.has(source.id)) {
+                continue;
+            }
+
+            const cached = getCachedProjectsForSource(year, source.id);
+            if (cached.projects.length === 0) {
+                continue;
+            }
+
+            cached.projects.forEach(project => projectList.push(project));
+            cached.hiddenProjects.forEach(project => hiddenList.push(project));
+        }
+
+        return { projects: projectList, hiddenProjects: hiddenList };
+    }
 
     function runProjectsExplorerSync() {
         if (activeSync) {
@@ -67,6 +136,7 @@ function createProjectCatalogRoutes({
 
     router.get('/api/years', async (req, res) => {
         try {
+            res.setHeader('Cache-Control', 'no-store');
             const result = await projectCatalogService.getYearsFromMultipleSources();
             console.log('📊 Final years list from all sources:', result.years);
 
@@ -94,12 +164,24 @@ function createProjectCatalogRoutes({
         }
 
         try {
+            res.setHeader('Cache-Control', 'no-store');
             const result = await projectCatalogService.getProjectsFromMultipleSources(year, sourceId || null);
             let projects = Array.isArray(result.projects) ? result.projects : [];
             let hiddenProjects = Array.isArray(result.hiddenProjects) ? result.hiddenProjects : [];
             if (sourceId) {
                 projects = projects.filter(project => project.sourceId === sourceId);
                 hiddenProjects = hiddenProjects.filter(project => project.sourceId === sourceId);
+                if (projects.length === 0 && isPcbim02SourceId(sourceId)) {
+                    const cached = getCachedProjectsForSource(year, sourceId);
+                    if (cached.projects.length > 0) {
+                        projects = cached.projects;
+                        hiddenProjects = cached.hiddenProjects;
+                    }
+                }
+            } else {
+                const restored = restoreMissingPcbim02SourcesFromCache(year, projects, hiddenProjects);
+                projects = restored.projects;
+                hiddenProjects = restored.hiddenProjects;
             }
             console.log(`📊 ${year}: Found ${projects.length} projects from all sources`);
 
@@ -129,6 +211,7 @@ function createProjectCatalogRoutes({
             return res.status(400).json({ error: 'Year and project parameters are required' });
         }
 
+        res.setHeader('Cache-Control', 'no-store');
         const result = await projectCatalogService.getProjectMedia(year, project, sourceId);
         if (!result) {
             return res.status(404).json({ error: `Project '${project}' not found in any source` });
@@ -137,15 +220,15 @@ function createProjectCatalogRoutes({
         res.json(result);
     });
 
-    router.post('/api/projects/refresh-cache', requireAuthenticated, async (req, res) => {
+    router.post('/api/projects/refresh-cache', async (req, res) => {
         try {
-            const authUser = req.authUser || req.user || {};
+            const authUser = getRequestUser(req) || {};
             const result = await runProjectsExplorerSync();
 
             res.json({
                 success: true,
                 message: 'Projects explorer cache refreshed.',
-                requestedBy: authUser.username || authUser.email || 'user',
+                requestedBy: authUser.username || authUser.email || 'manual-refresh',
                 output: result.stdout || null,
                 warnings: result.stderr || null,
                 timestamp: new Date().toISOString()

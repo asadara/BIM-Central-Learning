@@ -139,9 +139,20 @@ function calculateCompetencyScore(user) {
 
     // Learning Activities Score
     const progress = user.progress || {};
-    totalScore += (progress.coursesCompleted || 0) * 50; // 50 points per course
-    totalScore += (progress.examsPassed || 0) * 25; // 25 points per exam
-    totalScore += (progress.certificatesEarned || 0) * 100; // 100 points per certificate
+    totalScore += Math.min((progress.coursesCompleted || 0) * 40, 200);
+    totalScore += Math.min((progress.quizAttempts || 0) * 10, 120);
+    totalScore += Math.min((progress.practiceAttempts || 0) * 15, 150);
+    totalScore += Math.min((progress.examAttempts || 0) * 20, 120);
+    totalScore += Math.min((progress.examsPassed || 0) * 50, 150);
+    totalScore += Math.min((progress.certificatesEarned || 0) * 100, 200);
+
+    const averageAttemptScore = Number(progress.averageAttemptScore || 0);
+    if (averageAttemptScore > 0) {
+        totalScore += Math.min(Math.round(averageAttemptScore), 100);
+    }
+
+    const theoryCategoriesAttempted = Number(progress.theoryCategoriesAttempted || 0);
+    totalScore += Math.min(theoryCategoriesAttempted * 25, 75);
 
     // Activity Score (based on login count and recency)
     const loginCount = user.loginCount || 0;
@@ -198,7 +209,31 @@ function computeAverageCompetency(users) {
 
 async function fetchCompetencyUsersFromDb() {
     const result = await pool.query(
-        `SELECT
+        `WITH attempt_stats AS (
+            SELECT
+                user_id,
+                COUNT(*)::int AS total_attempts,
+                COUNT(*) FILTER (WHERE source_type = 'quiz')::int AS quiz_attempts,
+                COUNT(*) FILTER (WHERE source_type = 'practice')::int AS practice_attempts,
+                COUNT(*) FILTER (WHERE source_type = 'exam')::int AS exam_attempts,
+                COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed,
+                COUNT(*) FILTER (
+                    WHERE quiz_category IN ('mindset', 'governance', 'workflow', 'bim-mindset', 'bim-governance', 'delivery-workflow')
+                )::int AS theory_attempts,
+                COUNT(DISTINCT quiz_category) FILTER (
+                    WHERE quiz_category IN ('mindset', 'governance', 'workflow', 'bim-mindset', 'bim-governance', 'delivery-workflow')
+                )::int AS theory_categories_attempted,
+                COALESCE(ROUND(AVG(percentage)), 0)::int AS average_attempt_score,
+                COALESCE(ROUND(AVG(percentage) FILTER (
+                    WHERE quiz_category IN ('mindset', 'governance', 'workflow', 'bim-mindset', 'bim-governance', 'delivery-workflow')
+                )), 0)::int AS theory_average_score,
+                MAX(submitted_at) AS last_attempt_at,
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT quiz_category), NULL) AS categories_attempted
+            FROM learning_attempts
+            WHERE user_id IS NOT NULL
+            GROUP BY user_id
+        )
+        SELECT
             u.id,
             u.username,
             u.email,
@@ -213,25 +248,40 @@ async function fetchCompetencyUsersFromDb() {
             COALESCE(up.certificates_earned, 0) AS certificates_earned,
             COALESCE(up.current_level, u.bim_level, 'BIM Modeller') AS current_level,
             COALESCE(up.to_next_level, 0) AS to_next_level,
-            MAX(la.submitted_at) AS last_attempt_at
+            COALESCE(ast.total_attempts, 0) AS total_attempts,
+            COALESCE(ast.quiz_attempts, 0) AS quiz_attempts,
+            COALESCE(ast.practice_attempts, 0) AS db_practice_attempts,
+            COALESCE(ast.exam_attempts, 0) AS exam_attempts,
+            COALESCE(ast.exams_passed, 0) AS db_exams_passed,
+            COALESCE(ast.theory_attempts, 0) AS theory_attempts,
+            COALESCE(ast.theory_categories_attempted, 0) AS theory_categories_attempted,
+            COALESCE(ast.average_attempt_score, 0) AS average_attempt_score,
+            COALESCE(ast.theory_average_score, 0) AS theory_average_score,
+            COALESCE(ast.categories_attempted, ARRAY[]::text[]) AS categories_attempted,
+            ast.last_attempt_at
          FROM users u
          LEFT JOIN user_progress up ON up.user_id = u.id
-         LEFT JOIN learning_attempts la ON la.user_id = u.id
+         LEFT JOIN attempt_stats ast ON ast.user_id = u.id
          WHERE COALESCE(u.is_active, true) = true
-         GROUP BY
-            u.id, u.username, u.email, u.organization, u.bim_level,
-            u.login_count, u.last_login, u.registration_date,
-            up.courses_completed, up.practice_attempts, up.exams_passed,
-            up.certificates_earned, up.current_level, up.to_next_level
          ORDER BY u.id ASC`
     );
 
     return result.rows.map((row) => {
+        const practiceAttempts = Math.max(Number(row.practice_attempts || 0), Number(row.db_practice_attempts || 0));
+        const examsPassed = Math.max(Number(row.exams_passed || 0), Number(row.db_exams_passed || 0));
         const progress = {
             coursesCompleted: Number(row.courses_completed || 0),
-            practiceAttempts: Number(row.practice_attempts || 0),
-            examsPassed: Number(row.exams_passed || 0),
-            certificatesEarned: Number(row.certificates_earned || 0)
+            quizAttempts: Number(row.quiz_attempts || 0),
+            practiceAttempts,
+            examAttempts: Number(row.exam_attempts || 0),
+            examsPassed,
+            certificatesEarned: Number(row.certificates_earned || 0),
+            totalAttempts: Number(row.total_attempts || 0),
+            theoryAttempts: Number(row.theory_attempts || 0),
+            theoryCategoriesAttempted: Number(row.theory_categories_attempted || 0),
+            averageAttemptScore: Number(row.average_attempt_score || 0),
+            theoryAverageScore: Number(row.theory_average_score || 0),
+            categoriesAttempted: Array.isArray(row.categories_attempted) ? row.categories_attempted.filter(Boolean) : []
         };
 
         const normalizedUser = {
@@ -251,8 +301,13 @@ async function fetchCompetencyUsersFromDb() {
             lastLogin: normalizedUser.lastLogin,
             progress: {
                 coursesCompleted: progress.coursesCompleted,
+                quizAttempts: progress.quizAttempts,
+                practiceAttempts: progress.practiceAttempts,
+                examAttempts: progress.examAttempts,
                 examsPassed: progress.examsPassed,
-                certificatesEarned: progress.certificatesEarned
+                certificatesEarned: progress.certificatesEarned,
+                averageAttemptScore: progress.averageAttemptScore,
+                theoryCategoriesAttempted: progress.theoryCategoriesAttempted
             }
         });
 
@@ -262,6 +317,184 @@ async function fetchCompetencyUsersFromDb() {
             competencyLevel: getCompetencyLevel(competencyScore)
         };
     });
+}
+
+async function fetchCompetencyUserDetailFromDb(userId) {
+    const users = await fetchCompetencyUsersFromDb();
+    const user = users.find((item) => String(item.id) === String(userId));
+    if (!user) {
+        return null;
+    }
+
+    const attemptsResult = await pool.query(
+        `SELECT
+            id,
+            quiz_id,
+            quiz_name,
+            quiz_category,
+            source_type,
+            score,
+            total_questions,
+            percentage,
+            passed,
+            time_taken,
+            submitted_at
+         FROM learning_attempts
+         WHERE user_id::text = $1::text
+         ORDER BY submitted_at DESC
+         LIMIT 100`,
+        [String(userId)]
+    );
+
+    let activitySummary = {
+        pdfReads: 0,
+        videosWatched: 0,
+        completedModules: 0,
+        totalEvents: 0
+    };
+    let activityEvents = [];
+
+    try {
+        const activitySummaryResult = await pool.query(
+            `SELECT
+                COUNT(*)::int AS total_events,
+                COUNT(*) FILTER (
+                    WHERE module_type = 'pdf' AND event_type = 'opened'
+                )::int AS pdf_reads,
+                COUNT(DISTINCT CASE
+                    WHEN module_type = 'video' AND event_type IN ('opened', 'completed')
+                    THEN module_id
+                END)::int AS videos_watched,
+                COUNT(DISTINCT CASE
+                    WHEN event_type = 'completed'
+                    THEN module_type || ':' || module_id
+                END)::int AS completed_modules
+             FROM learning_activity_events
+             WHERE user_id::text = $1::text
+                OR ($2::text IS NOT NULL AND lower(user_email) = lower($2::text))`,
+            [String(userId), user.email || null]
+        );
+
+        const row = activitySummaryResult.rows[0] || {};
+        activitySummary = {
+            pdfReads: Number(row.pdf_reads || 0),
+            videosWatched: Number(row.videos_watched || 0),
+            completedModules: Number(row.completed_modules || 0),
+            totalEvents: Number(row.total_events || 0)
+        };
+
+        const activityEventsResult = await pool.query(
+            `SELECT
+                module_id,
+                module_type,
+                event_type,
+                title,
+                category,
+                source,
+                progress_percent,
+                created_at
+             FROM learning_activity_events
+             WHERE user_id::text = $1::text
+                OR ($2::text IS NOT NULL AND lower(user_email) = lower($2::text))
+             ORDER BY created_at DESC
+             LIMIT 100`,
+            [String(userId), user.email || null]
+        );
+
+        activityEvents = activityEventsResult.rows.map((event) => ({
+            moduleId: event.module_id,
+            moduleType: event.module_type,
+            eventType: event.event_type,
+            title: event.title || event.module_id || 'Learning activity',
+            category: event.category || '',
+            source: event.source || '',
+            progressPercent: Number(event.progress_percent || 0),
+            createdAt: event.created_at
+        }));
+    } catch (error) {
+        console.warn('WARN: Failed to load learning activity detail:', error.message);
+    }
+
+    const attempts = attemptsResult.rows.map((attempt) => ({
+        id: attempt.id,
+        quizId: attempt.quiz_id,
+        quizName: attempt.quiz_name,
+        quizCategory: attempt.quiz_category,
+        sourceType: attempt.source_type,
+        score: Number(attempt.score || 0),
+        totalQuestions: Number(attempt.total_questions || 0),
+        percentage: Number(attempt.percentage || 0),
+        passed: !!attempt.passed,
+        timeTaken: Number(attempt.time_taken || 0),
+        submittedAt: attempt.submitted_at
+    }));
+
+    const categorySummary = attempts.reduce((summary, attempt) => {
+        const key = attempt.quizCategory || attempt.sourceType || 'uncategorized';
+        if (!summary[key]) {
+            summary[key] = {
+                category: key,
+                attempts: 0,
+                passed: 0,
+                bestScore: 0,
+                averageScore: 0,
+                latestAt: null,
+                totalScore: 0
+            };
+        }
+
+        summary[key].attempts += 1;
+        summary[key].passed += attempt.passed ? 1 : 0;
+        summary[key].bestScore = Math.max(summary[key].bestScore, attempt.percentage);
+        summary[key].totalScore += attempt.percentage;
+        summary[key].averageScore = Math.round(summary[key].totalScore / summary[key].attempts);
+        summary[key].latestAt = summary[key].latestAt || attempt.submittedAt;
+        return summary;
+    }, {});
+
+    const timeline = [
+        ...attempts.slice(0, 50).map((attempt) => ({
+            type: attempt.sourceType || 'quiz',
+            title: attempt.quizName || 'Quiz attempt',
+            category: attempt.quizCategory || '',
+            score: attempt.percentage,
+            status: attempt.passed ? 'passed' : 'completed',
+            occurredAt: attempt.submittedAt
+        })),
+        ...activityEvents.slice(0, 50).map((event) => ({
+            type: event.moduleType || 'activity',
+            title: event.title || 'Learning activity',
+            category: event.category || '',
+            status: event.eventType || 'opened',
+            progressPercent: event.progressPercent,
+            occurredAt: event.createdAt
+        }))
+    ]
+        .filter((item) => item.occurredAt)
+        .sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt))
+        .slice(0, 80);
+
+    return {
+        user,
+        attemptSummary: {
+            totalAttempts: attempts.length,
+            quizAttempts: attempts.filter((attempt) => attempt.sourceType === 'quiz').length,
+            practiceAttempts: attempts.filter((attempt) => attempt.sourceType === 'practice').length,
+            examAttempts: attempts.filter((attempt) => attempt.sourceType === 'exam').length,
+            passedAttempts: attempts.filter((attempt) => attempt.passed).length,
+            averageScore: attempts.length
+                ? Math.round(attempts.reduce((sum, attempt) => sum + attempt.percentage, 0) / attempts.length)
+                : 0
+        },
+        categorySummary: Object.values(categorySummary).map((item) => {
+            const { totalScore, ...publicItem } = item;
+            return publicItem;
+        }),
+        attempts,
+        activitySummary,
+        activityEvents,
+        timeline
+    };
 }
 
 async function fetchDashboardInsightsFromDb(users) {
@@ -449,6 +682,28 @@ router.get('/users', requireCompetencyAuthority, async (req, res) => {
     } catch (error) {
         console.error('Error loading competency users:', error);
         res.status(500).json({ error: 'Failed to load users data' });
+    }
+});
+
+// GET /api/competency/users/:userId/detail - Get selected user competency and learning history
+router.get('/users/:userId/detail', requireCompetencyAuthority, async (req, res) => {
+    try {
+        let detail = null;
+
+        try {
+            detail = await fetchCompetencyUserDetailFromDb(req.params.userId);
+        } catch (dbError) {
+            console.warn('WARN: Failed to load competency user detail from PostgreSQL:', dbError.message);
+        }
+
+        if (!detail) {
+            return res.status(404).json({ error: 'User competency detail not found' });
+        }
+
+        return res.json(detail);
+    } catch (error) {
+        console.error('Error loading competency user detail:', error);
+        return res.status(500).json({ error: 'Failed to load user competency detail' });
     }
 });
 
@@ -822,16 +1077,23 @@ router.get('/admin/authorities', requireAdminSession, async (req, res) => {
 
 // Helper Functions for Report Generation
 async function generateIndividualReport(userId) {
-    // Load user data and calculate competency
-    const competencyData = await readCompetencyData();
-    const user = competencyData.users.find(u => u.id == userId);
+    let users = [];
+    try {
+        users = await fetchCompetencyUsersFromDb();
+    } catch (dbError) {
+        console.warn('WARN: Failed to load individual report user from PostgreSQL, fallback to JSON:', dbError.message);
+        const competencyData = await readCompetencyData();
+        users = competencyData.users || [];
+    }
+
+    const user = users.find(u => String(u.id) === String(userId));
 
     if (!user) {
         throw new Error('User not found');
     }
 
-    const score = calculateCompetencyScore(user);
-    const level = getCompetencyLevel(score);
+    const score = Number(user.competencyScore || calculateCompetencyScore(user));
+    const level = user.competencyLevel || getCompetencyLevel(score);
 
     return {
         userInfo: {
@@ -839,7 +1101,7 @@ async function generateIndividualReport(userId) {
             email: user.email,
             organization: user.organization,
             bimLevel: user.bimLevel,
-            jobRole: user.jobRole
+            jobRole: user.jobRole || null
         },
         competencyScore: score,
         competencyLevel: level,
@@ -849,19 +1111,27 @@ async function generateIndividualReport(userId) {
 }
 
 async function generateOrganizationReport(organizationId) {
-    const competencyData = await readCompetencyData();
-    const orgUsers = competencyData.users.filter(u => u.organization === organizationId);
+    let users = [];
+    try {
+        users = await fetchCompetencyUsersFromDb();
+    } catch (dbError) {
+        console.warn('WARN: Failed to load organization report users from PostgreSQL, fallback to JSON:', dbError.message);
+        const competencyData = await readCompetencyData();
+        users = competencyData.users || [];
+    }
+
+    const orgUsers = users.filter(u => u.organization === organizationId);
 
     const totalUsers = orgUsers.length;
     const avgScore = orgUsers.length > 0 ?
-        Math.round(orgUsers.reduce((sum, u) => sum + calculateCompetencyScore(u), 0) / orgUsers.length) : 0;
+        Math.round(orgUsers.reduce((sum, u) => sum + Number(u.competencyScore || calculateCompetencyScore(u)), 0) / orgUsers.length) : 0;
 
     const levelDistribution = {
-        novice: orgUsers.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Novice').length,
-        beginner: orgUsers.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Beginner').length,
-        intermediate: orgUsers.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Intermediate').length,
-        advanced: orgUsers.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Advanced').length,
-        expert: orgUsers.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Expert').length
+        novice: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Novice').length,
+        beginner: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Beginner').length,
+        intermediate: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Intermediate').length,
+        advanced: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Advanced').length,
+        expert: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Expert').length
     };
 
     return {
@@ -870,7 +1140,7 @@ async function generateOrganizationReport(organizationId) {
         averageScore: avgScore,
         levelDistribution,
         topPerformers: orgUsers
-            .map(u => ({ ...u, score: calculateCompetencyScore(u) }))
+            .map(u => ({ ...u, score: Number(u.competencyScore || calculateCompetencyScore(u)) }))
             .sort((a, b) => b.score - a.score)
             .slice(0, 5),
         generatedAt: new Date().toISOString()
@@ -878,19 +1148,25 @@ async function generateOrganizationReport(organizationId) {
 }
 
 async function generateSummaryReport() {
-    const competencyData = await readCompetencyData();
-    const users = competencyData.users;
+    let users = [];
+    try {
+        users = await fetchCompetencyUsersFromDb();
+    } catch (dbError) {
+        console.warn('WARN: Failed to load summary report users from PostgreSQL, fallback to JSON:', dbError.message);
+        const competencyData = await readCompetencyData();
+        users = competencyData.users || [];
+    }
 
     const totalUsers = users.length;
     const avgScore = users.length > 0 ?
-        Math.round(users.reduce((sum, u) => sum + calculateCompetencyScore(u), 0) / users.length) : 0;
+        Math.round(users.reduce((sum, u) => sum + Number(u.competencyScore || calculateCompetencyScore(u)), 0) / users.length) : 0;
 
     const levelDistribution = {
-        novice: users.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Novice').length,
-        beginner: users.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Beginner').length,
-        intermediate: users.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Intermediate').length,
-        advanced: users.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Advanced').length,
-        expert: users.filter(u => getCompetencyLevel(calculateCompetencyScore(u)) === 'Expert').length
+        novice: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Novice').length,
+        beginner: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Beginner').length,
+        intermediate: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Intermediate').length,
+        advanced: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Advanced').length,
+        expert: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Expert').length
     };
 
     // Organization breakdown
@@ -901,7 +1177,7 @@ async function generateSummaryReport() {
             orgBreakdown[org] = { count: 0, totalScore: 0 };
         }
         orgBreakdown[org].count++;
-        orgBreakdown[org].totalScore += calculateCompetencyScore(user);
+        orgBreakdown[org].totalScore += Number(user.competencyScore || calculateCompetencyScore(user));
     });
 
     Object.keys(orgBreakdown).forEach(org => {
@@ -914,7 +1190,7 @@ async function generateSummaryReport() {
         levelDistribution,
         organizationBreakdown: orgBreakdown,
         topPerformers: users
-            .map(u => ({ ...u, score: calculateCompetencyScore(u) }))
+            .map(u => ({ ...u, score: Number(u.competencyScore || calculateCompetencyScore(u)) }))
             .sort((a, b) => b.score - a.score)
             .slice(0, 10),
         generatedAt: new Date().toISOString()

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const {
+    mediaPathHasExcludedFolder,
     sanitizeExcludedFolderRules,
     shouldExcludeMediaFolder
 } = require("../../shared/rawMediaFolderFilter");
@@ -16,6 +17,7 @@ function createProjectCatalogService({
     projectSources,
     resolveSourcePath,
     validImageExt,
+    validModelExt = [],
     validVideoExt
 }) {
     const FFPROBE_CANDIDATES = [
@@ -51,6 +53,29 @@ function createProjectCatalogService({
         return enabledSources.filter(source => source.id === sourceId);
     }
 
+    function isPcbim02Source(sourceOrId) {
+        const sourceId = typeof sourceOrId === 'string'
+            ? sourceOrId
+            : (sourceOrId && sourceOrId.id ? sourceOrId.id : '');
+        return String(sourceId || '').toLowerCase().startsWith('pc-bim02');
+    }
+
+    function getResolveOptionsForSource(source, timeoutMs) {
+        return {
+            timeoutMs,
+            allowLocalMirrorFallback: !isPcbim02Source(source)
+        };
+    }
+
+    function sourceSupportsYear(source, year) {
+        if (!source || !Array.isArray(source.fixedYears) || source.fixedYears.length === 0) {
+            return true;
+        }
+
+        const normalizedYear = String(year || '').trim();
+        return source.fixedYears.map(value => String(value || '').trim()).includes(normalizedYear);
+    }
+
     function buildProjectMediaCacheFileName(year, sourceId, projectName) {
         const safe = (value) => encodeURIComponent(String(value || '').trim()).replace(/%/g, '_');
         return `${safe(year)}__${safe(sourceId || 'unknown')}__${safe(projectName)}.json`;
@@ -58,6 +83,40 @@ function createProjectCatalogService({
 
     function getProjectMediaCacheFilePath(year, sourceId, projectName) {
         return path.join(PROJECT_MEDIA_JSON_CACHE_DIR, buildProjectMediaCacheFileName(year, sourceId, projectName));
+    }
+
+    function normalizeCachedProjectMediaPayload(payload) {
+        if (!payload || typeof payload !== 'object' || !Array.isArray(payload.mediaDetails)) {
+            return payload;
+        }
+
+        payload.mediaDetails = payload.mediaDetails
+            .filter((detail) => detail && !mediaPathHasExcludedFolder(detail.url || detail.displayUrl || ''))
+            .map((detail) => {
+            if (!detail || typeof detail !== 'object') {
+                return detail;
+            }
+
+            const displayUrl = String(detail.displayUrl || '');
+            if (!/^\/data\/pc-bim02-cache\//i.test(displayUrl)) {
+                return detail;
+            }
+
+            return {
+                ...detail,
+                displayUrl: projectMediaUtilityService.buildProjectMediaDisplayUrl(detail.url)
+            };
+        });
+
+        if (Array.isArray(payload.media)) {
+            const validUrls = new Set(payload.mediaDetails.map((detail) => detail && detail.url).filter(Boolean));
+            payload.media = payload.media.filter((url) =>
+                !mediaPathHasExcludedFolder(url) && (validUrls.size === 0 || validUrls.has(url))
+            );
+            payload.totalMedia = payload.media.length;
+        }
+
+        return payload;
     }
 
     function readProjectMediaCache(year, sourceId, projectName) {
@@ -69,7 +128,7 @@ function createProjectCatalogService({
 
             const raw = fs.readFileSync(cachePath, 'utf8');
             const parsed = JSON.parse(raw);
-            return parsed && typeof parsed === 'object' ? parsed : null;
+            return parsed && typeof parsed === 'object' ? normalizeCachedProjectMediaPayload(parsed) : null;
         } catch (error) {
             return null;
         }
@@ -118,6 +177,22 @@ function createProjectCatalogService({
         return shouldExcludeMediaFolder(folderName, scanExcludedFolders);
     }
 
+    function hasProjectNumberPrefix(folderName) {
+        return /^\s*\d+[\s._-]+/.test(String(folderName || ''));
+    }
+
+    function shouldSkipVisibleProjectFolder(folderName, scanExcludedFolders = excludedFolders) {
+        if (shouldSkipProjectFolder(folderName, scanExcludedFolders)) {
+            return 'excluded_folder';
+        }
+
+        if (!hasProjectNumberPrefix(folderName)) {
+            return 'missing_number_prefix';
+        }
+
+        return null;
+    }
+
     function findMediaRecursive(dir, maxDepth = 5, currentDepth = 0, baseDir, mediaRoute = '/media', scanConfig = null) {
         const effectiveBaseDir = baseDir || dir;
         const scanExcludedFolders = scanConfig && Array.isArray(scanConfig.excludedFolders)
@@ -151,7 +226,7 @@ function createProjectCatalogService({
                     );
                 } else {
                     const ext = path.extname(item.name).toLowerCase();
-                    if (validImageExt.includes(ext) || validVideoExt.includes(ext)) {
+                    if (validImageExt.includes(ext) || validVideoExt.includes(ext) || validModelExt.includes(ext)) {
                         const relativePath = path.relative(effectiveBaseDir, fullPath).split(path.sep).join('/');
                         mediaFiles.push(`${mediaRoute}/${encodeURI(relativePath)}`);
                     }
@@ -166,11 +241,17 @@ function createProjectCatalogService({
 
     function findThumbnailInFolderFromSource(basePath, folderPattern, sourcePath, isRoot = false, mediaRoute = '/media') {
         try {
+            if (mediaPathHasExcludedFolder(basePath)) {
+                return null;
+            }
+
             let searchPath = basePath;
 
             if (!isRoot && folderPattern) {
                 const subfolders = fs.readdirSync(basePath, { withFileTypes: true })
-                    .filter(item => item.isDirectory() && folderPattern.test(item.name));
+                    .filter(item => item.isDirectory()
+                        && folderPattern.test(item.name)
+                        && !shouldSkipProjectFolder(item.name));
 
                 if (subfolders.length === 0) return null;
                 searchPath = path.join(basePath, subfolders[0].name);
@@ -198,6 +279,9 @@ function createProjectCatalogService({
 
             for (const item of items) {
                 if (item.isDirectory()) {
+                    if (shouldSkipProjectFolder(item.name)) {
+                        continue;
+                    }
                     const subPath = path.join(projectPath, item.name);
                     const thumbnail = findThumbnailInFolderFromSource(subPath, null, sourcePath, true, mediaRoute);
                     if (thumbnail) return thumbnail;
@@ -275,11 +359,21 @@ function createProjectCatalogService({
 
         for (const source of getEnabledSources()) {
             yearsBySource[source.id] = [];
+            if (source.rootScan && Array.isArray(source.fixedYears) && source.fixedYears.length > 0) {
+                const fixedYears = normalizeYears(source.fixedYears);
+                yearsBySource[source.id] = fixedYears;
+                fixedYears.forEach(year => allYears.add(year));
+            }
 
             try {
-                const sourcePath = await resolveSourcePath(source, lanManager, { timeoutMs: 3000 });
+                const sourcePath = await resolveSourcePath(source, lanManager, getResolveOptionsForSource(source, 3000));
 
                 if (!sourcePath) {
+                    if (source.rootScan && Array.isArray(source.fixedYears) && source.fixedYears.length > 0) {
+                        const fixedYears = normalizeYears(source.fixedYears);
+                        yearsBySource[source.id] = fixedYears;
+                        fixedYears.forEach(year => allYears.add(year));
+                    }
                     console.warn(`⚠️ Source path not available for ${source.id}`);
                     if (source.mountId && !source.rootScan) {
                         const mount = lanManager.getMountById(source.mountId);
@@ -395,9 +489,13 @@ function createProjectCatalogService({
         const lanManager = new LANMountManager();
 
         for (const source of getEnabledSourcesForScan(sourceId)) {
+            if (!sourceSupportsYear(source, year)) {
+                continue;
+            }
+
             try {
                 const mount = source.mountId ? lanManager.getMountById(source.mountId) : null;
-                const sourcePath = await resolveSourcePath(source, lanManager, { timeoutMs: 5000 });
+                const sourcePath = await resolveSourcePath(source, lanManager, getResolveOptionsForSource(source, 5000));
 
                 if (!sourcePath) {
                     console.warn(`⚠️ Source path not available for ${source.id}`);
@@ -432,6 +530,18 @@ function createProjectCatalogService({
                 }
 
                 for (const folder of projectFolders) {
+                    const skipReason = shouldSkipVisibleProjectFolder(folder.name);
+                    if (skipReason) {
+                        hiddenProjects.push({
+                            name: folder.name,
+                            sourceId: source.id,
+                            source: source.name,
+                            reason: skipReason,
+                            mediaCount: 0
+                        });
+                        continue;
+                    }
+
                     const projectName = folder.name;
                     const projectPath = path.join(projectDir, projectName);
 
@@ -439,7 +549,7 @@ function createProjectCatalogService({
                         const scanConfig = getProjectScanConfig(source);
                         const thumbnail = findProjectThumbnailFromSource(projectPath, year, projectName, sourcePath, source.mediaRoute);
                         const mediaCount = countProjectMedia(projectPath, sourcePath, source.mediaRoute, scanConfig);
-                        const isAlwaysIncludedSource = source.id === 'pc-bim02-2025';
+                        const isAlwaysIncludedSource = isPcbim02Source(source);
 
                         if (mediaCount > 0 || thumbnail || isAlwaysIncludedSource) {
                             const projectKey = `${projectName}_${source.id}`;
@@ -477,10 +587,11 @@ function createProjectCatalogService({
     }
 
     async function getProjectMedia(year, project, sourceId) {
-        const cached = readProjectMediaCache(year, sourceId, project);
-        if (cached) {
-            return cached;
+        if (shouldSkipVisibleProjectFolder(project)) {
+            return null;
         }
+
+        const cached = readProjectMediaCache(year, sourceId, project);
 
         let projectPath = null;
         let foundSource = null;
@@ -490,10 +601,11 @@ function createProjectCatalogService({
 
         for (const source of getEnabledSources()) {
             if (sourceId && source.id !== sourceId) continue;
+            if (!sourceSupportsYear(source, year)) continue;
 
             try {
                 const mount = source.mountId ? lanManager.getMountById(source.mountId) : null;
-                const sourcePath = await resolveSourcePath(source, lanManager, { timeoutMs: 8000 });
+                const sourcePath = await resolveSourcePath(source, lanManager, getResolveOptionsForSource(source, 8000));
 
                 if (!sourcePath) {
                     console.warn(`⚠️ Source path not available for ${source.id}`);
@@ -530,7 +642,7 @@ function createProjectCatalogService({
         }
 
         if (!projectPath || !foundSource) {
-            return null;
+            return cached || null;
         }
 
         let media = [];
@@ -664,9 +776,10 @@ function createProjectCatalogService({
             const sizeBytes = stat.size;
             const ext = path.extname(filePath).toLowerCase();
             const isVideo = validVideoExt.includes(ext);
+            const isModel = validModelExt.includes(ext);
             const durationSeconds = isVideo ? await getVideoDurationSeconds(filePath, stat) : null;
 
-            return { url, displayUrl, sizeBytes, durationSeconds };
+            return { url, displayUrl, sizeBytes, durationSeconds, mediaKind: isModel ? 'model' : (isVideo ? 'video' : 'image') };
         });
     }
 

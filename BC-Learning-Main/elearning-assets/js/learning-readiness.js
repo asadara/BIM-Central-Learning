@@ -2,6 +2,39 @@
     const LEVEL_ORDER = ['BIM Modeller', 'BIM Coordinator', 'BIM Manager'];
 
     const EXAM_BLUEPRINTS = {
+        'bim-mindset-theory-exam': {
+            examId: 'bim-mindset-theory-exam',
+            title: 'BIM Mindset Theory Exam',
+            shortTitle: 'BIM Mindset Exam',
+            requiredLevel: 'BIM Modeller',
+            targetCategories: ['bim-mindset'],
+            minAccuracy: 78,
+            minAttempts: 3,
+            coverageTarget: 1,
+            recommendedPracticeMode: 'skill-drills'
+        },
+        'bim-governance-theory-exam': {
+            examId: 'bim-governance-theory-exam',
+            title: 'BIM Governance Theory Exam',
+            shortTitle: 'BIM Governance Exam',
+            requiredLevel: 'BIM Coordinator',
+            targetCategories: ['bim-governance'],
+            minAccuracy: 80,
+            minAttempts: 3,
+            coverageTarget: 1,
+            recommendedPracticeMode: 'skill-drills'
+        },
+        'bim-delivery-workflow-theory-exam': {
+            examId: 'bim-delivery-workflow-theory-exam',
+            title: 'BIM Delivery Workflow Theory Exam',
+            shortTitle: 'Delivery Workflow Exam',
+            requiredLevel: 'BIM Coordinator',
+            targetCategories: ['delivery-workflow'],
+            minAccuracy: 80,
+            minAttempts: 3,
+            coverageTarget: 1,
+            recommendedPracticeMode: 'skill-drills'
+        },
         'autocad-certification': {
             examId: 'autocad-certification',
             title: 'AutoCAD Certified User Exam',

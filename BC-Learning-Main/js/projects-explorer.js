@@ -5,6 +5,10 @@
         this.sources = [];
         this.projects = [];
         this.hiddenProjects = [];
+        this.allProjectsIndex = [];
+        this.allProjectsIndexLoaded = false;
+        this.projectSearchLoadPromise = null;
+        this.projectSearchRenderToken = 0;
         this.mediaData = [];
         this.filteredData = [];
         this.selectedYear = null;
@@ -13,6 +17,7 @@
         this.selectedProjectKey = null;
         this.selectedSourceId = null;
         this.searchQuery = '';
+        this.projectSearchQuery = '';
         this.filterType = 'all';
         this.filterSize = 'all';
         this.sortBy = 'name-asc';
@@ -72,9 +77,13 @@
         for (const base of candidates) {
             const url = `${base}${path}`;
             try {
-                const response = await fetch(url);
+                const response = await fetch(url, { cache: 'no-store' });
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    error.status = response.status;
+                    error.url = url;
+                    error.isHttpError = true;
+                    throw error;
                 }
                 const data = await response.json();
                 this.apiBase = base;
@@ -85,6 +94,10 @@
         }
 
         throw lastError || new Error('Network request failed');
+    }
+
+    shouldUseStaticCacheFallback(error) {
+        return !(error && error.isHttpError);
     }
 
     async fetchStaticCacheJson(fileName) {
@@ -106,6 +119,88 @@
         return response.json();
     }
 
+    mergeProjectMediaPayload(primaryPayload, fallbackPayload) {
+        const merged = {
+            ...(primaryPayload && typeof primaryPayload === 'object' ? primaryPayload : {})
+        };
+        const primaryDetails = Array.isArray(primaryPayload && primaryPayload.mediaDetails)
+            ? primaryPayload.mediaDetails
+            : [];
+        const fallbackDetails = Array.isArray(fallbackPayload && fallbackPayload.mediaDetails)
+            ? fallbackPayload.mediaDetails
+            : [];
+        const detailsByUrl = new Map();
+
+        [...primaryDetails, ...fallbackDetails].forEach((detail) => {
+            if (!detail || !detail.url || this.hasIncomingDataFolder(detail.url || detail.displayUrl || '')) {
+                return;
+            }
+            if (!detailsByUrl.has(detail.url)) {
+                detailsByUrl.set(detail.url, detail);
+            }
+        });
+
+        const mediaUrls = [
+            ...(Array.isArray(primaryPayload && primaryPayload.media) ? primaryPayload.media : []),
+            ...(Array.isArray(fallbackPayload && fallbackPayload.media) ? fallbackPayload.media : []),
+            ...Array.from(detailsByUrl.keys())
+        ].filter((url) => url && !this.hasIncomingDataFolder(url));
+
+        merged.media = [...new Set(mediaUrls)];
+        merged.mediaDetails = merged.media
+            .map((url) => detailsByUrl.get(url))
+            .filter(Boolean);
+        merged.totalMedia = merged.media.length;
+
+        return merged;
+    }
+
+    normalizeFolderLabel(value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/^[\s._-]*\d+[\s._-]*/g, '')
+            .replace(/[._-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    hasIncomingDataFolder(value) {
+        const safeDecode = (input) => {
+            let output = String(input || '');
+            for (let index = 0; index < 3; index += 1) {
+                try {
+                    const decoded = decodeURIComponent(output);
+                    if (decoded === output) break;
+                    output = decoded;
+                } catch (error) {
+                    break;
+                }
+            }
+            return output;
+        };
+
+        const cleanPath = safeDecode(value).replace(/\\/g, '/').split(/[?#]/)[0];
+        return cleanPath
+            .split('/')
+            .filter(Boolean)
+            .some((segment) => {
+                const normalized = this.normalizeFolderLabel(segment);
+                return /\bincoming\s*data\b/.test(normalized)
+                    || /\bincomingdata\b/.test(normalized)
+                    || /\bdata\s*incoming\b/.test(normalized)
+                    || /\bdataincoming\b/.test(normalized);
+            });
+    }
+
+    hasProjectNumberPrefix(value) {
+        return /^\s*\d+[\s._-]+/.test(String(value || ''));
+    }
+
+    shouldDisplayProjectFolder(project) {
+        const projectName = project && project.name ? project.name : '';
+        return this.hasProjectNumberPrefix(projectName) && !this.hasIncomingDataFolder(projectName);
+    }
+
     buildProjectMediaCacheFileName(year, projectName, sourceId) {
         const safe = (value) => encodeURIComponent(String(value || '').trim()).replace(/%/g, '_');
         return `${safe(year)}__${safe(sourceId || 'unknown')}__${safe(projectName)}.json`;
@@ -123,27 +218,16 @@
         return `${base}/api/media-proxy?url=${encodeURIComponent(cleanUrl)}`;
     }
 
-    buildPcBim02MirrorUrl(mediaUrl) {
+    buildProjectVideoThumbnailUrl(mediaUrl) {
         const cleanUrl = String(mediaUrl || '').trim();
         if (!cleanUrl) return '';
 
-        const routeMappings = [
-            {
-                prefix: '/media-bim02-2026/',
-                target: '/data/pc-bim02-cache/PROJECT BIM 2026/'
-            },
-            {
-                prefix: '/media-bim02/',
-                target: '/data/pc-bim02-cache/PROJECT BIM 2025/'
-            }
-        ];
-
-        const mapping = routeMappings.find((item) => cleanUrl.startsWith(item.prefix));
-        if (!mapping) {
-            return '';
+        let base = this.apiBase || window.location.origin || '';
+        if (base === 'null') {
+            base = '';
         }
-
-        return `${mapping.target}${cleanUrl.slice(mapping.prefix.length)}`;
+        base = base.replace(/\/$/, '');
+        return `${base}/api/project-media-thumbnail?url=${encodeURIComponent(cleanUrl)}`;
     }
 
     getBestDisplayUrl(displayUrl, sourceUrl) {
@@ -156,18 +240,14 @@
         }
 
         if (/\/api\/media-proxy\?/i.test(candidateUrl)) {
-            const mirroredUrl = this.buildPcBim02MirrorUrl(rawUrl);
-            if (mirroredUrl) {
-                return mirroredUrl;
-            }
             return candidateUrl;
         }
 
+        if (/^\/data\/pc-bim02-cache\//i.test(candidateUrl)) {
+            return this.buildMediaProxyUrl(rawUrl);
+        }
+
         if (/^\/media(?:-bim02(?:-2026)?|-bim1-\d{4})?\//i.test(candidateUrl)) {
-            const mirroredUrl = this.buildPcBim02MirrorUrl(rawUrl || candidateUrl);
-            if (mirroredUrl) {
-                return mirroredUrl;
-            }
             return this.buildMediaProxyUrl(rawUrl || candidateUrl);
         }
 
@@ -262,7 +342,7 @@
         button.disabled = !!isBusy;
         button.innerHTML = isBusy
             ? '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Menyinkronkan...'
-            : '<i class="fas fa-rotate-right me-2"></i>Refresh';
+            : '<i class="fas fa-rotate-right me-2"></i>Sinkronkan';
     }
 
     async reloadProjectsView() {
@@ -306,23 +386,16 @@
 
         this.isRefreshingProjects = true;
         this.setRefreshButtonState(true);
-        this.setRefreshStatus(hasValidToken
-            ? 'Sinkronisasi data project sedang berjalan...'
-            : 'Memuat ulang data project dari cache terbaru...', 'info');
+        this.setRefreshStatus('Sinkronisasi manual konten PC-BIM02 sedang berjalan...', 'info');
 
         try {
-            if (!hasValidToken) {
-                await this.reloadProjectsView();
-                this.setRefreshStatus('Data project dimuat ulang dari cache terbaru yang tersedia.', 'success');
-                return;
+            const headers = { 'Content-Type': 'application/json' };
+            if (hasValidToken) {
+                headers.Authorization = `Bearer ${token}`;
             }
-
             const response = await fetch('/api/projects/refresh-cache', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers,
                 credentials: 'include'
             });
 
@@ -360,6 +433,24 @@
             searchInput.addEventListener('input', (e) => {
                 this.searchQuery = e.target.value.toLowerCase();
                 this.applyFilters();
+            });
+        }
+
+        const projectSearchInput = document.getElementById('project-search-input');
+        if (projectSearchInput) {
+            projectSearchInput.addEventListener('input', (e) => this.handleProjectSearchInput(e.target.value));
+        }
+
+        const projectSearchClear = document.getElementById('project-search-clear');
+        if (projectSearchClear) {
+            projectSearchClear.addEventListener('click', () => {
+                this.projectSearchQuery = '';
+                const input = document.getElementById('project-search-input');
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+                this.renderProjectList();
             });
         }
 
@@ -442,7 +533,7 @@
             const projectItem = e.target.closest('[data-project]');
             if (projectItem && projectItem.dataset.project) {
                 e.preventDefault();
-                this.selectProject(projectItem.dataset.project, projectItem.dataset.sourceId || null);
+                this.openProjectFromList(projectItem);
                 return;
             }
 
@@ -473,17 +564,26 @@
         try {
             let data;
             try {
-                data = await this.fetchStaticCacheJson('years.json');
-            } catch (cacheError) {
                 data = await this.fetchJsonWithFallback('/api/years');
+            } catch (apiError) {
+                if (!this.shouldUseStaticCacheFallback(apiError)) {
+                    throw apiError;
+                }
+                data = await this.fetchStaticCacheJson('years.json');
             }
 
             this.years = Array.isArray(data.years) ? data.years : [];
             this.yearsBySource = data.yearsBySource && typeof data.yearsBySource === 'object' ? data.yearsBySource : {};
             this.sources = Array.isArray(data.sources) ? data.sources : [];
+            this.allProjectsIndex = [];
+            this.allProjectsIndexLoaded = false;
+            this.projectSearchLoadPromise = null;
             this.renderYearList();
 
-            if (this.sources.length > 0) {
+            const initialProjectContext = this.getInitialProjectContext();
+            if (initialProjectContext.year) {
+                await this.openProjectContext(initialProjectContext);
+            } else if (this.sources.length > 0) {
                 const sortedSources = [...this.sources].sort((a, b) => (a.priority || 0) - (b.priority || 0));
                 const firstSource = sortedSources.find(source => this.getUniqueSortedYearsForSource(source.id).length > 0) || sortedSources[0];
                 const firstYear = this.getUniqueSortedYearsForSource(firstSource.id)[0];
@@ -499,6 +599,35 @@
                     <div class="text-muted small">Gagal memuat tahun: ${error.message}</div>
                 `;
             }
+        }
+    }
+
+    getInitialProjectContext() {
+        const params = new URLSearchParams(window.location.search || '');
+        return {
+            year: (params.get('year') || '').trim(),
+            sourceId: (params.get('sourceId') || params.get('source') || '').trim(),
+            project: (params.get('project') || '').trim()
+        };
+    }
+
+    async openProjectContext({ year, sourceId, project }) {
+        const normalizedYear = String(year || '').trim();
+        const normalizedSourceId = String(sourceId || '').trim();
+        const normalizedProject = String(project || '').trim();
+
+        if (!normalizedYear) return;
+
+        await this.selectYear(normalizedYear, normalizedSourceId || null);
+
+        if (!normalizedProject) return;
+
+        const matchingProject = this.projects.find((item) =>
+            item.name === normalizedProject && (!normalizedSourceId || item.sourceId === normalizedSourceId)
+        );
+
+        if (matchingProject) {
+            await this.selectProject(matchingProject.name, matchingProject.sourceId || normalizedSourceId || null);
         }
     }
 
@@ -622,6 +751,8 @@
         const projectList = document.getElementById('project-list');
         if (!projectList) return;
 
+        this.updateProjectSearchStatus(0, 0);
+
         projectList.innerHTML = `
             <div class="text-center">
                 <div class="spinner-border spinner-border-sm" role="status">
@@ -640,12 +771,17 @@
             const query = sourceId ? `?sourceId=${encodeURIComponent(sourceId)}` : '';
             let data;
             try {
-                data = await this.fetchStaticCacheJson(`projects-${year}.json`);
-            } catch (cacheError) {
                 data = await this.fetchJsonWithFallback(`/api/projects/${year}${query}`);
+            } catch (apiError) {
+                if (!this.shouldUseStaticCacheFallback(apiError)) {
+                    throw apiError;
+                }
+                data = await this.fetchStaticCacheJson(`projects-${year}.json`);
             }
 
-            this.projects = Array.isArray(data.projects) ? data.projects : [];
+            this.projects = Array.isArray(data.projects)
+                ? data.projects.filter(project => this.shouldDisplayProjectFolder(project))
+                : [];
             this.hiddenProjects = Array.isArray(data.hiddenProjects) ? data.hiddenProjects : [];
             if (sourceId) {
                 this.projects = this.projects.filter(project => project.sourceId === sourceId);
@@ -660,38 +796,227 @@
             }
         } catch (error) {
             this.hiddenProjects = [];
+            this.updateProjectSearchStatus(0, 0);
             projectList.innerHTML = `
                 <div class="text-muted small">Gagal memuat proyek: ${error.message}</div>
             `;
         }
     }
 
+    async fetchProjectsForSearchScope(year, sourceId) {
+        const query = sourceId ? `?sourceId=${encodeURIComponent(sourceId)}` : '';
+        let data;
+        try {
+            data = await this.fetchJsonWithFallback(`/api/projects/${year}${query}`);
+        } catch (apiError) {
+            if (!this.shouldUseStaticCacheFallback(apiError)) {
+                throw apiError;
+            }
+            data = await this.fetchStaticCacheJson(`projects-${year}.json`);
+        }
+
+        let projects = Array.isArray(data.projects)
+            ? data.projects.filter(project => this.shouldDisplayProjectFolder(project))
+            : [];
+
+        if (sourceId) {
+            projects = projects.filter(project => project.sourceId === sourceId);
+        }
+
+        return projects.map((project) => ({
+            ...project,
+            year: String(year || project.year || '').trim(),
+            sourceId: project.sourceId || sourceId || '',
+            source: project.source || this.getSourceLabel(sourceId) || project.source || ''
+        }));
+    }
+
+    getSourceLabel(sourceId) {
+        const source = this.sources.find((item) => item && item.id === sourceId);
+        return source ? (source.name || source.groupName || source.id || '') : '';
+    }
+
+    getProjectSearchScopes() {
+        const scopes = [];
+        const hasSources = this.sources && this.sources.length > 0 && Object.keys(this.yearsBySource).length > 0;
+
+        if (hasSources) {
+            const sortedSources = [...this.sources].sort((a, b) => (a.priority || 0) - (b.priority || 0));
+            sortedSources.forEach((source) => {
+                this.getUniqueSortedYearsForSource(source.id).forEach((year) => {
+                    scopes.push({ year, sourceId: source.id });
+                });
+            });
+        } else {
+            this.years.forEach((year) => {
+                scopes.push({ year, sourceId: null });
+            });
+        }
+
+        const seen = new Set();
+        return scopes.filter((scope) => {
+            const key = `${scope.year}::${scope.sourceId || 'unknown'}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return !!scope.year;
+        });
+    }
+
+    async ensureProjectSearchIndex() {
+        if (this.allProjectsIndexLoaded) {
+            return this.allProjectsIndex;
+        }
+
+        if (this.projectSearchLoadPromise) {
+            return this.projectSearchLoadPromise;
+        }
+
+        const scopes = this.getProjectSearchScopes();
+        this.projectSearchLoadPromise = Promise.all(
+            scopes.map((scope) => this.fetchProjectsForSearchScope(scope.year, scope.sourceId).catch(() => []))
+        ).then((projectGroups) => {
+            const uniqueProjects = new Map();
+            projectGroups.flat().forEach((project) => {
+                const key = `${project.year || ''}::${project.sourceId || ''}::${project.name || ''}`;
+                if (!uniqueProjects.has(key)) {
+                    uniqueProjects.set(key, project);
+                }
+            });
+
+            this.allProjectsIndex = Array.from(uniqueProjects.values()).sort((a, b) => {
+                const yearCompare = String(b.year || '').localeCompare(String(a.year || ''));
+                if (yearCompare !== 0) return yearCompare;
+                return String(a.name || '').localeCompare(String(b.name || ''));
+            });
+            this.allProjectsIndexLoaded = true;
+            return this.allProjectsIndex;
+        }).finally(() => {
+            this.projectSearchLoadPromise = null;
+        });
+
+        return this.projectSearchLoadPromise;
+    }
+
+    async handleProjectSearchInput(value) {
+        this.projectSearchQuery = this.normalizeSearchText(value);
+        const renderToken = this.projectSearchRenderToken + 1;
+        this.projectSearchRenderToken = renderToken;
+
+        if (!this.projectSearchQuery) {
+            this.renderProjectList();
+            return;
+        }
+
+        if (!this.allProjectsIndexLoaded) {
+            this.renderProjectSearchLoading();
+            await this.ensureProjectSearchIndex();
+            if (renderToken !== this.projectSearchRenderToken) return;
+        }
+
+        this.renderProjectList();
+    }
+
+    renderProjectSearchLoading() {
+        const projectList = document.getElementById('project-list');
+        if (!projectList) return;
+
+        this.updateProjectSearchStatus(0, 0, 'Mencari di semua tahun dan sumber...');
+        projectList.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <small class="text-muted d-block mt-2">Membangun indeks proyek...</small>
+            </div>
+        `;
+    }
+
+    normalizeSearchText(value) {
+        return String(value || '')
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[._-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+    }
+
+    getVisibleProjects() {
+        const query = this.projectSearchQuery.trim();
+        if (!query) {
+            return this.projects;
+        }
+
+        return this.allProjectsIndex.filter((project) => {
+            const projectName = project && project.name ? project.name : '';
+            return this.normalizeSearchText(projectName).includes(query);
+        });
+    }
+
+    updateProjectSearchStatus(visibleCount, totalCount, message = '') {
+        const status = document.getElementById('project-search-status');
+        if (!status) return;
+
+        const clearButton = document.getElementById('project-search-clear');
+        if (clearButton) {
+            clearButton.disabled = !this.projectSearchQuery;
+        }
+
+        if (!totalCount) {
+            status.textContent = message;
+            return;
+        }
+
+        status.textContent = this.projectSearchQuery
+            ? `${visibleCount} dari ${totalCount} proyek ditemukan di semua tahun`
+            : `${totalCount} proyek tersedia`;
+    }
+
     renderProjectList() {
         const projectList = document.getElementById('project-list');
         if (!projectList) return;
 
-        const hiddenNotice = this.renderHiddenProjectsNotice();
+        const isGlobalSearch = !!this.projectSearchQuery;
+        const sourceProjects = isGlobalSearch ? this.allProjectsIndex : this.projects;
 
-        if (this.projects.length === 0) {
+        if (sourceProjects.length === 0) {
+            this.updateProjectSearchStatus(0, 0);
             projectList.innerHTML = `
-                ${hiddenNotice}
-                <div class="text-muted small">Tidak ada proyek.</div>
+                <div class="text-muted small">${isGlobalSearch ? 'Tidak ada indeks proyek untuk dicari.' : 'Tidak ada proyek.'}</div>
             `;
             return;
         }
 
-        const projectItems = this.projects.map((project) => {
+        const visibleProjects = this.getVisibleProjects();
+        this.updateProjectSearchStatus(visibleProjects.length, sourceProjects.length);
+
+        if (visibleProjects.length === 0) {
+            projectList.innerHTML = `
+                <div class="text-muted small">Tidak ada proyek yang sesuai.</div>
+            `;
+            return;
+        }
+
+        const projectItems = visibleProjects.map((project) => {
             const sourceId = project.sourceId || '';
             const projectKey = `${project.name}::${sourceId || 'unknown'}`;
             const sourceLabel = project.source || sourceId || 'Unknown';
             const sourceClass = sourceId.includes('bim02') ? 'source-bim02' : sourceId.includes('bim1') ? 'source-bim1' : '';
             const mediaCount = typeof project.mediaCount === 'number' ? project.mediaCount : 0;
+            const projectYear = project.year || this.selectedYear || '';
+            const safeName = this.escapeHtml(project.name);
+            const safeSourceId = this.escapeHtml(sourceId);
+            const safeProjectKey = this.escapeHtml(projectKey);
+            const safeSourceLabel = this.escapeHtml(sourceLabel);
+            const safeYear = this.escapeHtml(projectYear);
+            const yearMeta = isGlobalSearch && projectYear ? `<span>${safeYear}</span>` : '';
             return `
-                <a href="#" class="category-item" data-project="${project.name}" data-source-id="${sourceId}" data-project-key="${projectKey}">
+                <a href="#" class="category-item" data-project="${safeName}" data-project-year="${safeYear}" data-source-id="${safeSourceId}" data-project-key="${safeProjectKey}">
                     <div>
-                        <div class="category-name">${project.name}</div>
+                        <div class="category-name">${safeName}</div>
                         <div class="category-meta">
-                            <span class="source-tag ${sourceClass}">${sourceLabel}</span>
+                            <span class="source-tag ${sourceClass}">${safeSourceLabel}</span>
+                            ${yearMeta}
                             <span>${mediaCount} media</span>
                         </div>
                     </div>
@@ -700,29 +1025,26 @@
             `;
         }).join('');
 
-        projectList.innerHTML = `${hiddenNotice}${projectItems}`;
+        projectList.innerHTML = projectItems;
 
         this.highlightActive('[data-project-key]', this.selectedProjectKey, 'data-project-key');
     }
 
-    renderHiddenProjectsNotice() {
-        if (!Array.isArray(this.hiddenProjects) || this.hiddenProjects.length === 0) {
-            return '';
+    async openProjectFromList(projectItem) {
+        const projectName = projectItem.dataset.project || '';
+        const sourceId = projectItem.dataset.sourceId || null;
+        const projectYear = projectItem.dataset.projectYear || this.selectedYear;
+
+        if (!projectName) return;
+
+        const needsContextSwitch = projectYear
+            && (String(projectYear) !== String(this.selectedYear || '') || (sourceId || null) !== (this.selectedSourceId || null));
+
+        if (needsContextSwitch) {
+            await this.selectYear(projectYear, sourceId);
         }
 
-        const names = this.hiddenProjects
-            .map((item) => item && item.name ? item.name : '')
-            .filter(Boolean);
-        const uniqueNames = [...new Set(names)];
-        const preview = uniqueNames.slice(0, 3).join(', ');
-        const suffix = uniqueNames.length > 3 ? `, +${uniqueNames.length - 3} lainnya` : '';
-        const namesText = preview ? `<br><span class="text-muted">Contoh: ${preview}${suffix}</span>` : '';
-
-        return `
-            <div class="alert alert-warning py-2 px-3 small mb-2">
-                <strong>${this.hiddenProjects.length}</strong> folder proyek disembunyikan karena belum ada media visual (gambar/video).${namesText}
-            </div>
-        `;
+        await this.selectProject(projectName, sourceId);
     }
 
     async selectProject(projectName, sourceId) {
@@ -743,12 +1065,25 @@
             const query = sourceId ? `?sourceId=${encodeURIComponent(sourceId)}` : '';
             let data;
             try {
-                data = await this.fetchStaticMediaCacheJson(this.selectedYear, projectName, sourceId || 'unknown');
-            } catch (cacheError) {
                 data = await this.fetchJsonWithFallback(`/api/project-media/${encodeURIComponent(this.selectedYear)}/${encodeURIComponent(projectName)}${query}`);
+                try {
+                    const cachedData = await this.fetchStaticMediaCacheJson(this.selectedYear, projectName, sourceId || 'unknown');
+                    data = this.mergeProjectMediaPayload(data, cachedData);
+                } catch (cacheMergeError) {
+                    // Live API remains authoritative when static cache is not available.
+                }
+            } catch (apiError) {
+                if (!this.shouldUseStaticCacheFallback(apiError)) {
+                    throw apiError;
+                }
+                data = await this.fetchStaticMediaCacheJson(this.selectedYear, projectName, sourceId || 'unknown');
             }
-            const mediaList = Array.isArray(data.media) ? data.media : [];
-            const detailsList = Array.isArray(data.mediaDetails) ? data.mediaDetails : [];
+            const mediaList = Array.isArray(data.media)
+                ? data.media.filter(url => !this.hasIncomingDataFolder(url))
+                : [];
+            const detailsList = Array.isArray(data.mediaDetails)
+                ? data.mediaDetails.filter(detail => !this.hasIncomingDataFolder((detail && (detail.url || detail.displayUrl)) || ''))
+                : [];
             const detailMap = new Map(
                 detailsList
                     .filter(detail => detail && detail.url)
@@ -757,7 +1092,7 @@
 
             this.mediaData = mediaList
                 .map((url) => this.buildMediaItem(url, detailMap.get(url)))
-                .filter(item => item.type === 'image' || item.type === 'video');
+                .filter(item => item.type === 'image' || item.type === 'video' || item.type === 'model');
 
             this.currentPage = 1;
             this.applyFilters();
@@ -781,10 +1116,12 @@
         }
         const ext = filename.split('.').pop().toLowerCase();
         const imageExts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'];
-        const videoExts = ['mp4', 'mov', 'webm', 'avi', 'mkv', 'wmv'];
+        const videoExts = ['mp4', 'mov', 'webm', 'avi', 'mkv', 'wmv', 'm4v'];
+        const modelExts = ['ifc'];
         let type = 'other';
         if (imageExts.includes(ext)) type = 'image';
         if (videoExts.includes(ext)) type = 'video';
+        if (modelExts.includes(ext) || (details && details.mediaKind === 'model')) type = 'model';
 
         const sizeBytes = details && typeof details.sizeBytes === 'number' ? details.sizeBytes : null;
         const durationSeconds = details && typeof details.durationSeconds === 'number' ? details.durationSeconds : null;
@@ -808,7 +1145,8 @@
             webm: 'video/webm',
             avi: 'video/x-msvideo',
             mkv: 'video/x-matroska',
-            wmv: 'video/x-ms-wmv'
+            wmv: 'video/x-ms-wmv',
+            m4v: 'video/mp4'
         };
         return mimeTypes[ext] || 'video/mp4';
     }
@@ -837,6 +1175,34 @@
         return `${baseName}-wm.${outputExt}`;
     }
 
+    getDownloadUrl(item) {
+        if (item && item.type === 'model') {
+            return item.url || item.sourceUrl || '#';
+        }
+
+        return this.getWatermarkUrl(item);
+    }
+
+    getDownloadFilename(item) {
+        if (item && item.type === 'model') {
+            return item.filename || 'model.ifc';
+        }
+
+        return this.getWatermarkFilename(item);
+    }
+
+    buildIfcViewerUrl(item) {
+        const fileUrl = item && (item.sourceUrl || item.url) ? (item.sourceUrl || item.url) : '';
+        const params = new URLSearchParams({
+            file: fileUrl,
+            name: item && item.filename ? item.filename : 'IFC Model',
+            source: this.selectedSourceId || '',
+            year: this.selectedYear || '',
+            project: this.selectedProject || ''
+        });
+        return `/pages/ifc-viewer.html?${params.toString()}`;
+    }
+
     escapeHtml(value) {
         return String(value || '')
             .replace(/&/g, '&amp;')
@@ -854,6 +1220,16 @@
                 iconImage: '/img/icons/video-icon2.png',
                 badge: 'VID',
                 caption: 'Video'
+            };
+        }
+
+        if (type === 'model') {
+            return {
+                theme: 'model',
+                icon: 'fas fa-cube',
+                iconImage: '',
+                badge: 'IFC',
+                caption: 'IFC Model'
             };
         }
 
@@ -890,6 +1266,10 @@
     }
 
     buildMediaThumbnail(item) {
+        if (item.type === 'model') {
+            return this.buildFileThumb('model');
+        }
+
         if (item.type === 'image') {
             const safeName = this.escapeHtml(item.filename);
             return `
@@ -899,7 +1279,18 @@
             `;
         }
 
-        return this.buildFileThumb('video');
+        const thumbnailUrl = this.buildProjectVideoThumbnailUrl(item.sourceUrl || item.url);
+        if (!thumbnailUrl) {
+            return this.buildFileThumb('video');
+        }
+
+        const safeName = this.escapeHtml(item.filename);
+        return `
+            <img src="${thumbnailUrl}" alt="${safeName}" loading="lazy" decoding="async" class="video-thumb-image"
+                onerror="this.style.display='none'; const play=this.parentElement.querySelector('.video-thumb-play'); if (play) play.style.display='none'; const fallback=this.parentElement.querySelector('.file-thumb'); if (fallback) fallback.classList.remove('is-hidden');">
+            <span class="video-thumb-play" aria-hidden="true"><i class="fas fa-play"></i></span>
+            ${this.buildFileThumb('video', { hidden: true })}
+        `;
     }
 
     renderPreviewUnavailable(viewer, reason) {
@@ -1000,15 +1391,32 @@
             const globalIndex = startIndex + index;
             const mediaThumb = this.buildMediaThumbnail(item);
 
-            const typeLabel = item.type === 'video' ? 'VIDEO' : 'IMAGE';
-            const downloadUrl = this.getWatermarkUrl(item);
-            const downloadName = this.getWatermarkFilename(item);
+            const typeLabel = item.type === 'video' ? 'VIDEO' : (item.type === 'model' ? 'IFC' : 'IMAGE');
+            const downloadUrl = this.getDownloadUrl(item);
+            const downloadName = this.getDownloadFilename(item);
             const sizeLabel = this.formatFileSize(item.sizeBytes);
             const durationLabel = item.type === 'video' ? this.formatDuration(item.durationSeconds) : '';
             const metaPrimary = [this.selectedYear || '', this.selectedProject || ''].filter(Boolean).join(' • ');
             const durationMeta = item.type === 'video'
                 ? ` • Durasi: ${durationLabel || '-'}`
                 : '';
+            const actions = item.type === 'model'
+                ? `
+                    <a class="btn-media-action btn-viewer" href="${this.buildIfcViewerUrl(item)}">
+                        <i class="fas fa-cube"></i> Open IFC
+                    </a>
+                    <a class="btn-media-action btn-download" href="${downloadUrl}" download="${downloadName}">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                `
+                : `
+                    <button class="btn-media-action btn-view" data-media-index="${globalIndex}">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <a class="btn-media-action btn-download" href="${downloadUrl}" download="${downloadName}">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                `;
 
             return `
                 <div class="col-lg-4 col-md-6">
@@ -1024,12 +1432,7 @@
                                 <div class="media-meta-row">Ukuran: ${sizeLabel}${durationMeta}</div>
                             </div>
                             <div class="media-actions">
-                                <button class="btn-media-action btn-view" data-media-index="${globalIndex}">
-                                    <i class="fas fa-eye"></i> Preview
-                                </button>
-                                <a class="btn-media-action btn-download" href="${downloadUrl}" download="${downloadName}">
-                                    <i class="fas fa-download"></i> Download
-                                </a>
+                                ${actions}
                             </div>
                         </div>
                     </div>

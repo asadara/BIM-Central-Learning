@@ -220,15 +220,17 @@
                         <h4>Skema Sederhana</h4>
                         <div class="bg-light p-4 rounded text-center">
                             <div class="d-flex justify-content-center align-items-center flex-wrap mb-3">
-                                <div class="flow-box rules">Rules</div>
+                                <div class="flow-box rules">Requirements</div>
                                 <div class="arrow">&rarr;</div>
-                                <div class="flow-box model">Model</div>
+                                <div class="flow-box model">Plan</div>
                                 <div class="arrow">&rarr;</div>
-                                <div class="flow-box coordinate">Coordinate</div>
+                                <div class="flow-box coordinate">Produce</div>
                                 <div class="arrow">&rarr;</div>
-                                <div class="flow-box simulate">Simulate</div>
+                                <div class="flow-box simulate">Coordinate</div>
                                 <div class="arrow">&rarr;</div>
-                                <div class="flow-box document">Document</div>
+                                <div class="flow-box document">Review</div>
+                                <div class="arrow">&rarr;</div>
+                                <div class="flow-box document">Approve</div>
                                 <div class="arrow">&rarr;</div>
                                 <div class="flow-box deliver">Deliver</div>
                             </div>
@@ -265,54 +267,54 @@
                     </p>
 
                     <div class="pijakan">
-                        <strong>Pijakan:</strong> ISO 19650-1/-2 (information management principles & delivery);
-                        Indonesia: Pedoman/Regulasi BIM PUPR/LPJK (verifikasi nomor)
-                        <!-- TODO: Verify specific PUPR/LPJK regulation numbers -->
+                        <strong>Pijakan narasi:</strong> prinsip manajemen informasi dan delivery bertahap yang umum dipakai dalam praktik BIM modern, termasuk pendekatan ISO 19650.
                     </div>
 
                     <section class="ringkas">
                         <h3>Ringkas</h3>
                         <ul>
-                            <li>Alur BIM dimulai dari penetapan aturan dan standar proyek</li>
-                            <li>Produksi model merupakan inti dari proses BIM</li>
-                            <li>Koordinasi memastikan integrasi antar disiplin</li>
-                            <li>Simulasi dan analisis mendukung pengambilan keputusan</li>
-                            <li>Dokumentasi dan delivery menutup siklus dengan handover ke operasi</li>
+                            <li>Alur BIM dimulai dari kebutuhan informasi proyek, bukan dari software atau model</li>
+                            <li>BEP, MIDP/TIDP, CDE, standar penamaan, dan gate review menjadi aturan kerja bersama</li>
+                            <li>Produksi model adalah bagian dari proses delivery informasi, bukan tujuan akhir</li>
+                            <li>Koordinasi, review, issue resolution, approval, dan handover menentukan apakah informasi layak dipakai</li>
+                            <li>Delivery selesai ketika informasi yang diserahkan sesuai scope, status, dan kebutuhan pengguna</li>
                         </ul>
                     </section>
 
                     <section class="content-explanation">
                         <h2>Urutan Proses BIM</h2>
-                        <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-1 (information management framework); Indonesia: SNI ISO
-                            19650-1 (BIM Concepts & Principles) <!-- TODO: Verify PUPR specific guidelines -->
-                        </div>
-                        <p>Proses BIM mengikuti urutan logis yang memastikan informasi dikembangkan secara bertahap dari
-                            konsep hingga implementasi.</p>
+                        <p>Workflow BIM yang sehat mengikuti prinsip manajemen informasi: kebutuhan ditetapkan, rencana dibuat, informasi diproduksi, diperiksa, dikoordinasikan, disetujui, lalu diserahkan untuk penggunaan tertentu. Prinsip ini selaras dengan pendekatan ISO 19650 tanpa harus mengklaim bahwa halaman ini adalah prosedur compliance.</p>
                         <ul>
-                            <li><strong>Rules (Aturan):</strong> Penetapan standar, kontrak, dan spesifikasi proyek</li>
-                            <li><strong>Model (Produksi):</strong> Pembuatan model digital berdasarkan disiplin</li>
-                            <li><strong>Coordinate (Koordinasi):</strong> Integrasi model antar disiplin untuk
-                                mendeteksi konflik</li>
-                            <li><strong>Simulate (Simulasi):</strong> Analisis performa bangunan melalui simulasi</li>
-                            <li><strong>Document (Dokumentasi):</strong> Pembuatan deliverables teknis dan laporan</li>
-                            <li><strong>Deliver (Pengiriman):</strong> Handover informasi ke fase konstruksi dan operasi
-                            </li>
+                            <li><strong>Information requirement:</strong> tentukan informasi yang dibutuhkan owner, proyek, dan tim pelaksana.</li>
+                            <li><strong>Planning:</strong> susun BEP, pembagian tanggung jawab, MIDP/TIDP, CDE, naming, status, dan approval gate.</li>
+                            <li><strong>Production:</strong> buat model, drawing, schedule, quantity, atau dokumen sesuai scope dan kebutuhan informasi.</li>
+                            <li><strong>Coordination:</strong> gabungkan informasi lintas disiplin, kelola clash/issue, dan catat keputusan.</li>
+                            <li><strong>Review and approval:</strong> cek kualitas, versi, kelengkapan, dan suitability sebelum informasi dipakai.</li>
+                            <li><strong>Delivery and handover:</strong> serahkan paket informasi yang jelas statusnya, lengkap metadata, dan dapat ditelusuri.</li>
                         </ul>
 
-                        <h2>Handover Antar Tahap</h2>
-                        <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (asset delivery phase); Indonesia: SNI ISO 19650-2
-                            (Asset Delivery Phase) <!-- TODO: Verify LPJK handover procedures -->
-                        </div>
-                        <p>Setiap tahap handover memerlukan verifikasi kualitas dan akseptasi dari penerima informasi.
-                        </p>
+                        <h2>Yang Perlu Dipahami</h2>
+                        <p>Setiap tahap handover memerlukan verifikasi kualitas dan penerimaan dari pihak yang akan menggunakan informasi. Handover bukan hanya mengirim file, tetapi menyatakan informasi mana yang boleh dipakai, untuk tujuan apa, oleh siapa, dan dengan batasan apa.</p>
                         <ul>
-                            <li>Engineering ke BIM: Transfer spesifikasi teknis</li>
-                            <li>BIM ke QA-QC: Model terintegrasi untuk review</li>
-                            <li>QA-QC ke Site: Model siap konstruksi dengan approval</li>
-                            <li>Site ke Operations: As-built information untuk maintenance</li>
+                            <li>Engineering ke BIM: kebutuhan teknis dan batas desain harus jelas.</li>
+                            <li>BIM ke QA/QC: model dan data harus siap direview, bukan langsung dianggap benar.</li>
+                            <li>QA/QC ke Site: hanya informasi dengan status sesuai yang boleh dipakai untuk pekerjaan.</li>
+                            <li>Site ke Operations: as-built information harus mencatat kondisi aktual dan bukti perubahan.</li>
                         </ul>
+
+                        <h2>Kesalahan Umum yang Perlu Dihindari</h2>
+                        <ul>
+                            <li>Menganggap workflow BIM selesai saat model 3D selesai dibuat.</li>
+                            <li>Melakukan koordinasi tanpa issue owner, due date, status, dan keputusan yang terdokumentasi.</li>
+                            <li>Menggunakan model untuk procurement, konstruksi, atau klaim tanpa status approval yang jelas.</li>
+                            <li>Mengabaikan feedback lapangan sehingga model, schedule, dan dokumen tidak lagi mencerminkan kondisi proyek.</li>
+                        </ul>
+
+                        <h2>Implikasi di Proyek</h2>
+                        <p>Project manager, engineer, BIM modeller, planner, QS, QA/QC, dan tim site perlu membaca workflow BIM sebagai alur kontrol informasi. Setiap penggunaan model atau dokumen harus dapat menjawab: informasi ini berasal dari mana, versi berapa, statusnya apa, disetujui oleh siapa, dan dipakai untuk keputusan apa.</p>
+
+                        <h2>Ringkasan Pendek</h2>
+                        <p>BIM Delivery Workflow adalah proses mengubah kebutuhan informasi menjadi paket informasi yang terkoordinasi, tervalidasi, dan siap digunakan. Model 3D penting, tetapi nilainya muncul ketika terhubung dengan rencana, review, issue resolution, approval, dan handover.</p>
                     </section>
 
                     <section class="example">
@@ -342,8 +344,8 @@
                         <ul>
                             <li>ISO 19650-1 (Information Management Framework)</li>
                             <li>ISO 19650-2 (Asset Delivery Phase)</li>
-                            <li>SNI ISO 19650-1/-2</li>
-                            <li>Pedoman BIM PUPR/LPJK (verifikasi nomor) <!-- TODO --></li>
+                            <li>SNI ISO 19650-1/-2 sebagai rujukan prinsip, jika dipakai dalam proyek</li>
+                            <li>Dokumen kontrak, BEP, standar internal, dan prosedur CDE proyek</li>
                         </ul>
                     </section>
                 </div>

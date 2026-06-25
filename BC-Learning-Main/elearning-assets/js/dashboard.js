@@ -91,10 +91,19 @@ function authFetch(url, options = {}) {
 // Load enhanced learning systems
 function loadEnhancedSystems() {
     return new Promise((resolve) => {
+        if (
+            typeof enhancedLearningPaths !== 'undefined' &&
+            typeof enhancedPracticeQuestions !== 'undefined' &&
+            typeof enhancedExamDatabase !== 'undefined'
+        ) {
+            resolve();
+            return;
+        }
+
         const scripts = [
-            'enhanced-learning-paths.js',
-            'enhanced-practice-questions.js',
-            'enhanced-exam-database.js'
+            'js/enhanced-learning-paths.js',
+            'js/enhanced-practice-questions.js',
+            'js/enhanced-exam-database.js'
         ];
 
         let loadedCount = 0;

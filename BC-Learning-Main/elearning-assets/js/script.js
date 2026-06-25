@@ -58,6 +58,7 @@ function syncSidebarToggleHandle() {
 
     if (icon) {
         icon.className = `fas fa-chevron-${isCollapsed ? 'right' : 'left'}`;
+        icon.style.transform = 'none';
     }
 }
 

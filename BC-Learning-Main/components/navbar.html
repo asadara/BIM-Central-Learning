@@ -21,11 +21,26 @@
                     Bantuan
                 </a>
             </div>
+            <div class="nav-item dokumen-access-link" hidden>
+                <a href="/pages/manual-books.html" class="nav-link" aria-label="Cari dokumen BCL">
+                    <i class="fas fa-search bcl-inline-icon-sm"></i>
+                    <span class="bcl-nav-label">Dokumen</span>
+                </a>
+            </div>
+            <div class="nav-item audit-2026-access-link" hidden>
+                <a href="/pages/audit-2026.html" class="nav-link" aria-label="Audit 2026">
+                    <i class="fas fa-folder-tree bcl-inline-icon-sm"></i>
+                    <span class="bcl-nav-label">Audit 2026</span>
+                </a>
+            </div>
             <div class="nav-item">
                 <a href="/pages/bim-mindset.html" class="nav-link">BIM Mindset</a>
             </div>
             <div class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">BIM Governance</a>
+                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                    <span class="bcl-nav-full">BIM Governance</span>
+                    <span class="bcl-nav-short">Governance</span>
+                </a>
                 <div class="dropdown-menu fade-down m-0" id="bim-governance-menu" style="max-height: 70vh; overflow-y: auto;">
                     <h6 class="dropdown-header">Landasan Regulasi</h6>
                     <a href="/pages/regulasi-bim.html" class="dropdown-item">Regulasi BIM</a>
@@ -52,8 +67,12 @@
                 </div>
             </div>
             <div class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">BIM Delivery Workflow</a>
+                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                    <span class="bcl-nav-full">BIM Delivery Workflow</span>
+                    <span class="bcl-nav-short">Workflow</span>
+                </a>
                 <div class="dropdown-menu fade-down m-0">
+                    <a href="/pages/workflow-bim-nke.html" class="dropdown-item">BIM NKE Workflow</a>
                     <a href="/pages/workflow-overview.html" class="dropdown-item">Peta Alur BIM (End-to-End)</a>
                     <a href="/pages/workflow-standar.html" class="dropdown-item">Standar & Aturan Main</a>
                     <a href="/pages/workflow-produksi.html" class="dropdown-item">Produksi Model</a>
@@ -66,7 +85,10 @@
                 </div>
             </div>
             <div class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Knowledge Center</a>
+                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                    <span class="bcl-nav-full">Knowledge Center</span>
+                    <span class="bcl-nav-short">Knowledge</span>
+                </a>
                 <div class="dropdown-menu fade-down m-0">
                     <h6 class="dropdown-header">Dasar BIM</h6>
                     <a href="/pages/bim.html" class="dropdown-item">Apa itu BIM?</a>
@@ -75,9 +97,11 @@
                     <a href="/pages/plugins.html" class="dropdown-item">Plugin & Tools BIM</a>
                     <div class="dropdown-divider"></div>
                     <h6 class="dropdown-header">Materi & Referensi</h6>
-                    <a href="/pages/manual-books.html" class="dropdown-item">Buku Panduan</a>
+                    <a href="/pages/manual-books.html" class="dropdown-item dokumen-access-link" hidden>Document Library</a>
                     <a href="/pages/library.html" class="dropdown-item">Pustaka BIM</a>
                     <a href="/pages/bimassets.html" class="dropdown-item">Aset Pengetahuan</a>
+                    <a href="/pages/lesson-learn.html" class="dropdown-item">Lesson Learn</a>
+                    <a href="/pages/ifc-viewer.html" class="dropdown-item">IFC Viewer</a>
                     <a href="/pages/updates.html" class="dropdown-item">Berita & Update BIM</a>
                     <div class="dropdown-divider"></div>
                     <h6 class="dropdown-header">Belajar & Praktik</h6>
@@ -91,17 +115,23 @@
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Training</a>
                 <div class="dropdown-menu fade-down m-0">
                     <a href="/pages/elearning.html" class="dropdown-item">Pusat Belajar</a>
-                    <a href="/elearning-assets/home.html" class="dropdown-item">Jalur Belajar</a>
+                    <a href="/elearning-assets/dashboard.html" class="dropdown-item">Jalur Belajar</a>
                 </div>
             </div>
             <div class="nav-item dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle bcl-inline-icon-md"></i><span id="account-name">Akun</span>
+                    <span class="bcl-message-dot" id="account-message-indicator" hidden></span>
                 </a>
                 <div class="dropdown-menu fade-down m-0">
                     <a href="/pages/login.html" class="dropdown-item account-dropdown-item" id="login-link"><i class="fas fa-sign-in-alt"></i><span>Masuk</span></a>
                     <a href="/pages/signup.html" class="dropdown-item account-dropdown-item" id="register-link"><i class="fas fa-user-plus"></i><span>Daftar</span></a>
                     <a href="/elearning-assets/dashboard.html" class="dropdown-item account-dropdown-item" id="dashboard-link" hidden><i class="fas fa-chart-line"></i><span>Dashboard Belajar</span></a>
+                    <a href="/pages/messages.html" class="dropdown-item account-dropdown-item" id="messages-link" hidden>
+                        <i class="fas fa-envelope"></i>
+                        <span>Pesan Masuk</span>
+                        <span class="badge rounded-pill bg-danger ms-auto" id="message-unread-badge" hidden>0</span>
+                    </a>
                     <a href="/elearning-assets/profile.html" class="dropdown-item account-dropdown-item" id="profile-link" hidden><i class="fas fa-user-circle"></i><span>Profil Saya</span></a>
                     <div class="dropdown-divider" id="admin-tools-divider" hidden></div>
                     <a href="/pages/sub/mapping-kompetensi.html" class="dropdown-item account-dropdown-item" id="competency-link" hidden><i class="fas fa-project-diagram"></i><span>Mapping Kompetensi</span></a>
@@ -129,21 +159,22 @@
     }
 
     .bcl-main-navbar {
-        --bcl-nav-min-height: 82px;
+        --bcl-nav-min-height: 78px;
         --bcl-nav-horizontal-padding: 12px;
-        --bcl-nav-link-font-size: 16px;
+        --bcl-nav-link-font-size: 14px;
         --bcl-nav-link-font-weight: 600;
-        --bcl-nav-link-padding-x: 8px;
-        --bcl-brand-gap: 12px;
-        --bcl-brand-logo-height-nke: 44px;
-        --bcl-brand-logo-height-bim: 44px;
-        --bcl-brand-logo-height-bcl: 44px;
+        --bcl-nav-link-padding-x: 7px;
+        --bcl-nav-item-gap: 2px;
+        --bcl-brand-gap: 10px;
+        --bcl-brand-logo-height-nke: 40px;
+        --bcl-brand-logo-height-bim: 40px;
+        --bcl-brand-logo-height-bcl: 40px;
         --bcl-dropdown-radius: 14px;
         --bcl-dropdown-item-font-size: 14px;
         --bcl-dropdown-item-font-weight: 500;
         --bcl-dropdown-header-font-size: 12px;
-        --bcl-brand-padding-inline: 24px;
-        --bcl-nav-margin-inline-end: 16px;
+        --bcl-brand-padding-inline: 18px;
+        --bcl-nav-margin-inline-end: 8px;
         box-sizing: border-box;
         display: flex;
         align-items: center;
@@ -200,21 +231,23 @@
         width: auto;
         object-fit: contain;
         flex: 0 0 auto;
+        margin: 0 !important;
     }
 
     .bcl-main-navbar .bcl-brand-logo-nke {
-        height: var(--bcl-brand-logo-height-nke);
+        height: var(--bcl-brand-logo-height-nke) !important;
     }
 
     .bcl-main-navbar .bcl-brand-logo-bim {
-        height: var(--bcl-brand-logo-height-bim);
+        height: var(--bcl-brand-logo-height-bim) !important;
     }
 
     .bcl-main-navbar .bcl-brand-logo-bcl {
-        height: var(--bcl-brand-logo-height-bcl);
+        height: var(--bcl-brand-logo-height-bcl) !important;
     }
 
     .bcl-main-navbar .navbar-toggler {
+        display: none;
         flex: 0 0 auto;
         margin: 0 0 0 auto !important;
     }
@@ -229,7 +262,8 @@
         display: flex;
         align-items: center;
         flex-wrap: nowrap;
-        gap: 0;
+        gap: var(--bcl-nav-item-gap);
+        border-top: 0 !important;
         margin-left: auto !important;
         margin-right: var(--bcl-nav-margin-inline-end) !important;
         padding: 0 !important;
@@ -252,6 +286,7 @@
         align-items: center;
         min-height: var(--bcl-nav-min-height);
         padding: 0 var(--bcl-nav-link-padding-x) !important;
+        margin: 0 !important;
         font-size: var(--bcl-nav-link-font-size) !important;
         font-weight: var(--bcl-nav-link-font-weight) !important;
         line-height: 1.2;
@@ -260,6 +295,10 @@
         white-space: nowrap;
         text-align: center;
         letter-spacing: 0.01em !important;
+    }
+
+    .bcl-main-navbar .bcl-nav-short {
+        display: none;
     }
 
     .bcl-main-navbar .account-dropdown-item {
@@ -273,6 +312,17 @@
         flex: 0 0 1.1rem;
         text-align: center;
         color: #2f3d63;
+    }
+
+    .bcl-main-navbar .bcl-message-dot {
+        display: inline-flex;
+        width: 9px;
+        height: 9px;
+        margin-left: 6px;
+        border-radius: 999px;
+        background: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.16);
+        vertical-align: middle;
     }
 
     .bcl-main-navbar .navbar-nav .nav-link:hover,
@@ -331,18 +381,19 @@
     }
 
     .nav-compact .bcl-main-navbar {
-        --bcl-nav-min-height: 80px;
-        --bcl-nav-horizontal-padding: 12px;
-        --bcl-nav-link-font-size: 16px;
+        --bcl-nav-min-height: 72px;
+        --bcl-nav-horizontal-padding: 10px;
+        --bcl-nav-link-font-size: 13px;
         --bcl-nav-link-font-weight: 600;
-        --bcl-nav-link-padding-x: 8px;
-        --bcl-brand-gap: 8px;
-        --bcl-brand-logo-height-nke: 38px;
-        --bcl-brand-logo-height-bim: 38px;
-        --bcl-brand-logo-height-bcl: 38px;
+        --bcl-nav-link-padding-x: 6px;
+        --bcl-nav-item-gap: 3px;
+        --bcl-brand-gap: 7px;
+        --bcl-brand-logo-height-nke: 34px;
+        --bcl-brand-logo-height-bim: 34px;
+        --bcl-brand-logo-height-bcl: 34px;
         --bcl-dropdown-radius: 12px;
-        --bcl-brand-padding-inline: 18px;
-        --bcl-nav-margin-inline-end: 14px;
+        --bcl-brand-padding-inline: 10px;
+        --bcl-nav-margin-inline-end: 6px;
     }
 
     .nav-compact .bcl-main-navbar .navbar-brand {
@@ -356,6 +407,14 @@
 
     .nav-compact .bcl-main-navbar .navbar-nav .nav-link {
         letter-spacing: 0 !important;
+    }
+
+    .nav-compact .bcl-main-navbar .bcl-nav-full {
+        display: none;
+    }
+
+    .nav-compact .bcl-main-navbar .bcl-nav-short {
+        display: inline;
     }
 
     .nav-compact .bcl-main-navbar .dropdown-toggle::after {
@@ -466,8 +525,11 @@
         display: flex !important;
         align-items: center;
         justify-content: center;
+        width: 46px;
+        height: 46px;
         min-width: 46px;
         min-height: 46px;
+        padding: 0 !important;
         border-radius: 12px;
         border: 1px solid rgba(24, 29, 56, 0.12);
         background: rgba(255, 255, 255, 0.94);
@@ -491,18 +553,19 @@
     @media (max-width: 991.98px) {
         .bcl-main-navbar {
             --bcl-nav-horizontal-padding: 10px;
-            --bcl-nav-min-height: 74px;
-            --bcl-brand-logo-height-nke: 34px;
-            --bcl-brand-logo-height-bim: 34px;
-            --bcl-brand-logo-height-bcl: 34px;
+            --bcl-nav-min-height: 70px;
+            --bcl-nav-item-gap: 0;
+            --bcl-brand-logo-height-nke: 32px;
+            --bcl-brand-logo-height-bim: 32px;
+            --bcl-brand-logo-height-bcl: 32px;
         }
 
         .bcl-main-navbar .navbar-brand {
-            --bcl-brand-padding-inline: 16px;
+            --bcl-brand-padding-inline: 12px;
         }
 
         .bcl-main-navbar .bcl-brand-logos {
-            --bcl-brand-gap: 10px;
+            --bcl-brand-gap: 8px;
         }
 
         .bcl-main-navbar .navbar-nav .nav-link {
@@ -512,6 +575,41 @@
 
         .nav-mobile .bcl-main-navbar .navbar-nav {
             padding: 10px;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .bcl-main-navbar {
+            --bcl-nav-horizontal-padding: 8px;
+            --bcl-brand-gap: 5px;
+            --bcl-brand-logo-height-nke: 28px;
+            --bcl-brand-logo-height-bim: 28px;
+            --bcl-brand-logo-height-bcl: 28px;
+        }
+
+        .bcl-main-navbar .navbar-brand {
+            --bcl-brand-padding-inline: 8px;
+        }
+
+        .nav-mobile .bcl-main-navbar .navbar-toggler {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            min-height: 42px;
+            border-radius: 10px;
+        }
+    }
+
+    @media (max-width: 370px) {
+        .bcl-main-navbar {
+            --bcl-brand-gap: 4px;
+            --bcl-brand-logo-height-nke: 25px;
+            --bcl-brand-logo-height-bim: 25px;
+            --bcl-brand-logo-height-bcl: 25px;
+        }
+
+        .bcl-main-navbar .navbar-brand {
+            --bcl-brand-padding-inline: 6px;
         }
     }
 
@@ -667,9 +765,23 @@
 
         function updateNavMode() {
             const desktopBreakpoint = 992;
+            const fitTolerance = 6;
+
             function setNavMode({ mobile, compact }) {
                 rootElement.classList.toggle('nav-mobile', mobile);
                 rootElement.classList.toggle('nav-compact', !mobile && compact);
+                navbar.dataset.navMode = mobile ? 'mobile' : (compact ? 'compact' : 'desktop');
+            }
+
+            function getOuterWidth(element) {
+                if (!element) {
+                    return 0;
+                }
+
+                const style = window.getComputedStyle(element);
+                const marginLeft = parseFloat(style.marginLeft) || 0;
+                const marginRight = parseFloat(style.marginRight) || 0;
+                return Math.ceil(element.getBoundingClientRect().width + marginLeft + marginRight);
             }
 
             function measureDesktopFit(compactMode) {
@@ -684,18 +796,22 @@
                 const horizontalPadding =
                     (parseFloat(navbarStyle.paddingLeft) || 0) +
                     (parseFloat(navbarStyle.paddingRight) || 0);
-                const availableWidth = navbar.clientWidth - horizontalPadding;
-                const brandWidth = brandLink ? Math.ceil(brandLink.getBoundingClientRect().width) : 0;
-                const navItemWidth = navbarNav
-                    ? Array.from(navbarNav.querySelectorAll(':scope > .nav-item > .nav-link'))
-                        .reduce((total, link) => total + Math.ceil(link.getBoundingClientRect().width), 0)
-                    : 0;
+                const availableWidth = navbar.clientWidth;
+                const brandWidth = getOuterWidth(brandLink);
+                const navItems = navbarNav
+                    ? Array.from(navbarNav.querySelectorAll(':scope > .nav-item'))
+                    : [];
+                const navItemWidth = navItems.reduce((total, item) => total + getOuterWidth(item), 0);
                 const navMarginInlineEnd = navStyle ? (parseFloat(navStyle.marginRight) || 0) : 0;
-                const requiredWidth = brandWidth + navItemWidth + navMarginInlineEnd + 24;
+                const navItemGap = navStyle ? (parseFloat(navStyle.columnGap || navStyle.gap) || 0) : 0;
+                const navGapWidth = navItemGap * Math.max(0, navItems.length - 1);
+                const flexGap = parseFloat(navbarStyle.columnGap || navbarStyle.gap) || 0;
+                const requiredWidth = brandWidth + navItemWidth + navGapWidth + navMarginInlineEnd + horizontalPadding + flexGap + fitTolerance;
 
                 return {
                     availableWidth,
-                    requiredWidth
+                    requiredWidth,
+                    fits: requiredWidth <= availableWidth
                 };
             }
 
@@ -704,11 +820,11 @@
             if (window.innerWidth >= desktopBreakpoint) {
                 const standardMeasurement = measureDesktopFit(false);
 
-                if (standardMeasurement.requiredWidth <= standardMeasurement.availableWidth) {
+                if (standardMeasurement.fits) {
                     navMode = { mobile: false, compact: false };
                 } else {
                     const compactMeasurement = measureDesktopFit(true);
-                    navMode = compactMeasurement.requiredWidth <= compactMeasurement.availableWidth
+                    navMode = compactMeasurement.fits
                         ? { mobile: false, compact: true }
                         : { mobile: true, compact: false };
                 }
@@ -747,8 +863,33 @@
             document.body.classList.toggle('bcl-navbar-menu-open', isMobileMode && isExpanded);
         }
 
+        if (navbarToggler && navbarCollapse) {
+            navbarToggler.addEventListener('click', event => {
+                if (!rootElement.classList.contains('nav-mobile')) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                const shouldOpen = !navbarCollapse.classList.contains('show');
+                closeAllDropdowns();
+                navbarCollapse.classList.toggle('show', shouldOpen);
+                navbarToggler.classList.toggle('collapsed', !shouldOpen);
+                syncMobileMenuState();
+            });
+        }
+
         updateNavMode();
         adjustNavbarForScreenSize();
+
+        function refreshNavbarMode() {
+            clearTimeout(navbar.bclResponsiveRefreshTimeout);
+            navbar.bclResponsiveRefreshTimeout = setTimeout(() => {
+                updateNavMode();
+                adjustNavbarForScreenSize();
+            }, 80);
+        }
 
         window.addEventListener('resize', () => {
             clearTimeout(window.bclNavbarResizeTimeout);
@@ -761,6 +902,15 @@
         window.addEventListener('orientationchange', () => {
             updateNavMode();
             adjustNavbarForScreenSize();
+        });
+
+        window.addEventListener('load', refreshNavbarMode, { once: true });
+
+        navbar.querySelectorAll('img').forEach(image => {
+            if (!image.complete) {
+                image.addEventListener('load', refreshNavbarMode, { once: true });
+                image.addEventListener('error', refreshNavbarMode, { once: true });
+            }
         });
 
         if (document.fonts && document.fonts.ready) {
@@ -817,5 +967,67 @@
         document.addEventListener('DOMContentLoaded', initializeResponsiveNavbar, { once: true });
     } else {
         initializeResponsiveNavbar();
+    }
+
+    function readBclNavbarJson(key) {
+        try {
+            return JSON.parse(localStorage.getItem(key) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function getBclNavbarMessageToken() {
+        const user = readBclNavbarJson('user');
+        return localStorage.getItem('token') || user.token || '';
+    }
+
+    function getBclNavbarRole() {
+        const user = readBclNavbarJson('user');
+        const userData = readBclNavbarJson('userData');
+        return String(localStorage.getItem('role') || user.role || user.jobRole || userData.role || '');
+    }
+
+    function setBclNavbarMessageState(unreadCount, visible) {
+        const messagesLink = document.getElementById('messages-link');
+        const badge = document.getElementById('message-unread-badge');
+        const dot = document.getElementById('account-message-indicator');
+        const count = Number(unreadCount || 0);
+
+        if (messagesLink) messagesLink.hidden = !visible;
+        if (badge) {
+            badge.hidden = !visible || count <= 0;
+            badge.textContent = count > 99 ? '99+' : String(count);
+        }
+        if (dot) dot.hidden = !visible || count <= 0;
+    }
+
+    async function refreshBclNavbarMessageState() {
+        const token = getBclNavbarMessageToken();
+        const role = getBclNavbarRole().toLowerCase();
+        if (!token || role.includes('admin')) {
+            setBclNavbarMessageState(0, false);
+            return;
+        }
+
+        setBclNavbarMessageState(0, true);
+        try {
+            const response = await fetch('/api/messages', {
+                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
+                cache: 'no-store'
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            setBclNavbarMessageState(Number(data.unread || 0), true);
+        } catch (error) {
+            setBclNavbarMessageState(0, true);
+        }
+    }
+
+    window.BCLRefreshMessageIndicator = window.BCLRefreshMessageIndicator || refreshBclNavbarMessageState;
+    refreshBclNavbarMessageState();
+    if (!window.bclNavbarMessageTimer) {
+        window.bclNavbarMessageTimer = setInterval(refreshBclNavbarMessageState, 60000);
     }
 </script>

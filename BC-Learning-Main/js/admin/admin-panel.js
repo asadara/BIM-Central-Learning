@@ -123,6 +123,7 @@ class AdminPanel {
             { name: 'questions', path: 'modules/questions.js' },
             { name: 'videos', path: 'modules/videos.js' },
             { name: 'videoDisplay', path: 'modules/video-display.js' },
+            { name: 'messages', path: 'modules/messages.js' },
             { name: 'contentManagement', path: 'modules/content-management.js' }
         ];
 

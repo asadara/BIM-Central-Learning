@@ -233,6 +233,7 @@
                         <h5><i class="fas fa-check-circle"></i> Definition of Done - Model Release</h5>
                         <ul class="list-unstyled">
                             <li><i class="fas fa-check text-success"></i> Model sesuai LOD spesifikasi</li>
+                            <li><i class="fas fa-check text-success"></i> Model sesuai tujuan penggunaan dan status release</li>
                             <li><i class="fas fa-check text-success"></i> Tidak ada clash internal</li>
                             <li><i class="fas fa-check text-success"></i> Metadata lengkap (author, date, status)</li>
                             <li><i class="fas fa-check text-success"></i> IFC export berhasil tanpa error</li>
@@ -260,45 +261,56 @@
                     <section class="content-explanation">
                         <h2>Proses Produksi Model</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650 concepts of information container + suitability/status
-                            (cite generally); Indonesia: ketentuan dokumen kontrak/spesifikasi proyek
-                            <!-- TODO: Verify specific contract clauses -->
+                            <strong>Pijakan narasi:</strong> produksi model harus mengikuti kebutuhan informasi, scope, BEP, status container, dan gate review proyek.
                         </div>
-                        <p>Produksi model BIM mengikuti proses sistematis untuk memastikan kualitas dan konsistensi.</p>
+                        <p>Produksi model BIM adalah proses membuat informasi yang dapat dipercaya, bukan sekadar membuat geometri. Model harus dibangun dari input yang sah, sesuai tujuan BIM use, dan siap diperiksa sebelum dipakai oleh disiplin lain.</p>
                         <ul>
-                            <li><strong>Input Gathering:</strong> Kumpulkan semua spesifikasi, referensi, dan baseline
-                            </li>
-                            <li><strong>Model Build:</strong> Buat model sesuai disiplin dengan koordinasi awal</li>
-                            <li><strong>Self-Check:</strong> Verifikasi internal sebelum submit</li>
-                            <li><strong>Submit Review:</strong> Kirim dengan dokumentasi lengkap</li>
+                            <li><strong>Input gathering:</strong> kumpulkan EIR/AIR yang relevan, BEP, referensi desain, spesifikasi, survey, baseline, dan batas scope.</li>
+                            <li><strong>Model build:</strong> buat model sesuai disiplin, LOD/LOI atau Level of Information Need, dan aturan koordinasi proyek.</li>
+                            <li><strong>Self-check:</strong> periksa koordinat, naming, parameter, kelengkapan, clash internal, dan status sebelum submit.</li>
+                            <li><strong>Submit review:</strong> kirim model bersama metadata, issue log, batasan penggunaan, dan catatan perubahan.</li>
                         </ul>
 
                         <h2>Quality Assurance dalam Produksi</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650-2 (information suitability); Indonesia: SNI 8438:2017
-                            (Quality Assurance) <!-- TODO: Verify QA procedures -->
+                            <strong>Pijakan narasi:</strong> QA memastikan informasi sesuai tujuan penggunaan sebelum keluar dari WIP.
                         </div>
-                        <p>Quality assurance terintegrasi dalam setiap langkah produksi model.</p>
+                        <p>Quality assurance terintegrasi dalam setiap langkah produksi model. Pemeriksaan harus mencakup geometri, data, status, versi, dan kesesuaian terhadap kebutuhan informasi, bukan hanya clash detection.</p>
                         <ul>
                             <li><strong>Continuous Checking:</strong> Validasi saat model dibangun</li>
                             <li><strong>Clash Detection:</strong> Deteksi interference antar elemen</li>
                             <li><strong>Data Validation:</strong> Pastikan parameter sesuai spesifikasi</li>
-                            <li><strong>LOD Compliance:</strong> Tingkat detail sesuai tahap proyek</li>
+                            <li><strong>Information Need Compliance:</strong> detail geometri dan informasi sesuai fase, scope, dan keputusan yang didukung</li>
                         </ul>
 
                         <h2>LOD dan LOI Guidelines</h2>
                         <div class="pijakan">
-                            <strong>Pijakan:</strong> ISO 19650 (information requirements); Indonesia: SNI 8433:2017
-                            (BIM Classification Systems) <!-- TODO: Verify LOD specifications -->
+                            <strong>Pijakan narasi:</strong> LOD/LOI membantu menyepakati kedalaman informasi, tetapi harus selalu dikaitkan dengan kebutuhan proyek.
                         </div>
-                        <p>Level of Detail (LOD) dan Level of Information (LOI) menentukan kedalaman model.</p>
+                        <p>Level of Detail (LOD) dan Level of Information (LOI) menentukan kedalaman model dan data. Namun, angka LOD tidak boleh dibaca sebagai jaminan bahwa model otomatis benar atau otomatis boleh dipakai untuk semua keputusan.</p>
                         <ul>
-                            <li><strong>LOD 100:</strong> Conceptual model untuk planning</li>
-                            <li><strong>LOD 200:</strong> Approximate geometry untuk coordination</li>
-                            <li><strong>LOD 300:</strong> Precise model untuk construction</li>
-                            <li><strong>LOD 400:</strong> Fabrication model untuk manufacturing</li>
-                            <li><strong>LOD 500:</strong> As-built model untuk operation</li>
+                            <li><strong>LOD/LOI rendah:</strong> cukup untuk konsep, studi awal, atau estimasi kasar.</li>
+                            <li><strong>LOD/LOI menengah:</strong> membantu koordinasi lintas disiplin dan perencanaan konstruksi.</li>
+                            <li><strong>LOD/LOI tinggi:</strong> dapat mendukung fabrikasi, instalasi, atau handover jika sudah diverifikasi dan disetujui.</li>
+                            <li><strong>Level of Information Need:</strong> fokus pada informasi minimum yang benar-benar diperlukan untuk tujuan tertentu.</li>
                         </ul>
+
+                        <h2>Yang Perlu Dipahami</h2>
+                        <p>Model yang baik bukan model yang paling detail, tetapi model yang sesuai kebutuhan, konsisten, tervalidasi, dan jelas status penggunaannya.</p>
+
+                        <h2>Kesalahan Umum yang Perlu Dihindari</h2>
+                        <ul>
+                            <li>Membuat model terlalu detail tanpa kebutuhan proyek yang jelas.</li>
+                            <li>Menganggap clash-free berarti model sudah layak untuk konstruksi.</li>
+                            <li>Mengabaikan parameter, metadata, status, dan batasan penggunaan.</li>
+                            <li>Memakai model WIP untuk quantity, procurement, atau pekerjaan lapangan.</li>
+                        </ul>
+
+                        <h2>Implikasi di Proyek</h2>
+                        <p>BIM modeller dan drafter perlu bekerja dari input yang sudah jelas; engineer dan QA/QC perlu memeriksa substansi teknis; coordinator memastikan model dapat digabung dan dilacak; project team hanya memakai model sesuai statusnya.</p>
+
+                        <h2>Ringkasan Pendek</h2>
+                        <p>Produksi model adalah produksi informasi. Model harus dikembangkan, diperiksa, dan dirilis berdasarkan tujuan proyek, bukan berdasarkan asumsi bahwa visual 3D sudah cukup.</p>
                     </section>
 
                     <section class="example">
@@ -327,10 +339,7 @@
                         <ul>
                             <li>ISO 19650-1 (Information Management)</li>
                             <li>ISO 19650-2 (Information Suitability)</li>
-                            <li>SNI 8433:2017 (BIM Classification Systems)</li>
-                            <li>SNI 8434:2017 (BIM Model Production)</li>
-                            <li>SNI 8438:2017 (Quality Assurance)</li>
-                            <li>Ketentuan kontrak/spesifikasi proyek <!-- TODO --></li>
+                            <li>Dokumen kontrak, BEP, LOD/LOI matrix, TIDP, dan prosedur QA/QC proyek</li>
                         </ul>
                     </section>
                 </div>

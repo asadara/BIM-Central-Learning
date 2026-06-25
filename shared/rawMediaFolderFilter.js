@@ -9,7 +9,9 @@ function normalizeFolderLabel(value) {
 
 const INCOMING_DATA_FOLDER_PATTERNS = [
     /\bincoming\s*data\b/,
-    /\bincomingdata\b/
+    /\bincomingdata\b/,
+    /\bdata\s*incoming\b/,
+    /\bdataincoming\b/
 ];
 
 function sanitizeExcludedFolderRules(rules = []) {
@@ -52,9 +54,37 @@ function shouldExcludeMediaFolder(folderName, additionalRules = []) {
     );
 }
 
+function safeDecodePathSegment(value) {
+    let output = String(value || '');
+    for (let index = 0; index < 3; index += 1) {
+        try {
+            const decoded = decodeURIComponent(output);
+            if (decoded === output) {
+                break;
+            }
+            output = decoded;
+        } catch (error) {
+            break;
+        }
+    }
+    return output;
+}
+
+function mediaPathHasExcludedFolder(value, additionalRules = []) {
+    const normalizedPath = safeDecodePathSegment(value)
+        .replace(/\\/g, '/')
+        .split(/[?#]/)[0];
+
+    return normalizedPath
+        .split('/')
+        .filter(Boolean)
+        .some((segment) => shouldExcludeMediaFolder(segment, additionalRules));
+}
+
 module.exports = {
     INCOMING_DATA_FOLDER_PATTERNS,
     matchesExcludedFolderRule,
+    mediaPathHasExcludedFolder,
     normalizeFolderLabel,
     sanitizeExcludedFolderRules,
     shouldExcludeMediaFolder

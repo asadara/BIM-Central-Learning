@@ -7,7 +7,7 @@ const DEFAULT_DST_ROOT = 'C:/BCL/data/pc-bim02-cache/PROJECT BIM 2025';
 const SYNC_FOLDER = 'MEDIA_SYNC';
 const VALID_EXT = new Set([
   '.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp',
-  '.mp4', '.mov', '.webm', '.avi', '.mkv', '.wmv'
+  '.mp4', '.mov', '.webm', '.avi', '.mkv', '.wmv', '.m4v'
 ]);
 
 function parseArgs(argv) {
@@ -15,7 +15,8 @@ function parseArgs(argv) {
     projects: [],
     skipExisting: true,
     srcRoot: DEFAULT_SRC_ROOT,
-    dstRoot: DEFAULT_DST_ROOT
+    dstRoot: DEFAULT_DST_ROOT,
+    allowMirrorWrite: false
   };
 
   for (const arg of argv) {
@@ -30,6 +31,11 @@ function parseArgs(argv) {
 
     if (arg === '--force') {
       options.skipExisting = false;
+      continue;
+    }
+
+    if (arg === '--allow-mirror-write') {
+      options.allowMirrorWrite = true;
       continue;
     }
 
@@ -144,6 +150,11 @@ function syncProject(projectName, options) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  if (!options.allowMirrorWrite) {
+    console.error('DISABLED|PC-BIM02 mirror sync is disabled by default. Use --allow-mirror-write for manual recovery only.');
+    process.exit(2);
+  }
+
   const projects = getProjectNames(options.srcRoot, options.projects);
 
   console.log(`START|projects=${projects.length}|skipExisting=${options.skipExisting}|src=${options.srcRoot}|dst=${options.dstRoot}`);

@@ -1,0 +1,245 @@
+[
+  {
+    "id": "bim-mindset-foundation",
+    "order": 10,
+    "title": "BIM Mindset Foundation",
+    "level": "BIM Modeller",
+    "description": "Jalur dasar untuk memahami BIM sebagai sistem manajemen informasi, bukan sekadar software atau model 3D.",
+    "courseCategory": "bim-mindset",
+    "modules": [
+      {
+        "id": "bim-mindset-information-management",
+        "order": 1,
+        "title": "BIM sebagai Manajemen Informasi",
+        "outcome": "Peserta memahami status, versi, sumber resmi, dan tujuan penggunaan informasi.",
+        "materials": [
+          { "type": "reading", "title": "Konsep BIM Mindset", "source": "/pages/bim-mindset.html" }
+        ],
+        "practice": { "category": "bim-mindset", "minimumAttempts": 3, "minimumAverageScore": 78 }
+      }
+    ],
+    "exam": {
+      "id": "bim-mindset-theory-exam",
+      "title": "BIM Mindset Theory Exam",
+      "passingScore": 80
+    },
+    "readiness": {
+      "requiredLevel": "BIM Modeller",
+      "targetCategories": ["bim-mindset"],
+      "minAccuracy": 78,
+      "minAttempts": 3,
+      "coverageTarget": 1,
+      "recommendedPracticeMode": "skill-drills"
+    },
+    "certificate": {
+      "title": "BIM Mindset Theory",
+      "validForMonths": 24
+    }
+  },
+  {
+    "id": "bim-governance-foundation",
+    "order": 20,
+    "title": "BIM Governance Foundation",
+    "level": "BIM Coordinator",
+    "description": "Jalur untuk menguasai authority, responsibility, decision gate, quality gate, dan audit trail.",
+    "courseCategory": "bim-governance",
+    "modules": [
+      {
+        "id": "bim-governance-control",
+        "order": 1,
+        "title": "Kontrol Informasi dan Keputusan",
+        "outcome": "Peserta dapat membedakan pembuat informasi, pemeriksa, pemberi approval, dan pengguna informasi.",
+        "materials": [
+          { "type": "reading", "title": "BIM Governance", "source": "/pages/bim-governance-quiz.html" }
+        ],
+        "practice": { "category": "bim-governance", "minimumAttempts": 3, "minimumAverageScore": 80 }
+      }
+    ],
+    "exam": {
+      "id": "bim-governance-theory-exam",
+      "title": "BIM Governance Theory Exam",
+      "passingScore": 80
+    },
+    "readiness": {
+      "requiredLevel": "BIM Coordinator",
+      "targetCategories": ["bim-governance"],
+      "minAccuracy": 80,
+      "minAttempts": 3,
+      "coverageTarget": 1,
+      "recommendedPracticeMode": "skill-drills"
+    },
+    "certificate": {
+      "title": "BIM Governance Theory",
+      "validForMonths": 24
+    }
+  },
+  {
+    "id": "bim-delivery-workflow-foundation",
+    "order": 30,
+    "title": "BIM Delivery Workflow Foundation",
+    "level": "BIM Coordinator",
+    "description": "Jalur untuk memahami alur delivery informasi BIM dari kebutuhan hingga penggunaan di proyek.",
+    "courseCategory": "delivery-workflow",
+    "modules": [
+      {
+        "id": "bim-delivery-workflow-core",
+        "order": 1,
+        "title": "Workflow Delivery Informasi",
+        "outcome": "Peserta memahami kebutuhan informasi, produksi, koordinasi, validasi, rilis, dan penggunaan informasi.",
+        "materials": [
+          { "type": "reading", "title": "BIM Delivery Workflow", "source": "/pages/bim-delivery-workflow-quiz.html" }
+        ],
+        "practice": { "category": "delivery-workflow", "minimumAttempts": 3, "minimumAverageScore": 80 }
+      }
+    ],
+    "exam": {
+      "id": "bim-delivery-workflow-theory-exam",
+      "title": "BIM Delivery Workflow Theory Exam",
+      "passingScore": 80
+    },
+    "readiness": {
+      "requiredLevel": "BIM Coordinator",
+      "targetCategories": ["delivery-workflow"],
+      "minAccuracy": 80,
+      "minAttempts": 3,
+      "coverageTarget": 1,
+      "recommendedPracticeMode": "skill-drills"
+    },
+    "certificate": {
+      "title": "BIM Delivery Workflow Theory",
+      "validForMonths": 24
+    }
+  },
+  {
+    "id": "autocad-certified-user",
+    "order": 40,
+    "title": "AutoCAD Certified User",
+    "level": "BIM Modeller",
+    "description": "Jalur software untuk dasar drafting 2D, editing, annotation, plotting, dan kesiapan ujian AutoCAD.",
+    "courseCategory": "autocad",
+    "modules": [
+      {
+        "id": "autocad-basics-course",
+        "order": 1,
+        "title": "AutoCAD Basics Course",
+        "outcome": "Peserta menyelesaikan materi dasar AutoCAD sebelum practice sertifikasi.",
+        "materials": [
+          { "type": "video", "title": "Materi Video AutoCAD", "source": "/elearning-assets/courses.html" },
+          { "type": "pdf", "title": "Materi PDF AutoCAD", "source": "/elearning-assets/courses.html" }
+        ],
+        "practice": { "category": "autocad", "minimumAttempts": 3, "minimumAverageScore": 80 }
+      }
+    ],
+    "exam": {
+      "id": "autocad-certification",
+      "title": "AutoCAD Certified User Exam",
+      "passingScore": 75
+    },
+    "readiness": {
+      "requiredLevel": "BIM Modeller",
+      "targetCategories": ["autocad"],
+      "minAccuracy": 80,
+      "minAttempts": 3,
+      "coverageTarget": 1,
+      "recommendedPracticeMode": "skill-drills"
+    },
+    "certificate": {
+      "title": "AutoCAD Certified User",
+      "validForMonths": 24
+    }
+  },
+  {
+    "id": "revit-architecture-professional",
+    "order": 50,
+    "title": "Revit Architecture Professional",
+    "level": "BIM Coordinator",
+    "description": "Jalur lanjutan untuk Revit fundamentals, modelling, intermediate modelling, dan quality control.",
+    "courseCategory": "revit",
+    "modules": [
+      {
+        "id": "revit-basics-course",
+        "order": 1,
+        "title": "Revit Basics Course",
+        "outcome": "Peserta menyelesaikan materi dasar Revit dan memahami struktur model.",
+        "materials": [
+          { "type": "video", "title": "Materi Video Revit", "source": "/elearning-assets/courses.html" }
+        ],
+        "practice": { "category": "revit-fundamentals", "minimumAttempts": 1, "minimumAverageScore": 78 }
+      },
+      {
+        "id": "revit-advanced-course",
+        "order": 2,
+        "title": "Revit Advanced Course",
+        "outcome": "Peserta melatih modelling lanjutan dan quality control sebelum ujian.",
+        "materials": [
+          { "type": "pdf", "title": "Materi PDF Revit", "source": "/elearning-assets/courses.html" }
+        ],
+        "practice": { "category": "revit-modeling", "minimumAttempts": 3, "minimumAverageScore": 78 }
+      }
+    ],
+    "exam": {
+      "id": "revit-architecture-exam",
+      "title": "Revit Architecture Professional Exam",
+      "passingScore": 80
+    },
+    "readiness": {
+      "requiredLevel": "BIM Coordinator",
+      "targetCategories": ["revit-fundamentals", "revit-modeling", "intermediate-modeling", "quality-control"],
+      "minAccuracy": 78,
+      "minAttempts": 4,
+      "coverageTarget": 0.75,
+      "recommendedPracticeMode": "mock-tests"
+    },
+    "certificate": {
+      "title": "Revit Architecture Professional",
+      "validForMonths": 36
+    }
+  },
+  {
+    "id": "bim-manager-certification",
+    "order": 60,
+    "title": "BIM Manager Certification",
+    "level": "BIM Manager",
+    "description": "Jalur advanced untuk strategi implementasi BIM, koordinasi lintas tim, leadership, dan evaluasi kualitas.",
+    "courseCategory": "bim-management",
+    "modules": [
+      {
+        "id": "bim-strategy-course",
+        "order": 1,
+        "title": "BIM Strategy Course",
+        "outcome": "Peserta memahami strategi implementasi BIM dan pengelolaan standar.",
+        "materials": [
+          { "type": "reading", "title": "BIM Strategy", "source": "/elearning-assets/courses.html" }
+        ],
+        "practice": { "category": "bim-fundamentals", "minimumAttempts": 2, "minimumAverageScore": 82 }
+      },
+      {
+        "id": "project-management-course",
+        "order": 2,
+        "title": "Project Coordination and Leadership",
+        "outcome": "Peserta dapat menghubungkan koordinasi proyek, leadership, dan quality governance.",
+        "materials": [
+          { "type": "reading", "title": "Project Coordination", "source": "/elearning-assets/courses.html" }
+        ],
+        "practice": { "category": "project-coordination", "minimumAttempts": 3, "minimumAverageScore": 82 }
+      }
+    ],
+    "exam": {
+      "id": "bim-manager-certification",
+      "title": "BIM Manager Certification Exam",
+      "passingScore": 85
+    },
+    "readiness": {
+      "requiredLevel": "BIM Manager",
+      "targetCategories": ["bim-fundamentals", "clash-detection", "project-coordination", "federated-models", "advanced-modeling"],
+      "minAccuracy": 82,
+      "minAttempts": 5,
+      "coverageTarget": 0.7,
+      "recommendedPracticeMode": "mock-tests"
+    },
+    "certificate": {
+      "title": "Certified BIM Manager",
+      "validForMonths": 60
+    }
+  }
+]

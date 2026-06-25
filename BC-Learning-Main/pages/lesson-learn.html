@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <title>BIM NKE : Lesson Learn</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="Ruang pengumpulan lesson learn dari masalah, kasus proyek, dan ide inovasi untuk reuse pengetahuan BIM NKE." name="description">
+
+    <link href="/img/icons/icon_bcl.ico?v=20260313d" rel="icon">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+    <link href="../lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css?v=20260518b" rel="stylesheet">
+
+    <style>
+        :root {
+            --lesson-ink: #172033;
+            --lesson-muted: #5f6f86;
+            --lesson-line: rgba(23, 32, 51, 0.12);
+            --lesson-accent: #f97316;
+            --lesson-accent-soft: #fff1e8;
+            --lesson-success: #0f8f65;
+            --lesson-blue: #245f9d;
+            --lesson-bg: #f6f8fb;
+            --lesson-panel: #ffffff;
+        }
+
+        body {
+            background: var(--lesson-bg);
+            color: var(--lesson-ink);
+        }
+
+        .lesson-shell {
+            padding: 20px 0 64px;
+        }
+
+        .lesson-topbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 18px;
+            align-items: end;
+            margin-bottom: 22px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--lesson-line);
+        }
+
+        .lesson-kicker {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--lesson-accent);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.11em;
+            text-transform: uppercase;
+        }
+
+        .lesson-topbar h1 {
+            margin: 0;
+            color: var(--lesson-ink);
+            font-size: clamp(2rem, 4vw, 3.1rem);
+            line-height: 1.05;
+        }
+
+        .lesson-topbar p {
+            max-width: 780px;
+            margin: 12px 0 0;
+            color: var(--lesson-muted);
+            line-height: 1.65;
+        }
+
+        .lesson-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .lesson-actions .btn,
+        .lesson-status-button {
+            border-radius: 999px;
+            font-weight: 700;
+        }
+
+        .lesson-workspace {
+            display: grid;
+            grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .lesson-panel {
+            background: var(--lesson-panel);
+            border: 1px solid var(--lesson-line);
+            border-radius: 18px;
+            box-shadow: 0 18px 40px rgba(23, 32, 51, 0.07);
+        }
+
+        .lesson-capture {
+            position: sticky;
+            top: 102px;
+            padding: 20px;
+        }
+
+        .lesson-panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .lesson-panel-header h2,
+        .lesson-panel-header h3 {
+            margin: 0;
+            color: var(--lesson-ink);
+            font-size: 1.25rem;
+        }
+
+        .lesson-panel-header p {
+            margin: 6px 0 0;
+            color: var(--lesson-muted);
+            font-size: 0.92rem;
+            line-height: 1.45;
+        }
+
+        .lesson-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            border-radius: 12px;
+            background: var(--lesson-accent-soft);
+            color: var(--lesson-accent);
+        }
+
+        .lesson-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .lesson-field-wide {
+            grid-column: 1 / -1;
+        }
+
+        .lesson-form label {
+            display: block;
+            margin-bottom: 6px;
+            color: #334155;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .lesson-form .form-control,
+        .lesson-form .form-select,
+        .lesson-filterbar .form-control,
+        .lesson-filterbar .form-select {
+            min-height: 44px;
+            border-radius: 12px;
+            border-color: var(--lesson-line);
+            color: var(--lesson-ink);
+            font-weight: 600;
+        }
+
+        .lesson-form textarea.form-control {
+            min-height: 88px;
+            resize: vertical;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .lesson-form .form-control:focus,
+        .lesson-form .form-select:focus,
+        .lesson-filterbar .form-control:focus,
+        .lesson-filterbar .form-select:focus {
+            border-color: rgba(249, 115, 22, 0.65);
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.12);
+        }
+
+        .lesson-submit-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .lesson-save-note {
+            margin: 0;
+            color: var(--lesson-muted);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .lesson-board {
+            min-width: 0;
+        }
+
+        .lesson-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .lesson-stat {
+            min-height: 96px;
+            padding: 16px;
+            background: #ffffff;
+            border: 1px solid var(--lesson-line);
+            border-radius: 16px;
+        }
+
+        .lesson-stat span {
+            display: block;
+            color: var(--lesson-muted);
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .lesson-stat strong {
+            display: block;
+            margin-top: 8px;
+            color: var(--lesson-ink);
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        .lesson-filterbar {
+            display: grid;
+            grid-template-columns: minmax(240px, 1fr) minmax(150px, 190px) minmax(150px, 190px);
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 14px;
+            background: #ffffff;
+            border: 1px solid var(--lesson-line);
+            border-radius: 16px;
+        }
+
+        .lesson-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .lesson-card {
+            padding: 18px;
+            background: #ffffff;
+            border: 1px solid var(--lesson-line);
+            border-radius: 18px;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(249, 115, 22, 0.32);
+            box-shadow: 0 16px 34px rgba(23, 32, 51, 0.08);
+        }
+
+        .lesson-card-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .lesson-card h3 {
+            margin: 0;
+            color: var(--lesson-ink);
+            font-size: 1.16rem;
+            line-height: 1.3;
+        }
+
+        .lesson-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .lesson-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #eef4fb;
+            color: #36506f;
+            font-size: 0.78rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .lesson-chip.problem {
+            background: #fff1f2;
+            color: #be123c;
+        }
+
+        .lesson-chip.case {
+            background: #eff6ff;
+            color: var(--lesson-blue);
+        }
+
+        .lesson-chip.innovation {
+            background: #ecfdf5;
+            color: var(--lesson-success);
+        }
+
+        .lesson-chip.improvement {
+            background: var(--lesson-accent-soft);
+            color: var(--lesson-accent);
+        }
+
+        .lesson-status {
+            min-width: 98px;
+            justify-content: center;
+            background: #f1f5f9;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .lesson-status.approved,
+        .lesson-status.applied {
+            background: #ecfdf5;
+            color: var(--lesson-success);
+        }
+
+        .lesson-status.review {
+            background: #eff6ff;
+            color: var(--lesson-blue);
+        }
+
+        .lesson-card-body {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .lesson-block {
+            padding-top: 12px;
+            border-top: 1px solid rgba(23, 32, 51, 0.08);
+        }
+
+        .lesson-block strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #334155;
+            font-size: 0.79rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .lesson-block p {
+            margin: 0;
+            color: var(--lesson-muted);
+            line-height: 1.58;
+        }
+
+        .lesson-card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+
+        .lesson-empty,
+        .lesson-loading,
+        .lesson-error {
+            padding: 34px 24px;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid var(--lesson-line);
+            border-radius: 18px;
+        }
+
+        .lesson-empty i,
+        .lesson-loading i,
+        .lesson-error i {
+            display: block;
+            margin-bottom: 12px;
+            color: var(--lesson-accent);
+            font-size: 2rem;
+        }
+
+        .lesson-toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 1080;
+            max-width: min(360px, calc(100vw - 32px));
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: #172033;
+            color: #ffffff;
+            box-shadow: 0 18px 40px rgba(23, 32, 51, 0.18);
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .lesson-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 1199.98px) {
+            .lesson-workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .lesson-capture {
+                position: static;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .lesson-topbar {
+                grid-template-columns: 1fr;
+                align-items: start;
+            }
+
+            .lesson-actions {
+                justify-content: flex-start;
+            }
+
+            .lesson-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .lesson-filterbar,
+            .lesson-card-body,
+            .lesson-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .lesson-field-wide {
+                grid-column: auto;
+            }
+
+            .lesson-card-top {
+                grid-template-columns: 1fr;
+            }
+
+            .lesson-submit-row {
+                align-items: stretch;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .lesson-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .lesson-capture,
+            .lesson-card,
+            .lesson-filterbar {
+                padding: 14px;
+                border-radius: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navbar-container"></div>
+
+    <main class="container-xxl lesson-shell">
+        <div class="container">
+            <section class="lesson-topbar wow fadeInUp" data-wow-delay="0.1s">
+                <div>
+                    <span class="lesson-kicker">Knowledge Center</span>
+                    <h1>Lesson Learn</h1>
+                    <p>Tempat mengumpulkan hasil pembelajaran dari masalah, kasus proyek, dan ide inovasi agar pengalaman proyek sebelumnya bisa dipakai ulang pada project berikutnya.</p>
+                </div>
+                <div class="lesson-actions">
+                    <a class="btn btn-outline-primary" href="/pages/manual-books.html?q=Lesson%20Learn">
+                        <i class="fas fa-book-open me-2" aria-hidden="true"></i>Manual Referensi
+                    </a>
+                    <button class="btn btn-primary" type="button" id="lesson-export-button">
+                        <i class="fas fa-file-export me-2" aria-hidden="true"></i>Export CSV
+                    </button>
+                </div>
+            </section>
+
+            <section class="lesson-workspace">
+                <aside class="lesson-panel lesson-capture wow fadeInUp" data-wow-delay="0.12s">
+                    <div class="lesson-panel-header">
+                        <div>
+                            <h2>Capture Lesson</h2>
+                            <p>Format minimum mengikuti pola peristiwa, penyebab, tindakan, pencegahan, dan ide inovasi.</p>
+                        </div>
+                        <span class="lesson-icon"><i class="fas fa-lightbulb" aria-hidden="true"></i></span>
+                    </div>
+
+                    <form class="lesson-form" id="lesson-form">
+                        <div class="lesson-form-grid">
+                            <div class="lesson-field-wide">
+                                <label for="lesson-title">Judul Lesson</label>
+                                <input class="form-control" id="lesson-title" name="title" maxlength="180" required
+                                    placeholder="Contoh: Clash berulang karena versi model berbeda">
+                            </div>
+                            <div>
+                                <label for="lesson-project">Project</label>
+                                <input class="form-control" id="lesson-project" name="projectName" maxlength="180" required
+                                    placeholder="Nama project">
+                            </div>
+                            <div>
+                                <label for="lesson-phase">Fase</label>
+                                <input class="form-control" id="lesson-phase" name="projectPhase" maxlength="120"
+                                    placeholder="Design, koordinasi, close-out">
+                            </div>
+                            <div>
+                                <label for="lesson-category">Kategori</label>
+                                <select class="form-select" id="lesson-category" name="category">
+                                    <option value="problem">Masalah</option>
+                                    <option value="case">Kasus</option>
+                                    <option value="innovation">Ide Inovasi</option>
+                                    <option value="improvement">Improvement</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="lesson-status">Status</label>
+                                <select class="form-select" id="lesson-status" name="status">
+                                    <option value="draft">Draft</option>
+                                    <option value="review">Review</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="applied">Applied</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="lesson-discipline">Disiplin</label>
+                                <input class="form-control" id="lesson-discipline" name="discipline" maxlength="120"
+                                    placeholder="Arsitektur, Struktur, MEP">
+                            </div>
+                            <div>
+                                <label for="lesson-date">Tanggal Kejadian</label>
+                                <input class="form-control" id="lesson-date" name="eventDate" type="date">
+                            </div>
+                            <div class="lesson-field-wide">
+                                <label for="lesson-issue">Permasalahan atau Kasus</label>
+                                <textarea class="form-control" id="lesson-issue" name="issue" required
+                                    placeholder="Apa yang terjadi dan bagaimana dampaknya pada proyek?"></textarea>
+                            </div>
+                            <div class="lesson-field-wide">
+                                <label for="lesson-root-cause">Penyebab</label>
+                                <textarea class="form-control" id="lesson-root-cause" name="rootCause"
+                                    placeholder="Apa akar penyebab masalah atau peluang improvement?"></textarea>
+                            </div>
+                            <div class="lesson-field-wide">
+                                <label for="lesson-action">Tindakan</label>
+                                <textarea class="form-control" id="lesson-action" name="actionTaken"
+                                    placeholder="Apa tindakan yang sudah dilakukan tim?"></textarea>
+                            </div>
+                            <div class="lesson-field-wide">
+                                <label for="lesson-prevention">Pencegahan untuk Project Berikutnya</label>
+                                <textarea class="form-control" id="lesson-prevention" name="prevention"
+                                    placeholder="Standar, checklist, approval, template, atau alur kerja apa yang perlu diterapkan?"></textarea>
+                            </div>
+                            <div class="lesson-field-wide">
+                                <label for="lesson-innovation">Ide Inovasi</label>
+                                <textarea class="form-control" id="lesson-innovation" name="innovationIdea"
+                                    placeholder="Ide otomasi, dashboard, template, script, atau metode kerja baru."></textarea>
+                            </div>
+                            <div>
+                                <label for="lesson-owner">Owner</label>
+                                <input class="form-control" id="lesson-owner" name="owner" maxlength="120"
+                                    placeholder="PIC tindak lanjut">
+                            </div>
+                            <div>
+                                <label for="lesson-tags">Tag</label>
+                                <input class="form-control" id="lesson-tags" name="tags" maxlength="300"
+                                    placeholder="clash, CDE, template">
+                            </div>
+                            <div class="lesson-field-wide">
+                                <label for="lesson-impact">Impact</label>
+                                <input class="form-control" id="lesson-impact" name="impact" maxlength="800"
+                                    placeholder="Efek pada waktu, biaya, kualitas, risiko, atau rework">
+                            </div>
+                        </div>
+
+                        <div class="lesson-submit-row">
+                            <p class="lesson-save-note" id="lesson-save-note">Data disimpan ke server BCL. Jika API belum aktif, browser menyimpan salinan lokal.</p>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-plus me-2" aria-hidden="true"></i>Simpan Lesson
+                            </button>
+                        </div>
+                    </form>
+                </aside>
+
+                <section class="lesson-board">
+                    <div class="lesson-stats wow fadeInUp" data-wow-delay="0.14s" aria-label="Ringkasan lesson learn">
+                        <div class="lesson-stat">
+                            <span>Total</span>
+                            <strong id="lesson-stat-total">0</strong>
+                        </div>
+                        <div class="lesson-stat">
+                            <span>Approved</span>
+                            <strong id="lesson-stat-approved">0</strong>
+                        </div>
+                        <div class="lesson-stat">
+                            <span>Inovasi</span>
+                            <strong id="lesson-stat-innovation">0</strong>
+                        </div>
+                        <div class="lesson-stat">
+                            <span>Applied</span>
+                            <strong id="lesson-stat-applied">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="lesson-filterbar wow fadeInUp" data-wow-delay="0.16s">
+                        <input class="form-control" id="lesson-search" type="search"
+                            placeholder="Cari project, kasus, tag, atau ide inovasi" aria-label="Cari lesson learn">
+                        <select class="form-select" id="lesson-category-filter" aria-label="Filter kategori">
+                            <option value="all">Semua Kategori</option>
+                            <option value="problem">Masalah</option>
+                            <option value="case">Kasus</option>
+                            <option value="innovation">Ide Inovasi</option>
+                            <option value="improvement">Improvement</option>
+                        </select>
+                        <select class="form-select" id="lesson-status-filter" aria-label="Filter status">
+                            <option value="all">Semua Status</option>
+                            <option value="draft">Draft</option>
+                            <option value="review">Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="applied">Applied</option>
+                        </select>
+                    </div>
+
+                    <div class="lesson-list" id="lesson-list">
+                        <div class="lesson-loading">
+                            <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                            <p class="mb-0">Memuat data Lesson Learn...</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+    <div class="lesson-toast" id="lesson-toast" role="status" aria-live="polite"></div>
+
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top" aria-label="Kembali ke atas"><i
+            class="bi bi-arrow-up" aria-hidden="true"></i></a>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../lib/waypoints/waypoints.min.js"></script>
+    <script src="../lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/loadComponents.js?v=20260518c"></script>
+    <script>
+        (function () {
+            const API_URL = '/api/lesson-learn';
+            const LOCAL_KEY = 'bcl.lessonLearn.items';
+            const CATEGORY_LABELS = {
+                problem: 'Masalah',
+                case: 'Kasus',
+                innovation: 'Ide Inovasi',
+                improvement: 'Improvement'
+            };
+            const STATUS_LABELS = {
+                draft: 'Draft',
+                review: 'Review',
+                approved: 'Approved',
+                applied: 'Applied'
+            };
+
+            const state = {
+                lessons: [],
+                apiAvailable: true,
+                search: '',
+                category: 'all',
+                status: 'all'
+            };
+
+            document.addEventListener('DOMContentLoaded', initLessonLearn);
+
+            function initLessonLearn() {
+                document.getElementById('lesson-form')?.addEventListener('submit', handleSubmit);
+                document.getElementById('lesson-search')?.addEventListener('input', debounce((event) => {
+                    state.search = event.target.value.trim().toLowerCase();
+                    renderLessons();
+                }, 160));
+                document.getElementById('lesson-category-filter')?.addEventListener('change', (event) => {
+                    state.category = event.target.value;
+                    renderLessons();
+                });
+                document.getElementById('lesson-status-filter')?.addEventListener('change', (event) => {
+                    state.status = event.target.value;
+                    renderLessons();
+                });
+                document.getElementById('lesson-export-button')?.addEventListener('click', exportCsv);
+
+                loadLessons();
+            }
+
+            async function loadLessons() {
+                try {
+                    const response = await fetch(API_URL, { cache: 'no-store' });
+                    if (!response.ok) {
+                        throw new Error('HTTP ' + response.status);
+                    }
+
+                    const payload = await response.json();
+                    state.lessons = Array.isArray(payload.data) ? payload.data : [];
+                    state.apiAvailable = true;
+                    syncLocalCopy(state.lessons);
+                } catch (error) {
+                    state.apiAvailable = false;
+                    state.lessons = readLocalLessons();
+                    setSaveNote('API Lesson Learn belum aktif. Data baru akan disimpan sebagai salinan lokal browser.');
+                }
+
+                renderLessons();
+            }
+
+            async function handleSubmit(event) {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const lesson = getLessonFromForm(form);
+
+                if (!lesson.title || !lesson.projectName || !lesson.issue) {
+                    showToast('Judul, project, dan permasalahan wajib diisi.');
+                    return;
+                }
+
+                try {
+                    let savedLesson = null;
+                    if (state.apiAvailable) {
+                        const response = await fetch(API_URL, {
+                            method: 'POST',
+                            headers: buildJsonHeaders(),
+                            body: JSON.stringify(lesson)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('HTTP ' + response.status);
+                        }
+
+                        const payload = await response.json();
+                        savedLesson = payload.data;
+                    }
+
+                    if (!savedLesson) {
+                        savedLesson = {
+                            ...lesson,
+                            id: 'local-' + Date.now(),
+                            submittedBy: 'Local Browser',
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        };
+                    }
+
+                    state.lessons.unshift(savedLesson);
+                    syncLocalCopy(state.lessons);
+                    form.reset();
+                    renderLessons();
+                    showToast('Lesson Learn tersimpan.');
+                } catch (error) {
+                    state.apiAvailable = false;
+                    setSaveNote('API Lesson Learn belum aktif. Data baru disimpan sebagai salinan lokal browser.');
+                    const localLesson = {
+                        ...lesson,
+                        id: 'local-' + Date.now(),
+                        submittedBy: 'Local Browser',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    state.lessons.unshift(localLesson);
+                    syncLocalCopy(state.lessons);
+                    form.reset();
+                    renderLessons();
+                    showToast('Lesson tersimpan lokal karena API belum tersedia.');
+                }
+            }
+
+            async function updateLessonStatus(id, status) {
+                const lesson = state.lessons.find((item) => item.id === id);
+                if (!lesson) {
+                    return;
+                }
+
+                const previousStatus = lesson.status;
+                lesson.status = status;
+                lesson.updatedAt = new Date().toISOString();
+                renderLessons();
+
+                try {
+                    if (state.apiAvailable && !String(id).startsWith('local-')) {
+                        const response = await fetch(API_URL + '/' + encodeURIComponent(id), {
+                            method: 'PATCH',
+                            headers: buildJsonHeaders(),
+                            body: JSON.stringify({ status })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('HTTP ' + response.status);
+                        }
+
+                        const payload = await response.json();
+                        Object.assign(lesson, payload.data);
+                    }
+
+                    syncLocalCopy(state.lessons);
+                    showToast('Status lesson diperbarui.');
+                } catch (error) {
+                    lesson.status = previousStatus;
+                    renderLessons();
+                    showToast('Gagal memperbarui status di server.');
+                }
+            }
+
+            function getLessonFromForm(form) {
+                const data = new FormData(form);
+                const lesson = {};
+                data.forEach((value, key) => {
+                    lesson[key] = String(value || '').trim();
+                });
+                lesson.tags = String(lesson.tags || '')
+                    .split(',')
+                    .map((tag) => tag.trim())
+                    .filter(Boolean);
+                return lesson;
+            }
+
+            function renderLessons() {
+                renderStats();
+                const list = document.getElementById('lesson-list');
+                if (!list) {
+                    return;
+                }
+
+                const lessons = getFilteredLessons();
+                if (lessons.length === 0) {
+                    list.innerHTML = `
+                        <div class="lesson-empty">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <h3 class="h5">Lesson belum ditemukan</h3>
+                            <p class="mb-0">Ubah filter atau tambahkan lesson dari form capture.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = lessons.map(renderLessonCard).join('');
+                list.querySelectorAll('[data-status-action]').forEach((button) => {
+                    button.addEventListener('click', () => updateLessonStatus(button.dataset.lessonId, button.dataset.statusAction));
+                });
+            }
+
+            function renderStats() {
+                setText('lesson-stat-total', state.lessons.length);
+                setText('lesson-stat-approved', state.lessons.filter((lesson) => lesson.status === 'approved').length);
+                setText('lesson-stat-innovation', state.lessons.filter((lesson) => lesson.category === 'innovation').length);
+                setText('lesson-stat-applied', state.lessons.filter((lesson) => lesson.status === 'applied').length);
+            }
+
+            function getFilteredLessons() {
+                return state.lessons.filter((lesson) => {
+                    if (state.category !== 'all' && lesson.category !== state.category) {
+                        return false;
+                    }
+
+                    if (state.status !== 'all' && lesson.status !== state.status) {
+                        return false;
+                    }
+
+                    if (!state.search) {
+                        return true;
+                    }
+
+                    return [
+                        lesson.title,
+                        lesson.projectName,
+                        lesson.projectPhase,
+                        lesson.category,
+                        lesson.discipline,
+                        lesson.issue,
+                        lesson.rootCause,
+                        lesson.actionTaken,
+                        lesson.prevention,
+                        lesson.innovationIdea,
+                        lesson.impact,
+                        lesson.owner,
+                        ...(lesson.tags || [])
+                    ].join(' ').toLowerCase().includes(state.search);
+                });
+            }
+
+            function renderLessonCard(lesson) {
+                const category = lesson.category || 'problem';
+                const status = lesson.status || 'draft';
+                const tags = Array.isArray(lesson.tags) ? lesson.tags : [];
+                const nextActions = getStatusActions(status, lesson.id);
+
+                return `
+                    <article class="lesson-card">
+                        <div class="lesson-card-top">
+                            <div>
+                                <h3>${escapeHtml(lesson.title)}</h3>
+                                <div class="lesson-meta">
+                                    <span class="lesson-chip ${escapeAttribute(category)}"><i class="fas fa-layer-group" aria-hidden="true"></i>${escapeHtml(CATEGORY_LABELS[category] || category)}</span>
+                                    <span class="lesson-chip"><i class="fas fa-project-diagram" aria-hidden="true"></i>${escapeHtml(lesson.projectName || '-')}</span>
+                                    ${lesson.projectPhase ? `<span class="lesson-chip"><i class="fas fa-code-branch" aria-hidden="true"></i>${escapeHtml(lesson.projectPhase)}</span>` : ''}
+                                    ${lesson.discipline ? `<span class="lesson-chip"><i class="fas fa-users-cog" aria-hidden="true"></i>${escapeHtml(lesson.discipline)}</span>` : ''}
+                                </div>
+                            </div>
+                            <span class="lesson-chip lesson-status ${escapeAttribute(status)}">${escapeHtml(STATUS_LABELS[status] || status)}</span>
+                        </div>
+
+                        <div class="lesson-card-body">
+                            ${renderBlock('Permasalahan atau Kasus', lesson.issue)}
+                            ${renderBlock('Penyebab', lesson.rootCause)}
+                            ${renderBlock('Tindakan', lesson.actionTaken)}
+                            ${renderBlock('Pencegahan', lesson.prevention)}
+                            ${renderBlock('Ide Inovasi', lesson.innovationIdea)}
+                            ${renderBlock('Impact', lesson.impact)}
+                        </div>
+
+                        <div class="lesson-meta mt-3">
+                            ${lesson.owner ? `<span class="lesson-chip"><i class="fas fa-user-check" aria-hidden="true"></i>${escapeHtml(lesson.owner)}</span>` : ''}
+                            ${lesson.eventDate ? `<span class="lesson-chip"><i class="fas fa-calendar-alt" aria-hidden="true"></i>${escapeHtml(formatDate(lesson.eventDate))}</span>` : ''}
+                            ${tags.map((tag) => `<span class="lesson-chip"><i class="fas fa-tag" aria-hidden="true"></i>${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+
+                        <div class="lesson-card-actions">
+                            ${nextActions}
+                        </div>
+                    </article>
+                `;
+            }
+
+            function renderBlock(label, value) {
+                const text = String(value || '').trim();
+                if (!text) {
+                    return '';
+                }
+
+                return `
+                    <div class="lesson-block">
+                        <strong>${escapeHtml(label)}</strong>
+                        <p>${escapeHtml(text)}</p>
+                    </div>
+                `;
+            }
+
+            function getStatusActions(currentStatus, id) {
+                const actions = [
+                    { status: 'review', label: 'Review' },
+                    { status: 'approved', label: 'Approve' },
+                    { status: 'applied', label: 'Mark Applied' }
+                ].filter((action) => action.status !== currentStatus);
+
+                return actions.map((action) => `
+                    <button class="btn btn-sm btn-outline-primary lesson-status-button" type="button"
+                        data-lesson-id="${escapeAttribute(id)}" data-status-action="${escapeAttribute(action.status)}">
+                        ${escapeHtml(action.label)}
+                    </button>
+                `).join('');
+            }
+
+            function exportCsv() {
+                const lessons = getFilteredLessons();
+                if (lessons.length === 0) {
+                    showToast('Tidak ada lesson untuk diekspor.');
+                    return;
+                }
+
+                const headers = [
+                    'Title',
+                    'Project',
+                    'Phase',
+                    'Category',
+                    'Discipline',
+                    'Issue',
+                    'Root Cause',
+                    'Action Taken',
+                    'Prevention',
+                    'Innovation Idea',
+                    'Impact',
+                    'Owner',
+                    'Status',
+                    'Tags',
+                    'Updated At'
+                ];
+
+                const rows = lessons.map((lesson) => [
+                    lesson.title,
+                    lesson.projectName,
+                    lesson.projectPhase,
+                    CATEGORY_LABELS[lesson.category] || lesson.category,
+                    lesson.discipline,
+                    lesson.issue,
+                    lesson.rootCause,
+                    lesson.actionTaken,
+                    lesson.prevention,
+                    lesson.innovationIdea,
+                    lesson.impact,
+                    lesson.owner,
+                    STATUS_LABELS[lesson.status] || lesson.status,
+                    (lesson.tags || []).join('; '),
+                    lesson.updatedAt
+                ]);
+
+                const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'bcl-lesson-learn.csv';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                showToast('CSV Lesson Learn dibuat.');
+            }
+
+            function csvCell(value) {
+                const text = String(value || '').replace(/"/g, '""');
+                return '"' + text + '"';
+            }
+
+            function buildJsonHeaders() {
+                const headers = { 'Content-Type': 'application/json' };
+                const token = localStorage.getItem('token');
+                if (token) {
+                    headers.Authorization = 'Bearer ' + token;
+                }
+                return headers;
+            }
+
+            function readLocalLessons() {
+                try {
+                    const parsed = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            function syncLocalCopy(lessons) {
+                try {
+                    localStorage.setItem(LOCAL_KEY, JSON.stringify(lessons));
+                } catch (error) {
+                    return;
+                }
+            }
+
+            function setSaveNote(text) {
+                setText('lesson-save-note', text);
+            }
+
+            function setText(id, value) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            }
+
+            function showToast(message) {
+                const toast = document.getElementById('lesson-toast');
+                if (!toast) {
+                    return;
+                }
+
+                toast.textContent = message;
+                toast.classList.add('show');
+                clearTimeout(toast.hideTimer);
+                toast.hideTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+            }
+
+            function formatDate(value) {
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return value;
+                }
+
+                return new Intl.DateTimeFormat('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }).format(date);
+            }
+
+            function debounce(callback, delay) {
+                let timeoutId;
+                return (...args) => {
+                    window.clearTimeout(timeoutId);
+                    timeoutId = window.setTimeout(() => callback(...args), delay);
+                };
+            }
+
+            function escapeHtml(value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function escapeAttribute(value) {
+                return escapeHtml(value).replace(/`/g, '&#96;');
+            }
+        })();
+    </script>
+</body>
+
+</html>

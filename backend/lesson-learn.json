@@ -1,0 +1,56 @@
+{
+  "items": [
+    {
+      "id": "lesson-seed-clash-coordination",
+      "title": "Clash berulang karena model referensi belum terkunci",
+      "projectName": "Project BIM 2025",
+      "projectPhase": "Koordinasi desain",
+      "category": "case",
+      "discipline": "Arsitektur, Struktur, MEP",
+      "eventDate": "2025-12-15",
+      "issue": "Clash yang sama muncul kembali setelah koordinasi karena beberapa disiplin memakai versi model referensi yang berbeda.",
+      "rootCause": "Status informasi belum jelas, model referensi belum dikunci, dan catatan approval tidak dijadikan syarat sebelum koordinasi.",
+      "actionTaken": "Tim menetapkan satu model referensi approved, mencatat versi yang digunakan, dan membuat log keputusan koordinasi.",
+      "prevention": "Setiap koordinasi wajib memakai model dengan status approved atau shared yang tercatat, lengkap dengan tanggal, pemilik, dan catatan perubahan.",
+      "innovationIdea": "Dashboard ringkas untuk menandai versi model koordinasi yang sedang berlaku di setiap disiplin.",
+      "impact": "Mengurangi pengulangan review dan mempercepat penutupan clash prioritas.",
+      "owner": "BIM Coordinator",
+      "status": "approved",
+      "tags": [
+        "clash",
+        "coordination",
+        "model version",
+        "audit trail"
+      ],
+      "submittedBy": "BCL System",
+      "createdAt": "2026-06-02T00:00:00.000Z",
+      "updatedAt": "2026-06-02T00:00:00.000Z"
+    },
+    {
+      "id": "lesson-seed-template-automation",
+      "title": "Template checklist mempercepat close-out pembelajaran",
+      "projectName": "Project BIM 2024",
+      "projectPhase": "Project close-out",
+      "category": "innovation",
+      "discipline": "BIM Management",
+      "eventDate": "2024-11-20",
+      "issue": "Lesson learned sulit dipakai ulang karena format catatan berbeda antar proyek.",
+      "rootCause": "Belum ada format minimum untuk merangkum peristiwa, penyebab, tindakan, pencegahan, dan ide inovasi.",
+      "actionTaken": "Tim menggunakan template lesson learn yang sama pada sesi retrospective dan close-out.",
+      "prevention": "Format standar perlu dipakai sejak milestone review, bukan hanya saat akhir proyek.",
+      "innovationIdea": "Form digital yang langsung mengelompokkan lesson berdasarkan proyek, fase, disiplin, status, dan tag.",
+      "impact": "Pembelajaran lebih mudah dicari ulang untuk briefing project berikutnya.",
+      "owner": "BIM Manager",
+      "status": "applied",
+      "tags": [
+        "template",
+        "close-out",
+        "knowledge reuse",
+        "innovation"
+      ],
+      "submittedBy": "BCL System",
+      "createdAt": "2026-06-02T00:00:00.000Z",
+      "updatedAt": "2026-06-02T00:00:00.000Z"
+    }
+  ]
+}

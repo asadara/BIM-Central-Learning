@@ -8,6 +8,8 @@ const COURSE_DISPLAY_PRIORITY = new Map([
     ['civil-3d', 30]
 ]);
 
+window.BCL_OFFICIAL_COURSE_GUIDE = true;
+
 function normalizeCategorySlug(value) {
     return (value || '')
         .toString()
@@ -216,8 +218,747 @@ async function trackLearningActivity(payload) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    setupCoursePageLearningHierarchy();
+    loadOfficialLearningPaths();
     fetchCourses();
 });
+
+function setupCoursePageLearningHierarchy() {
+    ensureOfficialLearningPathStyles();
+    ensureLearningGuideSection();
+    ensureOfficialLearningPathSection();
+    relabelCourseSupportSections();
+    applyDefaultCourseSectionState();
+
+    setTimeout(applyDefaultCourseSectionState, 0);
+    setTimeout(applyDefaultCourseSectionState, 800);
+    setTimeout(applyDefaultCourseSectionState, 1800);
+    setTimeout(applyDefaultCourseSectionState, 3200);
+}
+
+function ensureOfficialLearningPathStyles() {
+    if (document.getElementById('official-learning-path-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'official-learning-path-styles';
+    style.textContent = `
+        .official-learning-paths {
+            margin-bottom: 2rem;
+        }
+        .learning-guide-section {
+            margin-bottom: 2rem;
+        }
+        #pdf-section.collapsed .filter-buttons,
+        #video-section.collapsed .filter-buttons {
+            display: none !important;
+        }
+        body:has(#learning-guide-section) #bcl-training-user-guide,
+        body:has(#learning-guide-section) .learning-sections-guide,
+        body:has(#learning-guide-section) .pdf-role-entry {
+            display: none !important;
+        }
+        .section-label {
+            align-items: center;
+            background: rgba(142, 68, 173, 0.12);
+            border-radius: 999px;
+            color: var(--main-color);
+            display: inline-flex;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: .02em;
+            padding: .45rem .8rem;
+            text-transform: uppercase;
+        }
+        .section-help {
+            color: #666;
+            display: block;
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-top: .25rem;
+        }
+        .learning-guide-panel {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.8rem;
+        }
+        .learning-guide-steps {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .learning-guide-step {
+            display: grid;
+            gap: .7rem;
+            grid-template-columns: 3rem 1fr;
+            align-items: start;
+        }
+        .learning-guide-step i {
+            align-items: center;
+            background: rgba(13, 110, 253, 0.08);
+            border-radius: 999px;
+            color: #0d6efd;
+            display: inline-flex;
+            height: 3rem;
+            justify-content: center;
+            width: 3rem;
+        }
+        .learning-guide-step h3 {
+            color: var(--black);
+            font-size: 1.6rem;
+            margin: 0 0 .35rem;
+        }
+        .learning-guide-step p {
+            color: #666;
+            font-size: 1.3rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .official-paths-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.4rem;
+        }
+        .official-path-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.6rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .official-path-card h3 {
+            color: var(--black);
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        .official-path-card p,
+        .official-path-step,
+        .official-path-meta,
+        .official-path-requirement,
+        .official-path-progress-note {
+            color: #666;
+            font-size: 1.3rem;
+            line-height: 1.5;
+        }
+        .official-path-meta-row,
+        .official-path-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .8rem;
+        }
+        .official-path-meta {
+            border-radius: 999px;
+            background: rgba(13, 110, 253, 0.08);
+            color: #0d6efd;
+            font-weight: 700;
+            padding: .6rem 1rem;
+        }
+        .official-path-flow {
+            display: grid;
+            gap: .7rem;
+        }
+        .official-path-progress {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            display: grid;
+            gap: .8rem;
+            padding: 1rem;
+        }
+        .official-path-progress-header,
+        .official-path-progress-metrics {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .7rem;
+            justify-content: space-between;
+        }
+        .official-path-status {
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: 1.15rem;
+            font-weight: 800;
+            padding: .5rem .85rem;
+            text-transform: uppercase;
+        }
+        .official-path-status.not-started {
+            background: #eef2f7;
+            color: #475569;
+        }
+        .official-path-status.needs-practice {
+            background: #fff4de;
+            color: #9a5b00;
+        }
+        .official-path-status.ready {
+            background: #e5f7ed;
+            color: #137a3b;
+        }
+        .official-path-status.certified {
+            background: rgba(142, 68, 173, 0.12);
+            color: var(--main-color);
+        }
+        .official-path-progress-bar {
+            background: #e9ecef;
+            border-radius: 999px;
+            height: .8rem;
+            overflow: hidden;
+        }
+        .official-path-progress-fill {
+            background: linear-gradient(90deg, #0d6efd, var(--main-color));
+            border-radius: inherit;
+            height: 100%;
+            min-width: .8rem;
+        }
+        .official-path-progress-metric {
+            color: #666;
+            font-size: 1.2rem;
+        }
+        .official-path-progress-metric strong {
+            color: var(--black);
+        }
+        .official-path-step {
+            display: grid;
+            grid-template-columns: 2.6rem 1fr;
+            gap: .8rem;
+            align-items: start;
+        }
+        .official-path-step i {
+            align-items: center;
+            background: rgba(142, 68, 173, 0.12);
+            border-radius: 999px;
+            color: var(--main-color);
+            display: inline-flex;
+            height: 2.6rem;
+            justify-content: center;
+            width: 2.6rem;
+        }
+        .official-path-actions .preview-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .6rem;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function setCourseSectionExpanded(section, expanded) {
+    if (!section) return;
+
+    const content = section.querySelector('.collapsible-content');
+    section.classList.toggle('expanded', expanded);
+    section.classList.toggle('collapsed', !expanded);
+
+    if (content) {
+        content.classList.toggle('expanded', expanded);
+        content.style.display = expanded ? 'block' : 'none';
+        content.style.padding = expanded ? '2rem' : '0';
+    }
+}
+
+function ensureLearningGuideSection() {
+    ensureOfficialLearningPathStyles();
+
+    let section = document.getElementById('learning-guide-section');
+    if (section) return section;
+
+    const officialSection = ensureOfficialLearningPathSection();
+    const anchor = officialSection || document.querySelector('.pdf-courses') || document.querySelector('.courses');
+    if (!anchor || !anchor.parentNode) return null;
+
+    section = document.createElement('section');
+    section.className = 'learning-guide-section collapsible-section expanded';
+    section.id = 'learning-guide-section';
+    section.innerHTML = `
+        <div class="collapsible-header" onclick="toggleSection('learning-guide-section')">
+            <h1 class="heading">
+                <span class="section-label">Guidance</span>
+                <span><i class="fas fa-compass section-icon"></i> Mulai dari sini
+                    <span class="section-help">Gunakan halaman ini dari atas ke bawah: pahami alur, pilih path, lalu kerjakan task pendukung.</span>
+                </span>
+            </h1>
+            <i class="fas fa-chevron-down collapsible-arrow"></i>
+        </div>
+        <div class="collapsible-content expanded" style="display:block; padding:2rem;">
+            <div class="learning-guide-panel">
+                <div class="learning-guide-steps">
+                    <div class="learning-guide-step">
+                        <i class="fas fa-route"></i>
+                        <div>
+                            <h3>1. Pilih path</h3>
+                            <p>Mulai dari Jalur Belajar Resmi. Path menentukan urutan course, module, practice, exam, dan certificate.</p>
+                        </div>
+                    </div>
+                    <div class="learning-guide-step">
+                        <i class="fas fa-dumbbell"></i>
+                        <div>
+                            <h3>2. Kerjakan task</h3>
+                            <p>Gunakan practice sesuai path. PDF dan video adalah task library pendukung, bukan langkah pertama.</p>
+                        </div>
+                    </div>
+                    <div class="learning-guide-step">
+                        <i class="fas fa-certificate"></i>
+                        <div>
+                            <h3>3. Ambil exam</h3>
+                            <p>Exam baru terbuka setelah readiness cukup. Sertifikat keluar hanya setelah exam lulus dan syarat path terpenuhi.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    anchor.parentNode.insertBefore(section, anchor);
+    return section;
+}
+
+function ensureOfficialLearningPathSection() {
+    ensureOfficialLearningPathStyles();
+
+    let section = document.getElementById('official-paths-section');
+    if (section) return section;
+
+    const pdfSection = document.querySelector('.pdf-courses') || document.querySelector('.courses');
+    if (!pdfSection || !pdfSection.parentNode) return null;
+
+    section = document.createElement('section');
+    section.className = 'official-learning-paths collapsible-section expanded';
+    section.id = 'official-paths-section';
+    section.innerHTML = `
+        <div class="collapsible-header" onclick="toggleSection('official-paths-section')">
+            <h1 class="heading">
+                <span class="section-label">Path</span>
+                <span><i class="fas fa-route section-icon"></i> Jalur Belajar Resmi
+                    <span class="section-help">Prioritas utama: pilih salah satu path untuk melihat urutan belajar resmi sampai sertifikat.</span>
+                </span>
+            </h1>
+            <i class="fas fa-chevron-down collapsible-arrow"></i>
+        </div>
+        <div class="collapsible-content expanded" style="display:block; padding:2rem;">
+            <div class="official-paths-grid" id="official-paths-container">
+                <div class="loading-courses" style="text-align:center; padding:2rem;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Memuat jalur belajar resmi...</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    pdfSection.parentNode.insertBefore(section, pdfSection);
+    return section;
+}
+
+function relabelCourseSupportSections() {
+    const pdfSection = document.getElementById('pdf-section');
+    const videoSection = document.getElementById('video-section');
+
+    const pdfHeading = pdfSection?.querySelector('.collapsible-header h1');
+    if (pdfHeading) {
+        pdfHeading.innerHTML = `
+            <span class="section-label">Task Library</span>
+            <span><i class="fas fa-file-pdf section-icon"></i> Materi PDF
+                <span class="section-help">Buka saat path meminta referensi bacaan atau dokumen pendukung.</span>
+            </span>
+        `;
+    }
+
+    const videoHeading = videoSection?.querySelector('.collapsible-header h1');
+    if (videoHeading) {
+        videoHeading.innerHTML = `
+            <span class="section-label">Task Library</span>
+            <span><i class="fas fa-play-circle section-icon"></i> Materi Video
+                <span class="section-help">Buka saat perlu tutorial software atau demonstrasi langkah kerja.</span>
+            </span>
+        `;
+    }
+}
+
+function applyDefaultCourseSectionState() {
+    hideLegacyCourseGuides();
+    setCourseSectionExpanded(document.getElementById('learning-guide-section'), true);
+    setCourseSectionExpanded(document.getElementById('official-paths-section'), true);
+    setCourseSectionExpanded(document.getElementById('pdf-section'), false);
+    setCourseSectionExpanded(document.getElementById('video-section'), false);
+}
+
+function hideLegacyCourseGuides() {
+    [
+        document.getElementById('bcl-training-user-guide'),
+        document.querySelector('.learning-sections-guide'),
+        document.querySelector('.pdf-role-entry')
+    ].forEach((element) => {
+        if (element) {
+            element.style.display = 'none';
+            element.setAttribute('aria-hidden', 'true');
+        }
+    });
+}
+
+function ensureCourseReadinessScript() {
+    if (window.LearningReadiness) return Promise.resolve();
+    if (window.__courseReadinessScriptPromise) return window.__courseReadinessScriptPromise;
+
+    window.__courseReadinessScriptPromise = new Promise((resolve) => {
+        const existing = document.getElementById('course-learning-readiness-loader');
+        if (existing) {
+            existing.addEventListener('load', () => resolve(), { once: true });
+            existing.addEventListener('error', () => resolve(), { once: true });
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.id = 'course-learning-readiness-loader';
+        script.src = 'js/learning-readiness.js';
+        script.onload = () => resolve();
+        script.onerror = () => resolve();
+        document.body.appendChild(script);
+    });
+
+    return window.__courseReadinessScriptPromise;
+}
+
+function getCourseCurrentUser() {
+    const authUser = parseLearningJsonSafe(localStorage.getItem('user'), null);
+    const localUser = parseLearningJsonSafe(localStorage.getItem('userData'), {});
+    return authUser || localUser || {};
+}
+
+function getCourseUserIdentity() {
+    const user = getCourseCurrentUser();
+    return String(user.id || user.userId || user.email || user.username || user.name || '').trim();
+}
+
+function getCoursePracticeHistory() {
+    const userData = parseLearningJsonSafe(localStorage.getItem('userData'), {});
+    return Array.isArray(userData.practiceHistory) ? userData.practiceHistory : [];
+}
+
+function getCourseExamHistory() {
+    const history = parseLearningJsonSafe(localStorage.getItem('examHistory'), []);
+    return Array.isArray(history) ? history : [];
+}
+
+async function fetchCourseCertificates() {
+    const identity = getCourseUserIdentity();
+    if (!identity) return [];
+
+    try {
+        const response = await fetch(`/api/elearning/certificate/${encodeURIComponent(identity)}`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.warn('Course certificates unavailable:', error.message);
+        return [];
+    }
+}
+
+function normalizeCoursePracticeCategories(entry) {
+    if (Array.isArray(entry.categories) && entry.categories.length) return entry.categories;
+    if (entry.category) return [entry.category];
+    if (entry.sourceCategory) return [entry.sourceCategory];
+    return [];
+}
+
+function summarizeCoursePracticeHistory(history) {
+    if (window.LearningReadiness?.summarizePracticeHistory) {
+        return window.LearningReadiness.summarizePracticeHistory(history);
+    }
+
+    const summary = {};
+    history.forEach((entry) => {
+        normalizeCoursePracticeCategories(entry).forEach((category) => {
+            if (!summary[category]) {
+                summary[category] = {
+                    attempts: 0,
+                    totalScore: 0,
+                    averageScore: 0,
+                    bestScore: 0,
+                    latestScore: 0
+                };
+            }
+
+            const score = Number(entry.score || 0);
+            summary[category].attempts += 1;
+            summary[category].totalScore += score;
+            summary[category].bestScore = Math.max(summary[category].bestScore, score);
+            summary[category].latestScore = score;
+        });
+    });
+
+    Object.values(summary).forEach((item) => {
+        item.averageScore = item.attempts ? Math.round(item.totalScore / item.attempts) : 0;
+    });
+
+    return summary;
+}
+
+function getPathPracticeRequirements(learningPath) {
+    return (Array.isArray(learningPath.modules) ? learningPath.modules : [])
+        .map((module) => ({
+            moduleId: module.id,
+            moduleTitle: module.title,
+            category: module.practice?.category || '',
+            minimumAttempts: toNonNegativeInt(module.practice?.minimumAttempts, 0),
+            minimumAverageScore: toNonNegativeInt(module.practice?.minimumAverageScore, 0)
+        }))
+        .filter((item) => item.category);
+}
+
+function getReadinessForPath(learningPath) {
+    const dashboard = window.LearningReadiness?.getReadinessDashboard?.();
+    if (!dashboard || !Array.isArray(dashboard.exams)) return null;
+    return dashboard.exams.find((item) => item.examId === learningPath.exam?.id) || null;
+}
+
+function findCertificateForPath(learningPath, certificates) {
+    const examId = String(learningPath.exam?.id || '').toLowerCase();
+    const certificateTitle = String(learningPath.certificate?.title || '').toLowerCase();
+    const examTitle = String(learningPath.exam?.title || '').toLowerCase();
+
+    return certificates.find((certificate) => {
+        const quizId = String(certificate.quizId || certificate.quiz_id || '').toLowerCase();
+        const title = String(certificate.title || '').toLowerCase();
+        return (examId && quizId === examId) ||
+            (certificateTitle && title === certificateTitle) ||
+            (examTitle && title === examTitle);
+    }) || null;
+}
+
+function translateCourseReadinessRecommendation(message) {
+    const text = String(message || '').trim();
+    if (!text) return '';
+
+    let match = text.match(/^Reach level (.+) to unlock this exam path\.$/i);
+    if (match) return `Naik ke level ${match[1]} untuk membuka exam path ini.`;
+
+    match = text.match(/^Complete practice in (.+)\.$/i);
+    if (match) return `Selesaikan practice pada ${match[1]}.`;
+
+    match = text.match(/^Raise average score to (\d+)% for exam readiness\.$/i);
+    if (match) return `Naikkan rata-rata skor ke ${match[1]}% agar siap exam.`;
+
+    match = text.match(/^Finish (\d+) more measured attempts\.$/i);
+    if (match) return `Selesaikan ${match[1]} attempt terukur lagi.`;
+
+    match = text.match(/^Build more attempts in (.+)\.$/i);
+    if (match) return `Tambahkan attempt practice pada ${match[1]}.`;
+
+    return text;
+}
+
+function hasExamPassedForPath(learningPath) {
+    const examId = String(learningPath.exam?.id || '');
+    if (!examId) return false;
+
+    return getCourseExamHistory().some((attempt) => {
+        const attemptId = String(attempt.examId || attempt.quizId || '');
+        return attemptId === examId && (attempt.passed === true || Number(attempt.score || attempt.percentage || 0) >= Number(learningPath.exam?.passingScore || 0));
+    });
+}
+
+function buildPathPracticeSummary(learningPath) {
+    const requirements = getPathPracticeRequirements(learningPath);
+    const practiceSummary = summarizeCoursePracticeHistory(getCoursePracticeHistory());
+
+    const rows = requirements.map((requirement) => {
+        const stats = practiceSummary[requirement.category] || {};
+        const attempts = toNonNegativeInt(stats.attempts, 0);
+        const averageScore = toNonNegativeInt(stats.averageScore, 0);
+
+        return {
+            ...requirement,
+            attempts,
+            averageScore,
+            completed: attempts >= requirement.minimumAttempts && averageScore >= requirement.minimumAverageScore
+        };
+    });
+
+    const totalRequiredAttempts = rows.reduce((sum, row) => sum + row.minimumAttempts, 0);
+    const totalAttempts = rows.reduce((sum, row) => sum + row.attempts, 0);
+    const averageScore = rows.length
+        ? Math.round(rows.reduce((sum, row) => sum + row.averageScore, 0) / rows.length)
+        : 0;
+    const completedRequirements = rows.filter((row) => row.completed).length;
+    const coverage = rows.length ? Math.round((completedRequirements / rows.length) * 100) : 0;
+
+    return {
+        rows,
+        totalAttempts,
+        totalRequiredAttempts,
+        averageScore,
+        completedRequirements,
+        totalRequirements: rows.length,
+        coverage
+    };
+}
+
+function buildOfficialPathProgress(learningPath, certificates) {
+    const certificate = findCertificateForPath(learningPath, certificates);
+    const readiness = getReadinessForPath(learningPath);
+    const practice = buildPathPracticeSummary(learningPath);
+    const examPassed = hasExamPassedForPath(learningPath);
+    const started = practice.totalAttempts > 0 || examPassed;
+
+    if (certificate) {
+        return {
+            status: 'certified',
+            label: 'Certificate earned',
+            progress: 100,
+            note: `Sertifikat sudah terbit: ${certificate.title || learningPath.certificate?.title || 'Sertifikat'}.`,
+            readiness,
+            practice,
+            certificate
+        };
+    }
+
+    if (readiness?.status === 'ready') {
+        return {
+            status: 'ready',
+            label: 'Ready for exam',
+            progress: Math.max(85, toNonNegativeInt(readiness.readinessScore, 0)),
+            note: 'Syarat readiness sudah cukup. Lanjutkan ke exam formal untuk membuka sertifikat.',
+            readiness,
+            practice,
+            certificate: null
+        };
+    }
+
+    if (started || readiness?.status === 'almost-ready') {
+        const missingAttempts = Math.max(0, practice.totalRequiredAttempts - practice.totalAttempts);
+        return {
+            status: 'needs-practice',
+            label: 'Practice kurang',
+            progress: readiness ? toNonNegativeInt(readiness.readinessScore, 0) : Math.min(75, practice.coverage),
+            note: translateCourseReadinessRecommendation(readiness?.recommendation) || `Tambahkan ${missingAttempts} attempt terukur dan capai skor minimum practice.`,
+            readiness,
+            practice,
+            certificate: null
+        };
+    }
+
+    return {
+        status: 'not-started',
+        label: 'Belum mulai',
+        progress: 0,
+        note: 'Mulai dari practice path agar sistem dapat mengukur readiness Anda.',
+        readiness,
+        practice,
+        certificate: null
+    };
+}
+
+async function loadOfficialLearningPaths() {
+    const section = ensureOfficialLearningPathSection();
+    if (!section) return;
+
+    const container = section.querySelector('#official-paths-container');
+    if (!container) return;
+
+    try {
+        await ensureCourseReadinessScript();
+        const response = await fetch('/api/elearning/modules/learning-paths');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const paths = Array.isArray(data.data) ? data.data : [];
+        const certificates = await fetchCourseCertificates();
+        renderOfficialLearningPaths(paths, container, certificates);
+    } catch (error) {
+        console.warn('Failed to load official learning paths:', error.message);
+        container.innerHTML = `
+            <div class="error-courses">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Gagal memuat jalur belajar resmi.</p>
+            </div>
+        `;
+    }
+}
+
+function renderOfficialLearningPaths(paths, container, certificates = []) {
+    if (!paths.length) {
+        container.innerHTML = `
+            <div class="no-courses">
+                <i class="fas fa-route"></i>
+                <p>Belum ada jalur belajar resmi.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = paths.map((learningPath) => {
+        const firstModule = Array.isArray(learningPath.modules) ? learningPath.modules[0] : null;
+        const practice = firstModule && firstModule.practice ? firstModule.practice : {};
+        const practiceHref = `practice.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}&view=skill-drills`;
+        const examHref = `exams.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}`;
+        const progress = buildOfficialPathProgress(learningPath, certificates);
+        const certificateHref = progress.certificate
+            ? `certification.html?cert=${encodeURIComponent(progress.certificate.id || '')}`
+            : 'certification.html';
+        const primaryAction = progress.status === 'certified'
+            ? `<a class="preview-btn" href="${certificateHref}"><i class="fas fa-certificate"></i> Lihat Sertifikat</a>`
+            : progress.status === 'ready'
+                ? `<a class="preview-btn" href="${examHref}"><i class="fas fa-clipboard-check"></i> Ambil Exam</a>`
+                : `<a class="preview-btn" href="${practiceHref}"><i class="fas fa-route"></i> Mulai Practice</a>`;
+
+        return `
+            <article class="official-path-card" data-learning-path-id="${sanitizeHTML(learningPath.id)}">
+                <div class="official-path-meta-row">
+                    <span class="official-path-meta">${sanitizeHTML(learningPath.level || 'BIM')}</span>
+                    <span class="official-path-meta">${Number(learningPath.modules?.length || 0)} module</span>
+                </div>
+                <h3>${sanitizeHTML(learningPath.title)}</h3>
+                <p>${sanitizeHTML(learningPath.description || '')}</p>
+                <div class="official-path-progress">
+                    <div class="official-path-progress-header">
+                        <span class="official-path-status ${progress.status}">${sanitizeHTML(progress.label)}</span>
+                        <span class="official-path-progress-metric"><strong>${Number(progress.progress || 0)}%</strong> path readiness</span>
+                    </div>
+                    <div class="official-path-progress-bar" aria-hidden="true">
+                        <div class="official-path-progress-fill" style="width:${Number(progress.progress || 0)}%;"></div>
+                    </div>
+                    <div class="official-path-progress-metrics">
+                        <span class="official-path-progress-metric"><strong>${Number(progress.practice.totalAttempts || 0)}/${Number(progress.practice.totalRequiredAttempts || 0)}</strong> attempts</span>
+                        <span class="official-path-progress-metric"><strong>${Number(progress.practice.averageScore || 0)}%</strong> avg practice</span>
+                        <span class="official-path-progress-metric"><strong>${Number(progress.practice.coverage || 0)}%</strong> requirements</span>
+                    </div>
+                    <div class="official-path-progress-note">${sanitizeHTML(progress.note)}</div>
+                </div>
+                <div class="official-path-flow">
+                    <div class="official-path-step">
+                        <i class="fas fa-book-open"></i>
+                        <span><strong>Course:</strong> ${sanitizeHTML(learningPath.title)}</span>
+                    </div>
+                    <div class="official-path-step">
+                        <i class="fas fa-layer-group"></i>
+                        <span><strong>Module:</strong> ${sanitizeHTML(firstModule?.title || 'Module pembelajaran')}</span>
+                    </div>
+                    <div class="official-path-step">
+                        <i class="fas fa-dumbbell"></i>
+                        <span><strong>Practice:</strong> ${sanitizeHTML(practice.category || '-')} (${Number(practice.minimumAttempts || 0)} attempt, ${Number(practice.minimumAverageScore || 0)}% avg)</span>
+                    </div>
+                    <div class="official-path-step">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span><strong>Exam:</strong> ${sanitizeHTML(learningPath.exam?.title || '-')}</span>
+                    </div>
+                    <div class="official-path-step">
+                        <i class="fas fa-certificate"></i>
+                        <span><strong>Certificate:</strong> ${sanitizeHTML(learningPath.certificate?.title || '-')}</span>
+                    </div>
+                </div>
+                <div class="official-path-actions">
+                    ${primaryAction}
+                    <a class="preview-btn" href="${progress.status === 'ready' ? practiceHref : examHref}">
+                        <i class="fas fa-${progress.status === 'ready' ? 'dumbbell' : 'clipboard-check'}"></i>
+                        ${progress.status === 'ready' ? 'Review Practice' : 'Exam Gate'}
+                    </a>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
 
 function fetchCourses() {
     const container = document.querySelector('.courses .box-container') ||
@@ -1176,7 +1917,3 @@ function tryGenerateThumbnail(imgEl, rawPath, fallbackSrc = '/img/course-default
             imgEl.src = fallbackSrc;
         });
 }
-
-
-
-

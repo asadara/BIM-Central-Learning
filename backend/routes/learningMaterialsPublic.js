@@ -7,6 +7,7 @@ const {
     generatePDFThumbnailWithPoppler,
     generatePDFThumbnailWithImageMagick,
     generatePDFThumbnailWithPuppeteer,
+    generatePDFThumbnailWithChromeNative,
     isLikelyInvalidThumbnail
 } = require("../scripts/generate-pdf-thumbnails");
 
@@ -342,6 +343,13 @@ router.get("/thumbnail/:materialId", async (req, res) => {
         if (!success) {
             const readerUrl = `${req.protocol}://${req.get("host")}/public/reader.html?material=${encodeURIComponent(String(material.id))}`;
             success = await generatePDFThumbnailWithPuppeteer(String(material.id), readerUrl, cachedThumbnailPath);
+        }
+        if (success && await isLikelyInvalidThumbnail(cachedThumbnailPath)) {
+            success = false;
+            fs.rmSync(cachedThumbnailPath, { force: true });
+        }
+        if (!success) {
+            success = await generatePDFThumbnailWithChromeNative(fileSystemPath, cachedThumbnailPath);
         }
 
         if (!success || !fs.existsSync(cachedThumbnailPath)) {

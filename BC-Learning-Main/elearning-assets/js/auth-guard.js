@@ -236,36 +236,36 @@ class AuthGuard {
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title">
                                 <i class="fas fa-lock me-2"></i>
-                                Authentication Required
+                                Login Diperlukan
                             </h5>
                         </div>
                         <div class="modal-body">
                             <div class="text-center mb-4">
-                                <p class="text-muted">You need to sign in to access BC Learning e-learning content.</p>
+                                <p class="text-muted">Silakan login untuk mengakses konten e-learning BC Learning.</p>
                             </div>
 
                             <!-- Action Buttons -->
                             <div class="d-grid gap-3 mt-4">
                                 <a href="/pages/login.html" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-sign-in-alt me-2"></i>Sign In to Existing Account
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login dengan Akun yang Ada
                                 </a>
                                 <a href="/pages/signup.html" class="btn btn-success btn-lg">
-                                    <i class="fas fa-user-plus me-2"></i>Create New Account
+                                    <i class="fas fa-user-plus me-2"></i>Buat Akun Baru
                                 </a>
                             </div>
 
                             <div class="text-center mt-3">
                                 <small class="text-muted">
-                                    After signing in, you'll be redirected back to access the learning content.
+                                    Setelah login, Anda akan diarahkan kembali ke halaman yang sedang dibuka.
                                 </small>
                             </div>
 
                             <!-- Loading Spinner -->
                             <div id="auth-loading" class="text-center mt-3" style="display: none;">
                                 <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                                    <span class="visually-hidden">Memuat...</span>
                                 </div>
-                                <p class="mt-2">Processing...</p>
+                                <p class="mt-2">Memproses...</p>
                             </div>
 
                             <!-- Error Message -->
@@ -320,7 +320,7 @@ class AuthGuard {
         const password = document.getElementById('login-password').value.trim();
 
         if (!email || !password) {
-            this.showError('Please fill in all fields');
+            this.showError('Lengkapi semua kolom.');
             return;
         }
 
@@ -360,17 +360,17 @@ class AuthGuard {
                     window.updateUserUI();
                 }
 
-                this.showSuccess('Login successful! Welcome back.');
+                this.showSuccess('Login berhasil. Selamat datang kembali.');
                 setTimeout(() => {
                     this.hideAuthModal();
                 }, 1500);
 
             } else {
-                this.showError(result.error || result.message || 'Login failed');
+                this.showError(result.error || result.message || 'Login gagal.');
             }
         } catch (error) {
             console.error('Login error:', error);
-            this.showError('Network error. Please check your connection and try again.');
+            this.showError('Gangguan jaringan. Periksa koneksi lalu coba lagi.');
         } finally {
             this.showLoading(false);
         }
@@ -385,7 +385,7 @@ class AuthGuard {
         const organization = document.getElementById('signup-organization').value.trim();
 
         if (!username || !email || !password || !bimLevel) {
-            this.showError('Please fill in all required fields');
+            this.showError('Lengkapi semua kolom wajib.');
             return;
         }
 
@@ -409,18 +409,18 @@ class AuthGuard {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                this.showSuccess('Account created successfully! Please sign in with your credentials.');
+                this.showSuccess('Akun berhasil dibuat. Silakan login dengan akun tersebut.');
                 // Switch to login tab
                 document.getElementById('login-tab').click();
                 // Pre-fill email
                 document.getElementById('login-email').value = email;
 
             } else {
-                this.showError(result.error || result.message || 'Signup failed');
+                this.showError(result.error || result.message || 'Pendaftaran gagal.');
             }
         } catch (error) {
             console.error('Signup error:', error);
-            this.showError('Network error. Please check your connection and try again.');
+            this.showError('Gangguan jaringan. Periksa koneksi lalu coba lagi.');
         } finally {
             this.showLoading(false);
         }

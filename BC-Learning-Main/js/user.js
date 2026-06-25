@@ -141,6 +141,9 @@ async function updateUserUI() {
    const logoutLink = document.getElementById("logout-link");
    const registerLink = document.getElementById("register-link");
    const dashboardLink = document.getElementById("dashboard-link");
+   const messagesLink = document.getElementById("messages-link");
+   const messageUnreadBadge = document.getElementById("message-unread-badge");
+   const accountMessageIndicator = document.getElementById("account-message-indicator");
    const profileLink = document.getElementById("profile-link");
    const adminToolsDivider = document.getElementById("admin-tools-divider");
    const competencyLink = document.getElementById("competency-link");
@@ -160,6 +163,9 @@ async function updateUserUI() {
       if (logoutLink) logoutLink.hidden = true;
       if (registerLink) registerLink.hidden = false;
       if (dashboardLink) dashboardLink.hidden = true;
+      if (messagesLink) messagesLink.hidden = true;
+      if (messageUnreadBadge) messageUnreadBadge.hidden = true;
+      if (accountMessageIndicator) accountMessageIndicator.hidden = true;
       if (profileLink) profileLink.hidden = true;
       if (adminToolsDivider) adminToolsDivider.hidden = true;
       if (competencyLink) competencyLink.hidden = true;
@@ -181,6 +187,10 @@ async function updateUserUI() {
       if (logoutLink) logoutLink.hidden = false;
       if (registerLink) registerLink.hidden = true;
       if (dashboardLink) dashboardLink.hidden = false;
+      if (messagesLink) {
+         const isAdminUser = user.isAdmin || (user.role && user.role.toLowerCase().includes("admin"));
+         messagesLink.hidden = isAdminUser;
+      }
       if (profileLink) profileLink.hidden = false;
       if (adminToolsDivider) adminToolsDivider.hidden = true;
       if (competencyLink) competencyLink.hidden = true;
@@ -195,6 +205,9 @@ async function updateUserUI() {
 
       setupLogoutHandler(user);
       window.currentUser = user;
+      if (typeof window.BCLRefreshMessageIndicator === 'function') {
+         window.BCLRefreshMessageIndicator();
+      }
 
    } catch (error) {
       console.error('❌ Error updating user UI:', error);
@@ -649,6 +662,7 @@ const bclMainReadingCatalog = (() => {
          groupId: "bim-delivery-workflow",
          groupLabel: "BIM Delivery Workflow",
          pages: [
+            { path: "/pages/workflow-bim-nke.html", label: "BIM NKE Workflow" },
             { path: "/pages/workflow-overview.html", label: "Peta Alur BIM" },
             { path: "/pages/workflow-standar.html", label: "Standar dan Aturan Main" },
             { path: "/pages/workflow-produksi.html", label: "Produksi Model" },

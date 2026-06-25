@@ -7,6 +7,8 @@ const USERS_FILE = path.join(__dirname, '..', 'users.json');
 
 const ACCESS_COLUMN_DEFINITIONS = [
     ['mapping_kompetensi_access', 'BOOLEAN DEFAULT false'],
+    ['dokumen_access', 'BOOLEAN DEFAULT false'],
+    ['audit_2026_access', 'BOOLEAN DEFAULT false'],
     ['library_download_access', 'BOOLEAN DEFAULT false'],
     ['watermark_free_download_access', 'BOOLEAN DEFAULT false']
 ];
@@ -38,6 +40,12 @@ function normalizeAccessProfile(source = {}) {
     return {
         mappingKompetensiAccess: normalizeBoolean(
             source.mappingKompetensiAccess ?? source.mapping_kompetensi_access
+        ),
+        dokumenAccess: normalizeBoolean(
+            source.dokumenAccess ?? source.dokumen_access
+        ),
+        audit2026Access: normalizeBoolean(
+            source.audit2026Access ?? source.audit_2026_access
         ),
         libraryDownloadAccess: normalizeBoolean(
             source.libraryDownloadAccess ?? source.library_download_access
@@ -80,7 +88,8 @@ async function fetchAccessProfileFromDb(userId, email) {
     await ensureAccessColumns();
 
     const result = await pool.query(
-        `SELECT mapping_kompetensi_access, library_download_access, watermark_free_download_access
+        `SELECT mapping_kompetensi_access, dokumen_access, audit_2026_access,
+                library_download_access, watermark_free_download_access
          FROM users
          WHERE ($1::text IS NOT NULL AND id::text = $1::text)
             OR ($2::text IS NOT NULL AND lower(email) = lower($2))
@@ -117,6 +126,8 @@ async function resolveAccessProfile(authUser) {
     if (authUser.isAdmin) {
         return {
             mappingKompetensiAccess: true,
+            dokumenAccess: true,
+            audit2026Access: true,
             libraryDownloadAccess: true,
             watermarkFreeDownloadAccess: true
         };

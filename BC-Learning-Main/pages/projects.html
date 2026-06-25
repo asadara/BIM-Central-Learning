@@ -33,7 +33,7 @@
     <link href="../css/style.css" rel="stylesheet">
     <link href="../css/navbar-footer-fix.css" rel="stylesheet">
     <link href="../css/bim-methode.css" rel="stylesheet">
-    <link href="../css/projects-explorer.css" rel="stylesheet">
+    <link href="../css/projects-explorer.css?v=20260622b" rel="stylesheet">
 </head>
 
 <body class="page-projects-explorer">
@@ -46,23 +46,41 @@
         <div class="container-fluid">
             <div class="row g-4">
                 <!-- Sidebar Explorer -->
-                <div class="col-lg-5 col-xl-4 col-xxl-3">
-                    <div class="bg-light rounded p-4 mb-4">
-                        <h5 class="mb-3">Tahun Proyek</h5>
-                        <div id="year-list" class="category-list">
-                            <div class="text-center">
-                                <div class="spinner-border spinner-border-sm" role="status">
-                                    <span class="sr-only">Loading...</span>
+                <div class="col-lg-5 col-xl-4 col-xxl-3 project-sidebar-column">
+                    <div class="project-sidebar-sticky">
+                        <div class="bg-light rounded p-3 mb-4 project-search-card">
+                            <h5 class="mb-3">Cari Proyek</h5>
+                            <div class="project-search">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="search" class="form-control" id="project-search-input"
+                                        placeholder="Cari semua proyek..." autocomplete="off">
+                                    <button type="button" class="btn btn-outline-secondary" id="project-search-clear"
+                                        aria-label="Bersihkan pencarian proyek" disabled>
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                 </div>
-                                <small class="text-muted d-block mt-2">Memuat tahun...</small>
+                                <div class="small text-muted mt-2" id="project-search-status"></div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="bg-light rounded p-4">
-                        <h5 class="mb-3">Daftar Proyek</h5>
-                        <div id="project-list" class="category-list">
-                            <div class="text-muted small">Pilih tahun terlebih dahulu.</div>
+                        <div class="bg-light rounded p-4 mb-4">
+                            <h5 class="mb-3">Tahun Proyek</h5>
+                            <div id="year-list" class="category-list">
+                                <div class="text-center">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Memuat tahun...</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-light rounded p-4">
+                            <h5 class="mb-3">Daftar Proyek</h5>
+                            <div id="project-list" class="category-list">
+                                <div class="text-muted small">Pilih tahun terlebih dahulu.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -83,6 +101,7 @@
                                     <option value="all">Semua Tipe</option>
                                     <option value="image">Gambar</option>
                                     <option value="video">Video</option>
+                                    <option value="model">Model IFC</option>
                                 </select>
                             </div>
                             <div class="col-lg-2 col-md-6">
@@ -102,7 +121,7 @@
                             </div>
                             <div class="col-lg-2 col-md-6">
                                 <button type="button" class="btn btn-outline-primary w-100" id="refresh-projects-btn">
-                                    <i class="fas fa-rotate-right me-2"></i>Refresh
+                                    <i class="fas fa-rotate-right me-2"></i>Sinkronkan
                                 </button>
                             </div>
                         </div>
@@ -173,7 +192,7 @@
     <script src="../js/main.js"></script>
     <script src="../js/user.js" defer></script>
     <script src="../js/loadComponents.js"></script>
-    <script src="../js/projects-explorer.js?v=20260331a"></script>
+    <script src="../js/projects-explorer.js?v=20260622d"></script>
     <script src="../js/track-last-page.js"></script>
 </body>
 

@@ -131,14 +131,42 @@ class BIMGovernanceQuiz {
 
     prepareQuestions() {
         const pool = this.dedupeQuestions(this.questions);
-        const selected = this.shuffleArray(pool).slice(0, this.maxQuestions);
+        const basicPool = this.shuffleArray(pool.filter(q => this.getLevelGroup(q.level) === 'basic'));
+        const intermediatePool = this.shuffleArray(pool.filter(q => this.getLevelGroup(q.level) === 'intermediate'));
+        const advancedPool = this.shuffleArray(pool.filter(q => this.getLevelGroup(q.level) === 'advanced'));
+
+        const selected = [
+            ...basicPool.splice(0, Math.ceil(this.maxQuestions * 0.4)),
+            ...intermediatePool.splice(0, Math.ceil(this.maxQuestions * 0.4)),
+            ...advancedPool.splice(0, Math.floor(this.maxQuestions * 0.2))
+        ];
+
+        if (selected.length < this.maxQuestions) {
+            const selectedIds = new Set(selected.map(q => q.id || q.prompt));
+            const remainderPool = this.shuffleArray(pool.filter(q => !selectedIds.has(q.id || q.prompt)));
+            selected.push(...remainderPool.slice(0, this.maxQuestions - selected.length));
+        }
 
         selected.forEach((question) => {
             delete question.shuffledChoices;
             delete question.shuffledCorrectIndex;
         });
 
-        this.selectedQuestions = selected;
+        this.selectedQuestions = this.shuffleArray(selected).slice(0, this.maxQuestions);
+    }
+
+    getLevelGroup(level) {
+        const normalized = String(level || '').toLowerCase();
+        if (['basic', 'easy', 'dasar', 'beginner'].includes(normalized)) return 'basic';
+        if (['advanced', 'hard', 'advance', 'lanjutan'].includes(normalized)) return 'advanced';
+        return 'intermediate';
+    }
+
+    getLevelLabel(level) {
+        const group = this.getLevelGroup(level);
+        if (group === 'basic') return 'Dasar';
+        if (group === 'advanced') return 'Lanjutan';
+        return 'Menengah';
     }
 
     resetQuiz() {
@@ -169,7 +197,7 @@ class BIMGovernanceQuiz {
             questionCard.innerHTML = `
                 <div class="question-header">
                     <h5 class="mb-0">Pertanyaan ${index + 1}</h5>
-                    <small class="text-muted">${question.level === 'basic' ? 'Dasar' : 'Menengah'}</small>
+                    <small class="text-muted">${this.getLevelLabel(question.level)}</small>
                 </div>
                 <div class="question-content">
                     <p class="mb-3">${question.prompt}</p>
@@ -224,6 +252,7 @@ class BIMGovernanceQuiz {
         const newCorrectIndex = choiceObjects.findIndex(choice => choice.originalIndex === question.answer_index);
         question.shuffledCorrectIndex = newCorrectIndex;
         question.shuffledChoices = choiceObjects.map(choice => choice.text);
+        question.shuffledChoiceOriginalIndices = choiceObjects.map(choice => choice.originalIndex);
     }
 
     shuffleArray(array) {
@@ -298,7 +327,7 @@ class BIMGovernanceQuiz {
             userAnswerDiv.innerHTML = `
                 <strong>Jawaban Anda:</strong>
                 <span class="${isCorrect ? 'text-success' : 'text-danger'}">
-                    ${question.choices[userAnswerIndex] || 'Tidak dijawab'}
+                    ${question.shuffledChoices[userAnswerIndex] || 'Tidak dijawab'}
                 </span>
             `;
             questionDiv.appendChild(userAnswerDiv);
@@ -308,7 +337,7 @@ class BIMGovernanceQuiz {
             correctAnswerDiv.className = 'mb-2';
             correctAnswerDiv.innerHTML = `
                 <strong>Jawaban Benar:</strong>
-                <span class="text-success">${question.choices[question.answer_index]}</span>
+                <span class="text-success">${question.shuffledChoices[question.shuffledCorrectIndex]}</span>
             `;
             questionDiv.appendChild(correctAnswerDiv);
 
@@ -355,14 +384,18 @@ class BIMGovernanceQuiz {
                 quizName: 'BIM Governance Quiz',
                 quizCategory: 'governance',
                 sourceType: 'quiz',
-                answers: this.userAnswers,
+                answers: this.toOriginalAnswerIndices(),
                 score: this.score,
                 totalQuestions: this.selectedQuestions.length,
                 percentage,
                 passed,
+                passingScore: 70,
                 userId: userData.id || userData.userId || userData.email || userData.username || userData.name || null,
                 userName: userData.name || userData.username || 'Anonymous User',
-                userEmail: userData.email || null
+                userEmail: userData.email || null,
+                metadata: {
+                    questionIds: this.selectedQuestions.map(question => question.id)
+                }
             };
 
             await fetch('/api/elearning/quiz/submit', {
@@ -388,6 +421,16 @@ class BIMGovernanceQuiz {
             console.error('Error parsing user data:', e);
         }
         return null;
+    }
+
+    toOriginalAnswerIndices() {
+        return this.selectedQuestions.map((question, index) => {
+            const selectedIndex = this.userAnswers[index];
+            if (selectedIndex === null || selectedIndex === undefined) {
+                return null;
+            }
+            return question.shuffledChoiceOriginalIndices?.[selectedIndex] ?? selectedIndex;
+        });
     }
 
     restartQuiz() {

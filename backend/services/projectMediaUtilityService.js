@@ -1,6 +1,9 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const {
+    mediaPathHasExcludedFolder
+} = require("../../shared/rawMediaFolderFilter");
 
 function createProjectMediaUtilityService({
     backendDir,
@@ -28,7 +31,7 @@ function createProjectMediaUtilityService({
     const WATERMARK_SIZE_SCALE = 0.2;
     const BIM_METHODE_FOLDER_NAME = '20. METHODE ESTIMATE & TENDER';
     const LOCAL_PCBIM02_ROOT = path.resolve(backendDir, '..', 'PC-BIM02');
-    const LOCAL_PCBIM02_PROJECT_2025_ROOT = LOCAL_PCBIM02_ROOT;
+    const LOCAL_PCBIM02_PROJECT_2025_ROOT = path.resolve(backendDir, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2025');
     const NETWORK_PCBIM02_ROOT = '\\\\pc-bim02\\PROJECT BIM 2025';
 
     function getWatermarkFontFile() {
@@ -113,7 +116,8 @@ function createProjectMediaUtilityService({
         const normalizedFilePath = normalizePathValue(filePath);
         return allowedRoots.some(root => {
             const normalizedRoot = normalizePathValue(root);
-            return normalizedRoot && normalizedFilePath.startsWith(normalizedRoot);
+            return normalizedRoot
+                && (normalizedFilePath === normalizedRoot || normalizedFilePath.startsWith(`${normalizedRoot}\\`) || normalizedFilePath.startsWith(`${normalizedRoot}/`));
         });
     }
 
@@ -124,7 +128,7 @@ function createProjectMediaUtilityService({
             candidates.push(process.env.PCBIM02_ROOT);
         }
 
-        candidates.push(LOCAL_PCBIM02_ROOT);
+        candidates.push(NETWORK_PCBIM02_ROOT);
 
         try {
             const LANMountManager = require('../utils/lanMountManager');
@@ -141,21 +145,11 @@ function createProjectMediaUtilityService({
             // Ignore LAN mount resolution errors; fallback to network path.
         }
 
-        candidates.push(NETWORK_PCBIM02_ROOT);
+        candidates.push(LOCAL_PCBIM02_ROOT);
 
         const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
-        const localRootNormalized = normalizePathValue(LOCAL_PCBIM02_ROOT);
 
         return uniqueCandidates.sort((left, right) => {
-            const leftNormalized = normalizePathValue(left);
-            const rightNormalized = normalizePathValue(right);
-            const leftIsLocal = leftNormalized === localRootNormalized ? 0 : 1;
-            const rightIsLocal = rightNormalized === localRootNormalized ? 0 : 1;
-
-            if (leftIsLocal !== rightIsLocal) {
-                return leftIsLocal - rightIsLocal;
-            }
-
             const leftIsCacheMirror = /pc-bim02-cache/i.test(String(left));
             const rightIsCacheMirror = /pc-bim02-cache/i.test(String(right));
             if (leftIsCacheMirror !== rightIsCacheMirror) {
@@ -225,16 +219,32 @@ function createProjectMediaUtilityService({
     }
 
     function getMediaRouteMap() {
+        const uniqueBases = (...bases) => [...new Set(bases.filter(Boolean))];
+
         return [
-            { prefix: '/media-bim02-2026', base: getStaticMountPath('pc-bim02-2026', 'V:') },
-            { prefix: '/media-bim02', base: getStaticMountPath('pc-bim02', 'X:') },
-            { prefix: '/media-bim1-2025', base: getStaticMountPath('pc-bim1', 'Y:') },
-            { prefix: '/media-bim1-2024', base: getStaticMountPath('pc-bim1-2024', 'Z:') },
-            { prefix: '/media-bim1-2023', base: getStaticMountPath('pc-bim1-2023', 'W:') },
-            { prefix: '/media-bim1-2022', base: getStaticMountPath('pc-bim1-2022', 'U:') },
-            { prefix: '/media-bim1-2021', base: getStaticMountPath('pc-bim1-2021', 'T:') },
-            { prefix: '/media-bim1-2020', base: getStaticMountPath('pc-bim1-2020', 'S:') },
-            { prefix: '/media', base: baseProjectDir }
+            {
+                prefix: '/media-bim02-2026',
+                bases: uniqueBases(
+                    getStaticMountPath('pc-bim02-2026', 'V:'),
+                    '\\\\pc-bim02\\PROJECT BIM 2026',
+                    path.resolve(backendDir, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2026')
+                )
+            },
+            {
+                prefix: '/media-bim02',
+                bases: uniqueBases(
+                    getStaticMountPath('pc-bim02', 'X:'),
+                    NETWORK_PCBIM02_ROOT,
+                    LOCAL_PCBIM02_PROJECT_2025_ROOT
+                )
+            },
+            { prefix: '/media-bim1-2025', bases: uniqueBases(getStaticMountPath('pc-bim1', 'Y:')) },
+            { prefix: '/media-bim1-2024', bases: uniqueBases(getStaticMountPath('pc-bim1-2024', 'Z:')) },
+            { prefix: '/media-bim1-2023', bases: uniqueBases(getStaticMountPath('pc-bim1-2023', 'W:')) },
+            { prefix: '/media-bim1-2022', bases: uniqueBases(getStaticMountPath('pc-bim1-2022', 'U:')) },
+            { prefix: '/media-bim1-2021', bases: uniqueBases(getStaticMountPath('pc-bim1-2021', 'T:')) },
+            { prefix: '/media-bim1-2020', bases: uniqueBases(getStaticMountPath('pc-bim1-2020', 'S:')) },
+            { prefix: '/media', bases: uniqueBases(baseProjectDir) }
         ];
     }
 
@@ -283,6 +293,7 @@ function createProjectMediaUtilityService({
         cleanUrl = cleanUrl.split('?')[0].split('#')[0];
         if (!cleanUrl.startsWith('/')) return null;
         if (cleanUrl.includes('..')) return null;
+        if (mediaPathHasExcludedFolder(cleanUrl)) return null;
 
         const routeMap = getMediaRouteMap();
         const match = routeMap.find(route => cleanUrl === route.prefix || cleanUrl.startsWith(`${route.prefix}/`));
@@ -298,13 +309,36 @@ function createProjectMediaUtilityService({
         if (segments.some(segment => segment === '..')) {
             return null;
         }
-
-        const fullPath = path.resolve(match.base, normalized);
-        if (!isPathWithinBase(match.base, fullPath)) {
+        if (segments.some(segment => mediaPathHasExcludedFolder(segment))) {
             return null;
         }
 
-        return fullPath;
+        const bases = Array.isArray(match.bases) && match.bases.length > 0
+            ? match.bases
+            : [match.base].filter(Boolean);
+        let fallbackPath = null;
+
+        for (const base of bases) {
+            const fullPath = path.resolve(base, normalized);
+            if (!isPathWithinBase(base, fullPath)) {
+                continue;
+            }
+
+            if (!fallbackPath) {
+                fallbackPath = fullPath;
+            }
+
+            try {
+                const stats = fs.statSync(fullPath);
+                if (stats.isFile()) {
+                    return fullPath;
+                }
+            } catch (error) {
+                // Try the next backing path for this media route.
+            }
+        }
+
+        return fallbackPath;
     }
 
     function sanitizeDownloadName(filename) {

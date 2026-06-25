@@ -313,15 +313,69 @@ function getFallbackPracticeData() {
 let practiceData = [];
 let drillPracticeData = [];
 let mockPracticeData = [];
-let activePracticeFilter = 'all';
+let activePracticeFilter = 'theory-core';
 let activePracticeView = 'overview';
 let activeTargetExamId = null;
+
+const THEORY_CATEGORY_ORDER = ['bim-mindset', 'bim-governance', 'delivery-workflow'];
+const PRACTICE_CATEGORY_LABELS = {
+    'theory-core': 'Teori Inti',
+    'weak-topics': 'Topik Lemah',
+    'software-tools': 'Software/Tools',
+    'all': 'Semua',
+    'bim-mindset': 'Mindset',
+    'bim-governance': 'Governance',
+    'delivery-workflow': 'Delivery Workflow',
+    'bim-fundamentals': 'BIM Fundamentals',
+    'revit-fundamentals': 'Revit Fundamentals',
+    'revit-modeling': 'Revit Modeling',
+    'intermediate-modeling': 'Intermediate Modeling',
+    'quality-control': 'Quality Control',
+    'clash-detection': 'Clash Detection',
+    'project-coordination': 'Project Coordination',
+    'federated-models': 'Federated Models',
+    'advanced-modeling': 'Advanced Modeling',
+    'autocad': 'AutoCAD',
+    'revit': 'Revit',
+    'general': 'General'
+};
+
+function isTheoryCategory(category) {
+    return THEORY_CATEGORY_ORDER.includes(category);
+}
+
+function getPracticeCategoryLabel(category) {
+    return PRACTICE_CATEGORY_LABELS[category] || String(category || '').replace(/[-_]+/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+function getPracticeCategoryRank(category) {
+    const theoryIndex = THEORY_CATEGORY_ORDER.indexOf(category);
+    if (theoryIndex >= 0) {
+        return theoryIndex;
+    }
+
+    return 100 + Object.keys(PRACTICE_CATEGORY_LABELS).indexOf(category);
+}
+
+function sortPracticeSetsByPriority(sets) {
+    return [...sets].sort((a, b) => {
+        const categoryRank = getPracticeCategoryRank(a.category) - getPracticeCategoryRank(b.category);
+        if (categoryRank !== 0) {
+            return categoryRank;
+        }
+
+        const titleA = String(a.title || '');
+        const titleB = String(b.title || '');
+        return titleA.localeCompare(titleB);
+    });
+}
 
 // Load practice sets with enhanced data
 function loadPracticeSets() {
     activeTargetExamId = new URLSearchParams(window.location.search).get('targetExam');
+    activePracticeFilter = activeTargetExamId ? 'all' : 'theory-core';
     const loadedPracticeSets = getPracticeQuestions();
-    drillPracticeData = loadedPracticeSets.filter(set => !set.isRandomQuiz && !set.isMockExam);
+    drillPracticeData = sortPracticeSetsByPriority(loadedPracticeSets.filter(set => !set.isRandomQuiz && !set.isMockExam));
     mockPracticeData = generateMockPracticeSets();
     practiceData = [...loadedPracticeSets, ...mockPracticeData.filter(set => !loadedPracticeSets.some(existing => existing.id === set.id))];
     renderPracticeExperience();
@@ -334,7 +388,7 @@ function createPracticeSetCardMarkup(set) {
                 <h3>${set.title}</h3>
                 <div class="set-badges">
                     <span class="difficulty-badge ${set.difficulty.toLowerCase()}">${set.difficulty}</span>
-                    <span class="category-badge">${set.category}</span>
+                    <span class="category-badge">${getPracticeCategoryLabel(set.category)}</span>
                 </div>
             </div>
             <div class="set-info">
@@ -379,8 +433,10 @@ function displayPracticeSets(sets, containerId = 'practice-container') {
         console.log(`  ${index + 1}. ${set.title} (${set.questions} questions)`);
     });
 
-    container.innerHTML = sets.length
-        ? sets.map(set => createPracticeSetCardMarkup(set)).join('')
+    const prioritizedSets = sortPracticeSetsByPriority(sets);
+
+    container.innerHTML = prioritizedSets.length
+        ? prioritizedSets.map(set => createPracticeSetCardMarkup(set)).join('')
         : `
             <div class="practice-empty-state">
                 <h3>Tidak ada set latihan</h3>
@@ -733,7 +789,15 @@ function renderPracticeFilters() {
     const dashboard = getReadinessDashboard();
     const weakCategories = dashboard.weakCategories.map(item => item.category);
     const categories = [...new Set(drillPracticeData.map(set => set.category))];
-    const filters = ['all', 'weak-topics', ...categories];
+    const availableTheoryCategories = THEORY_CATEGORY_ORDER.filter(category => categories.includes(category));
+    const hasSoftwareCategories = categories.some(category => !isTheoryCategory(category));
+    const filters = [
+        'theory-core',
+        ...availableTheoryCategories,
+        'weak-topics',
+        ...(hasSoftwareCategories ? ['software-tools'] : []),
+        'all'
+    ];
     const container = document.getElementById('practice-filter-bar');
 
     if (!container) {
@@ -741,13 +805,14 @@ function renderPracticeFilters() {
     }
 
     container.innerHTML = filters.map(filter => {
-        const label = filter === 'all'
-            ? 'All Drills'
-            : filter === 'weak-topics'
-                ? 'Weak Topics'
-                : filter;
+        const label = getPracticeCategoryLabel(filter);
+        const groupClass = isTheoryCategory(filter) || filter === 'theory-core'
+            ? 'theory'
+            : filter === 'software-tools'
+                ? 'tools'
+                : 'utility';
 
-        return `<button class="practice-filter-btn ${filter === activePracticeFilter ? 'active' : ''}" data-filter="${filter}">${label}</button>`;
+        return `<button class="practice-filter-btn ${groupClass} ${filter === activePracticeFilter ? 'active' : ''}" data-filter="${filter}">${label}</button>`;
     }).join('');
 
     container.onclick = function (event) {
@@ -772,12 +837,20 @@ function renderPracticeFilters() {
 }
 
 function applyPracticeFilter(sets, weakCategories = getReadinessDashboard().weakCategories.map(item => item.category)) {
+    if (activePracticeFilter === 'theory-core') {
+        return sets.filter(set => isTheoryCategory(set.category));
+    }
+
     if (activePracticeFilter === 'all') {
         return sets;
     }
 
     if (activePracticeFilter === 'weak-topics') {
         return sets.filter(set => weakCategories.includes(set.category));
+    }
+
+    if (activePracticeFilter === 'software-tools') {
+        return sets.filter(set => !isTheoryCategory(set.category));
     }
 
     return sets.filter(set => set.category === activePracticeFilter);

@@ -150,6 +150,11 @@ function getReaderAuthToken() {
     return '';
 }
 
+function getReaderAuthHeaders() {
+    const token = getReaderAuthToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 function countReaderCompletedModules() {
     let count = 0;
 
@@ -461,11 +466,19 @@ function loadPDF() {
         errorMessage.textContent = `Gagal memuat PDF dari ${courseReaderConfig.pdfUrl}. Error: ${error.message}`;
     };
 
-    const primaryTask = pdfjsLib.getDocument({ url: courseReaderConfig.pdfUrl });
+    const primaryTask = pdfjsLib.getDocument({
+        url: courseReaderConfig.pdfUrl,
+        httpHeaders: getReaderAuthHeaders(),
+        withCredentials: true
+    });
     primaryTask.promise.then(handlePdfLoaded).catch(async function (error) {
         console.warn("Primary PDF load failed, trying fallback fetch:", error);
         try {
-            const response = await fetch(courseReaderConfig.pdfUrl);
+            const response = await fetch(courseReaderConfig.pdfUrl, {
+                headers: getReaderAuthHeaders(),
+                credentials: 'include',
+                cache: 'no-store'
+            });
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }

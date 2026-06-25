@@ -1076,7 +1076,7 @@ async function doBackgroundSync() {
     }
 
     navigateToHome() {
-        this.navigateToPath(this.getElearningPageUrl('home.html'));
+        this.navigateToPath(this.getElearningPageUrl('dashboard.html'));
     }
 
     navigateToCourses() {

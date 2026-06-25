@@ -142,7 +142,7 @@
                     <h2>Quick Access</h2>
                     <p>Gunakan shortcut ini untuk kembali ke area belajar yang paling sering dibuka.</p>
                     <div class="favorites-links">
-                        <a href="/elearning-assets/home.html"><i class="fas fa-home"></i>Home</a>
+                        <a href="/elearning-assets/dashboard.html"><i class="fas fa-chart-line"></i>Dashboard</a>
                         <a href="/elearning-assets/courses.html"><i class="fas fa-book-open"></i>Courses</a>
                         <a href="/elearning-assets/search.html"><i class="fas fa-search"></i>Search</a>
                         <a href="/elearning-assets/profile.html"><i class="fas fa-user"></i>Profile</a>
@@ -190,7 +190,7 @@
 
             listElement.innerHTML = items.map((item) => {
                 const label = item && (item.title || item.name || item.label) ? (item.title || item.name || item.label) : 'Favorite item';
-                const href = item && item.url ? item.url : '/elearning-assets/home.html';
+                const href = item && item.url ? item.url : '/elearning-assets/dashboard.html';
                 const meta = item && item.category ? item.category : 'Saved shortcut';
                 return `
                     <div class="favorite-item">

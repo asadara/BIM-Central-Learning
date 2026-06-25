@@ -1,6 +1,9 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const {
+    mediaPathHasExcludedFolder
+} = require("../../shared/rawMediaFolderFilter");
 
 function createProjectMediaMountRoutes({
     backendDir,
@@ -36,6 +39,9 @@ function createProjectMediaMountRoutes({
     const mountStaticMedia = (routePath, targetPathOrResolver) => {
         router.use(routePath, (req, res, next) => {
             if (req.path.includes('..')) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            if (mediaPathHasExcludedFolder(req.path)) {
                 return res.status(403).json({ error: 'Access denied' });
             }
             const resolvedTargetPath = typeof targetPathOrResolver === 'function'

@@ -1,1 +1,242 @@
-﻿<!DOCTYPE html><html lang="id"><head>    <meta charset="UTF-8">    <meta http-equiv="X-UA-Compatible" content="IE=edge">    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Sertifikasi - BC Learning</title>    <!-- font awesome cdn link  -->    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">    <!-- custom css file link  -->    <link rel="stylesheet" href="css/bootstrap.min.css"><link rel="stylesheet" href="css/style.css"></head><body>    <!-- Header akan dimuat otomatis oleh component-loader.js -->    <div class="header-container"></div>    <div class="side-bar" id="sidebar-container"></div>    <section class="certifications">        <h1 class="heading">Sertifikasi & Badge Saya</h1>        <!-- Certification Overview -->        <div class="cert-overview">            <div class="overview-stats">                <div class="stat-card">                    <div class="stat-icon">                        <i class="fas fa-certificate"></i>                    </div>                    <div class="stat-info">                        <h3 id="total-certificates">3</h3>                        <p>Sertifikat Diperoleh</p>                    </div>                </div>                <div class="stat-card">                    <div class="stat-icon">                        <i class="fas fa-medal"></i>                    </div>                    <div class="stat-info">                        <h3 id="total-badges">8</h3>                        <p>Badge Terkumpul</p>                    </div>                </div>                <div class="stat-card">                    <div class="stat-icon">                        <i class="fas fa-trophy"></i>                    </div>                    <div class="stat-info">                        <h3 id="completion-rate">75%</h3>                        <p>Tingkat Penyelesaian</p>                    </div>                </div>                <div class="stat-card">                    <div class="stat-icon">                        <i class="fas fa-star"></i>                    </div>                    <div class="stat-info">                        <h3 id="skill-score">4.2</h3>                        <p>Skor Keahlian</p>                    </div>                </div>            </div>        </div>        <!-- Filter Tabs -->        <div class="filter-tabs">            <button class="tab-btn active" data-tab="all">Semua Pencapaian</button>            <button class="tab-btn" data-tab="certificates">Sertifikat</button>            <button class="tab-btn" data-tab="badges">Badge</button>            <button class="tab-btn" data-tab="in-progress">Dalam Proses</button>        </div>        <!-- Sertifikat Section -->        <div class="tab-content" id="tab-certificates">            <div class="section-header">                <h3><i class="fas fa-certificate"></i> Sertifikat Profesional</h3>                <div class="section-actions">                    <button class="btn secondary" id="verify-certificates">                        <i class="fas fa-shield-alt"></i> Verifikasi Sertifikat                    </button>                    <button class="btn" id="share-profile">                        <i class="fas fa-share"></i> Bagikan Profil                    </button>                </div>            </div>            <div class="certificates-grid" id="certificates-container">                <!-- Sertifikat will be loaded dynamically -->            </div>        </div>        <!-- Badge Section -->        <div class="tab-content" id="tab-badges">            <div class="section-header">                <h3><i class="fas fa-medal"></i> Badge Digital</h3>                <div class="badge-categories">                    <button class="category-filter active" data-category="all">Semua Badge</button>                    <button class="category-filter" data-category="skill">Badge Keahlian</button>                    <button class="category-filter" data-category="achievement">Badge Pencapaian</button>                    <button class="category-filter" data-category="milestone">Badge Tonggak</button>                </div>            </div>            <div class="badges-grid" id="badges-container">                <!-- Badge will be loaded dynamically -->            </div>        </div>        <!-- Dalam Proses Section -->        <div class="tab-content" id="tab-in-progress">            <div class="section-header">                <h3><i class="fas fa-clock"></i> Sertifikasi Dalam Proses</h3>            </div>            <div class="progress-items" id="progress-container">                <!-- Progress items will be loaded dynamically -->            </div>        </div>        <!-- Certificate Detail Modal -->        <div class="modal" id="certificate-modal">            <div class="modal-content large">                <div class="modal-header">                    <h3><i class="fas fa-certificate"></i> Detail Sertifikat</h3>                    <button class="close-modal" id="close-certificate">&times;</button>                </div>                <div class="modal-body">                    <div class="certificate-preview" id="certificate-preview">                        <!-- Certificate preview will be loaded here -->                    </div>                    <div class="certificate-details" id="certificate-details">                        <!-- Certificate details will be loaded here -->                    </div>                </div>                <div class="modal-footer">                    <button class="btn secondary" id="download-pdf">                        <i class="fas fa-download"></i> Unduh PDF                    </button>                    <button class="btn secondary" id="download-image">                        <i class="fas fa-image"></i> Unduh Gambar                    </button>                    <button class="btn" id="share-certificate">                        <i class="fas fa-share"></i> Bagikan Sertifikat                    </button>                </div>            </div>        </div>        <!-- Badge Detail Modal -->        <div class="modal" id="badge-modal">            <div class="modal-content">                <div class="modal-header">                    <h3><i class="fas fa-medal"></i> Detail Badge</h3>                    <button class="close-modal" id="close-badge">&times;</button>                </div>                <div class="modal-body">                    <div class="badge-detail" id="badge-detail">                        <!-- Badge details will be loaded here -->                    </div>                </div>                <div class="modal-footer">                    <button class="btn secondary" id="share-badge">                        <i class="fas fa-share"></i> Bagikan Badge                    </button>                    <button class="btn" id="view-requirements">                        <i class="fas fa-list"></i> Lihat Persyaratan                    </button>                </div>            </div>        </div>        <!-- Verifikasi Sertifikat Modal -->        <div class="modal" id="verification-modal">            <div class="modal-content">                <div class="modal-header">                    <h3><i class="fas fa-shield-alt"></i> Verifikasi Sertifikat</h3>                    <button class="close-modal" id="close-verification">&times;</button>                </div>                <div class="modal-body">                    <div class="verification-form">                        <h4>Verifikasi Sertifikat</h4>                        <p>Masukkan ID sertifikat untuk memverifikasi keasliannya:</p>                        <div class="form-group">                            <input type="text" id="cert-id-input"                                placeholder="Masukkan ID Sertifikat (mis. BCL-2024-001234)">                            <button class="btn" id="verify-btn">Verifikasi</button>                        </div>                    </div>                    <div class="verification-result" id="verification-result">                        <!-- Verification result will be shown here -->                    </div>                </div>            </div>        </div>        <!-- Bagikan Profil Modal -->        <div class="modal" id="share-modal">            <div class="modal-content">                <div class="modal-header">                    <h3><i class="fas fa-share"></i> Bagikan Profil Profesional</h3>                    <button class="close-modal" id="close-share">&times;</button>                </div>                <div class="modal-body">                    <div class="share-options">                        <h4>Bagikan Pencapaian Anda</h4>                        <div class="share-links">                            <div class="share-item">                                <i class="fab fa-linkedin"></i>                                <span>LinkedIn Profile</span>                                <button class="btn secondary" onclick="shareToLinkedIn()">Bagikan</button>                            </div>                            <div class="share-item">                                <i class="fas fa-link"></i>                                <span>Tautan Profil Publik</span>                                <button class="btn secondary" onclick="copyProfileLink()">Salin Tautan</button>                            </div>                            <div class="share-item">                                <i class="fas fa-file-pdf"></i>                                <span>Resume Profesional</span>                                <button class="btn secondary" onclick="generateResume()">Buat PDF</button>                            </div>                        </div>                    </div>                </div>            </div>        </div>    </section>    <footer class="footer" id="footer-container"></footer>    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script><script src="js/component-loader.js"></script>    <script src="js/script.js"></script>    <script src="js/sidebar-loader.js"></script>    <script src="js/certifications.js"></script><script src="js/page-tracker.js"></script><script src="js/user.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sertifikasi - BC Learning</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="header-container"></div>
+    <div class="side-bar" id="sidebar-container"></div>
+
+    <section class="certifications">
+        <div class="cert-page-intro">
+            <div class="cert-page-copy">
+                <span class="cert-page-kicker">Rekap sertifikasi</span>
+                <h1>Sertifikat & Badge Saya</h1>
+                <p>Lihat sertifikat yang sudah diterbitkan untuk akun Anda, status masa berlakunya, dan jalur sertifikasi yang masih perlu diselesaikan.</p>
+            </div>
+            <div class="cert-user-status" aria-live="polite">
+                <span>Sertifikat aktif</span>
+                <strong id="hero-cert-count">0</strong>
+                <small id="hero-cert-copy">Data sertifikat sedang dimuat.</small>
+            </div>
+        </div>
+
+        <div class="cert-highlight" id="certificate-highlight">
+            <div class="cert-highlight-copy">
+                <span>Sertifikat terakhir</span>
+                <h2 id="latest-cert-title">Memuat data sertifikat</h2>
+                <p id="latest-cert-meta">Kami sedang mengambil riwayat sertifikasi Anda.</p>
+            </div>
+            <button class="btn secondary" id="latest-cert-button" type="button" disabled>
+                <i class="fas fa-eye"></i> Lihat Detail
+            </button>
+        </div>
+
+        <div class="cert-overview">
+            <div class="overview-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-certificates">0</h3>
+                        <p>Sertifikat aktif</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-badges">0</h3>
+                        <p>Badge terkumpul</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="completion-rate">0%</h3>
+                        <p>Penyelesaian materi</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="skill-score">0.0</h3>
+                        <p>Skor keahlian</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-tabs" role="tablist" aria-label="Filter pencapaian">
+            <button class="tab-btn active" data-tab="all" type="button">Semua Pencapaian</button>
+            <button class="tab-btn" data-tab="certificates" type="button">Sertifikat</button>
+            <button class="tab-btn" data-tab="badges" type="button">Badge</button>
+            <button class="tab-btn" data-tab="in-progress" type="button">Dalam Proses</button>
+        </div>
+
+        <div class="tab-content" id="tab-certificates">
+            <div class="section-header">
+                <div>
+                    <h3><i class="fas fa-certificate"></i> Sertifikat Profesional</h3>
+                    <p>Sertifikat yang tercatat di sini sudah diterbitkan dari hasil ujian atau penyelesaian jalur belajar.</p>
+                </div>
+                <div class="section-actions">
+                    <button class="btn secondary" id="verify-certificates" type="button">
+                        <i class="fas fa-shield-alt"></i> Verifikasi Sertifikat
+                    </button>
+                    <button class="btn" id="share-profile" type="button">
+                        <i class="fas fa-share"></i> Bagikan Profil
+                    </button>
+                </div>
+            </div>
+            <div class="certificates-grid" id="certificates-container"></div>
+        </div>
+
+        <div class="tab-content" id="tab-badges">
+            <div class="section-header">
+                <div>
+                    <h3><i class="fas fa-medal"></i> Badge Digital</h3>
+                    <p>Badge menunjukkan aktivitas, pencapaian, dan konsistensi belajar.</p>
+                </div>
+                <div class="badge-categories">
+                    <button class="category-filter active" data-category="all" type="button">Semua Badge</button>
+                    <button class="category-filter" data-category="skill" type="button">Keahlian</button>
+                    <button class="category-filter" data-category="achievement" type="button">Pencapaian</button>
+                    <button class="category-filter" data-category="milestone" type="button">Milestone</button>
+                </div>
+            </div>
+            <div class="badges-grid" id="badges-container"></div>
+        </div>
+
+        <div class="tab-content" id="tab-in-progress">
+            <div class="section-header">
+                <div>
+                    <h3><i class="fas fa-clock"></i> Sertifikasi Dalam Proses</h3>
+                    <p>Daftar ini membantu Anda memahami syarat yang sudah selesai dan langkah berikutnya.</p>
+                </div>
+            </div>
+            <div class="progress-items" id="progress-container"></div>
+        </div>
+
+        <div class="modal" id="certificate-modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-certificate"></i> Detail Sertifikat</h3>
+                    <button class="close-modal" id="close-certificate" type="button" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="certificate-preview" id="certificate-preview"></div>
+                    <div class="certificate-details" id="certificate-details"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="download-pdf" type="button">
+                        <i class="fas fa-download"></i> Unduh PDF
+                    </button>
+                    <button class="btn secondary" id="download-image" type="button">
+                        <i class="fas fa-image"></i> Unduh Gambar
+                    </button>
+                    <button class="btn" id="share-certificate" type="button">
+                        <i class="fas fa-share"></i> Bagikan Sertifikat
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="badge-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-medal"></i> Detail Badge</h3>
+                    <button class="close-modal" id="close-badge" type="button" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="badge-detail" id="badge-detail"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" id="share-badge" type="button">
+                        <i class="fas fa-share"></i> Bagikan Badge
+                    </button>
+                    <button class="btn" id="view-requirements" type="button">
+                        <i class="fas fa-list"></i> Lihat Syarat
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="verification-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-shield-alt"></i> Verifikasi Sertifikat</h3>
+                    <button class="close-modal" id="close-verification" type="button" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="verification-form">
+                        <h4>Masukkan ID sertifikat</h4>
+                        <p>Gunakan ID pada kartu atau detail sertifikat untuk memeriksa keasliannya.</p>
+                        <div class="form-group">
+                            <input type="text" id="cert-id-input" placeholder="Contoh: BCL-2024-001234">
+                            <button class="btn" id="verify-btn" type="button">Verifikasi</button>
+                        </div>
+                    </div>
+                    <div class="verification-result" id="verification-result"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="share-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-share"></i> Bagikan Profil Profesional</h3>
+                    <button class="close-modal" id="close-share" type="button" aria-label="Tutup">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="share-options">
+                        <h4>Bagikan pencapaian Anda</h4>
+                        <div class="share-links">
+                            <div class="share-item">
+                                <i class="fab fa-linkedin"></i>
+                                <span>Profil LinkedIn</span>
+                                <button class="btn secondary" onclick="shareToLinkedIn()" type="button">Bagikan</button>
+                            </div>
+                            <div class="share-item">
+                                <i class="fas fa-link"></i>
+                                <span>Tautan profil publik</span>
+                                <button class="btn secondary" onclick="copyProfileLink()" type="button">Salin Tautan</button>
+                            </div>
+                            <div class="share-item">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Resume profesional</span>
+                                <button class="btn secondary" onclick="generateResume()" type="button">Buat PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer" id="footer-container"></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/component-loader.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/sidebar-loader.js"></script>
+    <script src="js/certifications.js"></script>
+    <script src="js/page-tracker.js"></script>
+    <script src="js/user.js"></script>
+</body>
+
+</html>

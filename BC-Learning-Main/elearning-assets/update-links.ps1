@@ -11,7 +11,7 @@ foreach ($file in $files) {
     
     # NAVBAR UPDATES (di header section)
     # Logo link tetap ke elearning home
-    $content = $content -replace 'href="home\.html" class="logo"', 'href="/elearning-assets/home.html" class="logo"'
+    $content = $content -replace 'href="home\.html" class="logo"', 'href="/elearning-assets/dashboard.html" class="logo"'
     
     # Search form ke pages
     $content = $content -replace 'action="search\.html"', 'action="/pages/search.html"'

@@ -179,7 +179,7 @@
                         "Keputusan keuangan"
                     ],
         "answer_index":  1,
-        "explanation":  "BIM Manager mengelola proses BIM."
+        "explanation":  "BIM Manager mengelola proses, status, koordinasi, dan governance informasi BIM, tetapi bukan otomatis approver teknis semua disiplin."
     },
     {
         "id":  "BG-014",
@@ -188,12 +188,12 @@
         "prompt":  "Information producer bertanggung jawab atas...",
         "choices":  [
                         "Menyetujui model",
-                        "Membuat informasi akurat",
+                        "Menyiapkan informasi sesuai requirement untuk direview",
                         "Menggunakan informasi",
                         "Membuat keputusan"
                     ],
         "answer_index":  1,
-        "explanation":  "Producer membuat informasi yang benar."
+        "explanation":  "Producer menyiapkan informasi sesuai requirement untuk direview sesuai alur approval."
     },
     {
         "id":  "BG-015",
@@ -431,7 +431,7 @@
                         "Mengelola keuangan"
                     ],
         "answer_index":  1,
-        "explanation":  "BIM Manager mengkoordinasi proses."
+        "explanation":  "BIM Manager/BIM Coordinator mengelola proses, status, koordinasi, dan governance informasi BIM, tetapi bukan otomatis approver teknis semua disiplin."
     },
     {
         "id":  "BG-032",
@@ -608,7 +608,7 @@
         "prompt":  "Dalam konteks BIM Governance: Tujuan utama WIP (Work in Progress) adalah...",
         "choices":  [
                         "koordinasi antar tim memakai informasi yang sudah disetujui.",
-                        "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi.",
+                        "digunakan sesuai status/suitability code dan tujuan penggunaan yang ditentukan.",
                         "mengembangkan informasi internal sebelum QA dan review.",
                         "menyediakan audit trail dan referensi operasi atau maintenance."
                     ],
@@ -669,7 +669,7 @@
                         "mengendalikan versi resmi yang dipakai lintas tim."
                     ],
         "answer_index":  0,
-        "explanation":  "digunakan sebagai dasar keputusan atau konstruksi pada milestone resmi."
+        "explanation":  "Published/Approved hanya boleh digunakan sesuai status/suitability code dan tujuan penggunaan yang ditentukan."
     },
     {
         "id":  "BG-049",
@@ -763,7 +763,7 @@
         "choices":  [
                         "kode klasifikasi yang mengategorikan information container sesuai standar (misalnya Uniclass atau ISO 12006-2).",
                         "set metadata minimum: state, status code, revision, dan classification.",
-                        "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared.",
+                        "pemeriksaan kelengkapan, metadata, status, versi, evidence, dan kesiapan information container untuk review.",
                         "riwayat versi di fase WIP yang dikelola CDE saat informasi masih dikembangkan."
                     ],
         "answer_index":  3,
@@ -851,7 +851,7 @@
                         "kebutuhan informasi dari pihak pemberi tugas yang menjadi dasar BEP."
                     ],
         "answer_index":  2,
-        "explanation":  "pemeriksaan metadata (nama file atau atribut) sebelum info pindah dari WIP ke Shared."
+        "explanation":  "QA gate memeriksa kelengkapan, status, versi, evidence, dan kesiapan information container untuk review; technical review tetap menilai substansi disiplin."
     },
     {
         "id":  "BG-062",
@@ -859,7 +859,7 @@
         "type":  "single",
         "prompt":  "Dalam konteks BIM Governance: Tujuan utama QA check adalah...",
         "choices":  [
-                        "memastikan kualitas dan kebenaran konten sebelum koordinasi.",
+                        "memastikan kesesuaian teknis terhadap requirement dan tujuan penggunaan.",
                         "menjelaskan peran, proses, serta cara dan waktu produksi informasi.",
                         "menetapkan apa, kapan, dan format informasi yang harus diserahkan.",
                         "memastikan kepatuhan metadata sebelum review teknis."
@@ -893,7 +893,7 @@
                         "mendukung interoperabilitas openBIM lintas aplikasi."
                     ],
         "answer_index":  0,
-        "explanation":  "memastikan kualitas dan kebenaran konten sebelum koordinasi."
+        "explanation":  "Technical review menilai kesesuaian teknis terhadap requirement dan tujuan penggunaan, bukan sekadar menyatakan konten benar secara absolut."
     },
     {
         "id":  "BG-065",
@@ -986,7 +986,7 @@
         "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan BCF (BIM Collaboration Format)?",
         "choices":  [
                         "standar data untuk menyerahkan informasi aset dan O\u0026M secara digital.",
-                        "tingkat kelengkapan suatu elemen model.",
+                        "tingkat kebutuhan/kedalaman geometri dan informasi elemen untuk tujuan penggunaan tertentu.",
                         "penggabungan beberapa model atau container dari berbagai disiplin menjadi satu model terfederasi.",
                         "standar openBIM untuk komunikasi dan manajemen isu pada model."
                     ],
@@ -1047,7 +1047,7 @@
                         "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset."
                     ],
         "answer_index":  1,
-        "explanation":  "tingkat kelengkapan suatu elemen model."
+        "explanation":  "LOD/LOI membantu menetapkan kedalaman informasi untuk tujuan penggunaan tertentu; tidak otomatis membuat informasi valid tanpa review dan approval."
     },
     {
         "id":  "BG-076",
@@ -1128,7 +1128,7 @@
                         "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset.",
                         "catatan siapa dan kapan informasi diperiksa, disetujui, serta diubah.",
                         "pengaturan hak akses berdasarkan state atau role di CDE.",
-                        "satu sumber informasi resmi yang dipakai seluruh tim."
+                        "sumber rilis resmi dengan status, versi, approval, audit trail, dan tujuan penggunaan yang jelas."
                     ],
         "answer_index":  0,
         "explanation":  "informasi yang diarsipkan atau diagregasi untuk operasi dan pemeliharaan aset."
@@ -1215,7 +1215,7 @@
                         "satu sumber informasi resmi yang dipakai seluruh tim."
                     ],
         "answer_index":  3,
-        "explanation":  "satu sumber informasi resmi yang dipakai seluruh tim."
+        "explanation":  "Single source of truth berarti sumber rilis resmi yang terkendali, bukan satu folder yang otomatis membuat semua informasi benar."
     },
     {
         "id":  "BG-088",
@@ -1294,7 +1294,7 @@
         "prompt":  "Dalam konteks BIM Governance: Apa yang dimaksud dengan Published information usage?",
         "choices":  [
                         "informasi Shared hanya untuk tujuan yang diizinkan dan bersifat read-only.",
-                        "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi.",
+                        "informasi WIP bersifat draft dan tidak untuk keputusan formal atau koordinasi lintas tim sebelum Shared/Review.",
                         "informasi Published diotorisasi untuk penggunaan spesifik (misalnya konstruksi).",
                         "pertukaran data lintas software melalui IFC, bukan hanya file native."
                     ],
@@ -1355,7 +1355,7 @@
                         "state untuk informasi draft yang dibuat atau diedit oleh task team dan belum dibagikan."
                     ],
         "answer_index":  0,
-        "explanation":  "informasi WIP bersifat draft dan tidak untuk keputusan atau koordinasi."
+        "explanation":  "WIP boleh dipakai untuk koordinasi internal task team, tetapi tidak untuk keputusan formal atau koordinasi lintas tim sebelum Shared/Review."
     },
     {
         "id":  "BG-098",
@@ -1363,7 +1363,7 @@
         "type":  "single",
         "prompt":  "Dalam konteks BIM Governance: Tujuan utama WIP information usage adalah...",
         "choices":  [
-                        "kolaborasi multi-perangkat lunak.",
+                        "pertukaran informasi terbuka lintas aplikasi.",
                         "mencegah pemakaian informasi prematur.",
                         "menjadi sumber informasi tunggal agar orang yang tepat memakai info yang tepat pada waktu yang tepat.",
                         "mengembangkan informasi internal sebelum QA dan review."
@@ -1397,6 +1397,6 @@
                         "koordinasi antar tim memakai informasi yang sudah disetujui."
                     ],
         "answer_index":  2,
-        "explanation":  "kolaborasi multi-perangkat lunak."
+        "explanation":  "IFC mendukung pertukaran informasi terbuka lintas aplikasi, bukan bergantung pada satu software tertentu."
     }
 ]

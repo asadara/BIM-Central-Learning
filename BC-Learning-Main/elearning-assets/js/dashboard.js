@@ -672,7 +672,7 @@ function loadEnhancedCourses() {
                     duration: course.duration,
                     level: level.name,
                     progress: course.progress || 0,
-                    thumbnail: course.thumbnail || '../img/default.jpg',
+                    thumbnail: course.thumbnail || '/img/media-thumbnail.svg',
                     modules: course.modules.length,
                     enrolled: course.enrolled || false,
                     skills: course.skills,
@@ -701,7 +701,8 @@ function updateCourseRecommendations(courses) {
 
     courseContainer.innerHTML = recommendedCourses.map((course) => `
         <div class="course-card">
-            <img src="${course.thumbnail}" alt="${escapeHtml(course.title)}" class="course-thumbnail">
+            <img src="${course.thumbnail}" alt="${escapeHtml(course.title)}" class="course-thumbnail"
+                 onerror="this.onerror=null;this.src='/img/media-thumbnail.svg'">
             <div class="course-info">
                 <h4>${escapeHtml(course.title)}</h4>
                 <p class="course-description">${escapeHtml(course.description)}</p>

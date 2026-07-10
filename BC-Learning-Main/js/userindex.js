@@ -41,7 +41,7 @@ function setUserData(data) {
             name: data.name || data.username || '',
             email: data.email || '',
             role: data.role || 'Student',
-            photo: data.photo || data.image || data.img || '/img/user-default.png',
+            photo: data.photo || data.image || data.img || '/img/user-default.svg',
             token: data.token || ""
         };
 

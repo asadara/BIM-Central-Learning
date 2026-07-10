@@ -23,6 +23,7 @@ class BclIfcViewer {
         this.measureMode = false;
         this.measureStart = null;
         this.measurements = [];
+        this.pendingModelLoads = new Map();
         this.elements = {};
     }
 
@@ -287,19 +288,21 @@ class BclIfcViewer {
         const workerUrl = await OBC.FragmentsManager.getWorker();
         this.fragments = this.components.get(OBC.FragmentsManager);
         this.fragments.init(workerUrl);
-        this.world.camera.controls.addEventListener("update", () => this.fragments.core.update());
+        this.world.camera.controls.addEventListener("update", () => this.updateFragments(true));
         this.world.onCameraChanged.add((camera) => {
             for (const [, model] of this.fragments.list) {
                 model.useCamera(camera.three);
             }
-            this.fragments.core.update(true);
+            this.updateFragments(true);
         });
-        this.fragments.list.onItemSet.add(({ value: model }) => {
+        this.fragments.list.onItemSet.add(({ key, value: model }) => {
             model.useCamera(this.world.camera.three);
+            model.object.visible = true;
             this.world.scene.three.add(model.object);
-            this.fragments.core.update(true);
+            this.updateFragments(true);
             this.hasLoadedModel = true;
             this.setOverlay({ visible: false });
+            this.resolvePendingModelLoad(key, model);
         });
 
         this.fragments.core.models.materials.list.onItemSet.add(({ value: material }) => {
@@ -426,19 +429,100 @@ class BclIfcViewer {
         });
 
         const modelId = this.createModelId(displayName);
-        await this.ifcLoader.load(buffer, false, modelId, {
-            processData: {
-                progressCallback: (progress) => {
-                    const pct = this.normalizeLoaderProgress(progress);
-                    this.setStatus("Converting", `Konversi IFC ${Math.round(pct)}%`, 58 + (pct * 0.4));
+        const modelLoadPromise = this.waitForModelLoad(modelId);
+        try {
+            await this.ifcLoader.load(buffer, false, modelId, {
+                processData: {
+                    progressCallback: (progress) => {
+                        const pct = this.normalizeLoaderProgress(progress);
+                        this.setStatus("Converting", `Konversi IFC ${Math.round(pct)}%`, 58 + (pct * 0.4));
+                    }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            this.cancelPendingModelLoad(modelId);
+            throw error;
+        }
 
+        await modelLoadPromise;
+        await this.waitForModelGeometry();
+        this.resizeRenderer();
         await this.resetCamera();
         await this.refreshModelTools();
+        this.updateFragments(true);
         this.setStatus("Ready", "Model IFC berhasil dimuat.", 100);
         this.setOverlay({ visible: false });
+    }
+
+    updateFragments(force = false) {
+        if (!this.fragments || !this.world || !this.world.camera) return;
+        const camera = this.world.camera.three;
+        for (const [, model] of this.fragments.list) {
+            if (typeof model.useCamera === "function") {
+                model.useCamera(camera);
+            }
+            if (typeof model.update === "function") {
+                model.update(force);
+            }
+        }
+        this.fragments.core.update(force);
+    }
+
+    resolvePendingModelLoad(modelId, model) {
+        const pendingKey = modelId && this.pendingModelLoads.has(modelId)
+            ? modelId
+            : (this.pendingModelLoads.size === 1 ? [...this.pendingModelLoads.keys()][0] : null);
+        if (!pendingKey) return;
+
+        const pending = this.pendingModelLoads.get(pendingKey);
+        if (!pending) return;
+
+        clearTimeout(pending.timeout);
+        this.pendingModelLoads.delete(pendingKey);
+        pending.resolve(model);
+    }
+
+    cancelPendingModelLoad(modelId) {
+        const pending = this.pendingModelLoads.get(modelId);
+        if (!pending) return;
+        clearTimeout(pending.timeout);
+        this.pendingModelLoads.delete(modelId);
+    }
+
+    waitForModelLoad(modelId, timeoutMs = 15000) {
+        if (!this.fragments || !modelId) return Promise.resolve(null);
+
+        const loadedModel = this.fragments.list.get(modelId);
+        if (loadedModel) {
+            return Promise.resolve(loadedModel);
+        }
+
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                this.pendingModelLoads.delete(modelId);
+                reject(new Error("Konversi selesai, tetapi model belum terdaftar di viewer."));
+            }, timeoutMs);
+
+            this.pendingModelLoads.set(modelId, { resolve, reject, timeout });
+        });
+    }
+
+    waitForNextFrame() {
+        return new Promise(resolve => requestAnimationFrame(() => resolve()));
+    }
+
+    async waitForModelGeometry(timeoutMs = 10000) {
+        const startedAt = performance.now();
+        while (performance.now() - startedAt < timeoutMs) {
+            await this.waitForNextFrame();
+            this.fragments?.core.update(true);
+            const box = await this.getLoadedModelBox();
+            if (box) {
+                return box;
+            }
+        }
+
+        throw new Error("Model terkonversi, tetapi geometry tidak ditemukan di viewport.");
     }
 
     async fetchIfcBuffer(fetchUrl) {

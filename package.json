@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build:ifc-viewer": "esbuild BC-Learning-Main/src/ifc-viewer.js --bundle --format=iife --target=es2020 --outfile=BC-Learning-Main/js/ifc-viewer.bundle.js",
+    "smoke:projects-client": "node scripts/smoke-projects-client.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

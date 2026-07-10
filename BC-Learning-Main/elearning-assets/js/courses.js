@@ -1085,7 +1085,7 @@ function createCourseCard(course, courseIdOverride = '') {
         ? normalizeVideoItem(course.videos[0])
         : null;
     const rawThumbnail = course.thumbnail || (fallbackVideo ? fallbackVideo.thumbnail : '') || '';
-    let normalizedThumbnail = courseThumbMap[courseId] || '/img/course-default.jpg';
+    let normalizedThumbnail = courseThumbMap[courseId] || '/img/media-thumbnail.svg';
     if (rawThumbnail) {
         if (rawThumbnail.startsWith('/img/')) {
             normalizedThumbnail = rawThumbnail;
@@ -1095,7 +1095,7 @@ function createCourseCard(course, courseIdOverride = '') {
             rawThumbnail.startsWith('elearning-assets/images/') ||
             rawThumbnail.startsWith('/elearning-assets/images/')
         ) {
-            normalizedThumbnail = courseThumbMap[courseId] || '/img/course-default.jpg';
+            normalizedThumbnail = courseThumbMap[courseId] || '/img/media-thumbnail.svg';
         } else {
             normalizedThumbnail = rawThumbnail;
         }
@@ -1342,11 +1342,11 @@ function createVideoCard(video) {
     tutorDiv.className = 'tutor';
 
     const img1 = document.createElement('img');
-    img1.src = video.thumbnail || '/img/default.jpg';
+    img1.src = video.thumbnail || '/img/media-thumbnail.svg';
     img1.alt = sanitizeHTML(video.name);
     img1.onclick = () => playVideo(resolvedPath, video.name, video.id);
     img1.onerror = () => {
-        tryGenerateThumbnail(img1, rawVideoPath, '/img/default.jpg');
+        tryGenerateThumbnail(img1, rawVideoPath, '/img/media-thumbnail.svg');
     };
     tutorDiv.appendChild(img1);
 
@@ -1368,11 +1368,11 @@ function createVideoCard(video) {
     thumbDiv.className = 'thumb';
 
     const img2 = document.createElement('img');
-    img2.src = video.thumbnail || '/img/default.jpg';
+    img2.src = video.thumbnail || '/img/media-thumbnail.svg';
     img2.alt = sanitizeHTML(video.name);
     img2.onclick = () => playVideo(resolvedPath, video.name, video.id);
     img2.onerror = () => {
-        tryGenerateThumbnail(img2, rawVideoPath, '/img/default.jpg');
+        tryGenerateThumbnail(img2, rawVideoPath, '/img/media-thumbnail.svg');
     };
     thumbDiv.appendChild(img2);
 
@@ -1806,7 +1806,7 @@ function getVideoSizeLabel(sizeValue) {
 
 function normalizeVideoItem(video) {
     const name = video.name || video.title || 'Untitled Video';
-    const thumbnail = video.thumbnail || '/img/default.jpg';
+    const thumbnail = video.thumbnail || '/img/media-thumbnail.svg';
     const rawPath = video.path || video.url || video.filePath || '';
     const path = resolveVideoPath(rawPath);
     return {
@@ -1873,7 +1873,7 @@ function ensureBackToCoursesButton(introElement = null) {
     introInfo.intro.appendChild(backBtn);
 }
 
-function tryGenerateThumbnail(imgEl, rawPath, fallbackSrc = '/img/course-default.jpg') {
+function tryGenerateThumbnail(imgEl, rawPath, fallbackSrc = '/img/media-thumbnail.svg') {
     if (!imgEl) return;
 
     if (imgEl.dataset.thumbTried === '1') {

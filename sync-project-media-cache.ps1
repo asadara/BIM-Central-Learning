@@ -12,6 +12,10 @@ $modelExtensions = @('.ifc')
 $videoExtensions = @('.mp4', '.mov', '.webm', '.avi', '.mkv', '.wmv', '.m4v')
 $pcBim02Excluded = @('clash', 'clash detection', 'texture image marbel')
 $defaultExcluded = @('tender', 'clash', 'clash detection', 'texture image marbel')
+$pcBim02LocalRoots = @{
+    'pc-bim02-2025' = Join-Path $root 'data\pc-bim02-cache\PROJECT BIM 2025'
+    'pc-bim02-2026' = Join-Path $root 'data\pc-bim02-cache\PROJECT BIM 2026'
+}
 
 function Get-SafeCacheName([string]$value) {
     $safeValue = if ($null -ne $value) { $value } else { '' }
@@ -67,6 +71,29 @@ function Get-MediaDisplayUrl([string]$mediaUrl) {
     return "/api/media-proxy?url=$encodedUrl"
 }
 
+function Resolve-ProjectPath([string]$sourceId, [string]$projectName, [string]$projectPath) {
+    $normalizedSourceId = if ($null -ne $sourceId) { $sourceId.ToLowerInvariant() } else { '' }
+    $localRoot = $pcBim02LocalRoots[$normalizedSourceId]
+    if ($localRoot) {
+        $localProjectPath = Join-Path $localRoot $projectName
+        if (Test-Path -LiteralPath $localProjectPath) {
+            return [pscustomobject]@{
+                Path = $localProjectPath
+                UsedFallback = $true
+            }
+        }
+    }
+
+    if ($projectPath -and (Test-Path -LiteralPath $projectPath)) {
+        return [pscustomobject]@{
+            Path = $projectPath
+            UsedFallback = $false
+        }
+    }
+
+    return $null
+}
+
 function Scan-MediaFiles([string]$projectPath, [string]$baseDir, [string]$mediaRoute, [string]$sourceId) {
     $results = New-Object System.Collections.Generic.List[object]
     $stack = New-Object System.Collections.Generic.Stack[string]
@@ -97,6 +124,9 @@ function Scan-MediaFiles([string]$projectPath, [string]$baseDir, [string]$mediaR
                 sizeBytes = [int64]$entry.Length
                 durationSeconds = $null
                 mediaKind = $mediaKind
+                availability = 'available'
+                sourceStatus = 'available'
+                sourceLabel = if ($baseDir -like '*pc-bim02-cache*') { 'local-mirror' } elseif ($baseDir -like '\\*') { 'pc-bim02-unc' } else { 'local' }
             })
         }
     }
@@ -142,12 +172,18 @@ foreach ($projectCacheFile in $projectCacheFiles) {
             continue
         }
 
-        if (!(Test-Path -LiteralPath $projectPath)) {
+        $resolvedProject = Resolve-ProjectPath $sourceId $projectName $projectPath
+        if ($null -eq $resolvedProject) {
             $skipped++
             continue
         }
 
+        $projectPath = [string]$resolvedProject.Path
         $baseDir = [System.IO.Path]::GetDirectoryName($projectPath)
+        if ($resolvedProject.UsedFallback -and $pcBim02LocalRoots[$sourceId.ToLowerInvariant()]) {
+            $baseDir = [string]$pcBim02LocalRoots[$sourceId.ToLowerInvariant()]
+        }
+
         $mediaDetails = Scan-MediaFiles $projectPath $baseDir $mediaRoute $sourceId
         $payload = [pscustomobject]@{
             year = $projectYear
@@ -158,7 +194,7 @@ foreach ($projectCacheFile in $projectCacheFiles) {
             mediaDetails = @($mediaDetails)
             totalMedia = @($mediaDetails).Count
             scannedFolders = 1
-            message = 'Static media cache'
+            message = if ($resolvedProject.UsedFallback) { 'Static media cache from local PC-BIM02 mirror' } else { 'Static media cache' }
         }
 
         $cacheFileName = Get-CacheFileName $projectYear $sourceId $projectName

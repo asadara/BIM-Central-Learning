@@ -104,6 +104,8 @@ public/*.png
 BC-Learning-Main/img/waste old/
 !BC-Learning-Main/img/
 BC-Learning-Main/img/*
+!BC-Learning-Main/img/media-thumbnail.svg
+!BC-Learning-Main/img/user-default.svg
 !BC-Learning-Main/img/icons/
 BC-Learning-Main/img/icons/*
 !BC-Learning-Main/img/icons/trimmed/

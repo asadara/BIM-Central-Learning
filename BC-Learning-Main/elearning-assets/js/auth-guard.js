@@ -112,7 +112,7 @@ class AuthGuard {
                     name: username,
                     email: localStorage.getItem('email') || '',
                     role: localStorage.getItem('role') || 'Student',
-                    photo: localStorage.getItem('userimg') || '/img/user-default.png',
+                    photo: localStorage.getItem('userimg') || '/img/user-default.svg',
                     token: token
                 };
             }
@@ -147,7 +147,7 @@ class AuthGuard {
                 name: data.user.username || data.user.email || 'Administrator',
                 email: data.user.email || '',
                 role: data.user.role || 'System Administrator',
-                photo: '/img/user-default.png',
+                photo: '/img/user-default.svg',
                 isAdmin: true
             };
 
@@ -159,7 +159,7 @@ class AuthGuard {
             localStorage.setItem('username', adminUser.name || '');
             localStorage.setItem('email', adminUser.email || '');
             localStorage.setItem('role', adminUser.role || 'System Administrator');
-            localStorage.setItem('userimg', adminUser.photo || '/img/user-default.png');
+            localStorage.setItem('userimg', adminUser.photo || '/img/user-default.svg');
 
             this.syncAuthUI();
             return true;
@@ -341,7 +341,7 @@ class AuthGuard {
                     name: result.name || result.username,
                     email: result.email,
                     role: result.role || 'Student',
-                    photo: result.photo || '/img/user-default.png',
+                    photo: result.photo || '/img/user-default.svg',
                     token: result.token
                 };
 

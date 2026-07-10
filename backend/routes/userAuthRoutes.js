@@ -185,7 +185,7 @@ function createUserAuthRoutes({
                 success: true,
                 name: "Guest User",
                 role: "Visitor",
-                photo: "/img/user-default.png",
+                photo: "/img/user-default.svg",
                 joinDate: null,
                 streak: 0,
                 xp: 0
@@ -201,8 +201,8 @@ function createUserAuthRoutes({
             role: user.jobRole || user.job_role || "BIM Specialist",
             bimLevel: user.bimLevel || user.bim_level || "BIM Modeller",
             organization: user.organization || "",
-            photo: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.png"),
-            profileImage: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.png"),
+            photo: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.svg"),
+            profileImage: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.svg"),
             joinDate: formatJoinDate(user),
             streak: 0,
             xp: 0
@@ -500,7 +500,7 @@ function createUserAuthRoutes({
 
             const existingProfileImage = user.profileImage || user.profile_image || null;
             const finalProfileImage = normalizeProfileImageUrl(
-                existingProfileImage || googleProfile.picture || "/img/user-default.png"
+                existingProfileImage || googleProfile.picture || "/img/user-default.svg"
             );
 
             if (!existingProfileImage && googleProfile.picture) {
@@ -831,7 +831,7 @@ function createUserAuthRoutes({
                 bimLevel,
                 organization: user.organization,
                 loginCount: loginCount + 1,
-                photo: storedProfileImage || "/img/user-default.png",
+                photo: storedProfileImage || "/img/user-default.svg",
                 profileImage: storedProfileImage || null
             });
         } catch (error) {

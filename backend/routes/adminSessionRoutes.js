@@ -1,4 +1,8 @@
+const crypto = require("crypto");
 const express = require("express");
+const fs = require("fs");
+const nodemailer = require("nodemailer");
+const path = require("path");
 
 function createAdminSessionRoutes({
     findUserInJsonByEmail,
@@ -17,6 +21,381 @@ function createAdminSessionRoutes({
     writeUsers
 }) {
     const router = express.Router();
+    const RESET_TOKEN_TTL_MINUTES = 30;
+    const RESET_TOKEN_BYTES = 32;
+    const RESET_TOKEN_FILE = path.resolve(__dirname, "..", "admin-password-reset-tokens.json");
+
+    function normalizeEmail(value) {
+        return String(value || "").trim().toLowerCase();
+    }
+
+    function hashResetToken(token) {
+        return crypto.createHash("sha256").update(String(token || ""), "utf8").digest("hex");
+    }
+
+    function getPublicBaseUrl(req) {
+        const configured = String(process.env.BCL_BASE_URL || "").trim().replace(/\/+$/, "");
+        if (configured) return configured;
+        const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
+        const host = req.get("host") || `localhost:${process.env.HTTP_PORT || 5052}`;
+        return `${protocol}://${host}`;
+    }
+
+    function getResetLink(req, token) {
+        return `${getPublicBaseUrl(req)}/pages/sub/admin-password-reset.html?token=${encodeURIComponent(token)}`;
+    }
+
+    function getConfiguredMailTransport() {
+        const host = String(process.env.SMTP_HOST || "").trim();
+        const port = Number(process.env.SMTP_PORT || 587);
+        const user = String(process.env.SMTP_USER || "").trim();
+        const pass = String(process.env.SMTP_PASS || "").trim();
+        const from = String(process.env.SMTP_FROM || user || "").trim();
+
+        if (!host || !user || !pass || !from) {
+            return null;
+        }
+
+        return {
+            from,
+            transporter: nodemailer.createTransport({
+                host,
+                port,
+                secure: String(process.env.SMTP_SECURE || "").toLowerCase() === "true" || port === 465,
+                auth: { user, pass }
+            })
+        };
+    }
+
+    function isRoutableEmail(value) {
+        const email = normalizeEmail(value);
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !email.endsWith(".local");
+    }
+
+    function getRecoveryRecipient(user) {
+        const configured = String(process.env.ADMIN_RECOVERY_EMAIL || "").trim();
+        if (configured) {
+            return configured;
+        }
+
+        if (isRoutableEmail(user.email)) {
+            return user.email;
+        }
+
+        return "";
+    }
+
+    async function sendRecoveryEmail({ req, user, token }) {
+        const mail = getConfiguredMailTransport();
+        const resetLink = getResetLink(req, token);
+        const recipient = getRecoveryRecipient(user);
+
+        if (!mail) {
+            console.warn(`Admin password recovery email skipped; SMTP is not configured. target=${user.email || user.username}`);
+            return false;
+        }
+
+        if (!recipient) {
+            console.warn(`Admin password recovery email skipped; no routable ADMIN_RECOVERY_EMAIL for account=${user.email || user.username}`);
+            return false;
+        }
+
+        const expiresText = `${RESET_TOKEN_TTL_MINUTES} menit`;
+        await mail.transporter.sendMail({
+            from: mail.from,
+            to: recipient,
+            subject: "BCL Admin Password Recovery",
+            text: [
+                "Permintaan pemulihan password admin BCL diterima.",
+                "",
+                `Gunakan link berikut untuk membuat password baru. Link berlaku ${expiresText} dan hanya bisa dipakai sekali:`,
+                resetLink,
+                "",
+                `Akun admin: ${user.email || user.username}`,
+                "",
+                "Jika Anda tidak meminta reset password ini, abaikan email ini."
+            ].join("\n"),
+            html: [
+                "<p>Permintaan pemulihan password admin BCL diterima.</p>",
+                `<p>Gunakan link berikut untuk membuat password baru. Link berlaku <strong>${expiresText}</strong> dan hanya bisa dipakai sekali:</p>`,
+                `<p><a href="${resetLink}">Reset password admin BCL</a></p>`,
+                `<p>Akun admin: <code>${user.email || user.username}</code></p>`,
+                "<p>Jika Anda tidak meminta reset password ini, abaikan email ini.</p>"
+            ].join("")
+        });
+
+        return true;
+    }
+
+    async function ensurePasswordResetTable() {
+        if (!pgPool) return false;
+
+        await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS admin_password_reset_tokens (
+                id BIGSERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                email TEXT NOT NULL,
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TIMESTAMPTZ NOT NULL,
+                used_at TIMESTAMPTZ,
+                requested_ip TEXT,
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await pgPool.query(`
+            CREATE INDEX IF NOT EXISTS idx_admin_password_reset_tokens_hash
+            ON admin_password_reset_tokens(token_hash)
+        `);
+
+        await pgPool.query(`
+            CREATE INDEX IF NOT EXISTS idx_admin_password_reset_tokens_email
+            ON admin_password_reset_tokens(lower(email))
+        `);
+
+        return true;
+    }
+
+    function readResetTokensFromJson() {
+        try {
+            if (!fs.existsSync(RESET_TOKEN_FILE)) return [];
+            const parsed = JSON.parse(fs.readFileSync(RESET_TOKEN_FILE, "utf8"));
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.warn("Failed to read admin reset token file:", error.message);
+            return [];
+        }
+    }
+
+    function writeResetTokensToJson(tokens) {
+        try {
+            fs.writeFileSync(RESET_TOKEN_FILE, JSON.stringify(tokens, null, 2), "utf8");
+            return true;
+        } catch (error) {
+            console.warn("Failed to write admin reset token file:", error.message);
+            return false;
+        }
+    }
+
+    async function storeResetToken({ user, tokenHash, expiresAt, requestedIp, storageType }) {
+        if (storageType === "postgresql") {
+            await ensurePasswordResetTable();
+            await pgPool.query(
+                `UPDATE admin_password_reset_tokens
+                 SET used_at = CURRENT_TIMESTAMP
+                 WHERE lower(email) = lower($1)
+                   AND used_at IS NULL`,
+                [user.email]
+            );
+            await pgPool.query(
+                `INSERT INTO admin_password_reset_tokens (
+                    user_id, email, token_hash, expires_at, requested_ip, created_at
+                 ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+                [String(user.id), user.email, tokenHash, expiresAt, requestedIp]
+            );
+            return;
+        }
+
+        const now = Date.now();
+        const tokens = readResetTokensFromJson()
+            .filter((entry) => !entry.usedAt && new Date(entry.expiresAt).getTime() > now)
+            .filter((entry) => normalizeEmail(entry.email) !== normalizeEmail(user.email));
+
+        tokens.push({
+            userId: String(user.id),
+            email: user.email,
+            tokenHash,
+            expiresAt: expiresAt.toISOString(),
+            requestedIp,
+            createdAt: new Date().toISOString()
+        });
+        writeResetTokensToJson(tokens);
+    }
+
+    async function consumeResetToken(tokenHash) {
+        try {
+            await ensurePasswordResetTable();
+            const result = await pgPool.query(
+                `UPDATE admin_password_reset_tokens
+                 SET used_at = CURRENT_TIMESTAMP
+                 WHERE token_hash = $1
+                   AND used_at IS NULL
+                   AND expires_at > CURRENT_TIMESTAMP
+                 RETURNING user_id, email`,
+                [tokenHash]
+            );
+
+            if (result.rows.length > 0) {
+                return { storageType: "postgresql", userId: result.rows[0].user_id, email: result.rows[0].email };
+            }
+        } catch (dbError) {
+            if (!isPostgresConnectionError(dbError)) {
+                throw dbError;
+            }
+        }
+
+        const tokens = readResetTokensFromJson();
+        const now = Date.now();
+        const index = tokens.findIndex((entry) =>
+            entry.tokenHash === tokenHash &&
+            !entry.usedAt &&
+            new Date(entry.expiresAt).getTime() > now
+        );
+
+        if (index === -1) return null;
+
+        tokens[index].usedAt = new Date().toISOString();
+        writeResetTokensToJson(tokens);
+        return { storageType: "json", userId: tokens[index].userId, email: tokens[index].email };
+    }
+
+    async function findAdminForRecovery(identifier) {
+        const email = normalizeEmail(identifier);
+        if (!email) return null;
+
+        try {
+            const user = await findUserInPostgresByEmail(email, true);
+            if (user && user.is_admin && user.email) {
+                return { user, storageType: "postgresql" };
+            }
+        } catch (dbError) {
+            if (!isPostgresConnectionError(dbError)) {
+                throw dbError;
+            }
+        }
+
+        const fallbackUser = findUserInJsonByEmail(email, true, true);
+        if (fallbackUser && fallbackUser.is_admin && fallbackUser.email) {
+            return { user: fallbackUser, storageType: "json" };
+        }
+
+        return null;
+    }
+
+    async function updateAdminPasswordFromRecovery({ tokenRecord, passwordHash }) {
+        let user = null;
+        if (tokenRecord.storageType === "postgresql") {
+            try {
+                user = await findUserInPostgresByIdentity(tokenRecord.email, tokenRecord.userId, true);
+            } catch (dbError) {
+                if (!isPostgresConnectionError(dbError)) {
+                    throw dbError;
+                }
+            }
+
+            if (user && user.is_admin) {
+                await pgPool.query(
+                    `UPDATE users
+                     SET password = $1,
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE id::text = $2::text`,
+                    [passwordHash, String(user.id)]
+                );
+                return true;
+            }
+        }
+
+        user = findUserInJsonByIdentity(tokenRecord.email, tokenRecord.userId, true, true);
+        if (!user || !user.is_admin) return false;
+
+        const users = readUsers();
+        const userIndex = users.findIndex((entry) =>
+            (tokenRecord.userId && (entry.id === tokenRecord.userId || entry.id == tokenRecord.userId)) ||
+            (tokenRecord.email && normalizeEmail(entry.email) === normalizeEmail(tokenRecord.email))
+        );
+
+        if (userIndex === -1) return false;
+
+        users[userIndex].password = passwordHash;
+        users[userIndex].updatedAt = new Date().toISOString();
+        writeUsers(users);
+        return true;
+    }
+
+    router.post("/api/admin/password-recovery/request", async (req, res) => {
+        const genericResponse = {
+            success: true,
+            message: "Jika email admin valid dan SMTP sudah dikonfigurasi, link recovery akan dikirim."
+        };
+
+        try {
+            const email = normalizeEmail(req.body.email);
+            if (!email) {
+                return res.status(400).json({ success: false, error: "Email is required" });
+            }
+
+            const found = await findAdminForRecovery(email);
+            if (!found) {
+                console.warn(`Admin password recovery requested for unknown/non-admin email: ${email}`);
+                return res.json(genericResponse);
+            }
+
+            const token = crypto.randomBytes(RESET_TOKEN_BYTES).toString("hex");
+            const tokenHash = hashResetToken(token);
+            const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
+
+            await storeResetToken({
+                user: found.user,
+                tokenHash,
+                expiresAt,
+                requestedIp: req.ip,
+                storageType: found.storageType
+            });
+
+            const sent = await sendRecoveryEmail({ req, user: found.user, token });
+            console.log(`Admin password recovery requested for ${found.user.email}; emailSent=${sent}`);
+            return res.json(genericResponse);
+        } catch (error) {
+            console.error("Admin password recovery request error:", error);
+            return res.status(500).json({
+                success: false,
+                error: "Failed to process password recovery request"
+            });
+        }
+    });
+
+    router.post("/api/admin/password-recovery/reset", async (req, res) => {
+        try {
+            const token = String(req.body.token || "").trim();
+            const newPassword = String(req.body.newPassword || "");
+            const confirmPassword = String(req.body.confirmPassword || "");
+
+            if (!token || !newPassword || !confirmPassword) {
+                return res.status(400).json({ success: false, error: "Token and password fields are required" });
+            }
+
+            if (newPassword !== confirmPassword) {
+                return res.status(400).json({ success: false, error: "New password and confirmation do not match" });
+            }
+
+            if (newPassword.length < 8) {
+                return res.status(400).json({ success: false, error: "New password must be at least 8 characters long" });
+            }
+
+            const tokenRecord = await consumeResetToken(hashResetToken(token));
+            if (!tokenRecord) {
+                return res.status(400).json({ success: false, error: "Recovery link is invalid or expired" });
+            }
+
+            const passwordHash = await hashPassword(newPassword);
+            const updated = await updateAdminPasswordFromRecovery({ tokenRecord, passwordHash });
+            if (!updated) {
+                return res.status(404).json({ success: false, error: "Admin account not found" });
+            }
+
+            console.log(`Admin password recovered successfully for ${tokenRecord.email || tokenRecord.userId}`);
+            return res.json({
+                success: true,
+                message: "Password reset successfully. You can now sign in with the new password."
+            });
+        } catch (error) {
+            console.error("Admin password recovery reset error:", error);
+            return res.status(500).json({
+                success: false,
+                error: "Failed to reset password"
+            });
+        }
+    });
 
     router.post("/api/admin/login", async (req, res) => {
         try {

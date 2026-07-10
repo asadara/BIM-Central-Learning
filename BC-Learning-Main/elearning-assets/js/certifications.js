@@ -147,7 +147,7 @@ function mapCertificateRow(row) {
         skills: skillSeed.length > 0 ? skillSeed.slice(0, 3) : ['BIM Competency'],
         verificationUrl: row.url || row.certificateUrl || `${window.location.origin}/elearning-assets/certification.html?cert=${encodeURIComponent(row.id)}`,
         credlyUrl: null,
-        image: '/img/user-default.png'
+        image: '/img/user-default.svg'
     };
 }
 

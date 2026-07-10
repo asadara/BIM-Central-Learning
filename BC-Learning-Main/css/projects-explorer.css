@@ -155,6 +155,25 @@
     gap: 6px;
 }
 
+.project-explorer .media-card .media-source-warning {
+    align-items: center;
+    color: #b45309;
+    font-weight: 600;
+}
+
+.project-explorer .media-card .media-source-warning i {
+    color: #f59e0b;
+}
+
+.project-explorer .btn-media-action:disabled,
+.project-explorer .btn-media-action[disabled] {
+    cursor: not-allowed;
+    opacity: 0.68;
+    background: #e5e7eb;
+    border-color: #d1d5db;
+    color: #6b7280;
+}
+
 .project-explorer .media-thumbnail .video-thumb-image {
     background: #111827;
 }

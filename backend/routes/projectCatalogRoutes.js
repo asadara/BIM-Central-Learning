@@ -79,21 +79,14 @@ function createProjectCatalogRoutes({
         return { projects: projectList, hiddenProjects: hiddenList };
     }
 
-    function runProjectsExplorerSync() {
-        if (activeSync) {
-            return activeSync;
-        }
-
-        const bclRoot = path.resolve(backendDir, "..");
-        const syncScriptPath = path.join(bclRoot, "sync-projects-explorer-cache.ps1");
-
-        activeSync = new Promise((resolve, reject) => {
+    function runPowerShellScript(scriptPath, cwd) {
+        return new Promise((resolve, reject) => {
             const child = spawn("powershell.exe", [
                 "-NoProfile",
                 "-ExecutionPolicy", "Bypass",
-                "-File", syncScriptPath
+                "-File", scriptPath
             ], {
-                cwd: bclRoot,
+                cwd,
                 windowsHide: true
             });
 
@@ -121,13 +114,33 @@ function createProjectCatalogRoutes({
                     return;
                 }
 
-                const error = new Error(`Projects explorer sync failed with exit code ${code}`);
+                const error = new Error(`${path.basename(scriptPath)} failed with exit code ${code}`);
                 error.code = code;
                 error.stdout = stdout.trim();
                 error.stderr = stderr.trim();
                 reject(error);
             });
-        }).finally(() => {
+        });
+    }
+
+    function runProjectsExplorerSync() {
+        if (activeSync) {
+            return activeSync;
+        }
+
+        const bclRoot = path.resolve(backendDir, "..");
+        const projectSyncScriptPath = path.join(bclRoot, "sync-projects-explorer-cache.ps1");
+        const mediaSyncScriptPath = path.join(bclRoot, "sync-project-media-cache.ps1");
+
+        activeSync = (async () => {
+            const projectResult = await runPowerShellScript(projectSyncScriptPath, bclRoot);
+            const mediaResult = await runPowerShellScript(mediaSyncScriptPath, bclRoot);
+
+            return {
+                stdout: [projectResult.stdout, mediaResult.stdout].filter(Boolean).join("\n"),
+                stderr: [projectResult.stderr, mediaResult.stderr].filter(Boolean).join("\n")
+            };
+        })().finally(() => {
             activeSync = null;
         });
 

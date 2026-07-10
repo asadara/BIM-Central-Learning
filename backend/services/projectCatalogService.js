@@ -98,12 +98,17 @@ function createProjectCatalogService({
             }
 
             const displayUrl = String(detail.displayUrl || '');
+            const normalizedDetail = {
+                ...detail,
+                availability: detail.availability || (typeof detail.sizeBytes === 'number' ? 'indexed' : 'unknown')
+            };
+
             if (!/^\/data\/pc-bim02-cache\//i.test(displayUrl)) {
-                return detail;
+                return normalizedDetail;
             }
 
             return {
-                ...detail,
+                ...normalizedDetail,
                 displayUrl: projectMediaUtilityService.buildProjectMediaDisplayUrl(detail.url)
             };
         });
@@ -760,17 +765,35 @@ function createProjectCatalogService({
         }
 
         return mapWithConcurrency(mediaUrls, 3, async (url) => {
-            const filePath = projectMediaUtilityService.resolveMediaFileFromUrl(url);
+            const fileInfo = typeof projectMediaUtilityService.resolveMediaFileInfo === 'function'
+                ? projectMediaUtilityService.resolveMediaFileInfo(url)
+                : { filePath: projectMediaUtilityService.resolveMediaFileFromUrl(url), sourceLabel: null, reason: null };
+            const filePath = fileInfo && fileInfo.filePath;
             const displayUrl = projectMediaUtilityService.buildProjectMediaDisplayUrl(url);
             if (!filePath) {
-                return { url, displayUrl, sizeBytes: null, durationSeconds: null };
+                return {
+                    url,
+                    displayUrl,
+                    sizeBytes: null,
+                    durationSeconds: null,
+                    availability: 'invalid',
+                    sourceStatus: fileInfo && fileInfo.reason ? fileInfo.reason : 'unresolved'
+                };
             }
 
             let stat;
             try {
                 stat = await projectMediaUtilityService.statFileWithTimeout(filePath);
             } catch (error) {
-                return { url, displayUrl, sizeBytes: null, durationSeconds: null };
+                return {
+                    url,
+                    displayUrl,
+                    sizeBytes: null,
+                    durationSeconds: null,
+                    availability: 'unavailable',
+                    sourceStatus: projectMediaUtilityService.isTimeoutError(error) ? 'source-timeout' : (error.code || 'source-error'),
+                    sourceLabel: fileInfo && fileInfo.sourceLabel ? fileInfo.sourceLabel : undefined
+                };
             }
 
             const sizeBytes = stat.size;
@@ -779,7 +802,16 @@ function createProjectCatalogService({
             const isModel = validModelExt.includes(ext);
             const durationSeconds = isVideo ? await getVideoDurationSeconds(filePath, stat) : null;
 
-            return { url, displayUrl, sizeBytes, durationSeconds, mediaKind: isModel ? 'model' : (isVideo ? 'video' : 'image') };
+            return {
+                url,
+                displayUrl,
+                sizeBytes,
+                durationSeconds,
+                mediaKind: isModel ? 'model' : (isVideo ? 'video' : 'image'),
+                availability: 'available',
+                sourceStatus: 'available',
+                sourceLabel: fileInfo && fileInfo.sourceLabel ? fileInfo.sourceLabel : undefined
+            };
         });
     }
 

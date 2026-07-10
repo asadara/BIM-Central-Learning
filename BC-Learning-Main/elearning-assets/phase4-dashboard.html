@@ -920,6 +920,8 @@
       const restartConfirmModalEl = document.getElementById('restart-confirm-modal');
       const restartConfirmCancelEl = document.getElementById('restart-confirm-cancel');
       const restartConfirmSubmitEl = document.getElementById('restart-confirm-submit');
+      const restartButtonEl = document.getElementById('restart-bcl-button');
+      let adminSessionReady = false;
 
       const initialOutput = outputEl ? outputEl.textContent.trimEnd() : '';
 
@@ -1198,6 +1200,47 @@
         restartStatusDetailEl.textContent = detailText || resolved.detail;
       }
 
+      async function ensureAdminSessionForRestart() {
+        const endpoints = buildApiEndpointCandidates('/api/admin/session');
+
+        for (const url of endpoints) {
+          try {
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: { 'Accept': 'application/json' },
+              credentials: 'include',
+              cache: 'no-store'
+            });
+            if (!response.ok) {
+              continue;
+            }
+            const data = await response.json();
+            if (data && data.authenticated && data.user) {
+              adminSessionReady = true;
+              if (restartButtonEl) {
+                restartButtonEl.disabled = false;
+                restartButtonEl.style.opacity = '';
+                restartButtonEl.style.cursor = '';
+              }
+              setRestartUiState('ready', `Admin session aktif: ${data.user.email || data.user.username || 'admin'}. Restart BCL siap digunakan.`);
+              return true;
+            }
+          } catch (error) {
+            // Try the next candidate.
+          }
+        }
+
+        adminSessionReady = false;
+        if (restartButtonEl) {
+          restartButtonEl.disabled = true;
+          restartButtonEl.style.opacity = '0.7';
+          restartButtonEl.style.cursor = 'not-allowed';
+        }
+        setRestartUiState('error', 'Admin session belum aktif untuk host ini. Login dulu lewat AdminBCL pada alamat yang sama, lalu buka Server Control dari panel admin.');
+        logOutput('Restart disabled: admin session not found. Open AdminBCL on the same host, login, then use Server Control.');
+        return false;
+      }
+
       function openRestartConfirmModal() {
         if (!restartConfirmModalEl) {
           executeRestartServerProcess();
@@ -1274,12 +1317,10 @@
       }
 
       async function executeRestartServerProcess() {
-        const secret = 'phase4-admin-secret';
         const token = localStorage.getItem('token');
         const headers = {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Admin-Secret': secret
+          'Accept': 'application/json'
         };
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
@@ -1313,7 +1354,7 @@
               method: 'POST',
               headers,
               credentials: 'include',
-              body: JSON.stringify({ secret: secret })
+              body: JSON.stringify({})
             });
 
             if (!response.ok) {
@@ -1370,6 +1411,10 @@
       }
 
       function restartServerProcess() {
+        if (!adminSessionReady) {
+          ensureAdminSessionForRestart();
+          return;
+        }
         openRestartConfirmModal();
       }
 
@@ -1471,6 +1516,7 @@
       function initializeDashboard() {
         renderSystems();
         setRestartUiState('ready');
+        ensureAdminSessionForRestart();
         updateStats(0);
         refreshAllSystems();
         fetchNetworkInfo();

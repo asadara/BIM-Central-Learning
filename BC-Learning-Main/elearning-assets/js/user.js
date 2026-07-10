@@ -196,7 +196,7 @@ function updateImageElement(id, src) {
    const element = document.getElementById(id);
    if (element) {
       element.src = src;
-      element.onerror = () => element.src = "/img/user-default.png"; // Fallback
+      element.onerror = () => element.src = "/img/user-default.svg"; // Fallback
    }
 }
 
@@ -339,7 +339,7 @@ function setupLoginForm() {
             const user = {
                name: result.name || result.username,
                role: result.role || "Student",
-               photo: result.photo || "/img/user-default.png",
+               photo: result.photo || "/img/user-default.svg",
                token: result.token,
             };
             setUserData(user);
@@ -383,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
       //       name: "John Doe",
       //       email: "john.doe@example.com",
       //       role: "Student",
-      //       photo: "/img/user-default.png",
+      //       photo: "/img/user-default.svg",
       //       token: "sample-token-123"
       //    };
       //    setUserData(sampleUser);

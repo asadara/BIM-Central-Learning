@@ -60,14 +60,14 @@ function setUserData(data) {
          level: data.level || data.bimLevel || data.bim_level || 'BIM Modeller',
          bimLevel: data.bimLevel || data.level || data.bim_level || 'BIM Modeller',
          organization: data.organization || '',
-         photo: data.photo || data.image || data.img || '/img/user-default.png',
+         photo: data.photo || data.image || data.img || '/img/user-default.svg',
          token: data.token || ""
       };
 
       // Ensure consistent photo path across all sections
       if (normalizedData.photo && normalizedData.photo.includes('/elearning-assets/')) {
          // Convert elearning photo path to main site path for consistency
-         normalizedData.photo = '/img/user-default.png';
+         normalizedData.photo = '/img/user-default.svg';
       }
 
       localStorage.setItem("user", JSON.stringify(normalizedData));
@@ -123,7 +123,7 @@ async function updateUserUI() {
                      name: adminData.user.username || adminData.user.email,
                      email: adminData.user.email,
                      role: adminData.user.role || 'Administrator',
-                     photo: '/img/user-default.png', // Admin avatar
+                     photo: '/img/user-default.svg', // Admin avatar
                      isAdmin: true,
                      adminUser: adminData.user
                   };
@@ -199,7 +199,7 @@ async function updateUserUI() {
       // Update e-learning header elements
       if (headerUserName) headerUserName.textContent = user.name || "Guest";
       if (headerUserRole) headerUserRole.textContent = user.role || "student";
-      if (headerUserImg) headerUserImg.src = user.photo || "/img/user-default.png";
+      if (headerUserImg) headerUserImg.src = user.photo || "/img/user-default.svg";
       if (loggedInOptions) loggedInOptions.style.display = "block";
       if (guestOptions) guestOptions.style.display = "none";
 
@@ -224,7 +224,7 @@ function updateImageElement(id, src) {
    const element = document.getElementById(id);
    if (element) {
       element.src = src;
-      element.onerror = () => element.src = "/img/user-default.png"; // Fallback
+      element.onerror = () => element.src = "/img/user-default.svg"; // Fallback
    }
 }
 
@@ -358,7 +358,7 @@ function setupLoginForm() {
                name: result.name || result.username,
                email: result.email || email,
                role: result.role || result.bimLevel || "Student",
-               photo: result.photo || "/img/user-default.png",
+               photo: result.photo || "/img/user-default.svg",
                token: result.token,
                bimLevel: result.bimLevel,
                organization: result.organization

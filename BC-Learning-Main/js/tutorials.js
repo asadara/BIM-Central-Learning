@@ -1258,7 +1258,7 @@ function processThumbnailQueue() {
             if (data && data.thumbnail) {
                 imgElement.src = data.thumbnail;
             } else {
-                imgElement.src = '../img/fallback-thumb.png';
+                imgElement.src = '../img/media-thumbnail.svg';
                 imgElement.onerror = null;
             }
         })
@@ -1269,7 +1269,7 @@ function processThumbnailQueue() {
                 thumbnailQueue.push(item);
                 requeued = true;
             } else {
-                imgElement.src = '../img/fallback-thumb.png';
+                imgElement.src = '../img/media-thumbnail.svg';
                 imgElement.onerror = null;
             }
         })
@@ -1292,7 +1292,7 @@ function enqueueThumbnailRequest(imgElement, encodedPath) {
 function handleThumbnailError(imgElement, encodedPath) {
     if (!imgElement || imgElement.dataset.thumbRetry === '1') {
         if (imgElement) {
-            imgElement.src = '../img/fallback-thumb.png';
+            imgElement.src = '../img/media-thumbnail.svg';
             imgElement.onerror = null;
         }
         return;

@@ -133,6 +133,7 @@ function createProjectMediaUtilityRoutes({
     isTimeoutError,
     refreshProjectMediaCacheCopy,
     resolveBimMethodeFileFromId,
+    resolveMediaFileInfo,
     resolveMediaFileFromUrl,
     sanitizeDownloadName,
     statFileWithTimeout,
@@ -146,9 +147,15 @@ function createProjectMediaUtilityRoutes({
             return res.status(400).json({ error: 'url parameter is required' });
         }
 
-        const sourcePath = resolveMediaFileFromUrl(mediaUrl);
+        const sourceInfo = typeof resolveMediaFileInfo === 'function'
+            ? resolveMediaFileInfo(mediaUrl)
+            : { ok: false, filePath: resolveMediaFileFromUrl(mediaUrl), attempts: [] };
+        const sourcePath = sourceInfo && sourceInfo.filePath;
         if (!sourcePath) {
-            return res.status(400).json({ error: 'Invalid media url' });
+            return res.status(400).json({
+                error: 'Invalid media url',
+                reason: sourceInfo && sourceInfo.reason ? sourceInfo.reason : undefined
+            });
         }
 
         const ext = path.extname(sourcePath).toLowerCase();
@@ -202,9 +209,15 @@ function createProjectMediaUtilityRoutes({
             return res.status(400).json({ error: 'url parameter is required' });
         }
 
-        const sourcePath = resolveMediaFileFromUrl(mediaUrl);
+        const sourceInfo = typeof resolveMediaFileInfo === 'function'
+            ? resolveMediaFileInfo(mediaUrl)
+            : { ok: false, filePath: resolveMediaFileFromUrl(mediaUrl), attempts: [] };
+        const sourcePath = sourceInfo && sourceInfo.filePath;
         if (!sourcePath) {
-            return res.status(400).json({ error: 'Invalid media url' });
+            return res.status(400).json({
+                error: 'Invalid media url',
+                reason: sourceInfo && sourceInfo.reason ? sourceInfo.reason : undefined
+            });
         }
 
         const cachePath = getProjectMediaCachePath(mediaUrl, sourcePath);
@@ -221,7 +234,15 @@ function createProjectMediaUtilityRoutes({
 
         if (sourceStat && sourceStat.isFile()) {
             refreshProjectMediaCacheCopy(sourcePath, cachePath, sourceStat);
-            return streamMediaWithRange(req, res, sourcePath, sourceStat, contentType, 'public, max-age=300', 'origin');
+            return streamMediaWithRange(
+                req,
+                res,
+                sourcePath,
+                sourceStat,
+                contentType,
+                'public, max-age=300',
+                sourceInfo && sourceInfo.sourceLabel ? sourceInfo.sourceLabel : 'origin'
+            );
         }
 
         try {
@@ -234,13 +255,17 @@ function createProjectMediaUtilityRoutes({
         }
 
         const notFound = sourceError && (sourceError.code === 'ENOENT' || sourceError.code === 'ENOTDIR');
-        const statusCode = notFound ? 404 : 503;
+        const sourceUnavailable = sourceInfo && sourceInfo.routePrefix && /^\/media-bim02(?:-2026)?$/i.test(sourceInfo.routePrefix);
+        const statusCode = sourceUnavailable && !notFound ? 503 : (notFound ? 404 : 503);
         const errorMessage = notFound
-            ? 'Media file not found'
+            ? 'Media file not found in configured source paths'
             : 'Media source temporarily unavailable and no cache is available';
         return res.status(statusCode).json({
             error: errorMessage,
-            detail: isTimeoutError(sourceError) ? 'source timeout' : undefined
+            detail: isTimeoutError(sourceError) ? 'source timeout' : undefined,
+            sourceStatus: sourceUnavailable ? 'pc-bim02-unavailable-or-path-missing' : 'unavailable',
+            sourceLabel: sourceInfo && sourceInfo.sourceLabel ? sourceInfo.sourceLabel : undefined,
+            routePrefix: sourceInfo && sourceInfo.routePrefix ? sourceInfo.routePrefix : undefined
         });
     });
 

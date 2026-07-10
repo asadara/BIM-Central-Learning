@@ -5,12 +5,7 @@ const path = require("path");
 function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, videoCache }) {
     const router = express.Router();
 
-    function authorizeServerManagement(req, validSecret) {
-        const providedSecret = req.body?.secret || req.headers["x-admin-secret"];
-        if (providedSecret && providedSecret === validSecret) {
-            return { ok: true, method: "secret" };
-        }
-
+    function authorizeServerManagement(req) {
         if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
             return { ok: true, method: "admin-session" };
         }
@@ -21,7 +16,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
             if (token) {
                 try {
                     const decoded = jwt.verify(token, secretKey);
-                    const role = String(decoded?.role || decoded?.user?.role || decoded?.userType || "").toLowerCase();
+                    const role = String(decoded?.role || decoded?.jobRole || decoded?.user?.role || decoded?.userType || "").toLowerCase();
                     const isAdminToken = decoded?.isAdmin === true || role.includes("admin") || role.includes("super");
                     if (isAdminToken) {
                         return { ok: true, method: "jwt" };
@@ -70,8 +65,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
     }
 
     router.post("/api/server/restart-full", (req, res) => {
-        const validSecret = process.env.ADMIN_SECRET || "phase4-admin-secret";
-        const auth = authorizeServerManagement(req, validSecret);
+        const auth = authorizeServerManagement(req);
         if (!auth.ok) {
             appendServerRestartLog(`restart-full denied from ${req.ip} (unauthorized)`);
             return res.status(401).json({ error: "Unauthorized access" });
@@ -160,8 +154,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
     });
 
     router.post("/api/server/restart", (req, res) => {
-        const validSecret = process.env.ADMIN_SECRET || "phase4-admin-secret";
-        const auth = authorizeServerManagement(req, validSecret);
+        const auth = authorizeServerManagement(req);
         if (!auth.ok) {
             appendServerRestartLog(`restart denied from ${req.ip} (unauthorized)`);
             return res.status(401).json({ error: "Unauthorized access" });
@@ -218,8 +211,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
     });
 
     router.post("/api/server/clear-cache", (req, res) => {
-        const validSecret = process.env.ADMIN_SECRET || "phase4-admin-secret";
-        const auth = authorizeServerManagement(req, validSecret);
+        const auth = authorizeServerManagement(req);
         if (!auth.ok) {
             return res.status(401).json({ error: "Unauthorized access" });
         }

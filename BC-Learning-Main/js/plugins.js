@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     const container = document.getElementById("plugin-container");
-    const FALLBACK_PLUGIN_IMAGE = "/img/fallback-thumb.png";
+    const FALLBACK_PLUGIN_IMAGE = "/img/media-thumbnail.svg";
 
     if (!container) {
         console.error("❌ Plugin container not found!");

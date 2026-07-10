@@ -7,14 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML = data.map(mod => `
                         <div class="box">
                             <div class="tutor">
-                                <img src="/BC-Learning-Main/img/default.jpg" alt="Thumbnail Modul">
+                                <img src="/img/media-thumbnail.svg" alt="Thumbnail Modul">
                                 <div class="info">
                                     <h3>${mod.author || 'Tim BCL'}</h3>
                                     <span>${mod.date || ''}</span>
                                 </div>
                             </div>
                             <div class="thumb">
-                                <img src="/BC-Learning-Main/img/course-1.jpg" alt="">
+                                <img src="${mod.thumbnail || '/img/media-thumbnail.svg'}" alt="${mod.title || 'Thumbnail Modul'}" onerror="this.onerror=null;this.src='/img/media-thumbnail.svg'">
                                 <span>${mod.videos ? mod.videos.length + ' video' : ''}</span>
                             </div>
                             <h3 class="title">${mod.title}</h3>

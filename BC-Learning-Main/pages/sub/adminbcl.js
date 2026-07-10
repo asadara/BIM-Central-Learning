@@ -17,6 +17,13 @@ let allQuestions = [];
 // Users Management
 let allUsers = [];
 
+// Training Batch Management
+let allTrainingBatches = [];
+let currentTrainingBatch = null;
+let currentTrainingBatchMembers = [];
+let currentSubmissionReviewContext = null;
+let currentAttendanceContext = null;
+
 // PDF Management
 let allPDFManagementData = [];
 let selectedPDFManagementIds = new Set();
@@ -53,6 +60,7 @@ let filteredPDFMaterialsData = [];
 document.addEventListener('DOMContentLoaded', async () => {
     // Ensure default state: auth section visible, admin interface hidden
     ensureDefaultUIState();
+    initializePasswordRecoveryForm();
 
     // Load saved data
     loadSavedTags();
@@ -70,12 +78,95 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setTimeout(() => {
                     loadBIMMedia();
                 }, 50);
+            } else if (hash === 'training-batches') {
+                showSection(hash);
+                setTimeout(() => {
+                    loadTrainingBatches();
+                }, 50);
             } else {
                 showSection(hash);
             }
         }, 100);
     }
 });
+
+function initializePasswordRecoveryForm() {
+    const showButton = document.getElementById('show-password-recovery');
+    const cancelButton = document.getElementById('cancel-password-recovery');
+    const loginForm = document.getElementById('admin-login-form');
+    const recoveryForm = document.getElementById('admin-password-recovery-form');
+    const recoveryEmail = document.getElementById('recoveryEmail');
+    const adminEmail = document.getElementById('adminEmail');
+
+    if (!recoveryForm) {
+        return;
+    }
+
+    if (showButton) {
+        showButton.addEventListener('click', () => {
+            if (loginForm) loginForm.classList.add('d-none');
+            recoveryForm.classList.remove('d-none');
+            if (recoveryEmail && adminEmail && adminEmail.value) {
+                recoveryEmail.value = adminEmail.value;
+            }
+            if (recoveryEmail) recoveryEmail.focus();
+        });
+    }
+
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            recoveryForm.classList.add('d-none');
+            if (loginForm) loginForm.classList.remove('d-none');
+            recoveryForm.reset();
+        });
+    }
+
+    recoveryForm.addEventListener('submit', handlePasswordRecoverySubmit);
+}
+
+async function handlePasswordRecoverySubmit(event) {
+    event.preventDefault();
+
+    const recoveryEmail = document.getElementById('recoveryEmail');
+    const submitButton = document.getElementById('recovery-submit-button');
+    const email = recoveryEmail ? recoveryEmail.value.trim() : '';
+
+    if (!email) {
+        alert('Email admin wajib diisi.');
+        return;
+    }
+
+    const originalLabel = submitButton ? submitButton.textContent : '';
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Mengirim...';
+    }
+
+    try {
+        const response = await fetch('/api/admin/password-recovery/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email })
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || !result.success) {
+            alert('Recovery gagal: ' + (result.error || 'Server tidak bisa memproses request.'));
+            return;
+        }
+
+        alert(result.message || 'Jika email admin valid, link recovery akan dikirim.');
+        event.target.reset();
+    } catch (error) {
+        alert('Terjadi kesalahan recovery: ' + error.message);
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = originalLabel || 'Kirim Link Recovery';
+        }
+    }
+}
 
 function getStoredAdminToken() {
     try {
@@ -293,11 +384,2217 @@ function showSection(sectionName) {
     });
 
     // Show selected section
-    document.getElementById(sectionName + '-section').classList.remove('d-none');
+    const selectedSection = document.getElementById(sectionName + '-section');
+    if (!selectedSection) {
+        console.warn('Admin section not found:', sectionName);
+        return;
+    }
+    selectedSection.classList.remove('d-none');
 
     // Add active class to clicked nav link
     if (event && event.target) {
-        event.target.classList.add('active');
+        const activeLink = event.target.closest ? event.target.closest('.nav-link-modern') : event.target;
+        if (activeLink && activeLink.classList) {
+            activeLink.classList.add('active');
+        }
+    }
+}
+
+function bclEscapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function formatTrainingDate(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+    return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+    });
+}
+
+function formatTrainingDateTime(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function getTrainingStatusBadge(status) {
+    const normalized = String(status || 'draft').toLowerCase();
+    const classes = {
+        draft: 'bg-secondary',
+        active: 'bg-success',
+        completed: 'bg-primary',
+        archived: 'bg-dark'
+    };
+    return `<span class="badge ${classes[normalized] || 'bg-secondary'}">${bclEscapeHtml(normalized)}</span>`;
+}
+
+async function loadTrainingBatches() {
+    const container = document.getElementById('training-batches-content');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Memuat training batches...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch('/api/training/batches', {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || `Request failed (${response.status})`);
+        }
+
+        const result = await response.json();
+        allTrainingBatches = Array.isArray(result.data) ? result.data : [];
+        renderTrainingBatches();
+    } catch (error) {
+        console.error('Failed to load training batches:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Gagal memuat training batches: ${bclEscapeHtml(error.message)}
+            </div>
+        `;
+    }
+}
+
+function renderTrainingBatches() {
+    const container = document.getElementById('training-batches-content');
+    if (!container) return;
+
+    if (!Array.isArray(allTrainingBatches) || allTrainingBatches.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-chalkboard-user fa-3x mb-3"></i>
+                <h5>Belum ada training batch</h5>
+                <p class="mb-3">Buat batch pertama untuk mulai mengikat peserta, mentor, dan learning path.</p>
+                <button class="btn btn-modern-primary" onclick="showTrainingBatchModal()">
+                    <i class="fas fa-plus me-2"></i>Buat Batch Baru
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Batch</th>
+                        <th>Learning Path</th>
+                        <th>Periode</th>
+                        <th>Status</th>
+                        <th>Roster</th>
+                        <th>Updated</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${allTrainingBatches.map((batch) => `
+                        <tr>
+                            <td>
+                                <div class="fw-bold">${bclEscapeHtml(batch.title)}</div>
+                                <small class="text-muted">${bclEscapeHtml(batch.code || batch.id)}</small>
+                            </td>
+                            <td>${bclEscapeHtml(batch.learningPathId || '-')}</td>
+                            <td>
+                                <small>${formatTrainingDate(batch.startDate)} - ${formatTrainingDate(batch.endDate)}</small>
+                            </td>
+                            <td>${getTrainingStatusBadge(batch.status)}</td>
+                            <td>
+                                <div class="small">
+                                    <span class="me-2"><i class="fas fa-users me-1"></i>${Number(batch.participantCount || 0)} peserta</span>
+                                    <span class="me-2"><i class="fas fa-user-tie me-1"></i>${Number(batch.mentorCount || 0)} mentor</span>
+                                    <span><i class="fas fa-clipboard-check me-1"></i>${Number(batch.reviewerCount || 0)} reviewer</span>
+                                </div>
+                            </td>
+                            <td><small class="text-muted">${formatTrainingDate(batch.updatedAt || batch.createdAt)}</small></td>
+                            <td>
+                                <button class="btn btn-outline-primary btn-sm training-roster-btn" data-batch-id="${bclEscapeHtml(batch.id)}">
+                                    <i class="fas fa-users me-1"></i>Roster
+                                </button>
+                                <button class="btn btn-outline-success btn-sm training-plan-btn" data-batch-id="${bclEscapeHtml(batch.id)}">
+                                    <i class="fas fa-list-check me-1"></i>Plan
+                                </button>
+                                <button class="btn btn-outline-dark btn-sm training-evaluation-btn" data-batch-id="${bclEscapeHtml(batch.id)}">
+                                    <i class="fas fa-table-list me-1"></i>Evaluation
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm training-readiness-btn" data-batch-id="${bclEscapeHtml(batch.id)}">
+                                    <i class="fas fa-chart-line me-1"></i>Readiness
+                                </button>
+                                <button class="btn btn-outline-info btn-sm training-attendance-btn" data-batch-id="${bclEscapeHtml(batch.id)}">
+                                    <i class="fas fa-calendar-check me-1"></i>Attendance
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    container.querySelectorAll('.training-roster-btn').forEach((button) => {
+        button.addEventListener('click', () => loadTrainingBatchMembers(button.dataset.batchId));
+    });
+    container.querySelectorAll('.training-plan-btn').forEach((button) => {
+        button.addEventListener('click', () => loadTrainingPlan(button.dataset.batchId));
+    });
+    container.querySelectorAll('.training-evaluation-btn').forEach((button) => {
+        button.addEventListener('click', () => loadBatchEvaluation(button.dataset.batchId));
+    });
+    container.querySelectorAll('.training-readiness-btn').forEach((button) => {
+        button.addEventListener('click', () => loadBatchReadiness(button.dataset.batchId));
+    });
+    container.querySelectorAll('.training-attendance-btn').forEach((button) => {
+        button.addEventListener('click', () => loadBatchAttendance(button.dataset.batchId));
+    });
+}
+
+function showTrainingBatchModal() {
+    const modalHtml = `
+        <div class="modal fade" id="trainingBatchModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-chalkboard-user me-2"></i>Buat Training Batch
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="trainingBatchForm">
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Nama Batch *</label>
+                                    <input type="text" class="form-control" id="trainingBatchTitle"
+                                        placeholder="Contoh: BIM Modeller Batch 01 - 2026" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Kode Batch</label>
+                                    <input type="text" class="form-control" id="trainingBatchCode"
+                                        placeholder="Auto jika kosong">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Learning Path</label>
+                                    <select class="form-select" id="trainingBatchLearningPath">
+                                        <option value="">Pilih learning path</option>
+                                        <option value="bim-mindset-foundation">BIM Mindset Foundation</option>
+                                        <option value="bim-governance-foundation">BIM Governance Foundation</option>
+                                        <option value="bim-delivery-workflow-foundation">BIM Delivery Workflow Foundation</option>
+                                        <option value="autocad-certified-user">AutoCAD Certified User</option>
+                                        <option value="revit-architecture-professional">Revit Architecture Professional</option>
+                                        <option value="bim-manager-certification">BIM Manager Certification</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" id="trainingBatchStatus">
+                                        <option value="draft">Draft</option>
+                                        <option value="active">Active</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Tanggal Mulai</label>
+                                    <input type="date" class="form-control" id="trainingBatchStartDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Tanggal Selesai</label>
+                                    <input type="date" class="form-control" id="trainingBatchEndDate">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Deskripsi</label>
+                                    <textarea class="form-control" id="trainingBatchDescription" rows="3"
+                                        placeholder="Tujuan batch, target peserta, atau catatan training..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Simpan Batch
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const existingModal = document.getElementById('trainingBatchModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('trainingBatchForm').addEventListener('submit', handleTrainingBatchSubmit);
+
+    const modal = new bootstrap.Modal(document.getElementById('trainingBatchModal'));
+    modal.show();
+}
+
+async function handleTrainingBatchSubmit(event) {
+    event.preventDefault();
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+    submitButton.disabled = true;
+
+    const payload = {
+        title: document.getElementById('trainingBatchTitle').value.trim(),
+        code: document.getElementById('trainingBatchCode').value.trim(),
+        learningPathId: document.getElementById('trainingBatchLearningPath').value,
+        status: document.getElementById('trainingBatchStatus').value,
+        startDate: document.getElementById('trainingBatchStartDate').value,
+        endDate: document.getElementById('trainingBatchEndDate').value,
+        description: document.getElementById('trainingBatchDescription').value.trim()
+    };
+
+    try {
+        const response = await fetch('/api/training/batches', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(result.error || `Request failed (${response.status})`);
+        }
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('trainingBatchModal'));
+        if (modal) modal.hide();
+
+        await loadTrainingBatches();
+        alert('Training batch berhasil dibuat.');
+    } catch (error) {
+        console.error('Failed to create training batch:', error);
+        alert('Gagal membuat training batch: ' + error.message);
+    } finally {
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+    }
+}
+
+async function loadTrainingBatchMembers(batchId) {
+    const container = document.getElementById('training-batches-content');
+    if (!container || !batchId) return;
+
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Memuat roster batch...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(batchId)}/members`, {
+            credentials: 'include'
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(result.error || `Request failed (${response.status})`);
+        }
+
+        currentTrainingBatch = result.batch || allTrainingBatches.find((batch) => batch.id === batchId) || null;
+        currentTrainingBatchMembers = Array.isArray(result.data) ? result.data : [];
+        renderTrainingBatchRoster();
+    } catch (error) {
+        console.error('Failed to load training batch members:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Gagal memuat roster batch: ${bclEscapeHtml(error.message)}
+            </div>
+            <button class="btn btn-outline-secondary" onclick="loadTrainingBatches()">
+                <i class="fas fa-arrow-left me-2"></i>Kembali ke daftar batch
+            </button>
+        `;
+    }
+}
+
+function renderTrainingBatchRoster() {
+    const container = document.getElementById('training-batches-content');
+    if (!container || !currentTrainingBatch) return;
+
+    const batch = currentTrainingBatch;
+    const members = currentTrainingBatchMembers;
+
+    container.innerHTML = `
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <button class="btn btn-outline-secondary btn-sm mb-3" onclick="loadTrainingBatches()">
+                    <i class="fas fa-arrow-left me-1"></i>Daftar Batch
+                </button>
+                <h4 class="mb-1">${bclEscapeHtml(batch.title)}</h4>
+                <div class="text-muted">
+                    <span class="me-3">${bclEscapeHtml(batch.code || batch.id)}</span>
+                    <span class="me-3">${bclEscapeHtml(batch.learningPathId || 'No learning path')}</span>
+                    ${getTrainingStatusBadge(batch.status)}
+                </div>
+            </div>
+            <button class="btn btn-modern-primary" onclick="showBatchMemberModal()">
+                <i class="fas fa-user-plus me-2"></i>Tambah Member
+            </button>
+            <button class="btn btn-outline-success" onclick="loadTrainingPlan('${bclEscapeHtml(batch.id)}')">
+                <i class="fas fa-list-check me-2"></i>Training Plan
+            </button>
+        </div>
+
+        ${members.length === 0 ? `
+            <div class="text-center py-5 text-muted border rounded">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <h5>Roster masih kosong</h5>
+                <p class="mb-3">Tambahkan participant, mentor, reviewer, atau HC observer untuk batch ini.</p>
+                <button class="btn btn-modern-primary" onclick="showBatchMemberModal()">
+                    <i class="fas fa-user-plus me-2"></i>Tambah Member
+                </button>
+            </div>
+        ` : `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User</th>
+                            <th>BIM Level</th>
+                            <th>Role Batch</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${members.map((member) => `
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">${bclEscapeHtml(member.username || `User #${member.userId}`)}</div>
+                                    <small class="text-muted">${bclEscapeHtml(member.email || '-')}</small>
+                                    <div class="small text-muted">${bclEscapeHtml(member.jobRole || '')}${member.organization ? ` - ${bclEscapeHtml(member.organization)}` : ''}</div>
+                                </td>
+                                <td>${bclEscapeHtml(member.bimLevel || '-')}</td>
+                                <td>${getTrainingMemberRoleBadge(member.role)}</td>
+                                <td>${getTrainingMemberStatusBadge(member.enrollmentStatus)}</td>
+                                <td><small class="text-muted">${formatTrainingDate(member.joinedAt)}</small></td>
+                                <td>
+                                    <button class="btn btn-outline-danger btn-sm batch-member-delete-btn"
+                                        data-member-id="${Number(member.id)}"
+                                        data-member-name="${bclEscapeHtml(member.username || member.email || member.userId)}">
+                                        <i class="fas fa-trash me-1"></i>Hapus
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `}
+    `;
+
+    container.querySelectorAll('.batch-member-delete-btn').forEach((button) => {
+        button.addEventListener('click', () => deleteTrainingBatchMember(button.dataset.memberId, button.dataset.memberName));
+    });
+}
+
+function getTrainingMemberRoleBadge(role) {
+    const normalized = String(role || 'participant').toLowerCase();
+    const classes = {
+        participant: 'bg-primary',
+        mentor: 'bg-success',
+        reviewer: 'bg-info',
+        admin: 'bg-dark',
+        hc_observer: 'bg-warning text-dark'
+    };
+    const labels = {
+        participant: 'Participant',
+        mentor: 'Mentor',
+        reviewer: 'Reviewer',
+        admin: 'Admin',
+        hc_observer: 'HC Observer'
+    };
+    return `<span class="badge ${classes[normalized] || 'bg-secondary'}">${labels[normalized] || bclEscapeHtml(normalized)}</span>`;
+}
+
+function getTrainingMemberStatusBadge(status) {
+    const normalized = String(status || 'active').toLowerCase();
+    const classes = {
+        invited: 'bg-secondary',
+        active: 'bg-success',
+        completed: 'bg-primary',
+        dropped: 'bg-danger'
+    };
+    return `<span class="badge ${classes[normalized] || 'bg-secondary'}">${bclEscapeHtml(normalized)}</span>`;
+}
+
+function showBatchMemberModal() {
+    if (!currentTrainingBatch) {
+        alert('Pilih batch lebih dulu.');
+        return;
+    }
+
+    const modalHtml = `
+        <div class="modal fade" id="batchMemberModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-user-plus me-2"></i>Tambah Member Batch
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="batchMemberForm">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">User ID / Email / Username *</label>
+                                <input type="text" class="form-control" id="batchMemberIdentifier"
+                                    placeholder="contoh: user@bcl.local atau username" required>
+                                <small class="text-muted">User harus sudah terdaftar di BCL.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Role Batch</label>
+                                <select class="form-select" id="batchMemberRole">
+                                    <option value="participant">Participant</option>
+                                    <option value="mentor">Mentor</option>
+                                    <option value="reviewer">Reviewer</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="hc_observer">HC Observer</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Enrollment Status</label>
+                                <select class="form-select" id="batchMemberStatus">
+                                    <option value="active">Active</option>
+                                    <option value="invited">Invited</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="dropped">Dropped</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Simpan Member
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const existingModal = document.getElementById('batchMemberModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('batchMemberForm').addEventListener('submit', handleBatchMemberSubmit);
+
+    const modal = new bootstrap.Modal(document.getElementById('batchMemberModal'));
+    modal.show();
+}
+
+async function handleBatchMemberSubmit(event) {
+    event.preventDefault();
+
+    if (!currentTrainingBatch) return;
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+    submitButton.disabled = true;
+
+    const identifier = document.getElementById('batchMemberIdentifier').value.trim();
+    const payload = {
+        identifier,
+        role: document.getElementById('batchMemberRole').value,
+        enrollmentStatus: document.getElementById('batchMemberStatus').value
+    };
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/members`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(result.error || `Request failed (${response.status})`);
+        }
+
+        if (Array.isArray(result.skipped) && result.skipped.length > 0) {
+            throw new Error(`User tidak ditemukan: ${identifier}`);
+        }
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('batchMemberModal'));
+        if (modal) modal.hide();
+
+        await loadTrainingBatchMembers(currentTrainingBatch.id);
+        alert('Member batch berhasil disimpan.');
+    } catch (error) {
+        console.error('Failed to save batch member:', error);
+        alert('Gagal menyimpan member batch: ' + error.message);
+    } finally {
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+    }
+}
+
+async function deleteTrainingBatchMember(memberId, memberName) {
+    if (!currentTrainingBatch || !memberId) return;
+
+    const confirmed = confirm(`Hapus ${memberName || 'member'} dari batch ini?`);
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(
+            `/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/members/${encodeURIComponent(memberId)}`,
+            {
+                method: 'DELETE',
+                credentials: 'include'
+            }
+        );
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(result.error || `Request failed (${response.status})`);
+        }
+
+        await loadTrainingBatchMembers(currentTrainingBatch.id);
+    } catch (error) {
+        console.error('Failed to delete batch member:', error);
+        alert('Gagal menghapus member batch: ' + error.message);
+    }
+}
+
+async function loadTrainingPlan(batchId) {
+    const container = document.getElementById('training-batches-content');
+    if (!container || !batchId) return;
+
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Memuat training plan...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(batchId)}/training-plan`, {
+            credentials: 'include'
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(result.error || `Request failed (${response.status})`);
+        }
+
+        currentTrainingBatch = result.batch || allTrainingBatches.find((batch) => batch.id === batchId) || null;
+        renderTrainingPlan(result.topics || [], result.unassignedItems || []);
+    } catch (error) {
+        console.error('Failed to load training plan:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Gagal memuat training plan: ${bclEscapeHtml(error.message)}
+            </div>
+            <button class="btn btn-outline-secondary" onclick="loadTrainingBatches()">
+                <i class="fas fa-arrow-left me-2"></i>Kembali ke daftar batch
+            </button>
+        `;
+    }
+}
+
+async function loadBatchAttendance(batchId, selectedSessionId = '') {
+    const container = document.getElementById('training-batches-content');
+    if (!container || !batchId) return;
+
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Memuat attendance batch...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(batchId)}/attendance`, {
+            credentials: 'include'
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        currentTrainingBatch = result.batch || allTrainingBatches.find((batch) => batch.id === batchId) || null;
+        currentAttendanceContext = {
+            batch: result.batch,
+            participants: Array.isArray(result.participants) ? result.participants : [],
+            sessions: Array.isArray(result.sessions) ? result.sessions : [],
+            selectedSessionId: selectedSessionId || (Array.isArray(result.sessions) && result.sessions[0] ? result.sessions[0].id : '')
+        };
+        renderBatchAttendance(result);
+    } catch (error) {
+        console.error('Failed to load batch attendance:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Gagal memuat attendance: ${bclEscapeHtml(error.message)}
+            </div>
+            <button class="btn btn-outline-secondary" onclick="loadTrainingBatches()">
+                <i class="fas fa-arrow-left me-2"></i>Kembali ke daftar batch
+            </button>
+        `;
+    }
+}
+
+function renderBatchAttendance(result) {
+    const container = document.getElementById('training-batches-content');
+    if (!container) return;
+
+    const batch = result.batch || currentTrainingBatch || {};
+    const participants = Array.isArray(result.participants) ? result.participants : [];
+    const sessions = Array.isArray(result.sessions) ? result.sessions : [];
+    const selectedSessionId = currentAttendanceContext?.selectedSessionId || (sessions[0] ? sessions[0].id : '');
+    const selectedSession = sessions.find((session) => session.id === selectedSessionId) || sessions[0] || null;
+    if (currentAttendanceContext) currentAttendanceContext.selectedSessionId = selectedSession ? selectedSession.id : '';
+
+    container.innerHTML = `
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <button class="btn btn-outline-secondary btn-sm mb-3" onclick="loadTrainingBatches()">
+                    <i class="fas fa-arrow-left me-1"></i>Daftar Batch
+                </button>
+                <h4 class="mb-1">${bclEscapeHtml(batch.title || 'Batch Attendance')}</h4>
+                <div class="text-muted">
+                    <span class="me-3">${bclEscapeHtml(batch.code || batch.id || '')}</span>
+                    ${getTrainingStatusBadge(batch.status)}
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-dark" onclick="loadBatchEvaluation('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-table-list me-2"></i>Evaluation
+                </button>
+                <button class="btn btn-outline-warning" onclick="loadBatchReadiness('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-chart-line me-2"></i>Readiness
+                </button>
+                <button class="btn btn-modern-primary" onclick="showAttendanceSessionModal()">
+                    <i class="fas fa-plus me-2"></i>Tambah Session
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Participants</div>
+                    <div class="fs-4 fw-bold">${participants.length}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Sessions</div>
+                    <div class="fs-4 fw-bold">${sessions.length}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Recorded Sessions</div>
+                    <div class="fs-4 fw-bold">${sessions.filter((session) => Number(session.recordCount || 0) > 0).length}</div>
+                </div>
+            </div>
+        </div>
+
+        ${sessions.length ? `
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                ${sessions.map((session) => `
+                    <button class="btn ${selectedSession && selectedSession.id === session.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm"
+                        onclick="selectAttendanceSession('${bclEscapeHtml(session.id)}')">
+                        ${bclEscapeHtml(session.title)}
+                    </button>
+                `).join('')}
+            </div>
+            ${renderAttendanceRecordsTable(selectedSession, participants)}
+        ` : `
+            <div class="text-center py-5 text-muted border rounded bg-white">
+                <i class="fas fa-calendar-check fa-2x mb-3"></i>
+                <h5>Belum ada attendance session</h5>
+                <p class="mb-3">Buat session attendance untuk mulai mencatat kehadiran peserta.</p>
+                <button class="btn btn-modern-primary" onclick="showAttendanceSessionModal()">
+                    <i class="fas fa-plus me-2"></i>Tambah Session
+                </button>
+            </div>
+        `}
+    `;
+}
+
+function renderAttendanceRecordsTable(session, participants) {
+    if (!session) return '';
+    const recordsByUser = new Map((Array.isArray(session.records) ? session.records : []).map((record) => [Number(record.userId), record]));
+
+    return `
+        <div class="content-card">
+            <div class="card-header-modern">
+                <div>
+                    <div class="card-title-modern">
+                        <i class="fas fa-calendar-check"></i>${bclEscapeHtml(session.title)}
+                    </div>
+                    <small class="text-muted">${formatTrainingDateTime(session.scheduledAt)} | Present ${Number(session.presentCount || 0)}, Late ${Number(session.lateCount || 0)}, Absent ${Number(session.absentCount || 0)}, Excused ${Number(session.excusedCount || 0)}</small>
+                </div>
+                <button class="btn btn-success btn-sm" onclick="saveAttendanceRecords()">
+                    <i class="fas fa-save me-1"></i>Simpan Attendance
+                </button>
+            </div>
+            <div class="card-body-modern">
+                ${participants.length ? `
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Participant</th>
+                                    <th>Status</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${participants.map((participant) => {
+                                    const record = recordsByUser.get(Number(participant.userId)) || {};
+                                    const status = record.status || 'present';
+                                    return `
+                                        <tr data-attendance-user-id="${Number(participant.userId)}">
+                                            <td>
+                                                <div class="fw-semibold">${bclEscapeHtml(participant.username || participant.email || participant.userId || '-')}</div>
+                                                <small class="text-muted">${bclEscapeHtml(participant.email || '')}</small>
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm attendance-status">
+                                                    <option value="present" ${status === 'present' ? 'selected' : ''}>Present</option>
+                                                    <option value="late" ${status === 'late' ? 'selected' : ''}>Late</option>
+                                                    <option value="absent" ${status === 'absent' ? 'selected' : ''}>Absent</option>
+                                                    <option value="excused" ${status === 'excused' ? 'selected' : ''}>Excused</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input class="form-control form-control-sm attendance-note" value="${bclEscapeHtml(record.note || '')}" placeholder="Catatan attendance">
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : `
+                    <div class="text-muted py-4">Belum ada participant aktif pada batch ini.</div>
+                `}
+            </div>
+        </div>
+    `;
+}
+
+function selectAttendanceSession(sessionId) {
+    if (!currentAttendanceContext) return;
+    currentAttendanceContext.selectedSessionId = sessionId;
+    renderBatchAttendance({
+        batch: currentAttendanceContext.batch || currentTrainingBatch,
+        participants: currentAttendanceContext.participants || [],
+        sessions: currentAttendanceContext.sessions || []
+    });
+}
+
+function showAttendanceSessionModal() {
+    if (!currentTrainingBatch) {
+        alert('Pilih batch lebih dulu.');
+        return;
+    }
+
+    const existingModal = document.getElementById('attendanceSessionModal');
+    if (existingModal) existingModal.remove();
+
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal fade" id="attendanceSessionModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-plus me-2"></i>Tambah Attendance Session
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="attendanceSessionForm">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Judul Session *</label>
+                                <input type="text" class="form-control" id="attendanceSessionTitle" required placeholder="Contoh: Session 01 - BIM Mindset">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Jadwal</label>
+                                <input type="datetime-local" class="form-control" id="attendanceSessionScheduledAt">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Meeting URL / Lokasi</label>
+                                <input type="text" class="form-control" id="attendanceSessionMeetingUrl" placeholder="https://... atau ruang training">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Simpan Session
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `);
+
+    document.getElementById('attendanceSessionForm').addEventListener('submit', handleAttendanceSessionSubmit);
+    new bootstrap.Modal(document.getElementById('attendanceSessionModal')).show();
+}
+
+async function handleAttendanceSessionSubmit(event) {
+    event.preventDefault();
+    if (!currentTrainingBatch) return;
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+
+    const payload = {
+        title: document.getElementById('attendanceSessionTitle').value.trim(),
+        scheduledAt: document.getElementById('attendanceSessionScheduledAt').value,
+        meetingUrl: document.getElementById('attendanceSessionMeetingUrl').value.trim()
+    };
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/attendance/sessions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('attendanceSessionModal'));
+        if (modal) modal.hide();
+        await loadBatchAttendance(currentTrainingBatch.id, result.data?.id || '');
+    } catch (error) {
+        alert('Gagal menyimpan attendance session: ' + error.message);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    }
+}
+
+async function saveAttendanceRecords() {
+    if (!currentTrainingBatch || !currentAttendanceContext?.selectedSessionId) {
+        alert('Pilih attendance session lebih dulu.');
+        return;
+    }
+
+    const rows = Array.from(document.querySelectorAll('[data-attendance-user-id]'));
+    const records = rows.map((row) => ({
+        userId: Number(row.dataset.attendanceUserId),
+        status: row.querySelector('.attendance-status')?.value || 'present',
+        note: row.querySelector('.attendance-note')?.value.trim() || ''
+    }));
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/attendance/sessions/${encodeURIComponent(currentAttendanceContext.selectedSessionId)}/records`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ records })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        await loadBatchAttendance(currentTrainingBatch.id, currentAttendanceContext.selectedSessionId);
+        alert('Attendance berhasil disimpan.');
+    } catch (error) {
+        alert('Gagal menyimpan attendance: ' + error.message);
+    }
+}
+
+async function loadBatchEvaluation(batchId) {
+    const container = document.getElementById('training-batches-content');
+    if (!container || !batchId) return;
+
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Memuat batch evaluation...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(batchId)}/evaluation`, {
+            credentials: 'include'
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        currentTrainingBatch = result.batch || allTrainingBatches.find((batch) => batch.id === batchId) || null;
+        renderBatchEvaluation(result);
+    } catch (error) {
+        console.error('Failed to load batch evaluation:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Gagal memuat batch evaluation: ${bclEscapeHtml(error.message)}
+            </div>
+            <button class="btn btn-outline-secondary" onclick="loadTrainingBatches()">
+                <i class="fas fa-arrow-left me-2"></i>Kembali ke daftar batch
+            </button>
+        `;
+    }
+}
+
+async function loadBatchReadiness(batchId) {
+    const container = document.getElementById('training-batches-content');
+    if (!container || !batchId) return;
+
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Memuat readiness insight...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(batchId)}/readiness`, {
+            credentials: 'include'
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        currentTrainingBatch = result.batch || allTrainingBatches.find((batch) => batch.id === batchId) || null;
+        renderBatchReadiness(result);
+    } catch (error) {
+        console.error('Failed to load batch readiness:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Gagal memuat readiness insight: ${bclEscapeHtml(error.message)}
+            </div>
+            <button class="btn btn-outline-secondary" onclick="loadTrainingBatches()">
+                <i class="fas fa-arrow-left me-2"></i>Kembali ke daftar batch
+            </button>
+        `;
+    }
+}
+
+function getReadinessBadge(level) {
+    const normalized = String(level || 'in_progress').toLowerCase();
+    const classes = {
+        ready: 'bg-success',
+        on_track: 'bg-primary',
+        in_progress: 'bg-secondary',
+        at_risk: 'bg-warning text-dark',
+        blocked: 'bg-danger'
+    };
+    const labels = {
+        ready: 'Ready',
+        on_track: 'On Track',
+        in_progress: 'In Progress',
+        at_risk: 'At Risk',
+        blocked: 'Blocked'
+    };
+    return `<span class="badge ${classes[normalized] || 'bg-secondary'}">${bclEscapeHtml(labels[normalized] || normalized)}</span>`;
+}
+
+function renderBatchReadiness(result) {
+    const container = document.getElementById('training-batches-content');
+    if (!container) return;
+
+    const batch = result.batch || currentTrainingBatch || {};
+    const summary = result.summary || {};
+    const atRisk = Array.isArray(result.atRisk) ? result.atRisk : [];
+    const roleReadiness = Array.isArray(result.roleReadiness) ? result.roleReadiness : [];
+    const skillGaps = Array.isArray(result.skillGaps) ? result.skillGaps : [];
+
+    container.innerHTML = `
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <button class="btn btn-outline-secondary btn-sm mb-3" onclick="loadTrainingBatches()">
+                    <i class="fas fa-arrow-left me-1"></i>Daftar Batch
+                </button>
+                <h4 class="mb-1">${bclEscapeHtml(batch.title || 'Readiness Insight')}</h4>
+                <div class="text-muted">
+                    <span class="me-3">${bclEscapeHtml(batch.code || batch.id || '')}</span>
+                    ${getTrainingStatusBadge(batch.status)}
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-dark" onclick="loadBatchEvaluation('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-table-list me-2"></i>Evaluation
+                </button>
+                <button class="btn btn-outline-info" onclick="loadBatchAttendance('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-calendar-check me-2"></i>Attendance
+                </button>
+                <button class="btn btn-outline-success" onclick="loadTrainingPlan('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-list-check me-2"></i>Plan
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-2">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Ready</div>
+                    <div class="fs-4 fw-bold text-success">${Number(summary.readyCount || 0)}</div>
+                    <small>${Number(summary.readinessPercent || 0)}%</small>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">On Track</div>
+                    <div class="fs-4 fw-bold text-primary">${Number(summary.onTrackCount || 0)}</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">In Progress</div>
+                    <div class="fs-4 fw-bold">${Number(summary.inProgressCount || 0)}</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">At Risk</div>
+                    <div class="fs-4 fw-bold text-warning">${Number(summary.atRiskCount || 0)}</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Blocked</div>
+                    <div class="fs-4 fw-bold text-danger">${Number(summary.blockedCount || 0)}</div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Avg Score</div>
+                    <div class="fs-4 fw-bold">${summary.averageScore == null ? '-' : Number(summary.averageScore)}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="content-card h-100">
+                    <div class="card-header-modern">
+                        <div class="card-title-modern">
+                            <i class="fas fa-triangle-exclamation"></i>At-risk Participants
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        ${atRisk.length ? `
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Participant</th>
+                                            <th>Readiness</th>
+                                            <th>Score</th>
+                                            <th>Reasons</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${atRisk.map((row) => `
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold">${bclEscapeHtml(row.username || row.email || row.userId || '-')}</div>
+                                                    <small class="text-muted">${bclEscapeHtml(row.email || '')}</small>
+                                                </td>
+                                                <td>${getReadinessBadge(row.readinessLevel)}</td>
+                                                <td>${row.finalScore == null ? '-' : Number(row.finalScore)}</td>
+                                                <td class="small text-muted">${Array.isArray(row.riskReasons) && row.riskReasons.length ? row.riskReasons.map(bclEscapeHtml).join('<br>') : '-'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : `
+                            <div class="text-center py-5 text-muted">
+                                <i class="fas fa-circle-check fa-2x mb-3"></i>
+                                <p class="mb-0">Belum ada participant yang terdeteksi at-risk.</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="content-card h-100">
+                    <div class="card-header-modern">
+                        <div class="card-title-modern">
+                            <i class="fas fa-user-gear"></i>Readiness by Role
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        ${roleReadiness.length ? roleReadiness.map((role) => `
+                            <div class="border rounded p-3 mb-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <strong>${bclEscapeHtml(role.jobRole || 'Unspecified Role')}</strong>
+                                    <span>${Number(role.readinessPercent || 0)}% ready</span>
+                                </div>
+                                <div class="small text-muted">
+                                    ${Number(role.participantCount || 0)} participant, ${Number(role.atRiskCount || 0)} at-risk, ${Number(role.blockedCount || 0)} blocked
+                                    ${role.averageScore == null ? '' : `, avg score ${Number(role.averageScore)}`}
+                                </div>
+                            </div>
+                        `).join('') : `
+                            <div class="text-muted py-4">Belum ada data role readiness.</div>
+                        `}
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="content-card">
+                    <div class="card-header-modern">
+                        <div class="card-title-modern">
+                            <i class="fas fa-chart-simple"></i>Skill / Activity Gap
+                        </div>
+                    </div>
+                    <div class="card-body-modern">
+                        ${skillGaps.length ? `
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Practice Task</th>
+                                            <th>Completion</th>
+                                            <th>Review</th>
+                                            <th>Avg Score</th>
+                                            <th>Gap Signals</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${skillGaps.map((gap) => `
+                                            <tr>
+                                                <td class="fw-semibold">${bclEscapeHtml(gap.title || gap.classworkItemId)}</td>
+                                                <td>${Number(gap.submittedCount || 0)} / ${Number(gap.participantCount || 0)} <small class="text-muted">(${Number(gap.completionPercent || 0)}%)</small></td>
+                                                <td>${Number(gap.reviewedCount || 0)} reviewed</td>
+                                                <td>${gap.averageScore == null ? '-' : Number(gap.averageScore)}</td>
+                                                <td class="small text-muted">${Array.isArray(gap.gapReasons) && gap.gapReasons.length ? gap.gapReasons.map(bclEscapeHtml).join('<br>') : 'No major gap'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : `
+                            <div class="text-muted py-4">Belum ada practice task untuk dianalisis.</div>
+                        `}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderBatchEvaluation(result) {
+    const container = document.getElementById('training-batches-content');
+    if (!container) return;
+
+    const batch = result.batch || currentTrainingBatch || {};
+    const summary = result.summary || {};
+    const rows = Array.isArray(result.data) ? result.data : [];
+
+    container.innerHTML = `
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <button class="btn btn-outline-secondary btn-sm mb-3" onclick="loadTrainingBatches()">
+                    <i class="fas fa-arrow-left me-1"></i>Daftar Batch
+                </button>
+                <h4 class="mb-1">${bclEscapeHtml(batch.title || 'Batch Evaluation')}</h4>
+                <div class="text-muted">
+                    <span class="me-3">${bclEscapeHtml(batch.code || batch.id || '')}</span>
+                    ${getTrainingStatusBadge(batch.status)}
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-success" onclick="loadTrainingPlan('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-list-check me-2"></i>Plan
+                </button>
+                <button class="btn btn-outline-warning" onclick="loadBatchReadiness('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-chart-line me-2"></i>Readiness
+                </button>
+                <button class="btn btn-outline-info" onclick="loadBatchAttendance('${bclEscapeHtml(batch.id || '')}')">
+                    <i class="fas fa-calendar-check me-2"></i>Attendance
+                </button>
+                <a class="btn btn-modern-primary" href="/api/training/batches/${encodeURIComponent(batch.id || '')}/evaluation/export.csv" target="_blank" rel="noopener">
+                    <i class="fas fa-file-csv me-2"></i>Export CSV
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Participants</div>
+                    <div class="fs-4 fw-bold">${Number(summary.participantCount || 0)}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Completed/Passed</div>
+                    <div class="fs-4 fw-bold text-success">${Number(summary.completedCount || 0)}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Needs Revision</div>
+                    <div class="fs-4 fw-bold text-warning">${Number(summary.needsRevisionCount || 0)}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="border rounded p-3 bg-white">
+                    <div class="text-muted small">Average Score</div>
+                    <div class="fs-4 fw-bold">${summary.averageScore == null ? '-' : Number(summary.averageScore)}</div>
+                </div>
+            </div>
+        </div>
+
+        ${rows.length ? `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Participant</th>
+                            <th>Submission</th>
+                            <th>Review</th>
+                            <th>Score</th>
+                            <th>Final Status</th>
+                            <th>Note</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(renderBatchEvaluationRow).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : `
+            <div class="text-center py-5 text-muted border rounded">
+                <i class="fas fa-users fa-2x mb-3"></i>
+                <p class="mb-0">Belum ada participant aktif pada batch ini.</p>
+            </div>
+        `}
+    `;
+}
+
+function renderBatchEvaluationRow(row) {
+    const status = String(row.finalStatus || 'in_progress');
+    return `
+        <tr data-evaluation-user-id="${Number(row.userId)}">
+            <td>
+                <div class="fw-semibold">${bclEscapeHtml(row.username || row.email || row.userId || '-')}</div>
+                <small class="text-muted">${bclEscapeHtml(row.email || '')}</small>
+            </td>
+            <td>
+                <div class="fw-semibold">${Number(row.submittedCount || 0)} / ${Number(row.taskCount || 0)}</div>
+                <small class="text-muted">${Number(row.completionPercent || 0)}% complete</small>
+            </td>
+            <td>
+                <div class="fw-semibold">${Number(row.reviewedCount || 0)} reviewed</div>
+                <small class="text-muted">${Number(row.missingCount || 0)} missing, ${Number(row.returnedCount || 0)} returned</small>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm evaluation-final-score"
+                    value="${row.finalScore == null ? '' : Number(row.finalScore)}" min="0" step="0.01">
+                <small class="text-muted">Avg: ${row.averageScore == null ? '-' : Number(row.averageScore)}</small>
+            </td>
+            <td>
+                <select class="form-select form-select-sm evaluation-final-status">
+                    <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="completed" ${status === 'completed' ? 'selected' : ''}>Completed</option>
+                    <option value="passed" ${status === 'passed' ? 'selected' : ''}>Passed</option>
+                    <option value="needs_revision" ${status === 'needs_revision' ? 'selected' : ''}>Needs Revision</option>
+                    <option value="failed" ${status === 'failed' ? 'selected' : ''}>Failed</option>
+                    <option value="dropped" ${status === 'dropped' ? 'selected' : ''}>Dropped</option>
+                </select>
+            </td>
+            <td>
+                <textarea class="form-control form-control-sm evaluation-note" rows="2" placeholder="Catatan final...">${bclEscapeHtml(row.note || '')}</textarea>
+            </td>
+            <td>
+                <button class="btn btn-outline-primary btn-sm" onclick="saveBatchEvaluation(${Number(row.userId)})">
+                    <i class="fas fa-save me-1"></i>Simpan
+                </button>
+            </td>
+        </tr>
+    `;
+}
+
+async function saveBatchEvaluation(userId) {
+    if (!currentTrainingBatch || !userId) {
+        alert('Konteks batch evaluation belum siap.');
+        return;
+    }
+
+    const row = document.querySelector(`[data-evaluation-user-id="${Number(userId)}"]`);
+    if (!row) return;
+
+    const button = row.querySelector('button');
+    const originalText = button ? button.innerHTML : '';
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Simpan';
+    }
+
+    const payload = {
+        finalStatus: row.querySelector('.evaluation-final-status')?.value || 'in_progress',
+        finalScore: row.querySelector('.evaluation-final-score')?.value || null,
+        note: row.querySelector('.evaluation-note')?.value.trim() || ''
+    };
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/evaluation/${encodeURIComponent(userId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        await loadBatchEvaluation(currentTrainingBatch.id);
+    } catch (error) {
+        alert('Gagal menyimpan evaluation: ' + error.message);
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    }
+}
+
+function renderTrainingPlan(topics, unassignedItems) {
+    const container = document.getElementById('training-batches-content');
+    if (!container || !currentTrainingBatch) return;
+
+    const batch = currentTrainingBatch;
+    const allTopics = Array.isArray(topics) ? topics : [];
+    const looseItems = Array.isArray(unassignedItems) ? unassignedItems : [];
+
+    container.innerHTML = `
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <button class="btn btn-outline-secondary btn-sm mb-3" onclick="loadTrainingBatches()">
+                    <i class="fas fa-arrow-left me-1"></i>Daftar Batch
+                </button>
+                <h4 class="mb-1">${bclEscapeHtml(batch.title)}</h4>
+                <div class="text-muted">
+                    <span class="me-3">${bclEscapeHtml(batch.code || batch.id)}</span>
+                    <span class="me-3">${bclEscapeHtml(batch.learningPathId || 'No learning path')}</span>
+                    ${getTrainingStatusBadge(batch.status)}
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary" onclick="loadTrainingBatchMembers('${bclEscapeHtml(batch.id)}')">
+                    <i class="fas fa-users me-2"></i>Roster
+                </button>
+                <button class="btn btn-outline-dark" onclick="loadBatchEvaluation('${bclEscapeHtml(batch.id)}')">
+                    <i class="fas fa-table-list me-2"></i>Evaluation
+                </button>
+                <button class="btn btn-outline-warning" onclick="loadBatchReadiness('${bclEscapeHtml(batch.id)}')">
+                    <i class="fas fa-chart-line me-2"></i>Readiness
+                </button>
+                <button class="btn btn-outline-info" onclick="loadBatchAttendance('${bclEscapeHtml(batch.id)}')">
+                    <i class="fas fa-calendar-check me-2"></i>Attendance
+                </button>
+                <button class="btn btn-outline-success" onclick="showTrainingTopicModal()">
+                    <i class="fas fa-layer-group me-2"></i>Tambah Topic
+                </button>
+                <button class="btn btn-modern-primary" onclick="showClassworkModal()">
+                    <i class="fas fa-plus me-2"></i>Tambah Item
+                </button>
+            </div>
+        </div>
+
+        ${allTopics.length === 0 && looseItems.length === 0 ? `
+            <div class="text-center py-5 text-muted border rounded">
+                <i class="fas fa-list-check fa-3x mb-3"></i>
+                <h5>Training Plan masih kosong</h5>
+                <p class="mb-3">Tambahkan topic/session, lalu isi dengan material, quiz, exam, meeting, atau practice task.</p>
+                <button class="btn btn-outline-success me-2" onclick="showTrainingTopicModal()">
+                    <i class="fas fa-layer-group me-2"></i>Tambah Topic
+                </button>
+                <button class="btn btn-modern-primary" onclick="showClassworkModal()">
+                    <i class="fas fa-plus me-2"></i>Tambah Item
+                </button>
+            </div>
+        ` : `
+            <div class="training-plan-list">
+                ${allTopics.map((topic) => renderTrainingTopicCard(topic)).join('')}
+                ${looseItems.length > 0 ? `
+                    <div class="content-card mb-3">
+                        <div class="card-header-modern">
+                            <div class="card-title-modern">
+                                <i class="fas fa-inbox"></i>Unassigned Items
+                            </div>
+                        </div>
+                        <div class="card-body-modern">
+                            ${looseItems.map(renderClassworkItemRow).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `}
+    `;
+
+    window.currentTrainingPlanTopics = allTopics;
+}
+
+function renderTrainingTopicCard(topic) {
+    const items = Array.isArray(topic.items) ? topic.items : [];
+    return `
+        <div class="content-card mb-3">
+            <div class="card-header-modern">
+                <div>
+                    <div class="card-title-modern">
+                        <i class="fas fa-layer-group"></i>
+                        ${bclEscapeHtml(topic.title)}
+                    </div>
+                    ${topic.description ? `<small class="text-muted">${bclEscapeHtml(topic.description)}</small>` : ''}
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showClassworkModal('${bclEscapeHtml(topic.id)}')">
+                    <i class="fas fa-plus me-1"></i>Item
+                </button>
+            </div>
+            <div class="card-body-modern">
+                ${items.length === 0 ? `
+                    <div class="text-muted py-3">
+                        <i class="fas fa-info-circle me-2"></i>Belum ada item pada topic ini.
+                    </div>
+                ` : items.map(renderClassworkItemRow).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderClassworkItemRow(item) {
+    const isPracticeTask = String(item.type || '').toLowerCase() === 'practice_task';
+
+    return `
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border rounded p-3 mb-2 bg-white">
+            <div>
+                <div class="fw-bold">${bclEscapeHtml(item.title)}</div>
+                <small class="text-muted">
+                    ${getClassworkTypeLabel(item.type)}
+                    ${item.linkedResourceType ? ` - ${bclEscapeHtml(item.linkedResourceType)}:${bclEscapeHtml(item.linkedResourceId || '')}` : ''}
+                </small>
+                ${item.instructions ? `<div class="small text-muted mt-1">${bclEscapeHtml(item.instructions)}</div>` : ''}
+            </div>
+            <div class="text-end">
+                ${getClassworkStatusBadge(item.status)}
+                <div class="small text-muted mt-1">Due: ${formatTrainingDate(item.dueAt)}</div>
+                <div class="small text-muted">Points: ${Number(item.points || 0)}</div>
+                ${isPracticeTask ? `
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="showClassworkSubmissions('${bclEscapeHtml(item.id)}')">
+                        <i class="fas fa-inbox me-1"></i>Submissions
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function getSubmissionStatusBadge(status) {
+    const normalized = String(status || 'assigned').toLowerCase();
+    const classes = {
+        assigned: 'bg-secondary',
+        missing: 'bg-warning text-dark',
+        submitted: 'bg-success',
+        late: 'bg-warning text-dark',
+        returned: 'bg-danger',
+        reviewed: 'bg-info text-dark',
+        accepted: 'bg-primary'
+    };
+    const labels = {
+        assigned: 'Belum Submit',
+        missing: 'Missing',
+        submitted: 'Submitted',
+        late: 'Late',
+        returned: 'Returned',
+        reviewed: 'Reviewed',
+        accepted: 'Accepted'
+    };
+    return `<span class="badge ${classes[normalized] || 'bg-secondary'}">${bclEscapeHtml(labels[normalized] || normalized)}</span>`;
+}
+
+async function showClassworkSubmissions(itemId) {
+    if (!currentTrainingBatch || !itemId) {
+        alert('Pilih batch dan practice task lebih dulu.');
+        return;
+    }
+
+    const existingModal = document.getElementById('classworkSubmissionsModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div class="modal fade" id="classworkSubmissionsModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title">
+                                <i class="fas fa-inbox me-2"></i>Practice Submissions
+                            </h5>
+                            <small class="text-muted">${bclEscapeHtml(currentTrainingBatch.title || currentTrainingBatch.id)}</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="classworkSubmissionsContent">
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <p class="mb-0">Memuat submission peserta...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('classworkSubmissionsModal'));
+    modal.show();
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/classwork/${encodeURIComponent(itemId)}/submissions`, {
+            credentials: 'include'
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        renderClassworkSubmissions(result.classwork || {}, result.data || []);
+    } catch (error) {
+        const content = document.getElementById('classworkSubmissionsContent');
+        if (content) {
+            content.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Gagal memuat submission: ${bclEscapeHtml(error.message)}
+                </div>
+            `;
+        }
+    }
+}
+
+function renderClassworkSubmissions(classwork, entries) {
+    const content = document.getElementById('classworkSubmissionsContent');
+    if (!content) return;
+
+    const rows = Array.isArray(entries) ? entries : [];
+    currentSubmissionReviewContext = {
+        batchId: currentTrainingBatch ? currentTrainingBatch.id : '',
+        classwork
+    };
+    const submittedCount = rows.filter((entry) => ['submitted', 'late', 'returned', 'reviewed', 'accepted'].includes(String(entry.status || '').toLowerCase())).length;
+    const missingCount = rows.filter((entry) => ['assigned', 'missing'].includes(String(entry.status || '').toLowerCase())).length;
+
+    content.innerHTML = `
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+            <div>
+                <h6 class="mb-1">${bclEscapeHtml(classwork.title || 'Practice Task')}</h6>
+                <div class="text-muted small">
+                    Due: ${formatTrainingDateTime(classwork.dueAt)} | Points: ${Number(classwork.points || 0)}
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="badge bg-success">${submittedCount} submitted</span>
+                <span class="badge bg-secondary">${missingCount} pending/missing</span>
+                <span class="badge bg-light text-dark">${rows.length} peserta</span>
+            </div>
+        </div>
+
+        ${rows.length ? `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Peserta</th>
+                            <th>Status</th>
+                            <th>Dikirim</th>
+                            <th>Evidence</th>
+                            <th>Catatan</th>
+                            <th>Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(renderSubmissionRow).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : `
+            <div class="text-center py-5 text-muted border rounded">
+                <i class="fas fa-users fa-2x mb-3"></i>
+                <p class="mb-0">Belum ada participant pada batch ini.</p>
+            </div>
+        `}
+    `;
+}
+
+function renderSubmissionRow(entry) {
+    const submission = entry.submission || null;
+    const files = Array.isArray(submission?.files) ? submission.files : [];
+    const note = submission?.metadata?.note || '';
+
+    return `
+        <tr>
+            <td>
+                <div class="fw-semibold">${bclEscapeHtml(entry.username || entry.email || entry.userId || '-')}</div>
+                <small class="text-muted">${bclEscapeHtml(entry.email || '')}</small>
+            </td>
+            <td>${getSubmissionStatusBadge(entry.status)}</td>
+            <td>${formatTrainingDateTime(submission?.submittedAt)}</td>
+            <td>
+                ${files.length ? files.map((file) => `
+                    <div class="small mb-1">
+                        <i class="fas fa-paperclip me-1"></i>
+                        ${file.externalUrl ? `
+                            <a href="${bclEscapeHtml(file.externalUrl)}" target="_blank" rel="noopener">
+                                ${bclEscapeHtml(file.fileName || file.externalUrl)}
+                            </a>
+                        ` : `
+                            <span>${bclEscapeHtml(file.fileName || file.filePath || 'Evidence')}</span>
+                        `}
+                        ${file.filePath ? `<div class="text-muted">${bclEscapeHtml(file.filePath)}</div>` : ''}
+                    </div>
+                `).join('') : '<span class="text-muted small">Belum ada evidence</span>'}
+            </td>
+            <td class="small text-muted">${note ? bclEscapeHtml(note) : '-'}</td>
+            <td>
+                ${submission ? `
+                    <button class="btn btn-outline-success btn-sm" onclick="showSubmissionReview('${bclEscapeHtml(submission.id)}')">
+                        <i class="fas fa-pen-to-square me-1"></i>Review
+                    </button>
+                ` : '<span class="text-muted small">Menunggu submit</span>'}
+            </td>
+        </tr>
+    `;
+}
+
+async function showSubmissionReview(submissionId) {
+    const context = currentSubmissionReviewContext || {};
+    const batchId = context.batchId;
+    const classwork = context.classwork || {};
+
+    if (!batchId || !classwork.id || !submissionId) {
+        alert('Konteks review belum siap. Buka ulang submission list.');
+        return;
+    }
+
+    currentSubmissionReviewContext = {
+        ...context,
+        submissionId
+    };
+
+    const existingModal = document.getElementById('submissionReviewModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div class="modal fade" id="submissionReviewModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title">
+                                <i class="fas fa-pen-to-square me-2"></i>Review Submission
+                            </h5>
+                            <small class="text-muted">${bclEscapeHtml(classwork.title || 'Practice Task')}</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="submissionReviewContent">
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <p class="mb-0">Memuat detail review...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    new bootstrap.Modal(document.getElementById('submissionReviewModal')).show();
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(batchId)}/classwork/${encodeURIComponent(classwork.id)}/submissions/${encodeURIComponent(submissionId)}/review`, {
+            credentials: 'include'
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        renderSubmissionReviewForm(result);
+    } catch (error) {
+        const content = document.getElementById('submissionReviewContent');
+        if (content) {
+            content.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Gagal memuat review: ${bclEscapeHtml(error.message)}
+                </div>
+            `;
+        }
+    }
+}
+
+function renderSubmissionReviewForm(result) {
+    const content = document.getElementById('submissionReviewContent');
+    if (!content) return;
+
+    const submission = result.submission || {};
+    const criteria = Array.isArray(result.criteria) && result.criteria.length
+        ? result.criteria
+        : [{
+            id: '',
+            title: 'Kualitas Evidence',
+            description: 'Kelengkapan, kesesuaian instruksi, dan kualitas hasil praktik.',
+            maxScore: 100,
+            weight: 1
+        }];
+    const scores = Array.isArray(result.scores) ? result.scores : [];
+    const scoreByCriterion = new Map(scores.map((score) => [score.criterionId, score]));
+    const existingStatus = String(submission.status || 'reviewed').toLowerCase();
+
+    content.innerHTML = `
+        <form id="submissionReviewForm">
+            <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
+                <div>
+                    <div class="fw-semibold">${bclEscapeHtml(submission.username || submission.email || submission.userId || '-')}</div>
+                    <small class="text-muted">${bclEscapeHtml(submission.email || '')}</small>
+                </div>
+                <div class="text-end">
+                    ${getSubmissionStatusBadge(existingStatus)}
+                    <div class="small text-muted mt-1">Current score: ${submission.score == null ? '-' : Number(submission.score)}</div>
+                </div>
+            </div>
+
+            <div class="border rounded p-3 mb-3">
+                <div class="fw-semibold mb-2">Criteria Score</div>
+                ${criteria.map((criterion, index) => {
+                    const score = scoreByCriterion.get(criterion.id) || {};
+                    return `
+                        <div class="review-score-row border rounded p-3 mb-2"
+                            data-criterion-id="${bclEscapeHtml(criterion.id || '')}"
+                            data-title="${bclEscapeHtml(criterion.title)}"
+                            data-max-score="${Number(criterion.maxScore || 100)}"
+                            data-weight="${Number(criterion.weight || 1)}"
+                            data-sort-order="${index}">
+                            <div class="row g-2 align-items-start">
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold mb-1">${bclEscapeHtml(criterion.title)}</label>
+                                    ${criterion.description ? `<div class="small text-muted mb-2">${bclEscapeHtml(criterion.description)}</div>` : ''}
+                                    <textarea class="form-control review-score-comment" rows="2" placeholder="Komentar per criteria...">${bclEscapeHtml(score.comment || '')}</textarea>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Score</label>
+                                    <input type="number" class="form-control review-score-value"
+                                        min="0" max="${Number(criterion.maxScore || 100)}" step="0.01"
+                                        value="${score.score == null ? '' : Number(score.score)}" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Max</label>
+                                    <input type="text" class="form-control" value="${Number(criterion.maxScore || 100)}" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Status Review</label>
+                    <select class="form-select" id="reviewStatus">
+                        <option value="reviewed" ${existingStatus === 'reviewed' ? 'selected' : ''}>Reviewed</option>
+                        <option value="returned" ${existingStatus === 'returned' ? 'selected' : ''}>Returned for Revision</option>
+                        <option value="accepted" ${existingStatus === 'accepted' ? 'selected' : ''}>Accepted</option>
+                        <option value="completed" ${existingStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Feedback Summary</label>
+                    <textarea class="form-control" id="reviewFeedbackSummary" rows="3" placeholder="Ringkasan feedback untuk participant...">${bclEscapeHtml(submission.feedbackSummary || '')}</textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Komentar Baru</label>
+                    <textarea class="form-control" id="reviewComment" rows="3" placeholder="Opsional. Komentar ini akan terlihat oleh participant."></textarea>
+                </div>
+            </div>
+
+            ${Array.isArray(result.comments) && result.comments.length ? `
+                <div class="border-top pt-3 mb-3">
+                    <div class="fw-semibold mb-2">Riwayat Komentar</div>
+                    ${result.comments.map((comment) => `
+                        <div class="small text-muted mb-2">
+                            <i class="fas fa-comment me-1"></i>
+                            ${bclEscapeHtml(comment.body)}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+
+            <div class="modal-footer px-0 pb-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Simpan Review
+                </button>
+            </div>
+        </form>
+    `;
+
+    document.getElementById('submissionReviewForm').addEventListener('submit', handleSubmissionReviewSubmit);
+}
+
+async function handleSubmissionReviewSubmit(event) {
+    event.preventDefault();
+    const context = currentSubmissionReviewContext || {};
+    const batchId = context.batchId;
+    const classwork = context.classwork || {};
+    const submissionId = context.submissionId;
+
+    if (!batchId || !classwork.id || !submissionId) {
+        alert('Konteks review belum siap.');
+        return;
+    }
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+
+    const scores = Array.from(event.target.querySelectorAll('.review-score-row')).map((row) => ({
+        criterionId: row.dataset.criterionId || '',
+        title: row.dataset.title || 'Kualitas Evidence',
+        maxScore: Number(row.dataset.maxScore || 100),
+        weight: Number(row.dataset.weight || 1),
+        sortOrder: Number(row.dataset.sortOrder || 0),
+        score: row.querySelector('.review-score-value')?.value,
+        comment: row.querySelector('.review-score-comment')?.value.trim() || ''
+    }));
+
+    const payload = {
+        status: document.getElementById('reviewStatus').value,
+        feedbackSummary: document.getElementById('reviewFeedbackSummary').value.trim(),
+        comment: document.getElementById('reviewComment').value.trim(),
+        scores
+    };
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(batchId)}/classwork/${encodeURIComponent(classwork.id)}/submissions/${encodeURIComponent(submissionId)}/review`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        renderSubmissionReviewForm(result);
+        alert('Review submission berhasil disimpan.');
+    } catch (error) {
+        alert('Gagal menyimpan review: ' + error.message);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    }
+}
+
+function getClassworkTypeLabel(type) {
+    const labels = {
+        material: 'Material',
+        quiz: 'Quiz',
+        practice_task: 'Practice Task',
+        exam: 'Exam',
+        meeting: 'Meeting',
+        announcement: 'Announcement'
+    };
+    return labels[String(type || 'material')] || type;
+}
+
+function getClassworkStatusBadge(status) {
+    const normalized = String(status || 'draft').toLowerCase();
+    const classes = {
+        draft: 'bg-secondary',
+        published: 'bg-success',
+        closed: 'bg-primary',
+        archived: 'bg-dark'
+    };
+    return `<span class="badge ${classes[normalized] || 'bg-secondary'}">${bclEscapeHtml(normalized)}</span>`;
+}
+
+function showTrainingTopicModal() {
+    if (!currentTrainingBatch) {
+        alert('Pilih batch lebih dulu.');
+        return;
+    }
+
+    const modalHtml = `
+        <div class="modal fade" id="trainingTopicModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-layer-group me-2"></i>Tambah Topic / Session
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="trainingTopicForm">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Judul Topic *</label>
+                                <input type="text" class="form-control" id="trainingTopicTitle"
+                                    placeholder="Contoh: Session 01 - BIM Mindset" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Deskripsi</label>
+                                <textarea class="form-control" id="trainingTopicDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Urutan</label>
+                                <input type="number" class="form-control" id="trainingTopicSortOrder" value="0" min="0">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Simpan Topic
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const existingModal = document.getElementById('trainingTopicModal');
+    if (existingModal) existingModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('trainingTopicForm').addEventListener('submit', handleTrainingTopicSubmit);
+    new bootstrap.Modal(document.getElementById('trainingTopicModal')).show();
+}
+
+async function handleTrainingTopicSubmit(event) {
+    event.preventDefault();
+    if (!currentTrainingBatch) return;
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+    submitButton.disabled = true;
+
+    const payload = {
+        title: document.getElementById('trainingTopicTitle').value.trim(),
+        description: document.getElementById('trainingTopicDescription').value.trim(),
+        sortOrder: Number(document.getElementById('trainingTopicSortOrder').value || 0)
+    };
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/topics`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('trainingTopicModal'));
+        if (modal) modal.hide();
+        await loadTrainingPlan(currentTrainingBatch.id);
+    } catch (error) {
+        alert('Gagal menyimpan topic: ' + error.message);
+    } finally {
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+    }
+}
+
+function showClassworkModal(topicId = '') {
+    if (!currentTrainingBatch) {
+        alert('Pilih batch lebih dulu.');
+        return;
+    }
+
+    const topics = Array.isArray(window.currentTrainingPlanTopics) ? window.currentTrainingPlanTopics : [];
+    const topicOptions = topics.map((topic) => `
+        <option value="${bclEscapeHtml(topic.id)}" ${topic.id === topicId ? 'selected' : ''}>${bclEscapeHtml(topic.title)}</option>
+    `).join('');
+
+    const modalHtml = `
+        <div class="modal fade" id="classworkModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-list-check me-2"></i>Tambah Training Plan Item
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="classworkForm">
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Judul Item *</label>
+                                    <input type="text" class="form-control" id="classworkTitle" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Type</label>
+                                    <select class="form-select" id="classworkType">
+                                        <option value="material">Material</option>
+                                        <option value="quiz">Quiz</option>
+                                        <option value="practice_task">Practice Task</option>
+                                        <option value="exam">Exam</option>
+                                        <option value="meeting">Meeting</option>
+                                        <option value="announcement">Announcement</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Topic</label>
+                                    <select class="form-select" id="classworkTopicId">
+                                        <option value="">Unassigned</option>
+                                        ${topicOptions}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" id="classworkStatus">
+                                        <option value="draft">Draft</option>
+                                        <option value="published">Published</option>
+                                        <option value="closed">Closed</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Points</label>
+                                    <input type="number" class="form-control" id="classworkPoints" value="0" min="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Linked Resource Type</label>
+                                    <input type="text" class="form-control" id="classworkResourceType" placeholder="page, pdf, quiz, url">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Linked Resource ID / URL</label>
+                                    <input type="text" class="form-control" id="classworkResourceId" placeholder="/pages/bim-mindset.html">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Due At</label>
+                                    <input type="datetime-local" class="form-control" id="classworkDueAt">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Urutan</label>
+                                    <input type="number" class="form-control" id="classworkSortOrder" value="0" min="0">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Instruksi</label>
+                                    <textarea class="form-control" id="classworkInstructions" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Simpan Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const existingModal = document.getElementById('classworkModal');
+    if (existingModal) existingModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('classworkForm').addEventListener('submit', handleClassworkSubmit);
+    new bootstrap.Modal(document.getElementById('classworkModal')).show();
+}
+
+async function handleClassworkSubmit(event) {
+    event.preventDefault();
+    if (!currentTrainingBatch) return;
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
+    submitButton.disabled = true;
+
+    const payload = {
+        title: document.getElementById('classworkTitle').value.trim(),
+        type: document.getElementById('classworkType').value,
+        topicId: document.getElementById('classworkTopicId').value,
+        status: document.getElementById('classworkStatus').value,
+        points: Number(document.getElementById('classworkPoints').value || 0),
+        linkedResourceType: document.getElementById('classworkResourceType').value.trim(),
+        linkedResourceId: document.getElementById('classworkResourceId').value.trim(),
+        dueAt: document.getElementById('classworkDueAt').value,
+        sortOrder: Number(document.getElementById('classworkSortOrder').value || 0),
+        instructions: document.getElementById('classworkInstructions').value.trim()
+    };
+
+    try {
+        const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/classwork`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status})`);
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('classworkModal'));
+        if (modal) modal.hide();
+        await loadTrainingPlan(currentTrainingBatch.id);
+    } catch (error) {
+        alert('Gagal menyimpan item: ' + error.message);
+    } finally {
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
     }
 }
 

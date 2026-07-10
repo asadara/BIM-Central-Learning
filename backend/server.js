@@ -232,6 +232,27 @@ function requireFeatureAccess(accessKey) {
     return (req, res, next) => requireUserFeatureAccess(req, res, next, accessKey);
 }
 
+function requireAdminDashboardAccess(req, res, next) {
+    const authUser = getRequestUser(req);
+    if (authUser && authUser.isAdmin) {
+        req.authUser = authUser;
+        req.user = authUser;
+        return next();
+    }
+
+    if (req.accepts('html')) {
+        return res.redirect(`/pages/sub/adminbcl.html?redirect=${encodeURIComponent(req.originalUrl)}`);
+    }
+
+    return res.status(401).json({ error: 'Admin authentication required' });
+}
+
+app.get(
+    ['/elearning-assets/phase4-dashboard.html', '/phase4-dashboard.html'],
+    requireAdminDashboardAccess,
+    (req, res) => res.sendFile(path.join(LEARNING_ROOT_DIR, 'elearning-assets', 'phase4-dashboard.html'))
+);
+
 function normalizeAccessPath(value) {
     try {
         return decodeURIComponent(String(value || ''))
@@ -471,6 +492,7 @@ const competencyRoutes = require('./routes/competencyRoutes');
 const organizationsRoutes = require('./routes/organizations');
 const pluginsRoutes = require('./routes/plugins');
 const messagesRoutes = require('./routes/messages');
+const trainingBatchRoutes = require('./routes/trainingBatchRoutes');
 const videosAdminRoutes = require('./routes/videos');
 const createSystemStatusRoutes = require('./routes/systemStatusRoutes');
 const createActiveUserTracking = require('./modules/activeUserTracking');
@@ -538,6 +560,7 @@ app.use('/api/competency-reports', competencyRoutes);
 app.use('/api/organizations', organizationsRoutes);
 app.use('/api/plugins', pluginsRoutes);
 app.use(messagesRoutes);
+app.use('/api/training', trainingBatchRoutes);
 app.use('/api/admin/videos', videosAdminRoutes);
 app.get('/api/audit-2026/status', (req, res, next) => {
     if (!isLoopbackRequest(req)) {
@@ -821,7 +844,7 @@ const EXCLUDED_FOLDERS = VIDEO_SCAN_EXCLUDED_FOLDERS;
 const PROJECT_MEDIA_PROXY_CACHE_DIR = path.resolve(__dirname, 'public', 'cache', 'project-media-proxy');
 const PROJECT_MEDIA_PROXY_TIMEOUT_MS = Number(process.env.PROJECT_MEDIA_PROXY_TIMEOUT_MS) || 3000;
 const PROJECT_MEDIA_PROXY_CACHE_MAX_BYTES = Number(process.env.PROJECT_MEDIA_PROXY_CACHE_MAX_BYTES) || (60 * 1024 * 1024);
-const PROJECT_MEDIA_PROXY_CACHEABLE_EXT = new Set([...VALID_IMAGE_EXT, '.svg']);
+const PROJECT_MEDIA_PROXY_CACHEABLE_EXT = new Set([...VALID_IMAGE_EXT, ...VALID_MODEL_EXT, '.svg']);
 const PROJECT_MEDIA_PROXY_MIME = {
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',

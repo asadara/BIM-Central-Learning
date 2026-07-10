@@ -664,7 +664,7 @@
             sort: 'popular'
         };
         const itemsPerPage = 12;
-        const THUMBNAIL_FALLBACK_SRC = '/img/fallback-thumb.png';
+        const THUMBNAIL_FALLBACK_SRC = '/img/media-thumbnail.svg';
 
         function getApiCandidates(path) {
             const candidates = [path];
@@ -1052,7 +1052,7 @@
                 return course.thumbnail;
             }
 
-            return '../img/fallback-thumb.png';
+            return THUMBNAIL_FALLBACK_SRC;
         }
 
         // Create course card
@@ -1062,7 +1062,7 @@
             card.innerHTML = `
                 <div class="card course-card h-100">
                     <img src="${getCourseThumbnail(course)}" class="course-thumbnail card-img-top"
-                         alt="${course.title}" onerror="this.src='../img/fallback-thumb.png'">
+                         alt="${course.title}" onerror="this.onerror=null;this.src='${THUMBNAIL_FALLBACK_SRC}'">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">${course.title}</h5>
                         <p class="card-text flex-grow-1">${course.description}</p>

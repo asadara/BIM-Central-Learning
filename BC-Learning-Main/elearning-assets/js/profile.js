@@ -856,7 +856,7 @@ function renderEnrolledCourses(courses) {
     container.innerHTML = courses.map(course => `
         <div class="course-card">
             <div class="course-thumbnail">
-                <img src="${course.thumbnail}" alt="${course.title}" onerror="this.src='/elearning-assets/images/default-course.jpg'">
+                <img src="${course.thumbnail || '/img/media-thumbnail.svg'}" alt="${course.title}" onerror="this.onerror=null;this.src='/img/media-thumbnail.svg'">
             </div>
             <div class="course-info">
                 <h4>${course.title}</h4>
@@ -978,7 +978,7 @@ function getUserData() {
             return {
                 name: username,
                 role: role || 'Student',
-                photo: normalizeProfileImageUrl(userimg || '/img/user-default.png'),
+                photo: normalizeProfileImageUrl(userimg || '/img/user-default.svg'),
                 email: email || '',
                 token: token || ''
             };

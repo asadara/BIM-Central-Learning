@@ -117,6 +117,7 @@
 
 .ifc-workspace {
     display: grid;
+    align-items: start;
     grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
     gap: 14px;
     max-width: 1760px;
@@ -129,6 +130,9 @@
     flex-direction: column;
     gap: 14px;
     min-width: 0;
+    max-height: calc(100vh - 190px);
+    overflow-y: auto;
+    padding-right: 2px;
 }
 
 .ifc-panel-section {
@@ -423,7 +427,8 @@
 .ifc-viewer-stage {
     position: relative;
     min-width: 0;
-    min-height: 560px;
+    height: clamp(560px, calc(100vh - 220px), 820px);
+    min-height: 0;
     overflow: hidden;
     border: 1px solid #111827;
     border-radius: 8px;
@@ -517,8 +522,15 @@
         min-height: auto;
     }
 
+    .ifc-panel {
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+    }
+
     .ifc-viewer-stage {
-        min-height: 62vh;
+        height: 62vh;
+        min-height: 420px;
     }
 }
 

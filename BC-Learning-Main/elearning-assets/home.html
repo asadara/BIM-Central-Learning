@@ -451,17 +451,6 @@
                </article>
                <article class="page-card">
                   <div class="card-top">
-                     <div class="card-icon"><i class="fas fa-gauge-high"></i></div>
-                     <span class="card-tag">Enterprise</span>
-                  </div>
-                  <h3 class="card-title">Phase 4 Dashboard</h3>
-                  <p class="card-desc">Dashboard lanjutan untuk analitik dan ringkasan program.</p>
-                  <div class="card-actions">
-                     <a href="/elearning-assets/phase4-dashboard.html" class="inline-btn">Buka halaman</a>
-                  </div>
-               </article>
-               <article class="page-card">
-                  <div class="card-top">
                      <div class="card-icon"><i class="fas fa-user"></i></div>
                      <span class="card-tag">Profil</span>
                   </div>
@@ -628,7 +617,7 @@
             const viewCount = course.representativeVideo && Number.isFinite(course.representativeVideo.viewCount)
                ? course.representativeVideo.viewCount
                : (course.representativeVideo && course.representativeVideo.viewCount) || 0;
-            const thumbnail = normalizeText(course.thumbnail, '/img/course-default.jpg');
+            const thumbnail = normalizeText(course.thumbnail, '/img/media-thumbnail.svg');
 
             const card = document.createElement('div');
             card.className = 'box';
@@ -639,7 +628,10 @@
             const tutorImg = document.createElement('img');
             tutorImg.src = thumbnail;
             tutorImg.alt = `${title} thumbnail`;
-            tutorImg.onerror = () => { tutorImg.src = '/img/course-default.jpg'; };
+            tutorImg.onerror = () => {
+               tutorImg.onerror = null;
+               tutorImg.src = '/img/media-thumbnail.svg';
+            };
 
             const info = document.createElement('div');
             info.className = 'info';
@@ -661,7 +653,10 @@
             const thumbImg = document.createElement('img');
             thumbImg.src = thumbnail;
             thumbImg.alt = `${title} cover`;
-            thumbImg.onerror = () => { thumbImg.src = '/img/course-default.jpg'; };
+            thumbImg.onerror = () => {
+               thumbImg.onerror = null;
+               thumbImg.src = '/img/media-thumbnail.svg';
+            };
 
             const thumbSpan = document.createElement('span');
             thumbSpan.textContent = `${videoCount} videos`;

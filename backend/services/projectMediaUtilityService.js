@@ -32,7 +32,10 @@ function createProjectMediaUtilityService({
     const BIM_METHODE_FOLDER_NAME = '20. METHODE ESTIMATE & TENDER';
     const LOCAL_PCBIM02_ROOT = path.resolve(backendDir, '..', 'PC-BIM02');
     const LOCAL_PCBIM02_PROJECT_2025_ROOT = path.resolve(backendDir, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2025');
-    const NETWORK_PCBIM02_ROOT = '\\\\pc-bim02\\PROJECT BIM 2025';
+    const LOCAL_PCBIM02_PROJECT_2026_ROOT = path.resolve(backendDir, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2026');
+    const NETWORK_PCBIM02_PROJECT_2025_ROOT = '\\\\pc-bim02\\PROJECT BIM 2025';
+    const NETWORK_PCBIM02_PROJECT_2026_ROOT = '\\\\pc-bim02\\PROJECT BIM 2026';
+    const NETWORK_PCBIM02_ROOT = NETWORK_PCBIM02_PROJECT_2025_ROOT;
 
     function getWatermarkFontFile() {
         const primaryPath = WATERMARK_FONT_PRIMARY;
@@ -226,15 +229,15 @@ function createProjectMediaUtilityService({
                 prefix: '/media-bim02-2026',
                 bases: uniqueBases(
                     getStaticMountPath('pc-bim02-2026', 'V:'),
-                    '\\\\pc-bim02\\PROJECT BIM 2026',
-                    path.resolve(backendDir, '..', 'data', 'pc-bim02-cache', 'PROJECT BIM 2026')
+                    NETWORK_PCBIM02_PROJECT_2026_ROOT,
+                    LOCAL_PCBIM02_PROJECT_2026_ROOT
                 )
             },
             {
                 prefix: '/media-bim02',
                 bases: uniqueBases(
                     getStaticMountPath('pc-bim02', 'X:'),
-                    NETWORK_PCBIM02_ROOT,
+                    NETWORK_PCBIM02_PROJECT_2025_ROOT,
                     LOCAL_PCBIM02_PROJECT_2025_ROOT
                 )
             },
@@ -246,6 +249,14 @@ function createProjectMediaUtilityService({
             { prefix: '/media-bim1-2020', bases: uniqueBases(getStaticMountPath('pc-bim1-2020', 'S:')) },
             { prefix: '/media', bases: uniqueBases(baseProjectDir) }
         ];
+    }
+
+    function getSourceLabelForBase(base) {
+        const value = String(base || '');
+        if (/^\\\\/i.test(value)) return 'pc-bim02-unc';
+        if (/pc-bim02-cache/i.test(value)) return 'local-mirror';
+        if (/^[a-z]:[\\/]*$/i.test(value) || /^[a-z]:[\\/]/i.test(value)) return 'mapped-drive';
+        return 'local';
     }
 
     function safeDecodePath(value, maxRounds = 2) {
@@ -278,67 +289,187 @@ function createProjectMediaUtilityService({
         return targetNormalized.startsWith(baseWithSep);
     }
 
-    function resolveMediaFileFromUrl(rawUrl) {
-        if (!rawUrl || typeof rawUrl !== 'string') return null;
+    function sanitizeMediaSyncBaseName(fileName) {
+        const parsed = path.parse(String(fileName || ''));
+        const clean = parsed.name.replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+        return `${clean || 'media'}${parsed.ext.toLowerCase()}`;
+    }
+
+    function findMediaSyncFallback(base, normalizedRelativePath) {
+        if (getSourceLabelForBase(base) !== 'local-mirror') {
+            return null;
+        }
+
+        const segments = String(normalizedRelativePath || '')
+            .split(path.sep)
+            .filter(Boolean);
+        if (segments.length < 2) {
+            return null;
+        }
+
+        const projectFolder = segments[0];
+        const fileName = segments[segments.length - 1];
+        const syncDir = path.resolve(base, projectFolder, 'MEDIA_SYNC');
+        if (!isPathWithinBase(base, syncDir) || !fs.existsSync(syncDir)) {
+            return null;
+        }
+
+        const safeName = sanitizeMediaSyncBaseName(fileName).toLowerCase();
+        try {
+            const match = fs.readdirSync(syncDir, { withFileTypes: true })
+                .filter(entry => entry.isFile())
+                .map(entry => entry.name)
+                .find(name => {
+                    const lowerName = name.toLowerCase();
+                    return lowerName === safeName || lowerName.endsWith(`__${safeName}`);
+                });
+
+            if (!match) {
+                return null;
+            }
+
+            const fallbackPath = path.resolve(syncDir, match);
+            if (!isPathWithinBase(base, fallbackPath)) {
+                return null;
+            }
+
+            const stats = fs.statSync(fallbackPath);
+            return stats.isFile() ? fallbackPath : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function resolveMediaFileInfo(rawUrl) {
+        if (!rawUrl || typeof rawUrl !== 'string') {
+            return { ok: false, reason: 'empty-url', filePath: null, attempts: [] };
+        }
 
         let cleanUrl = rawUrl.trim();
         if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
             try {
                 cleanUrl = new URL(cleanUrl).pathname;
             } catch (error) {
-                return null;
+                return { ok: false, reason: 'invalid-absolute-url', filePath: null, attempts: [] };
             }
         }
 
         cleanUrl = cleanUrl.split('?')[0].split('#')[0];
-        if (!cleanUrl.startsWith('/')) return null;
-        if (cleanUrl.includes('..')) return null;
-        if (mediaPathHasExcludedFolder(cleanUrl)) return null;
+        if (!cleanUrl.startsWith('/')) {
+            return { ok: false, reason: 'invalid-relative-url', filePath: null, attempts: [] };
+        }
+        if (cleanUrl.includes('..')) {
+            return { ok: false, reason: 'unsafe-url', filePath: null, attempts: [] };
+        }
+        if (mediaPathHasExcludedFolder(cleanUrl)) {
+            return { ok: false, reason: 'excluded-path', filePath: null, attempts: [] };
+        }
 
         const routeMap = getMediaRouteMap();
         const match = routeMap.find(route => cleanUrl === route.prefix || cleanUrl.startsWith(`${route.prefix}/`));
-        if (!match) return null;
+        if (!match) {
+            return { ok: false, reason: 'unknown-route', filePath: null, attempts: [] };
+        }
 
         let relativePart = cleanUrl.slice(match.prefix.length);
         relativePart = relativePart.replace(/^\/+/, '');
-        if (!relativePart) return null;
+        if (!relativePart) {
+            return { ok: false, reason: 'empty-relative-path', filePath: null, attempts: [] };
+        }
 
         const decoded = safeDecodePath(relativePart, 3);
         const normalized = path.normalize(decoded.replace(/[\\/]+/g, path.sep));
         const segments = normalized.split(path.sep);
         if (segments.some(segment => segment === '..')) {
-            return null;
+            return { ok: false, reason: 'unsafe-normalized-path', filePath: null, attempts: [] };
         }
         if (segments.some(segment => mediaPathHasExcludedFolder(segment))) {
-            return null;
+            return { ok: false, reason: 'excluded-path', filePath: null, attempts: [] };
         }
 
         const bases = Array.isArray(match.bases) && match.bases.length > 0
             ? match.bases
             : [match.base].filter(Boolean);
         let fallbackPath = null;
+        let fallbackSourceLabel = null;
+        const attempts = [];
 
         for (const base of bases) {
             const fullPath = path.resolve(base, normalized);
             if (!isPathWithinBase(base, fullPath)) {
+                attempts.push({
+                    base,
+                    filePath: fullPath,
+                    sourceLabel: getSourceLabelForBase(base),
+                    ok: false,
+                    error: 'outside-base'
+                });
                 continue;
             }
 
             if (!fallbackPath) {
                 fallbackPath = fullPath;
+                fallbackSourceLabel = getSourceLabelForBase(base);
             }
 
             try {
                 const stats = fs.statSync(fullPath);
                 if (stats.isFile()) {
-                    return fullPath;
+                    return {
+                        ok: true,
+                        reason: 'found',
+                        filePath: fullPath,
+                        routePrefix: match.prefix,
+                        relativePath: normalized,
+                        sourceLabel: getSourceLabelForBase(base),
+                        attempts
+                    };
                 }
+                attempts.push({
+                    base,
+                    filePath: fullPath,
+                    sourceLabel: getSourceLabelForBase(base),
+                    ok: false,
+                    error: 'not-file'
+                });
             } catch (error) {
-                // Try the next backing path for this media route.
+                const mediaSyncFallback = findMediaSyncFallback(base, normalized);
+                if (mediaSyncFallback) {
+                    return {
+                        ok: true,
+                        reason: 'found-media-sync-fallback',
+                        filePath: mediaSyncFallback,
+                        routePrefix: match.prefix,
+                        relativePath: normalized,
+                        sourceLabel: getSourceLabelForBase(base),
+                        attempts
+                    };
+                }
+
+                attempts.push({
+                    base,
+                    filePath: fullPath,
+                    sourceLabel: getSourceLabelForBase(base),
+                    ok: false,
+                    error: error.code || error.message
+                });
             }
         }
 
-        return fallbackPath;
+        return {
+            ok: false,
+            reason: 'not-found-in-bases',
+            filePath: fallbackPath,
+            routePrefix: match.prefix,
+            relativePath: normalized,
+            sourceLabel: fallbackSourceLabel,
+            attempts
+        };
+    }
+
+    function resolveMediaFileFromUrl(rawUrl) {
+        const info = resolveMediaFileInfo(rawUrl);
+        return info && info.filePath ? info.filePath : null;
     }
 
     function sanitizeDownloadName(filename) {
@@ -468,6 +599,7 @@ function createProjectMediaUtilityService({
         isTimeoutError,
         refreshProjectMediaCacheCopy,
         resolveBimMethodeFileFromId,
+        resolveMediaFileInfo,
         resolveMediaFileFromUrl,
         sanitizeDownloadName,
         statFileWithTimeout,

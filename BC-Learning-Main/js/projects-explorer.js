@@ -32,6 +32,7 @@
         this.previewLoadTimeoutMs = 12000;
         this.previewRenderToken = 0;
         this.isRefreshingProjects = false;
+        this.emptyMediaMessage = 'Tidak ada media yang sesuai filter.';
 
         this.init();
     }
@@ -96,7 +97,10 @@
         throw lastError || new Error('Network request failed');
     }
 
-    shouldUseStaticCacheFallback(error) {
+    shouldUseStaticCacheFallback(error, options = {}) {
+        if (options.allowHttpErrors) {
+            return true;
+        }
         return !(error && error.isHttpError);
     }
 
@@ -113,7 +117,10 @@
         const fileName = this.buildProjectMediaCacheFileName(year, projectName, sourceId);
         const response = await fetch(`${this.mediaCacheBasePath}/${fileName}?v=20260313a`, { cache: 'no-store' });
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+            error.status = response.status;
+            error.isHttpError = true;
+            throw error;
         }
 
         return response.json();
@@ -1073,7 +1080,7 @@
                     // Live API remains authoritative when static cache is not available.
                 }
             } catch (apiError) {
-                if (!this.shouldUseStaticCacheFallback(apiError)) {
+                if (!this.shouldUseStaticCacheFallback(apiError, { allowHttpErrors: true })) {
                     throw apiError;
                 }
                 data = await this.fetchStaticMediaCacheJson(this.selectedYear, projectName, sourceId || 'unknown');
@@ -1093,11 +1100,17 @@
             this.mediaData = mediaList
                 .map((url) => this.buildMediaItem(url, detailMap.get(url)))
                 .filter(item => item.type === 'image' || item.type === 'video' || item.type === 'model');
+            this.emptyMediaMessage = this.mediaData.length === 0
+                ? 'Belum ada media publik yang tersedia untuk proyek ini. Folder sumber mungkin hanya berisi data yang dikecualikan atau source belum dapat diakses.'
+                : 'Tidak ada media yang sesuai filter.';
 
             this.currentPage = 1;
             this.applyFilters();
         } catch (error) {
-            this.renderEmptyState(`Gagal memuat media: ${error.message}`);
+            const message = error && (error.status === 404 || /HTTP 404/i.test(String(error.message || '')))
+                ? 'Belum ada cache media untuk proyek ini atau source media belum dapat diakses. Jalankan sinkronisasi saat PC-BIM02 aktif lalu pilih proyek kembali.'
+                : `Gagal memuat media: ${error.message}`;
+            this.renderEmptyState(message);
         }
     }
 
@@ -1125,6 +1138,10 @@
 
         const sizeBytes = details && typeof details.sizeBytes === 'number' ? details.sizeBytes : null;
         const durationSeconds = details && typeof details.durationSeconds === 'number' ? details.durationSeconds : null;
+        const availability = details && details.availability ? String(details.availability) : 'unknown';
+        const sourceStatus = details && details.sourceStatus ? String(details.sourceStatus) : '';
+        const sourceLabel = details && details.sourceLabel ? String(details.sourceLabel) : '';
+        const isUnavailable = ['unavailable', 'invalid', 'missing'].includes(availability.toLowerCase());
 
         return {
             url: displayUrl,
@@ -1132,7 +1149,11 @@
             filename,
             type,
             sizeBytes,
-            durationSeconds
+            durationSeconds,
+            availability,
+            sourceStatus,
+            sourceLabel,
+            isUnavailable
         };
     }
 
@@ -1266,6 +1287,10 @@
     }
 
     buildMediaThumbnail(item) {
+        if (item && item.isUnavailable) {
+            return this.buildFileThumb(item.type || 'image');
+        }
+
         if (item.type === 'model') {
             return this.buildFileThumb('model');
         }
@@ -1331,6 +1356,18 @@
         return `${minutes}:${pad(secs)}`;
     }
 
+    getMediaAvailabilityLabel(item) {
+        if (!item || !item.isUnavailable) return '';
+        const status = (item.sourceStatus || item.availability || '').toLowerCase();
+        if (status.includes('timeout')) return 'Source media timeout';
+        if (status.includes('excluded')) return 'Folder dikecualikan';
+        if (status.includes('invalid')) return 'URL media tidak valid';
+        if (status.includes('not-found') || status.includes('enoent') || status.includes('missing')) {
+            return 'File tidak ditemukan di source';
+        }
+        return 'Source media tidak tersedia';
+    }
+
     matchesSizeFilter(bytes) {
         if (this.filterSize === 'all') return true;
         if (typeof bytes !== 'number' || !Number.isFinite(bytes)) return false;
@@ -1379,7 +1416,7 @@
         if (!grid) return;
 
         if (this.filteredData.length === 0) {
-            this.renderEmptyState('Tidak ada media yang sesuai filter.');
+            this.renderEmptyState(this.emptyMediaMessage || 'Tidak ada media yang sesuai filter.');
             return;
         }
 
@@ -1400,7 +1437,21 @@
             const durationMeta = item.type === 'video'
                 ? ` • Durasi: ${durationLabel || '-'}`
                 : '';
-            const actions = item.type === 'model'
+            const availabilityLabel = this.getMediaAvailabilityLabel(item);
+            const availabilityMeta = item.isUnavailable
+                ? `<div class="media-meta-row media-source-warning"><i class="fas fa-triangle-exclamation"></i>${this.escapeHtml(availabilityLabel)}</div>`
+                : '';
+            const unavailableTitle = this.escapeHtml(availabilityLabel || 'Source media tidak tersedia');
+            const actions = item.isUnavailable
+                ? `
+                    <button class="btn-media-action btn-view" type="button" disabled title="${unavailableTitle}">
+                        <i class="fas fa-eye-slash"></i> Preview
+                    </button>
+                    <button class="btn-media-action btn-download" type="button" disabled title="${unavailableTitle}">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                `
+                : item.type === 'model'
                 ? `
                     <a class="btn-media-action btn-viewer" href="${this.buildIfcViewerUrl(item)}">
                         <i class="fas fa-cube"></i> Open IFC
@@ -1430,6 +1481,7 @@
                             <div class="media-meta">
                                 <div class="media-meta-row">${metaPrimary || '-'}</div>
                                 <div class="media-meta-row">Ukuran: ${sizeLabel}${durationMeta}</div>
+                                ${availabilityMeta}
                             </div>
                             <div class="media-actions">
                                 ${actions}

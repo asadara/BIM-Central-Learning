@@ -39,9 +39,23 @@ Task Scheduler
 Worklog
 Risalah Rapat
 Issues
+KPI
 Reports
 Workspace Settings
 ```
+
+Status implementasi KPI per 13 Juli 2026:
+- menu KPI tersedia pada grup Pelaporan;
+- halaman menyediakan tab Overview, Departemen, Divisi BIM, Individu, serta Program & Aktivitas;
+- 10 KPI Departemen Engineering dan 10 KPI Divisi BIM tahun 2026 sudah tersedia dari workbook referensi;
+- KPI Divisi memiliki relasi eksplisit ke KPI Departemen: `direct`, `scoped_rollup`, atau `contribution`;
+- KPI Individu dibentuk dari program Divisi yang diambil staff atau didelegasikan Kepala Divisi BIM;
+- Staff BIM dapat `raise hand` pada program berstatus `open` dengan `claim_policy=staff_proposable`, termasuk sebelum target program Divisi ditetapkan;
+- target program Divisi wajib ditetapkan Kepala Divisi saat review sebelum usulan staff dapat disetujui;
+- program `owner_only/delegation_only` tidak dapat diambil staff dan hanya dapat didelegasikan Kepala Divisi;
+- Coverage Matrix memisahkan target teralokasi dari actual terverifikasi dan menandai program yang belum disentuh;
+- Task dapat ditautkan ke satu kontribusi KPI approved milik PIC;
+- formula Excel yang rusak tidak diimpor; sistem memakai calculation contract terstruktur di PostgreSQL.
 
 ## 3. Access Model
 
@@ -51,23 +65,35 @@ Prinsip akses:
 - Kepala Divisi BIM bisa melihat dan melakukan approval;
 - Kepala Departemen Engineering bisa view summary;
 - viewer hanya read-only;
-- user yang bisa input harus user asli BCL, bukan viewer.
+- user yang bisa input harus user asli BCL, bukan viewer;
+- identitas dari token user BCL aktif diprioritaskan terhadap cookie Admin Panel yang mungkin masih tersimpan;
+- role global BCL dan `bim_workspace_role` adalah dua domain berbeda;
+- user dengan hak administrasi global tetap memakai role Workspace tersimpan ketika `bim_workspace_access=true`;
+- `system_admin` hanya menjadi fallback Workspace untuk administrator yang tidak memiliki assignment role Workspace eksplisit.
 
 Role behavior awal:
 
 ```text
 Staff BIM:
 - lihat workspace
+- lihat task kolektif Divisi BIM
+- membuat dan mengajukan task baru
+- memperbaiki task yang dikembalikan untuk revisi
+- update task yang menjadi tanggung jawabnya
 - input worklog
 - submit issue
+- raise hand / mengajukan kontribusi pada program KPI yang terbuka
 - lihat progress umum
 
 Kepala Divisi BIM:
 - lihat semua detail
+- review, koreksi, approve, atau reject input task staff
+- membuat task yang langsung tercatat sebagai approved
 - approve task
 - accept/reject issue
 - approve closure issue
 - review action item
+- menetapkan target program serta approve/revisi/reject kontribusi KPI staff
 
 Kepala Departemen Engineering:
 - summary/read-only
@@ -76,6 +102,68 @@ Kepala Departemen Engineering:
 Viewer:
 - read-only
 ```
+
+System Administrator BCL dapat mengelola akun, access flag, dan pemulihan data, tetapi bukan business approver. Override darurat harus dicatat di activity log.
+
+### 3.1 Workspace Access Fields
+
+```text
+bim_workspace_access = true / false
+bim_workspace_role = staff_bim | division_head | department_head | viewer
+```
+
+Semua route workspace wajib memverifikasi login, access flag, dan workspace role di backend. Menyembunyikan tombol di frontend bukan pengganti authorization backend.
+
+### 3.2 Permission Matrix
+
+| Modul/Aksi | Staff BIM | Kepala Divisi | Kepala Departemen | Viewer |
+|---|---|---|---|---|
+| Dashboard summary | Lihat | Lihat | Lihat | Lihat |
+| Dashboard detail | Sesuai akses | Semua | Summary | Summary |
+| Task kolektif | Lihat semua | Lihat semua | Read-only | Read-only |
+| Buat task | Ya | Ya | Tidak | Tidak |
+| Edit task draft | Creator sendiri | Semua | Tidak | Tidak |
+| Update progres task | Creator/PIC | Semua | Tidak | Tidak |
+| Approve input task | Tidak | Ya | Tidak | Tidak |
+| Approve task selesai | Tidak | Ya | Tidak | Tidak |
+| Input/edit worklog | Milik sendiri | Milik sendiri | Tidak | Tidak |
+| Lihat hours | Hours sendiri | Hours sendiri | Tidak | Tidak |
+| Lihat output worklog | Output divisi | Semua output | Summary | Summary terbatas |
+| Buat draft Risalah | Ya | Ya | Tidak | Tidak |
+| Edit draft Risalah | Creator sendiri | Semua | Tidak | Tidak |
+| Issue/close Risalah | Tidak | Ya | Tidak | Tidak |
+| Print Risalah issued | Ya | Ya | Ya | Jika diberi akses |
+| Buat issue | Ya | Ya | Tidak | Tidak |
+| Edit issue draft | Reporter sendiri | Semua | Tidak | Tidak |
+| Accept/reject issue | Tidak | Ya | Tidak | Tidak |
+| Request closure | Reporter/owner | Ya | Tidak | Tidak |
+| Approve closure | Tidak | Ya | Tidak | Tidak |
+| Reports personal | Ya | Ya | Tidak | Tidak |
+| Reports divisi | Summary | Semua | Summary | Summary terbatas |
+| Export | Data yang diizinkan | Semua | Summary | Tidak |
+| Workspace settings | Tidak | Konfigurasi operasional | Tidak | Tidak |
+
+### 3.3 Record Visibility
+
+- task approved bersifat kolektif dan terlihat seluruh staff BIM;
+- draft task hanya terlihat creator dan Kepala Divisi;
+- draft Risalah hanya terlihat creator dan Kepala Divisi;
+- Risalah issued terlihat seluruh user workspace;
+- draft/rejected issue hanya terlihat reporter dan Kepala Divisi;
+- issue accepted terlihat seluruh staff workspace;
+- hours worklog hanya dikirim API kepada PIC pemiliknya.
+
+### 3.4 Locking, Audit, and Delete Policy
+
+- worklog terkunci setelah task berstatus `approved_done`;
+- task pending approval dikunci untuk staff sampai dikembalikan sebagai revision;
+- Risalah issued dikoreksi melalui revisi, bukan overwrite langsung;
+- issue closed hanya dapat dibuka kembali Kepala Divisi dengan alasan;
+- approve, reject, correction, cancel, reopen, dan export dicatat di activity log;
+- tidak ada hard delete dari UI;
+- record memakai status cancelled, archived, corrected, voided, atau revised sesuai jenisnya;
+- Admin BCL mengatur access flag dan workspace role;
+- Kepala Divisi mengatur konfigurasi operasional, bukan akun atau hak akses user.
 
 ## 4. Task Scheduler
 
@@ -89,7 +177,11 @@ Grouping: per minggu + task list
 Default month state: empty
 Project: manual text
 Official owner: Kepala Divisi BIM
-PIC: optional manual text/user reference later
+PIC: wajib; creator sendiri untuk task staff atau user Staff BIM yang dipilih Kepala Divisi
+Task visibility: kolektif untuk seluruh staff Divisi BIM Workspace
+Task input: staff BIM dan Kepala Divisi BIM
+Task delegation: hanya Kepala Divisi BIM kepada user aktif ber-role Staff BIM
+Task intake approval: Kepala Divisi BIM
 Task closure: requires approval/review
 Carry-forward: outstanding task bulan sebelumnya
 Routine generation: user-triggered from previous month
@@ -113,6 +205,107 @@ approved_done
 rejected_revision
 cancelled
 ```
+
+Approval input task dipisahkan dari status pelaksanaan:
+
+```text
+draft
+pending_approval
+approved
+revision_required
+rejected
+```
+
+Workflow input task:
+
+```text
+Staff membuat draft task
+-> Staff submit untuk approval
+-> Kepala Divisi review dan dapat melakukan koreksi
+-> Approve menjadi task aktif, atau kembalikan untuk revision
+-> Task yang rejected tidak masuk pekerjaan aktif
+```
+
+Task yang dibuat langsung oleh Kepala Divisi dapat berstatus `approved` dengan audit actor tetap tercatat.
+
+Aturan penugasan:
+
+- task yang dibuat Staff BIM otomatis memakai creator sebagai PIC dan tidak dapat didelegasikan kepada user lain;
+- task staff adalah usulan pribadi sampai disetujui Kepala Divisi;
+- Kepala Divisi dapat memilih `Task saya` atau `Delegasikan ke Staff BIM` saat membuat atau mengoreksi task;
+- delegasi mencatat pemberi tugas, PIC, dan waktu delegasi;
+- perubahan PIC oleh Kepala Divisi dicatat sebagai aktivitas delegasi baru.
+
+### 4.1 Task dan KPI Alignment
+
+Setelah master KPI disahkan, setiap task approved harus memiliki salah satu klasifikasi berikut:
+
+```text
+KPI-linked task       -> terkait KPI Divisi dan indikator KPI individu PIC
+Non-KPI operational  -> tetap sah, tetapi wajib memiliki alasan operasional
+Pending KPI mapping  -> task usulan staff yang belum diputuskan Kepala Divisi
+```
+
+Prinsip alignment:
+
+- staff dapat mengusulkan kontribusi pada program yang dibuka Kepala Divisi;
+- Kepala Divisi dapat mendelegasikan program langsung kepada staff serta mengoreksi target, bobot, due date, dan evidence;
+- mapping task hanya dapat memakai kontribusi KPI milik PIC yang sudah approved;
+- task di luar pengetahuan Kepala Divisi tidak mendapat KPI credit sebelum direview;
+- completion task dan evidence menjadi sumber realisasi, tetapi tidak otomatis menjadi score KPI;
+- KPI credit hanya berasal dari actual yang diverifikasi Kepala Divisi agar pekerjaan tidak dihitung ganda;
+- task non-KPI tetap diperbolehkan untuk kebutuhan insidental, dengan alasan dan audit trail yang jelas.
+
+### 4.2 KPI Program dan Individu
+
+Hierarki operasional:
+
+```text
+KPI Departemen -> KPI Divisi BIM -> Program -> Komitmen Individu -> Task -> Evidence -> Actual Terverifikasi
+```
+
+Aturan:
+- satu program master mewakili satu KPI Divisi BIM pada siklus 2026;
+- target operasional program ditetapkan Kepala Divisi dan tidak mengubah target scorecard resmi;
+- program dapat `open` untuk usulan staff atau `closed`/`delegation_only`;
+- satu staff hanya memiliki satu komitmen aktif per program dan maksimal lima komitmen aktif;
+- total bobot approved per scorecard individu tidak boleh melebihi 100%;
+- Coverage mengukur target yang sudah dialokasikan, sedangkan Realization hanya memakai actual terverifikasi;
+- achievement individu dibatasi 120% dan weighted score memakai bobot approved;
+- state review: `pending_approval`, `revision_required`, `approved`, `verification_pending`, `achieved`, atau `rejected`.
+
+### 4.3 KPI Calculation Contract
+
+Master awal memakai scorecard 2026 dari workbook `Scorecard & KPI (Departemen - Individu).xlsx`.
+
+Kaidah perhitungan:
+
+```text
+Hasil Pengukuran = dihitung sesuai jenis indikator
+Achievement      = MIN(Hasil Pengukuran / Target, 120%)
+Weighted Score   = SUM(Achievement indikator x Bobot indikator)
+```
+
+Guardrails:
+- total bobot setiap scorecard harus 100%;
+- pembagi nol atau data kosong menghasilkan `belum terukur`, bukan 0%;
+- achievement setiap indikator dibatasi 120%;
+- `ratio_of_sums` dipakai untuk rasio event dan volume YTD;
+- `latest_checkpoint` dipakai untuk target milestone kumulatif digitalisasi;
+- `average_components` dan `average_period_scores` dipakai untuk Quality Survey dan PMP;
+- `cumulative_count` dipakai untuk inovasi, bukan nilai maksimum bulanan;
+- target PMP disimpan dalam skala konsisten `0..1`, sehingga 70% disimpan sebagai `0.70`;
+- KPI Departemen tidak dijumlahkan langsung dari skor tiga divisi tanpa aturan konsolidasi resmi.
+
+Relasi KPI Divisi ke Departemen:
+
+```text
+direct         = Divisi BIM menjadi pemilik langsung hasil indikator
+scoped_rollup  = hasil Divisi BIM menjadi bagian terukur dari hasil Departemen
+contribution   = aktivitas Divisi mendukung KPI Departemen tetapi skor tidak diwariskan 1:1
+```
+
+Setelah task aktif, staff creator/PIC dapat memperbarui progres dan mengirim task untuk completion review. Approval penyelesaian tetap dilakukan Kepala Divisi.
 
 UI label:
 
@@ -148,16 +341,28 @@ Monthly behavior:
 
 ## 5. Worklog
 
-Worklog adalah catatan harian pelaksanaan task.
+Worklog adalah rekapan harian pelaksanaan aktivitas operasional yang bersumber dari Task, kontribusi KPI, Issue, action Risalah Rapat, atau aktivitas manual yang memiliki alasan operasional.
 
 Keputusan utama:
 
 ```text
 Mode: harian
-PIC: pilih dari user BCL
-Hours spent: aktif sejak awal
-Task item: linked task atau manual task item
+PIC: mengikuti owner/PIC sumber dan user BCL yang login
+Hours spent: privat, hanya terlihat oleh user pemilik
+Sumber resmi: Task, KPI Assignment, Issue, Meeting Action
+Fallback: manual dengan alasan/konteks operasional wajib
 ```
+
+Alur data:
+
+```text
+Activity Log -> Activity Event -> Daily Worklog Auto Draft -> Konfirmasi PIC -> Report
+```
+
+Activity event dibagi menjadi:
+- `planning`: penugasan, usulan, approval intake, dan konfigurasi; termonitor tetapi tidak dihitung sebagai pekerjaan;
+- `execution`: update progress/output oleh PIC/owner; dapat membentuk draft Worklog;
+- `verification`: approval, review, closure, atau verifikasi oleh Kepala Divisi; termonitor tetapi tidak membentuk jam kerja staff.
 
 Required fields:
 
@@ -168,6 +373,9 @@ PIC User
 Task Status
 Hours Spent
 Work Summary
+Source Type
+Source ID
+Confirmation Status
 ```
 
 Optional fields:
@@ -199,8 +407,15 @@ other
 Rules:
 - worklog selalu satu tanggal, bukan rentang tanggal;
 - task beberapa hari diisi dengan beberapa worklog harian;
+- event eksekusi dikonsolidasikan menjadi satu Worklog per tanggal, PIC, source type, dan source ID;
+- hanya event eksekusi yang dilakukan PIC/owner sumber yang membentuk auto draft;
+- auto draft wajib dikonfirmasi PIC sebelum masuk Dashboard output dan Reports;
+- planning dan verification tetap terlihat pada Activity Feed, tetapi tidak dihitung sebagai Worklog resmi;
+- private hours disimpan terpisah dan tidak dapat dilihat Kepala Divisi/Kepala Departemen;
+- aktivitas manual tidak boleh dipakai sebagai jalur task random; alasan/konteks operasional wajib diisi;
 - worklog bisa update status task, tetapi tidak bisa approve task menjadi done;
-- task closure tetap lewat approval Task Scheduler.
+- task closure tetap lewat approval Task Scheduler;
+- Worklog tidak otomatis memberikan achievement atau score KPI. Credit KPI tetap melalui actual submission dan verifikasi KPI.
 
 ## 6. Risalah Rapat
 
@@ -354,12 +569,11 @@ Overdue Task count
 Blocked Task count
 ```
 
-Tidak masuk MVP:
+Tidak masuk dashboard operasional:
 - score personal;
 - ranking staff;
-- weighted KPI;
 - productivity score dari hours;
-- integrasi KPI resmi Divisi/Departemen.
+- detail score KPI; scorecard dibuka melalui menu KPI.
 
 Worklog hours:
 - staff/PIC bisa melihat jam miliknya sendiri;
@@ -372,11 +586,15 @@ Core tables:
 ```text
 bim_ops_tasks
 bim_ops_worklogs
+bim_ops_worklog_time
+bim_ops_activity_events
 bim_ops_meetings
 bim_ops_meeting_attendees
 bim_ops_meeting_actions
 bim_ops_issues
 bim_ops_activity_log
+bim_kpi_scorecards
+bim_kpi_indicators
 ```
 
 Prinsip schema:
@@ -384,6 +602,8 @@ Prinsip schema:
 - tidak perlu tabel `bim_ops_periods` untuk MVP;
 - evidence cukup satu `evidence_link` per item;
 - activity log masuk sejak awal, minimal untuk status dan approval;
+- activity event bersifat immutable dan menjadi sumber Activity Feed;
+- jam Worklog disimpan di tabel privat terpisah;
 - `official_owner_name = Kepala Divisi BIM` sebagai default/config sederhana;
 - project masih manual text;
 - user internal mengacu ke user BCL existing, dengan snapshot nama untuk histori.
@@ -406,6 +626,12 @@ due_date
 priority
 status
 requires_review
+intake_status
+intake_submitted_at
+intake_reviewed_by_user_id
+intake_reviewed_by_name_snapshot
+intake_reviewed_at
+intake_review_note
 submitted_at
 approved_by_user_id
 approved_by_name_snapshot
@@ -441,23 +667,71 @@ pic_user_id
 pic_name_snapshot
 worklog_type
 task_status
-hours_spent
 work_summary
 output_result
 blocker
 next_action
 evidence_link
 remarks
-updates_task_status
-previous_task_status
-new_task_status
+source_type
+source_id
+kpi_assignment_id
+issue_id
+meeting_action_id
+entry_origin
+confirmation_status
+confirmed_at
+progress_before
+progress_after
+system_summary
+event_count
+auto_key
 created_by_user_id
 created_by_name_snapshot
 created_at
 updated_at
 ```
 
-### 9.3 bim_ops_meetings
+### 9.3 bim_ops_worklog_time
+
+```text
+worklog_id
+user_id
+hours_spent
+created_at
+updated_at
+```
+
+Primary key adalah kombinasi `worklog_id` dan `user_id`. API hanya melakukan join terhadap `user_id` dari user yang sedang login.
+
+### 9.4 bim_ops_activity_events
+
+```text
+id
+event_type
+activity_class
+source_type
+source_id
+actor_user_id
+actor_name_snapshot
+pic_user_id
+pic_name_snapshot
+project_context
+event_date
+occurred_at
+summary
+output_snapshot
+progress_snapshot
+status_snapshot
+evidence_link
+metadata_json
+deduplication_key
+counts_as_work
+consolidated_worklog_id
+created_at
+```
+
+### 9.5 bim_ops_meetings
 
 ```text
 id
@@ -488,7 +762,7 @@ issued_at
 closed_at
 ```
 
-### 9.4 bim_ops_meeting_attendees
+### 9.6 bim_ops_meeting_attendees
 
 ```text
 id
@@ -503,7 +777,7 @@ created_at
 updated_at
 ```
 
-### 9.5 bim_ops_meeting_actions
+### 9.7 bim_ops_meeting_actions
 
 ```text
 id
@@ -530,7 +804,7 @@ updated_at
 closed_at
 ```
 
-### 9.6 bim_ops_issues
+### 9.8 bim_ops_issues
 
 ```text
 id
@@ -578,7 +852,7 @@ created_at
 updated_at
 ```
 
-### 9.7 bim_ops_activity_log
+### 9.9 bim_ops_activity_log
 
 ```text
 id
@@ -592,35 +866,205 @@ actor_name_snapshot
 created_at
 ```
 
-## 10. Reports Direction
-
-Reports belum difinalkan. Kandidat report MVP:
+### 9.10 bim_kpi_scorecards
 
 ```text
-Monthly Task Report
-PIC Worklog Report
-Issue Register
-Risalah Rapat Print View
-Meeting Action Follow-up Report
-Outstanding Task/Issue Report
+id
+period_year
+level
+org_unit
+title
+status
+max_achievement
+source_reference
+created_at
+updated_at
 ```
 
-Prinsip report:
-- operasional internal;
-- bukan KPI resmi perusahaan;
-- cukup jelas untuk kepala divisi dan kepala departemen;
-- bisa dimulai dari table/filter/export CSV/print.
-
-## 11. Next Discussion
-
-Urutan pembahasan berikutnya:
+### 9.11 bim_kpi_indicators
 
 ```text
-1. Reports MVP
-2. Sidebar final
-3. Permission/access final
-4. Implementation phases
-5. SQL migration and API design
-6. UI wireframe
+id
+scorecard_id
+parent_indicator_id
+code
+sort_order
+perspective_code
+perspective_name
+indicator_name
+program_name
+relation_type
+measurement_formula
+achievement_formula
+aggregation_method
+zero_denominator_policy
+target_operator
+target_value
+target_unit
+weight
+calculation_config
+source_reference
+is_active
+created_at
+updated_at
 ```
 
+### 9.12 bim_kpi_programs
+
+```text
+id
+period_year
+division_indicator_id
+code
+sort_order
+program_name
+allocation_mode
+claim_policy
+availability_status
+target_value
+target_unit
+is_active
+created_at
+updated_at
+```
+
+### 9.13 bim_kpi_individual_scorecards
+
+```text
+id
+period_year
+staff_user_id
+staff_name_snapshot
+status
+created_at
+updated_at
+```
+
+### 9.14 bim_kpi_assignments
+
+```text
+id
+scorecard_id
+program_id
+division_indicator_id
+staff_user_id
+staff_name_snapshot
+commitment_title
+measurement_type
+target_value
+target_unit
+proposed_weight
+approved_weight
+due_date
+expected_evidence
+status
+submitted_actual
+actual_evidence_link
+actual_note
+verified_actual
+achievement
+weighted_score
+review_note
+created_by_user_id
+delegated_by_user_id
+approved_by_user_id
+verified_by_user_id
+created_at
+updated_at
+```
+
+## 10. Reports MVP
+
+Reports MVP sudah dikunci menjadi empat keluaran:
+
+```text
+1. Ringkasan Bulanan Divisi
+2. Laporan Progress Task
+3. Laporan Worklog
+4. Laporan Outstanding
+```
+
+### 10.1 Ringkasan Bulanan Divisi
+
+Report default untuk Kepala Divisi BIM dan Kepala Departemen Engineering.
+
+Isi:
+- pekerjaan bulan berjalan;
+- task completion dan on-time completion;
+- task overdue atau blocked;
+- issue penting yang sudah accepted;
+- tindak lanjut rapat yang belum closed;
+- output utama dari worklog.
+
+Format awal dibuat print-friendly dan dapat disimpan sebagai PDF melalui browser.
+
+### 10.2 Laporan Progress Task
+
+Daftar task berdasarkan periode dengan field utama:
+
+```text
+Task
+Project / Context
+PIC
+Start Date
+Due Date
+Status
+Progress
+Approval Status
+```
+
+Mendukung filter periode, project, PIC, status, priority, dan export CSV.
+
+### 10.3 Laporan Worklog
+
+Aturan visibility:
+- staff BIM hanya melihat detail worklog dan hours miliknya sendiri;
+- Kepala Divisi dan Kepala Departemen melihat progress dan output per task/PIC tanpa detail hours.
+
+Mendukung filter periode, PIC, task, project, status, dan export CSV sesuai permission.
+
+### 10.4 Laporan Outstanding
+
+Menggabungkan item yang masih memerlukan perhatian:
+- task overdue atau blocked;
+- issue accepted/action required yang belum closed;
+- action item Risalah Rapat yang belum closed.
+
+### 10.5 Report Guardrails
+
+- report bersifat operasional internal, bukan KPI resmi perusahaan;
+- default periode adalah bulanan;
+- data operasional dapat diekspor CSV;
+- summary manajemen dibuat print-friendly;
+- generator Word/Excel kompleks belum masuk MVP;
+- print Risalah Rapat sesuai `FRM.NKE.01.06` tetap berada di menu Risalah Rapat, bukan digandakan di Reports.
+
+## 11. Implementation Status
+
+MVP pertama diimplementasikan pada 13 Juli 2026 dengan cakupan:
+
+- menu `Divisi BIM > Workspace` yang hanya tampil untuk user berizin;
+- role `Staff BIM`, `Kepala Divisi BIM`, `Kepala Departemen Engineering`, dan `Viewer`;
+- pengaturan akses dan role melalui User Management BCL;
+- Dashboard operasional bulanan;
+- Task Scheduler dengan approval input, completion review, dan carry-forward;
+- Worklog source-driven dengan Activity Feed lintas modul, auto draft harian, konfirmasi PIC, fallback manual terkontrol, dan private hours terpisah;
+- Risalah Rapat berbasis `FRM.NKE.01.06`, nomor otomatis, action item, dan print;
+- Issues dengan acceptance dan closure approval Kepala Divisi;
+- KPI 2026 untuk Departemen Engineering dan Divisi BIM dengan formula terstruktur dan cap achievement 120%;
+- master 10 program KPI Divisi, Coverage Matrix, target operasional, serta status coverage dan realization;
+- KPI Individu dari take/delegation program, approval/revision Kepala Divisi, actual, evidence, dan verified score;
+- linkage satu kontribusi KPI approved per task dengan validasi kepemilikan PIC;
+- Reports bulanan, progress task, output worklog, outstanding, print, dan CSV;
+- activity log untuk audit perubahan penting dan approval;
+- immutable operational activity event untuk planning, execution, dan verification.
+
+Implementasi berada pada:
+
+```text
+Frontend : BC-Learning-Main/pages/divisi-bim-workspace.html
+API      : /api/bim-workspace
+Schema   : bim_ops_* dan bim_kpi_*
+```
+
+Tahap berikutnya adalah menetapkan target operasional program dan user Staff BIM pada akun nyata, lalu user acceptance test untuk role Staff BIM, Kepala Divisi BIM, serta Kepala Departemen Engineering.

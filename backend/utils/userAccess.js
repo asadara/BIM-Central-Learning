@@ -10,8 +10,11 @@ const ACCESS_COLUMN_DEFINITIONS = [
     ['dokumen_access', 'BOOLEAN DEFAULT false'],
     ['audit_2026_access', 'BOOLEAN DEFAULT false'],
     ['library_download_access', 'BOOLEAN DEFAULT false'],
-    ['watermark_free_download_access', 'BOOLEAN DEFAULT false']
+    ['watermark_free_download_access', 'BOOLEAN DEFAULT false'],
+    ['bim_workspace_access', 'BOOLEAN DEFAULT false'],
+    ['bim_workspace_role', "TEXT DEFAULT 'viewer'"]
 ];
+const BIM_WORKSPACE_ROLES = new Set(['staff_bim', 'division_head', 'department_head', 'viewer']);
 
 const pool = new Pool(createPgConfig({
     max: 4,
@@ -37,6 +40,10 @@ function normalizeBoolean(value) {
 }
 
 function normalizeAccessProfile(source = {}) {
+    const requestedWorkspaceRole = String(
+        source.bimWorkspaceRole ?? source.bim_workspace_role ?? 'viewer'
+    ).trim().toLowerCase();
+
     return {
         mappingKompetensiAccess: normalizeBoolean(
             source.mappingKompetensiAccess ?? source.mapping_kompetensi_access
@@ -52,7 +59,11 @@ function normalizeAccessProfile(source = {}) {
         ),
         watermarkFreeDownloadAccess: normalizeBoolean(
             source.watermarkFreeDownloadAccess ?? source.watermark_free_download_access
-        )
+        ),
+        bimWorkspaceAccess: normalizeBoolean(
+            source.bimWorkspaceAccess ?? source.bim_workspace_access
+        ),
+        bimWorkspaceRole: BIM_WORKSPACE_ROLES.has(requestedWorkspaceRole) ? requestedWorkspaceRole : 'viewer'
     };
 }
 
@@ -89,7 +100,8 @@ async function fetchAccessProfileFromDb(userId, email) {
 
     const result = await pool.query(
         `SELECT mapping_kompetensi_access, dokumen_access, audit_2026_access,
-                library_download_access, watermark_free_download_access
+                library_download_access, watermark_free_download_access,
+                bim_workspace_access, bim_workspace_role
          FROM users
          WHERE ($1::text IS NOT NULL AND id::text = $1::text)
             OR ($2::text IS NOT NULL AND lower(email) = lower($2))
@@ -129,7 +141,9 @@ async function resolveAccessProfile(authUser) {
             dokumenAccess: true,
             audit2026Access: true,
             libraryDownloadAccess: true,
-            watermarkFreeDownloadAccess: true
+            watermarkFreeDownloadAccess: true,
+            bimWorkspaceAccess: true,
+            bimWorkspaceRole: 'system_admin'
         };
     }
 

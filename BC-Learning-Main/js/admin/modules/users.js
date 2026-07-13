@@ -66,7 +66,7 @@ class UsersModule {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="16" class="text-center py-4">
+                <td colspan="18" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                         <div class="spinner-border text-primary mb-2" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -127,7 +127,7 @@ class UsersModule {
                 console.error('❌ Users API failed:', response.status, errorText);
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="16" class="text-center py-4">
+                        <td colspan="18" class="text-center py-4">
                             <div class="alert alert-danger mb-0">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 Failed to load users: ${response.status} ${response.statusText}
@@ -139,7 +139,7 @@ class UsersModule {
             console.error('❌ Error loading users:', error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="16" class="text-center py-4">
+                    <td colspan="18" class="text-center py-4">
                         <div class="alert alert-danger mb-0">
                             <i class="fas fa-exclamation-circle me-2"></i>
                             Error loading users: ${error.message}
@@ -158,7 +158,7 @@ class UsersModule {
         if (users.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="16" class="text-center py-4">
+                    <td colspan="18" class="text-center py-4">
                         <div class="d-flex flex-column align-items-center">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                             <p class="text-muted mb-2">No users found</p>
@@ -212,6 +212,8 @@ class UsersModule {
             const mappingAccess = !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
             const dokumenAccess = !!(user.dokumenAccess || user.dokumen_access);
             const audit2026Access = !!(user.audit2026Access || user.audit_2026_access);
+            const bimWorkspaceAccess = !!(user.bimWorkspaceAccess || user.bim_workspace_access);
+            const bimWorkspaceRole = user.bimWorkspaceRole || user.bim_workspace_role || 'viewer';
             const libraryDownloadAccess = !!(user.libraryDownloadAccess || user.library_download_access);
             const watermarkFreeDownloadAccess = !!(user.watermarkFreeDownloadAccess || user.watermark_free_download_access);
             const statusBadge = isActive ?
@@ -289,6 +291,24 @@ class UsersModule {
                                    onchange="window.adminPanel.modules.get('users').instance.toggleAudit2026Access('${userId}', this.checked, this)">
                             <label class="form-check-label" for="audit2026Access_${userId}"></label>
                         </div>
+                    </td>
+                    <td class="text-center access-check-cell" title="Divisi BIM Workspace">
+                        <div class="form-check access-checkbox-wrap">
+                            <input class="form-check-input mapping-access-checkbox" type="checkbox"
+                                   id="bimWorkspaceAccess_${userId}"
+                                   ${bimWorkspaceAccess ? 'checked' : ''}
+                                   onchange="window.adminPanel.modules.get('users').instance.toggleBimWorkspaceAccess('${userId}', this.checked, this)">
+                            <label class="form-check-label" for="bimWorkspaceAccess_${userId}"></label>
+                        </div>
+                    </td>
+                    <td class="access-check-cell" title="Divisi BIM Workspace Role">
+                        <select class="form-select form-select-sm" aria-label="Workspace role"
+                                onchange="window.adminPanel.modules.get('users').instance.updateBimWorkspaceRole('${userId}', this.value, this)">
+                            <option value="viewer" ${bimWorkspaceRole === 'viewer' ? 'selected' : ''}>Viewer</option>
+                            <option value="staff_bim" ${bimWorkspaceRole === 'staff_bim' ? 'selected' : ''}>Staff BIM</option>
+                            <option value="division_head" ${bimWorkspaceRole === 'division_head' ? 'selected' : ''}>Kepala Divisi</option>
+                            <option value="department_head" ${bimWorkspaceRole === 'department_head' ? 'selected' : ''}>Kepala Departemen</option>
+                        </select>
                     </td>
                     <td class="text-center access-check-cell" title="Pustaka Download">
                         <div class="form-check access-checkbox-wrap">
@@ -1023,6 +1043,35 @@ class UsersModule {
         return this.updateBooleanAccess(userId, 'audit2026Access', isChecked, checkboxElement, 'Audit 2026 access', 'audit_2026_access');
     }
 
+    async toggleBimWorkspaceAccess(userId, isChecked, checkboxElement) {
+        return this.updateBooleanAccess(userId, 'bimWorkspaceAccess', isChecked, checkboxElement, 'Divisi BIM Workspace access', 'bim_workspace_access');
+    }
+
+    async updateBimWorkspaceRole(userId, role, selectElement) {
+        const allowed = ['viewer', 'staff_bim', 'division_head', 'department_head'];
+        if (!allowed.includes(role)) return;
+        const previous = this.allUsers.find((user) => String(user.id || user.user_id) === String(userId));
+        const previousRole = previous?.bimWorkspaceRole || previous?.bim_workspace_role || 'viewer';
+        selectElement.disabled = true;
+        try {
+            const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bimWorkspaceRole: role, bim_workspace_role: role })
+            });
+            if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || 'Update failed');
+            if (previous) {
+                previous.bimWorkspaceRole = role;
+                previous.bim_workspace_role = role;
+            }
+        } catch (error) {
+            selectElement.value = previousRole;
+            alert('Gagal memperbarui Workspace role: ' + error.message);
+        } finally {
+            selectElement.disabled = false;
+        }
+    }
+
     async toggleWatermarkFreeDownloadAccess(userId, isChecked, checkboxElement) {
         return this.updateBooleanAccess(userId, 'watermarkFreeDownloadAccess', isChecked, checkboxElement, 'Watermark-free download access', 'watermark_free_download_access');
     }
@@ -1079,7 +1128,7 @@ class UsersModule {
         }
 
         // Create CSV content
-        const headers = ['ID', 'Username', 'Email', 'BIM Level', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Library Download Access', 'Watermark-Free Download Access'];
+        const headers = ['ID', 'Username', 'Email', 'BIM Level', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Divisi BIM Workspace Access', 'Divisi BIM Workspace Role', 'Library Download Access', 'Watermark-Free Download Access'];
         const csvContent = [
             headers.join(','),
             ...this.allUsers.map(user => [
@@ -1094,6 +1143,8 @@ class UsersModule {
                 (user.mappingKompetensiAccess || user.mapping_kompetensi_access) ? 'Yes' : 'No',
                 (user.dokumenAccess || user.dokumen_access) ? 'Yes' : 'No',
                 (user.audit2026Access || user.audit_2026_access) ? 'Yes' : 'No',
+                (user.bimWorkspaceAccess || user.bim_workspace_access) ? 'Yes' : 'No',
+                user.bimWorkspaceRole || user.bim_workspace_role || 'viewer',
                 (user.libraryDownloadAccess || user.library_download_access) ? 'Yes' : 'No',
                 (user.watermarkFreeDownloadAccess || user.watermark_free_download_access) ? 'Yes' : 'No'
             ].map(field => `"${field || ''}"`).join(','))

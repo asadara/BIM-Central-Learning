@@ -1286,7 +1286,7 @@
         return [...new Set(candidates)];
       }
 
-      async function waitForRestartRecovery(timeoutMs = 120000) {
+      async function waitForRestartRecovery(timeoutMs = 300000) {
         const startedAt = Date.now();
         const endpoints = [
           ...buildApiEndpointCandidates('/ping'),
@@ -1398,8 +1398,8 @@
           return;
         }
 
-        logOutput('Backend belum terdeteksi pulih dalam 2 menit. Silakan refresh manual beberapa saat lagi.');
-        setRestartUiState('error', 'Server belum terdeteksi pulih dalam 2 menit. Coba Refresh Status atau jalankan restart manual.');
+        logOutput('Backend belum terdeteksi pulih dalam 5 menit. Silakan refresh manual beberapa saat lagi.');
+        setRestartUiState('error', 'Server belum terdeteksi pulih dalam 5 menit. Coba Refresh Status atau jalankan restart manual.');
         if (restartLabel) {
           restartLabel.innerHTML = originalLabel || '<svg class="icon-inline" aria-hidden="true"><use href="#icon-server"></use></svg>Restart BCL Sekarang';
         }

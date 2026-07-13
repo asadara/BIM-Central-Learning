@@ -493,6 +493,7 @@ const organizationsRoutes = require('./routes/organizations');
 const pluginsRoutes = require('./routes/plugins');
 const messagesRoutes = require('./routes/messages');
 const trainingBatchRoutes = require('./routes/trainingBatchRoutes');
+const bimWorkspaceRoutes = require('./routes/bimWorkspaceRoutes');
 const videosAdminRoutes = require('./routes/videos');
 const createSystemStatusRoutes = require('./routes/systemStatusRoutes');
 const createActiveUserTracking = require('./modules/activeUserTracking');
@@ -561,6 +562,7 @@ app.use('/api/organizations', organizationsRoutes);
 app.use('/api/plugins', pluginsRoutes);
 app.use(messagesRoutes);
 app.use('/api/training', trainingBatchRoutes);
+app.use('/api/bim-workspace', bimWorkspaceRoutes);
 app.use('/api/admin/videos', videosAdminRoutes);
 app.get('/api/audit-2026/status', (req, res, next) => {
     if (!isLoopbackRequest(req)) {

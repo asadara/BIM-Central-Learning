@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>Divisi BIM Workspace | BCL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Workspace operasional internal Divisi BIM NKE">
+    <link rel="icon" href="/logos/fav_logo_BCL.ico?v=20260424b" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css?v=20260713a" rel="stylesheet">
+    <link href="../css/navbar-footer-fix.css" rel="stylesheet">
+    <link href="../css/divisi-bim-workspace.css?v=20260713m" rel="stylesheet">
+</head>
+<body class="bimws-page">
+    <div id="navbar-container"></div>
+
+    <main class="bimws-layout" id="bimws-app" aria-busy="true">
+        <aside class="bimws-sidebar" id="bimws-sidebar">
+            <div class="bimws-sidebar-head">
+                <span class="bimws-mark"><i class="fas fa-cubes" aria-hidden="true"></i></span>
+                <div>
+                    <p>Divisi BIM</p>
+                    <h1>Workspace</h1>
+                </div>
+                <button class="bimws-icon-btn bimws-sidebar-toggle" id="bimws-sidebar-toggle" type="button" title="Ciutkan sidebar" aria-label="Ciutkan sidebar">
+                    <i class="fas fa-angles-left"></i>
+                </button>
+            </div>
+
+            <nav class="bimws-nav" aria-label="Navigasi Divisi BIM Workspace">
+                <p class="bimws-nav-group">Ringkasan</p>
+                <button type="button" class="bimws-nav-item is-active" data-view="dashboard">
+                    <i class="fas fa-chart-line"></i><span>Dashboard</span>
+                </button>
+                <p class="bimws-nav-group">Pekerjaan</p>
+                <button type="button" class="bimws-nav-item" data-view="tasks">
+                    <i class="fas fa-calendar-check"></i><span>Task Scheduler</span>
+                </button>
+                <button type="button" class="bimws-nav-item" data-view="worklogs">
+                    <i class="fas fa-clock-rotate-left"></i><span>Worklog</span>
+                </button>
+                <p class="bimws-nav-group">Koordinasi</p>
+                <button type="button" class="bimws-nav-item" data-view="meetings">
+                    <i class="fas fa-people-group"></i><span>Risalah Rapat</span>
+                </button>
+                <button type="button" class="bimws-nav-item" data-view="issues">
+                    <i class="fas fa-triangle-exclamation"></i><span>Issues</span>
+                </button>
+                <p class="bimws-nav-group">Pelaporan</p>
+                <button type="button" class="bimws-nav-item" data-view="kpi">
+                    <i class="fas fa-bullseye"></i><span>KPI</span>
+                </button>
+                <button type="button" class="bimws-nav-item" data-view="reports">
+                    <i class="fas fa-file-lines"></i><span>Reports</span>
+                </button>
+                <div class="bimws-settings-nav" hidden>
+                    <p class="bimws-nav-group">Administrasi</p>
+                    <button type="button" class="bimws-nav-item" data-view="settings">
+                        <i class="fas fa-sliders"></i><span>Pengaturan</span>
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <section class="bimws-main">
+            <header class="bimws-toolbar">
+                <button class="bimws-icon-btn bimws-mobile-menu" id="bimws-mobile-menu" type="button" title="Buka menu" aria-label="Buka menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="bimws-title-block">
+                    <p id="bimws-view-eyebrow">Ringkasan operasional</p>
+                    <h2 id="bimws-view-title">Dashboard</h2>
+                </div>
+                <div class="bimws-period-control" aria-label="Pilih periode">
+                    <button class="bimws-icon-btn" id="period-prev" type="button" title="Bulan sebelumnya" aria-label="Bulan sebelumnya"><i class="fas fa-chevron-left"></i></button>
+                    <button class="bimws-period-label" id="period-current" type="button" title="Kembali ke bulan ini">Juli 2026</button>
+                    <button class="bimws-icon-btn" id="period-next" type="button" title="Bulan berikutnya" aria-label="Bulan berikutnya"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="bimws-user-chip">
+                    <span id="bimws-user-name">Memuat...</span>
+                    <small id="bimws-user-role"></small>
+                </div>
+            </header>
+
+            <div class="bimws-access-state" id="bimws-access-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Memeriksa akses Divisi BIM Workspace...</p>
+            </div>
+
+            <div class="bimws-content" id="bimws-content" hidden>
+                <section class="bimws-view is-active" data-view-panel="dashboard">
+                    <div class="bimws-actions-row">
+                        <div>
+                            <h3>Ringkasan Bulanan</h3>
+                            <p>Progress kolektif Divisi BIM pada periode aktif.</p>
+                        </div>
+                        <div class="bimws-quick-actions" id="dashboard-quick-actions"></div>
+                    </div>
+                    <div class="bimws-metrics" id="dashboard-metrics"></div>
+                    <div class="bimws-dashboard-grid">
+                        <section class="bimws-panel bimws-span-2">
+                            <div class="bimws-panel-head"><div><h3>Task Overview</h3><p>Distribusi status dan rata-rata progress per project.</p></div><button class="bimws-text-btn" data-go-view="tasks">Lihat semua</button></div>
+                            <div id="dashboard-active-tasks" class="bimws-chart-region"></div>
+                        </section>
+                        <section class="bimws-panel">
+                            <div class="bimws-panel-head"><div><h3>Perlu Perhatian</h3><p>Overdue, blocked, dan approval.</p></div></div>
+                            <div id="dashboard-attention" class="bimws-feed"></div>
+                        </section>
+                        <section class="bimws-panel">
+                            <div class="bimws-panel-head"><div><h3>Output Terbaru</h3><p>Output worklog pada periode aktif.</p></div></div>
+                            <div id="dashboard-outputs" class="bimws-feed"></div>
+                        </section>
+                        <section class="bimws-panel bimws-span-2">
+                            <div class="bimws-panel-head"><div><h3>Aktivitas Terbaru</h3><p>Jejak perubahan dan approval workspace.</p></div></div>
+                            <div id="dashboard-activity" class="bimws-activity-list"></div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="bimws-view" data-view-panel="tasks">
+                    <div class="bimws-actions-row">
+                        <div><h3>Task Bulanan</h3><p>Task kolektif, approval input, dan completion review.</p></div>
+                        <div class="bimws-quick-actions"><button class="bimws-btn bimws-btn-secondary" id="task-carry-btn"><i class="fas fa-arrow-right-arrow-left"></i>Carry Forward</button><button class="bimws-btn bimws-btn-primary" id="task-new-btn"><i class="fas fa-plus"></i>Task Baru</button></div>
+                    </div>
+                    <div class="bimws-filterbar">
+                        <input id="task-search" type="search" placeholder="Cari task atau project..." aria-label="Cari task">
+                        <select id="task-status-filter" aria-label="Filter status"><option value="">Semua status</option><option value="planned">Planned</option><option value="in_progress">In Progress</option><option value="blocked">Blocked</option><option value="submitted_for_review">Review</option><option value="approved_done">Done</option><option value="rejected_revision">Revision</option></select>
+                        <select id="task-intake-filter" aria-label="Filter approval"><option value="">Semua approval</option><option value="draft">Draft</option><option value="pending_approval">Pending Approval</option><option value="approved">Approved</option><option value="revision_required">Revision Required</option><option value="rejected">Rejected</option></select>
+                    </div>
+                    <section class="bimws-gantt-panel" aria-labelledby="task-gantt-title">
+                        <div class="bimws-gantt-toolbar">
+                            <div>
+                                <h3 id="task-gantt-title">Timeline 2 Minggu</h3>
+                                <p id="task-gantt-range">Jadwal task pada jendela aktif.</p>
+                            </div>
+                            <div class="bimws-gantt-controls" aria-label="Navigasi timeline">
+                                <button type="button" class="bimws-icon-btn" id="task-gantt-prev" title="Dua minggu sebelumnya" aria-label="Dua minggu sebelumnya"><i class="fas fa-chevron-left"></i></button>
+                                <button type="button" class="bimws-btn bimws-btn-secondary" id="task-gantt-today"><i class="fas fa-calendar-day"></i>Hari ini</button>
+                                <button type="button" class="bimws-icon-btn" id="task-gantt-next" title="Dua minggu berikutnya" aria-label="Dua minggu berikutnya"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div id="tasks-gantt" class="bimws-gantt-wrap"></div>
+                    </section>
+                    <div class="bimws-panel"><div id="tasks-table" class="bimws-table-wrap"></div></div>
+                </section>
+
+                <section class="bimws-view" data-view-panel="worklogs">
+                    <div class="bimws-actions-row"><div><h3>Worklog Operasional</h3><p>Aktivitas termonitor dan konfirmasi pekerjaan harian dari sumber resmi.</p></div><button class="bimws-btn bimws-btn-primary" id="worklog-new-btn"><i class="fas fa-plus"></i>Tambah Update Kerja</button></div>
+                    <div class="bimws-metrics bimws-worklog-metrics" id="worklog-summary"></div>
+                    <div class="bimws-filterbar"><input id="worklog-search" type="search" placeholder="Cari task, PIC, atau output..." aria-label="Cari worklog"><label class="bimws-check"><input type="checkbox" id="worklog-mine-only"> Worklog saya</label></div>
+                    <div class="bimws-worklog-layout">
+                        <section class="bimws-panel">
+                            <div class="bimws-panel-head"><div><h3>Activity Feed</h3><p>Jejak planning, execution, dan verification dari modul workspace.</p></div></div>
+                            <div id="worklog-events" class="bimws-activity-list bimws-worklog-feed"></div>
+                        </section>
+                        <section class="bimws-panel">
+                            <div class="bimws-panel-head"><div><h3>Daily Worklog</h3><p>Draft otomatis harus dikonfirmasi PIC sebelum masuk laporan.</p></div></div>
+                            <div id="worklogs-table" class="bimws-table-wrap"></div>
+                        </section>
+                    </div>
+                </section>
+
+                <section class="bimws-view" data-view-panel="meetings">
+                    <div class="bimws-actions-row"><div><h3>Risalah Rapat</h3><p>FRM.NKE.01.06 dan tindak lanjut yang belum closed.</p></div><button class="bimws-btn bimws-btn-primary" id="meeting-new-btn"><i class="fas fa-plus"></i>Risalah Baru</button></div>
+                    <div class="bimws-panel"><div id="meetings-table" class="bimws-table-wrap"></div></div>
+                </section>
+
+                <section class="bimws-view" data-view-panel="issues">
+                    <div class="bimws-actions-row"><div><h3>Issue Register</h3><p>Dokumentasi issue internal dengan acceptance dan closure approval.</p></div><button class="bimws-btn bimws-btn-primary" id="issue-new-btn"><i class="fas fa-plus"></i>Issue Baru</button></div>
+                    <div class="bimws-filterbar"><input id="issue-search" type="search" placeholder="Cari issue atau project..." aria-label="Cari issue"><select id="issue-status-filter"><option value="">Semua status</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="accepted">Accepted</option><option value="action_required">Action Required</option><option value="resolved_pending_approval">Pending Closure</option><option value="closed">Closed</option><option value="rejected">Rejected</option></select></div>
+                    <div class="bimws-panel"><div id="issues-table" class="bimws-table-wrap"></div></div>
+                </section>
+
+                <section class="bimws-view" data-view-panel="kpi">
+                    <div class="bimws-actions-row">
+                        <div><h3>KPI</h3><p>Scorecard Departemen, Divisi BIM, dan individu.</p></div>
+                    </div>
+                    <div class="bimws-kpi-tabs" role="tablist" aria-label="Tingkat KPI">
+                        <button type="button" class="bimws-kpi-tab is-active" data-kpi-tab="overview" role="tab" aria-selected="true">Overview</button>
+                        <button type="button" class="bimws-kpi-tab" data-kpi-tab="department" role="tab" aria-selected="false">Departemen</button>
+                        <button type="button" class="bimws-kpi-tab" data-kpi-tab="division" role="tab" aria-selected="false">Divisi BIM</button>
+                        <button type="button" class="bimws-kpi-tab" data-kpi-tab="individual" role="tab" aria-selected="false">Individu</button>
+                        <button type="button" class="bimws-kpi-tab" data-kpi-tab="programs" role="tab" aria-selected="false">Program &amp; Aktivitas</button>
+                    </div>
+                    <section class="bimws-panel" aria-live="polite">
+                        <div class="bimws-panel-head"><div><h3 id="kpi-panel-title">Overview KPI</h3><p id="kpi-panel-help">Ringkasan scorecard pada tahun aktif.</p></div></div>
+                        <div id="kpi-content"></div>
+                    </section>
+                </section>
+
+                <section class="bimws-view" data-view-panel="reports">
+                    <div class="bimws-actions-row"><div><h3>Reports</h3><p>Ringkasan manajemen dan data operasional sesuai permission.</p></div><div class="bimws-quick-actions"><button class="bimws-btn bimws-btn-secondary" id="report-print-btn"><i class="fas fa-print"></i>Print Summary</button><button class="bimws-btn bimws-btn-primary" id="report-export-btn"><i class="fas fa-file-csv"></i>Export CSV</button></div></div>
+                    <div id="reports-content"></div>
+                </section>
+
+                <section class="bimws-view" data-view-panel="settings">
+                    <div class="bimws-actions-row"><div><h3>Pengaturan Workspace</h3><p>Konfigurasi operasional. Akses akun tetap dikelola Admin BCL.</p></div></div>
+                    <div class="bimws-panel bimws-settings-panel">
+                        <h3>Default Operasional</h3>
+                        <dl><div><dt>Official owner</dt><dd>Kepala Divisi BIM</dd></div><div><dt>Periode task</dt><dd>Bulanan</dd></div><div><dt>Approval task dan issue</dt><dd>Kepala Divisi BIM</dd></div><div><dt>Source of truth</dt><dd>PostgreSQL BCL</dd></div></dl>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <dialog class="bimws-dialog" id="bimws-dialog" aria-labelledby="bimws-dialog-title">
+        <form method="dialog" class="bimws-dialog-shell" id="bimws-dialog-form">
+            <header><div><p id="bimws-dialog-eyebrow"></p><h2 id="bimws-dialog-title"></h2></div><button class="bimws-icon-btn" id="bimws-dialog-x" type="button" title="Tutup" aria-label="Tutup"><i class="fas fa-xmark"></i></button></header>
+            <div class="bimws-dialog-body" id="bimws-dialog-body"></div>
+            <footer id="bimws-dialog-footer"></footer>
+        </form>
+    </dialog>
+
+    <div class="bimws-toast" id="bimws-toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/loadComponents.js?v=20260713a"></script>
+    <script src="../js/divisi-bim-workspace.js?v=20260713o"></script>
+</body>
+</html>

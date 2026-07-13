@@ -1,10 +1,14 @@
 <nav class="navbar bcl-main-navbar navbar-expand-lg navbar-light shadow sticky-top p-0"
     style="position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 1030; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
     <a href="../index.html" class="navbar-brand bcl-navbar-brand d-flex align-items-center">
-        <div class="bcl-brand-logos" aria-label="NKE BIM NKE BCL">
-            <img src="/img/icons/trimmed/logo_nke_trim.png" alt="NKE" class="bcl-brand-logo bcl-brand-logo-nke">
-            <img src="/img/icons/trimmed/bim_nke_trim.png" alt="BIM NKE" class="bcl-brand-logo bcl-brand-logo-bim">
-            <img src="/img/icons/trimmed/main_logo_BCL_trim.png" alt="BCL" class="bcl-brand-logo bcl-brand-logo-bcl">
+        <div class="bcl-brand-logos" aria-label="NKE dan BCL">
+            <img src="/img/icons/trimmed/nke_animated.gif?v=20260713-crop1" alt="NKE" class="bcl-brand-logo bcl-brand-logo-nke">
+            <span class="bcl-brand-separator" aria-hidden="true">|</span>
+            <span class="bcl-brand-logo-rotator" role="img" aria-label="BCL">
+                <img src="/img/icons/trimmed/main_logo_BCL_trim.png?v=20260713-crop1" alt="" class="bcl-brand-logo bcl-brand-logo-bcl">
+                <img src="/img/icons/trimmed/main_logo_BCL_2.png?v=20260713-crop1" alt="" class="bcl-brand-logo bcl-brand-logo-bcl">
+                <img src="/img/icons/trimmed/main_logo_BCL_3.png?v=20260713-crop1" alt="" class="bcl-brand-logo bcl-brand-logo-bcl">
+            </span>
         </div>
     </a>
 
@@ -109,6 +113,14 @@
                     <a href="/pages/projects.html" class="dropdown-item">Proyek</a>
                     <a href="/pages/tutorial.html" class="dropdown-item">Tutorial Video</a>
                     <a href="/pages/bim-methode.html" class="dropdown-item">Metode BIM</a>
+                </div>
+            </div>
+            <div class="nav-item dropdown bim-workspace-access-link" hidden>
+                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Divisi BIM</a>
+                <div class="dropdown-menu fade-down m-0">
+                    <a href="/pages/divisi-bim-workspace.html" class="dropdown-item">
+                        <i class="fas fa-briefcase bcl-inline-icon-md"></i>Workspace
+                    </a>
                 </div>
             </div>
             <div class="nav-item dropdown">
@@ -241,7 +253,16 @@
     }
 
     .bcl-main-navbar .bcl-brand-logo-nke {
-        height: var(--bcl-brand-logo-height-nke) !important;
+        height: var(--bcl-brand-logo-height-nke);
+    }
+
+    .bcl-main-navbar .bcl-brand-separator {
+        flex: 0 0 auto;
+        color: #98a2b3;
+        font-family: Arial, sans-serif !important;
+        font-size: clamp(22px, 2.2vw, 30px) !important;
+        font-weight: 300;
+        line-height: 1;
     }
 
     .bcl-main-navbar .bcl-brand-logo-bim {
@@ -249,7 +270,48 @@
     }
 
     .bcl-main-navbar .bcl-brand-logo-bcl {
-        height: var(--bcl-brand-logo-height-bcl) !important;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: auto;
+        height: 100% !important;
+        max-width: none;
+        opacity: 0;
+        transform: translateX(-50%);
+        animation: bcl-brand-logo-cycle 9s infinite ease-in-out;
+    }
+
+    .bcl-main-navbar .bcl-brand-logo-rotator {
+        position: relative;
+        display: block;
+        flex: 0 0 auto;
+        width: calc(var(--bcl-brand-logo-height-bcl) * 2.7);
+        height: var(--bcl-brand-logo-height-bcl);
+        overflow: hidden;
+    }
+
+    .bcl-main-navbar .bcl-brand-logo-bcl:nth-child(2) {
+        animation-delay: -6s;
+    }
+
+    .bcl-main-navbar .bcl-brand-logo-bcl:nth-child(3) {
+        animation-delay: -3s;
+    }
+
+    @keyframes bcl-brand-logo-cycle {
+        0%, 28% { opacity: 1; }
+        33%, 95% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .bcl-main-navbar .bcl-brand-logo-bcl {
+            animation: none;
+        }
+
+        .bcl-main-navbar .bcl-brand-logo-bcl:first-child {
+            opacity: 1;
+        }
     }
 
     .bcl-main-navbar .navbar-toggler {

@@ -423,6 +423,8 @@
                                                 <th class="access-column">Mapping<br><small>Kompetensi</small></th>
                                                 <th class="access-column">Dokumen<br><small>Navbar</small></th>
                                                 <th class="access-column">Audit<br><small>2026</small></th>
+                                                <th class="access-column">Divisi BIM<br><small>Workspace</small></th>
+                                                <th class="access-column">Workspace<br><small>Role</small></th>
                                                 <th class="access-column">Pustaka<br><small>Download</small></th>
                                                 <th class="access-column">Tanpa<br><small>Watermark</small></th>
                                                 <th>Aksi</th>
@@ -1347,16 +1349,27 @@
                                     <i class="fas fa-power-off"></i>
                                     Server Control
                                 </div>
-                                <a class="btn btn-outline-primary" href="/elearning-assets/phase4-dashboard.html" target="_blank" rel="noopener">
+                                <a id="server-control-full-link" class="btn btn-outline-primary" href="/elearning-assets/phase4-dashboard.html" target="_blank" rel="noopener">
                                     <i class="fas fa-external-link-alt me-2"></i>Buka Tab Penuh
                                 </a>
                             </div>
                             <div class="card-body-modern p-0">
                                 <iframe
-                                    src="/elearning-assets/phase4-dashboard.html"
+                                    id="server-control-frame"
+                                    src="about:blank"
                                     title="BCL Server Control"
                                     style="width: 100%; min-height: 760px; border: 0; display: block; background: #f8fafc;"
                                 ></iframe>
+                                <script>
+                                    (() => {
+                                        const dashboardUrl = new URL('/elearning-assets/phase4-dashboard.html', window.location.href);
+                                        if (dashboardUrl.port === '5052') dashboardUrl.port = '';
+                                        const frame = document.getElementById('server-control-frame');
+                                        const fullLink = document.getElementById('server-control-full-link');
+                                        if (frame) frame.src = dashboardUrl.href;
+                                        if (fullLink) fullLink.href = dashboardUrl.href;
+                                    })();
+                                </script>
                             </div>
                         </div>
                     </div>

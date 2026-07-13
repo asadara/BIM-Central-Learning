@@ -227,6 +227,7 @@ function applyNavbarAccessProfile(rootElement, accessProfile) {
     const root = rootElement || document;
     setAccessLinksVisibility(rootElement, '.dokumen-access-link', !!profile.dokumenAccess);
     setAccessLinksVisibility(rootElement, '.audit-2026-access-link', !!profile.audit2026Access);
+    setAccessLinksVisibility(rootElement, '.bim-workspace-access-link', !!profile.bimWorkspaceAccess);
     const competencyLink = root.querySelector('#competency-link');
     if (competencyLink) {
         competencyLink.hidden = !profile.mappingKompetensiAccess;

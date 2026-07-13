@@ -24,24 +24,7 @@ function buildAdminUser(overrides = {}) {
     };
 }
 
-function getRequestUser(req) {
-    if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
-        return buildAdminUser({
-            id: req.session.adminUser.id,
-            username: req.session.adminUser.username,
-            email: req.session.adminUser.email,
-            role: req.session.adminUser.role || 'System Administrator'
-        });
-    }
-
-    const adminTokenHeader = String(req.headers['x-admin-token'] || '');
-    if (LEGACY_ADMIN_TOKEN && adminTokenHeader && adminTokenHeader === LEGACY_ADMIN_TOKEN) {
-        return buildAdminUser({
-            id: 'legacy-admin-token',
-            username: 'legacy_admin_token'
-        });
-    }
-
+function getBearerRequestUser(req) {
     const authHeader = req.headers.authorization || '';
     if (!authHeader.startsWith('Bearer ')) {
         return null;
@@ -74,6 +57,27 @@ function getRequestUser(req) {
     }
 }
 
+function getRequestUser(req) {
+    if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
+        return buildAdminUser({
+            id: req.session.adminUser.id,
+            username: req.session.adminUser.username,
+            email: req.session.adminUser.email,
+            role: req.session.adminUser.role || 'System Administrator'
+        });
+    }
+
+    const adminTokenHeader = String(req.headers['x-admin-token'] || '');
+    if (LEGACY_ADMIN_TOKEN && adminTokenHeader && adminTokenHeader === LEGACY_ADMIN_TOKEN) {
+        return buildAdminUser({
+            id: 'legacy-admin-token',
+            username: 'legacy_admin_token'
+        });
+    }
+
+    return getBearerRequestUser(req);
+}
+
 function requireAuthenticated(req, res, next) {
     const authUser = getRequestUser(req);
     if (!authUser) {
@@ -99,6 +103,7 @@ function requireAdmin(req, res, next) {
 
 module.exports = {
     isAdminRole,
+    getBearerRequestUser,
     getRequestUser,
     requireAuthenticated,
     requireAdmin

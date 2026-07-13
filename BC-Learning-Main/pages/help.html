@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="utf-8">
@@ -34,6 +34,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
+        html,
+        body.help-page {
+            overflow-x: clip !important;
+            overflow-y: visible !important;
+        }
+
         .help-page-header {
             text-align: center;
             margin: 0;
@@ -197,11 +203,161 @@
             gap: 0.75rem;
             margin-top: 1rem;
         }
+
+        .onboarding-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+
+        .onboarding-note {
+            border-left: 4px solid #fb873f;
+            background: #fff;
+            padding: 1rem 1.15rem;
+            margin-top: 1.25rem;
+        }
+
+        .access-request-template {
+            margin: 0;
+            padding: 1rem;
+            border: 1px solid #d7dde5;
+            border-radius: 6px;
+            background: #f8fafc;
+            color: #263245;
+            white-space: pre-wrap;
+        }
+
+        .help-layout {
+            display: grid;
+            grid-template-columns: 230px minmax(0, 1fr);
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .help-sidebar {
+            position: sticky;
+            top: 96px;
+            max-height: calc(100vh - 112px);
+            overflow-y: auto;
+            padding: 0.35rem 1rem 1rem 0;
+            border-right: 1px solid #dfe4ea;
+        }
+
+        .help-sidebar-title {
+            margin: 0 0 1rem;
+            color: #1f2937;
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        .help-sidebar-title i { color: #fb873f; }
+        .help-sidebar-toggle { display: none; }
+
+        .help-topic-nav {
+            display: grid;
+            gap: 0.2rem;
+        }
+
+        .help-topic-group {
+            margin: 0.9rem 0 0.3rem;
+            color: #7b8798;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .help-topic-group:first-child { margin-top: 0; }
+
+        .help-topic-link {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            min-height: 38px;
+            padding: 0.5rem 0.65rem;
+            border-left: 3px solid transparent;
+            color: #475467;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .help-topic-link i {
+            width: 18px;
+            color: #7b8798;
+            text-align: center;
+        }
+
+        .help-topic-link:hover,
+        .help-topic-link.is-active {
+            border-left-color: #fb873f;
+            background: #fff4ed;
+            color: #b54708;
+        }
+
+        .help-topic-link:hover i,
+        .help-topic-link.is-active i { color: #fb873f; }
+
+        .help-content { min-width: 0; }
+        .help-topic { scroll-margin-top: 104px; }
+
+        @media (max-width: 991.98px) {
+            .help-layout { display: block; }
+
+            .help-sidebar {
+                position: sticky;
+                top: 82px;
+                z-index: 25;
+                max-height: none;
+                margin-bottom: 1rem;
+                padding: 0;
+                overflow: visible;
+                border: 1px solid #dfe4ea;
+                border-radius: 6px;
+                background: #fff;
+                box-shadow: 0 4px 14px rgba(16, 24, 40, 0.1);
+            }
+
+            .help-sidebar-title { display: none; }
+
+            .help-sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                min-height: 46px;
+                padding: 0.65rem 0.85rem;
+                border: 0;
+                background: #fff;
+                color: #1f2937;
+                font-weight: 700;
+                text-align: left;
+            }
+
+            .help-sidebar-toggle .fa-chevron-down { transition: transform 0.18s ease; }
+            .help-sidebar.is-open .help-sidebar-toggle .fa-chevron-down { transform: rotate(180deg); }
+
+            .help-topic-nav {
+                display: none;
+                max-height: min(60vh, 420px);
+                padding: 0 0.75rem 0.75rem;
+                overflow-y: auto;
+                border-top: 1px solid #eef1f4;
+            }
+
+            .help-sidebar.is-open .help-topic-nav { display: grid; }
+            .help-topic { scroll-margin-top: 142px; }
+        }
+
+        @media (max-width: 575.98px) {
+            .help-section { padding: 1.25rem; }
+            .container-xxl.py-5 { padding-top: 1rem !important; }
+        }
     </style>
 
 </head>
 
-<body>
+<body class="help-page">
 
     <!-- Navbar Universal -->
     <div id="navbar-container"></div>
@@ -216,9 +372,34 @@
     <!-- Help Content Start -->
     <div class="container-xxl py-5">
         <div class="container">
+            <div class="help-layout">
+                <aside class="help-sidebar" id="help-sidebar" aria-label="Topik bantuan">
+                    <h2 class="help-sidebar-title"><i class="fas fa-list me-2"></i>Topik Bantuan</h2>
+                    <button class="help-sidebar-toggle" id="help-sidebar-toggle" type="button" aria-expanded="false" aria-controls="help-topic-nav">
+                        <span><i class="fas fa-list me-2"></i>Topik Bantuan</span>
+                        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <nav class="help-topic-nav" id="help-topic-nav">
+                        <p class="help-topic-group">Mulai</p>
+                        <a class="help-topic-link is-active" href="#ringkasan"><i class="fas fa-house"></i>Ringkasan</a>
+                        <a class="help-topic-link" href="#panduan-akun-baru"><i class="fas fa-user-plus"></i>Membuat Akun</a>
+                        <a class="help-topic-link" href="#pengajuan-akses"><i class="fas fa-key"></i>Pengajuan Akses</a>
+
+                        <p class="help-topic-group">Menggunakan BCL</p>
+                        <a class="help-topic-link" href="#navigasi-menu"><i class="fas fa-compass"></i>Navigasi Menu</a>
+                        <a class="help-topic-link" href="#training"><i class="fas fa-route"></i>Alur Training</a>
+
+                        <p class="help-topic-group">Dukungan Teknis</p>
+                        <a class="help-topic-link" href="#https"><i class="fas fa-shield-halved"></i>HTTPS &amp; Sertifikat</a>
+                        <a class="help-topic-link" href="#faq"><i class="fas fa-circle-question"></i>FAQ</a>
+                        <a class="help-topic-link" href="#kontak"><i class="fas fa-headset"></i>Kontak Bantuan</a>
+                    </nav>
+                </aside>
+
+                <div class="help-content">
 
             <!-- Selamat Datang -->
-            <div class="help-section">
+            <div class="help-section help-topic" id="ringkasan">
                 <div class="text-center mb-4">
                     <i class="fas fa-graduation-cap help-icon"></i>
                     <h2 class="mb-3">Selamat Datang di BIM Central Learning</h2>
@@ -226,36 +407,97 @@
                 </div>
             </div>
 
-            <!-- Panduan Memulai -->
-            <div class="help-section">
+            <!-- Panduan Akun Baru -->
+            <div class="help-section help-topic" id="panduan-akun-baru">
                 <h3 class="mb-4">
-                    <i class="fas fa-play-circle text-primary me-2"></i>
-                    Panduan Memulai
+                    <i class="fas fa-user-plus text-primary me-2"></i>
+                    Panduan Membuat Akun BCL
                 </h3>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5><span class="step-number">1</span>Registrasi Akun</h5>
-                        <p>Klik menu "Sign up" di pojok kanan atas navbar untuk membuat akun baru. Isi data diri Anda dengan lengkap.</p>
+                <p class="lead mb-4">Ikuti langkah berikut jika Anda baru bergabung dan belum memiliki akun pengguna BCL.</p>
 
-                        <h5><span class="step-number">2</span>Verifikasi Email</h5>
-                        <p>Periksa email Anda untuk link verifikasi dan aktifkan akun Anda.</p>
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <h5><span class="step-number">1</span>Buka alamat resmi BCL</h5>
+                        <p>Gunakan <strong>https://bcl.nke.net</strong>. Jika muncul peringatan sertifikat, ikuti panduan instalasi Root CA pada bagian HTTPS di halaman ini.</p>
 
-                        <h5><span class="step-number">3</span>Login ke Sistem</h5>
-                        <p>Masuk dengan email dan password yang telah Anda daftarkan.</p>
+                        <h5><span class="step-number">2</span>Buka halaman pendaftaran</h5>
+                        <p>Pilih menu <strong>Akun</strong> pada navbar, lalu pilih <strong>Daftar</strong>. Anda juga dapat membuka tombol <strong>Buat Akun</strong> di bawah panduan ini.</p>
+
+                        <h5><span class="step-number">3</span>Pilih metode pendaftaran</h5>
+                        <p>Gunakan formulir akun BCL atau tombol Google. Untuk pendaftaran manual, siapkan username, email aktif, password, dan BIM Experience Level.</p>
                     </div>
-                    <div class="col-md-6">
-                        <h5><span class="step-number">4</span>Lengkapi Profil</h5>
-                        <p>Update informasi profil Anda untuk pengalaman belajar yang lebih personal.</p>
+                    <div class="col-lg-6">
+                        <h5><span class="step-number">4</span>Lengkapi data pekerjaan</h5>
+                        <p>Isi <strong>Job Role</strong> dan <strong>Organization</strong> agar admin dapat mengenali unit kerja dan kebutuhan akses Anda. Kedua field ini opsional, tetapi sangat disarankan.</p>
 
-                        <h5><span class="step-number">5</span>Mulai Belajar</h5>
-                        <p>Jelajahi berbagai menu dan mulai kursus pertama Anda!</p>
+                        <h5><span class="step-number">5</span>Selesaikan registrasi</h5>
+                        <p>Pilih <strong>Create Account</strong> atau selesaikan proses Google. Akun akan aktif setelah registrasi berhasil; saat ini tidak ada langkah verifikasi email terpisah.</p>
+
+                        <h5><span class="step-number">6</span>Login dan lengkapi profil</h5>
+                        <p>Masuk melalui menu <strong>Akun &gt; Login</strong>, lalu periksa profil, BIM Level, role pekerjaan, dan organisasi Anda sebelum menggunakan fitur BCL.</p>
                     </div>
+                </div>
+
+                <div class="onboarding-note">
+                    <strong>Catatan akses:</strong> pembuatan akun tidak otomatis memberikan akses ke seluruh menu internal. Beberapa halaman memerlukan persetujuan dan pengaturan permission oleh admin BCL.
+                </div>
+
+                <div class="onboarding-actions">
+                    <a class="btn btn-primary" href="/pages/signup.html"><i class="fas fa-user-plus me-2"></i>Buat Akun</a>
+                    <a class="btn btn-outline-primary" href="/pages/login.html"><i class="fas fa-right-to-bracket me-2"></i>Login BCL</a>
+                </div>
+            </div>
+
+            <!-- Pengajuan Akses -->
+            <div class="help-section help-topic" id="pengajuan-akses">
+                <h3 class="mb-3">
+                    <i class="fas fa-key text-primary me-2"></i>
+                    Pengajuan Akses Menu atau Fitur
+                </h3>
+                <p>Jika menu, halaman, dokumen, atau fitur tertentu belum terlihat setelah login, ajukan akses kepada admin melalui salah satu kanal berikut.</p>
+
+                <div class="row g-4 mt-1">
+                    <div class="col-lg-6">
+                        <div class="menu-card h-100 mb-0">
+                            <h5 class="text-primary"><i class="fas fa-message me-2"></i>Pesan di BCL</h5>
+                            <ol class="platform-steps mb-3">
+                                <li>Login menggunakan akun BCL Anda.</li>
+                                <li>Buka <strong>Akun &gt; Pesan Masuk</strong> pada navbar.</li>
+                                <li>Isi subjek dengan nama fitur yang diminta.</li>
+                                <li>Tulis kebutuhan dan alasan akses secara jelas.</li>
+                                <li>Pilih <strong>Kirim Balasan</strong>. Pesan akan masuk ke inbox admin dan tercatat dalam thread Anda.</li>
+                            </ol>
+                            <a class="btn btn-primary btn-sm" href="/pages/messages.html"><i class="fas fa-paper-plane me-2"></i>Buka Pesan BCL</a>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="menu-card h-100 mb-0">
+                            <h5 class="text-primary"><i class="fas fa-envelope me-2"></i>Email</h5>
+                            <p>Kirim permohonan ke:</p>
+                            <p class="fw-bold"><a href="mailto:nke-bim@nusakonstruksi.com?subject=Permohonan%20Akses%20BCL">nke-bim@nusakonstruksi.com</a></p>
+                            <p class="mb-2">Gunakan subjek yang mudah dikenali, misalnya:</p>
+                            <p class="mb-0"><code>Permohonan Akses BCL - Divisi BIM Workspace</code></p>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-3">Informasi yang perlu disertakan</h5>
+                <pre class="access-request-template">Nama / Username BCL:
+Email akun BCL:
+Divisi / Project / Organization:
+Menu atau fitur yang diminta:
+Role akses yang dibutuhkan (jika diketahui):
+Alasan atau kebutuhan pekerjaan:
+Atasan / pemberi persetujuan (jika diperlukan):</pre>
+
+                <div class="alert alert-warning mt-3 mb-0">
+                    <strong>Keamanan akun:</strong> jangan pernah mengirim password, kode OTP, token login, atau credential lain melalui Pesan BCL maupun email. Admin hanya memerlukan identitas akun dan alasan permohonan akses.
                 </div>
             </div>
 
             <!-- Navigasi Menu -->
-            <div class="help-section">
+            <div class="help-section help-topic" id="navigasi-menu">
                 <h3 class="mb-4">
                     <i class="fas fa-compass text-primary me-2"></i>
                     Navigasi Menu Utama
@@ -341,7 +583,7 @@
             </div>
 
             <!-- Workflow Training -->
-            <div class="help-section">
+            <div class="help-section help-topic" id="training">
                 <h3 class="mb-4">
                     <i class="fas fa-route text-primary me-2"></i>
                     Workflow Urutan Training
@@ -378,7 +620,7 @@
             </div>
 
             <!-- HTTPS Warning Guide -->
-            <div class="help-section">
+            <div class="help-section help-topic" id="https">
                 <h3 class="mb-4">
                     <i class="fas fa-shield-alt text-primary me-2"></i>
                     Mengatasi Peringatan HTTPS Merah
@@ -433,7 +675,7 @@
             </div>
 
             <!-- FAQ -->
-            <div class="help-section">
+            <div class="help-section help-topic" id="faq">
                 <h3 class="mb-4">
                     <i class="fas fa-question-circle text-primary me-2"></i>
                     FAQ - Pertanyaan Umum
@@ -482,6 +724,16 @@
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <i class="fas fa-chevron-down me-2"></i>
+                        Mengapa menu tertentu tidak terlihat setelah saya membuat akun?
+                    </div>
+                    <div class="faq-answer">
+                        Beberapa menu internal memakai permission khusus dan tidak aktif otomatis saat registrasi. Ajukan akses melalui <strong>Akun &gt; Pesan Masuk</strong> atau email ke <strong>nke-bim@nusakonstruksi.com</strong>. Setelah disetujui admin, muat ulang halaman atau login kembali.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <i class="fas fa-chevron-down me-2"></i>
                         Bagaimana cara mengikuti forum diskusi?
                     </div>
                     <div class="faq-answer">
@@ -491,7 +743,7 @@
             </div>
 
             <!-- Dukungan -->
-            <div class="support-card">
+            <div class="support-card help-topic" id="kontak">
                 <i class="fas fa-headset fa-3x mb-3"></i>
                 <h4>Butuh Bantuan Lebih Lanjut?</h4>
                 <p class="mb-4">Tim support kami siap membantu Anda dengan pertanyaan apa pun tentang penggunaan platform BCL</p>
@@ -506,8 +758,11 @@
                     </div>
                     <div class="col-md-4">
                         <i class="fas fa-comments fa-2x mb-2"></i>
-                        <p>Forum: Menu Community</p>
+                        <p><a class="text-white" href="/pages/messages.html">Pesan: Akun &gt; Pesan Masuk</a></p>
                     </div>
+                </div>
+            </div>
+
                 </div>
             </div>
 
@@ -549,12 +804,48 @@
             }
         }
 
+        const helpSidebar = document.getElementById('help-sidebar');
+        const helpSidebarToggle = document.getElementById('help-sidebar-toggle');
+        const helpTopicLinks = Array.from(document.querySelectorAll('.help-topic-link'));
+        const helpTopics = Array.from(document.querySelectorAll('.help-topic'));
+
+        if (helpSidebarToggle && helpSidebar) {
+            helpSidebarToggle.addEventListener('click', () => {
+                const isOpen = helpSidebar.classList.toggle('is-open');
+                helpSidebarToggle.setAttribute('aria-expanded', String(isOpen));
+            });
+        }
+
+        helpTopicLinks.forEach((link) => {
+            link.addEventListener('click', () => {
+                helpSidebar?.classList.remove('is-open');
+                helpSidebarToggle?.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        if ('IntersectionObserver' in window && helpTopics.length) {
+            const topicObserver = new IntersectionObserver((entries) => {
+                const visible = entries
+                    .filter((entry) => entry.isIntersecting)
+                    .sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top)[0];
+                if (!visible) return;
+
+                helpTopicLinks.forEach((link) => {
+                    link.classList.toggle('is-active', link.getAttribute('href') === `#${visible.target.id}`);
+                });
+            }, { rootMargin: '-115px 0px -70% 0px', threshold: 0 });
+
+            helpTopics.forEach((topic) => topicObserver.observe(topic));
+        }
+
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
+                const selector = this.getAttribute('href');
+                if (!selector || selector === '#') return;
+                const target = document.querySelector(selector);
                 if (target) {
+                    e.preventDefault();
                     target.scrollIntoView({
                         behavior: 'smooth',
                         block: 'start'

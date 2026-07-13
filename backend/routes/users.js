@@ -150,7 +150,8 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                        registration_date, last_login, login_count, is_active,
                        mapping_kompetensi_access, dokumen_access, audit_2026_access,
                        library_download_access,
-                       watermark_free_download_access
+                       watermark_free_download_access,
+                       bim_workspace_access, bim_workspace_role
                 FROM users
                 ORDER BY registration_date DESC
             `;
@@ -174,7 +175,9 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 dokumenAccess: user.dokumen_access || false,
                 audit2026Access: user.audit_2026_access || false,
                 libraryDownloadAccess: user.library_download_access || false,
-                watermarkFreeDownloadAccess: user.watermark_free_download_access || false
+                watermarkFreeDownloadAccess: user.watermark_free_download_access || false,
+                bimWorkspaceAccess: user.bim_workspace_access || false,
+                bimWorkspaceRole: user.bim_workspace_role || 'viewer'
             }));
 
             return res.json(safeUsers);
@@ -200,7 +203,9 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 dokumenAccess: user.dokumenAccess || user.dokumen_access || false,
                 audit2026Access: user.audit2026Access || user.audit_2026_access || false,
                 libraryDownloadAccess: user.libraryDownloadAccess || user.library_download_access || false,
-                watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false
+                watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false,
+                bimWorkspaceAccess: user.bimWorkspaceAccess || user.bim_workspace_access || false,
+                bimWorkspaceRole: user.bimWorkspaceRole || user.bim_workspace_role || 'viewer'
             }));
 
             console.log(`📄 Returned ${safeUsers.length} users from JSON fallback`);
@@ -423,7 +428,9 @@ router.post('/create', requireAdmin, async (req, res) => {
                 dokumenAccess: false,
                 audit2026Access: false,
                 libraryDownloadAccess: false,
-                watermarkFreeDownloadAccess: false
+                watermarkFreeDownloadAccess: false,
+                bimWorkspaceAccess: false,
+                bimWorkspaceRole: 'viewer'
             };
 
             return res.status(201).json({
@@ -470,7 +477,11 @@ router.post('/create', requireAdmin, async (req, res) => {
                 libraryDownloadAccess: false,
                 library_download_access: false,
                 watermarkFreeDownloadAccess: false,
-                watermark_free_download_access: false
+                watermark_free_download_access: false,
+                bimWorkspaceAccess: false,
+                bim_workspace_access: false,
+                bimWorkspaceRole: 'viewer',
+                bim_workspace_role: 'viewer'
             };
 
             users.push(newUser);
@@ -529,16 +540,23 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 libraryDownloadAccess: 'library_download_access',
                 library_download_access: 'library_download_access',
                 watermarkFreeDownloadAccess: 'watermark_free_download_access',
-                watermark_free_download_access: 'watermark_free_download_access'
+                watermark_free_download_access: 'watermark_free_download_access',
+                bimWorkspaceAccess: 'bim_workspace_access',
+                bim_workspace_access: 'bim_workspace_access',
+                bimWorkspaceRole: 'bim_workspace_role',
+                bim_workspace_role: 'bim_workspace_role'
             };
 
             // Build SET clause and values array
             Object.keys(updates).forEach(key => {
                 const columnName = fieldMapping[key];
                 if (columnName && key !== 'password' && !seenUpdateColumns.has(columnName)) {
+                    const normalizedValue = columnName === 'bim_workspace_role'
+                        ? normalizeAccessProfile({ bimWorkspaceRole: updates[key] }).bimWorkspaceRole
+                        : updates[key];
                     seenUpdateColumns.add(columnName);
                     updateFields.push(`${columnName} = $${paramIndex}`);
-                    values.push(updates[key]);
+                    values.push(normalizedValue);
                     paramIndex++;
                 }
             });
@@ -561,7 +579,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
                          registration_date, last_login, login_count, is_active,
                          mapping_kompetensi_access, dokumen_access, audit_2026_access,
                          library_download_access,
-                         watermark_free_download_access
+                         watermark_free_download_access,
+                         bim_workspace_access, bim_workspace_role
             `;
 
             const result = await pool.query(updateQuery, values);
@@ -589,7 +608,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 dokumenAccess: updatedUser.dokumen_access || false,
                 audit2026Access: updatedUser.audit_2026_access || false,
                 libraryDownloadAccess: updatedUser.library_download_access || false,
-                watermarkFreeDownloadAccess: updatedUser.watermark_free_download_access || false
+                watermarkFreeDownloadAccess: updatedUser.watermark_free_download_access || false,
+                bimWorkspaceAccess: updatedUser.bim_workspace_access || false,
+                bimWorkspaceRole: updatedUser.bim_workspace_role || 'viewer'
             };
 
             return res.json({
@@ -638,6 +659,12 @@ router.put('/:id', requireAdmin, async (req, res) => {
             const hasWatermarkUpdate =
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'watermarkFreeDownloadAccess') ||
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'watermark_free_download_access');
+            const hasWorkspaceAccessUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'bimWorkspaceAccess') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_access');
+            const hasWorkspaceRoleUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'bimWorkspaceRole') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_role');
 
             users[userIndex] = { ...users[userIndex], ...safeUpdates };
 
@@ -664,6 +691,16 @@ router.put('/:id', requireAdmin, async (req, res) => {
             if (hasWatermarkUpdate) {
                 users[userIndex].watermarkFreeDownloadAccess = accessUpdates.watermarkFreeDownloadAccess;
                 users[userIndex].watermark_free_download_access = accessUpdates.watermarkFreeDownloadAccess;
+            }
+
+            if (hasWorkspaceAccessUpdate) {
+                users[userIndex].bimWorkspaceAccess = accessUpdates.bimWorkspaceAccess;
+                users[userIndex].bim_workspace_access = accessUpdates.bimWorkspaceAccess;
+            }
+
+            if (hasWorkspaceRoleUpdate) {
+                users[userIndex].bimWorkspaceRole = accessUpdates.bimWorkspaceRole;
+                users[userIndex].bim_workspace_role = accessUpdates.bimWorkspaceRole;
             }
 
             // Save users

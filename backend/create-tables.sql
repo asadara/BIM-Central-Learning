@@ -41,7 +41,9 @@ CREATE TABLE IF NOT EXISTS users (
     dokumen_access BOOLEAN DEFAULT false,
     audit_2026_access BOOLEAN DEFAULT false,
     library_download_access BOOLEAN DEFAULT false,
-    watermark_free_download_access BOOLEAN DEFAULT false
+    watermark_free_download_access BOOLEAN DEFAULT false,
+    bim_workspace_access BOOLEAN DEFAULT false,
+    bim_workspace_role TEXT DEFAULT 'viewer'
 );
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS mapping_kompetensi_access BOOLEAN DEFAULT false;
@@ -49,6 +51,8 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS dokumen_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS audit_2026_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS library_download_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS watermark_free_download_access BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_access BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_role TEXT DEFAULT 'viewer';
 
 CREATE TABLE IF NOT EXISTS access_requests (
     id TEXT PRIMARY KEY,

@@ -1,5 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const { Pool } = require('pg');
 const { createPgConfig } = require('../config/runtimeConfig');
 const { getBearerRequestUser, getRequestUser } = require('../utils/auth');
@@ -29,6 +31,7 @@ const ISSUE_TYPES = new Set(['internal_issue', 'coordination_issue', 'model_issu
 const SEVERITIES = new Set(['low', 'medium', 'high', 'critical']);
 const MEETING_STATUSES = new Set(['draft', 'issued', 'closed', 'cancelled']);
 const ACTION_STATUSES = new Set(['open', 'in_progress', 'closed', 'cancelled']);
+const LEGACY_RISALAH_ROOT = path.resolve('G:/BIM CENTRAL LEARNING/data/RISALAH');
 
 let ensureTablesPromise;
 
@@ -62,6 +65,76 @@ function normalizeYear(value) {
 function normalizeDate(value) {
     const candidate = trimText(value, 10);
     return /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : null;
+}
+
+function normalizePathSlash(value) {
+    return String(value || '').replace(/\\/g, '/');
+}
+
+function parseLegacyRisalahDate(fileName, stats) {
+    const bracket = fileName.match(/\[(\d{4}-\d{2}-\d{2})\]/);
+    if (bracket) return { date: bracket[1], source: 'filename' };
+
+    const compact = fileName.match(/(?:^|[_\s])(\d{2})(\d{2})(\d{2})(?:[_\s.]|$)/);
+    if (compact) {
+        const day = compact[1];
+        const month = compact[2];
+        const year = `20${compact[3]}`;
+        return { date: `${year}-${month}-${day}`, source: 'filename' };
+    }
+
+    return { date: dateOnly(stats.mtime), source: 'modified' };
+}
+
+function parseLegacyRisalahSequence(fileName) {
+    const monitoring = fileName.match(/MEETING[_\s]+MONITORING[_\s]+(\d+)/i) || fileName.match(/MONITORING[_\s]*(\d+)/i);
+    if (monitoring) return { type: 'Monitoring', sequence: Number(monitoring[1]) };
+    const coordination = fileName.match(/MEETING[_\s]+KOORDINASI[_\s]+(\d+)/i) || fileName.match(/KOORDINASI[_\s]*(\d+)/i);
+    if (coordination) return { type: 'Koordinasi', sequence: Number(coordination[1]) };
+    return { type: 'Risalah', sequence: null };
+}
+
+function walkLegacyRisalahFiles(dir, baseDir = LEGACY_RISALAH_ROOT) {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) return walkLegacyRisalahFiles(fullPath, baseDir);
+        if (!entry.isFile() || entry.name.startsWith('~$') || entry.name.toLowerCase() === 'thumbs.db') return [];
+        if (path.extname(entry.name).toLowerCase() !== '.pdf') return [];
+
+        const relativePath = normalizePathSlash(path.relative(baseDir, fullPath));
+        const parts = relativePath.split('/');
+        const sourceCategory = parts[0] || '';
+        const contextFolder = parts.length > 2 ? parts[1] : sourceCategory;
+        const stats = fs.statSync(fullPath);
+        const parsedDate = parseLegacyRisalahDate(entry.name, stats);
+        const parsedSequence = parseLegacyRisalahSequence(entry.name);
+        const internal = sourceCategory.toUpperCase() === 'INTERNAL';
+        const projectName = internal ? 'Divisi BIM HO' : contextFolder;
+        const title = path.basename(entry.name, path.extname(entry.name)).replace(/\s+/g, ' ').trim();
+
+        return [{
+            id: crypto.createHash('sha1').update(relativePath).digest('hex'),
+            sourceType: 'legacy',
+            sourceCategory,
+            scopeType: internal ? 'kantor' : 'proyek',
+            projectName,
+            meetingNo: parsedSequence.sequence ? `${parsedSequence.type} ${parsedSequence.sequence}` : '',
+            documentType: parsedSequence.type,
+            documentSequence: parsedSequence.sequence,
+            subject: title,
+            meetingDate: parsedDate.date,
+            dateSource: parsedDate.source,
+            status: 'legacy_archive',
+            openActions: 0,
+            createdByName: 'Legacy Archive',
+            fileName: entry.name,
+            relativePath,
+            fileSize: stats.size,
+            fileSizeMb: Number((stats.size / 1048576).toFixed(2)),
+            pdfUrl: `/api/bim-workspace/legacy-risalah/file?path=${encodeURIComponent(relativePath)}`
+        }];
+    });
 }
 
 function dateOnly(value = new Date()) {
@@ -2084,6 +2157,30 @@ route('get', '/meetings', async (req, res) => {
          ORDER BY meeting_date DESC,created_at DESC`, [period,actorId(req),manager]
     );
     res.json(result.rows);
+});
+
+route('get', '/legacy-risalah', async (req, res) => {
+    const requestedPeriod = trimText(req.query.period, 7);
+    const period = /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedPeriod) ? requestedPeriod : '';
+    const allFiles = walkLegacyRisalahFiles(LEGACY_RISALAH_ROOT);
+    const files = allFiles
+        .filter((item) => !period || String(item.meetingDate || '').slice(0, 7) === period)
+        .sort((a, b) => String(b.meetingDate).localeCompare(String(a.meetingDate)) || a.projectName.localeCompare(b.projectName, 'id-ID'));
+    res.json({ rootAvailable: fs.existsSync(LEGACY_RISALAH_ROOT), period: period || 'all', files });
+});
+
+route('get', '/legacy-risalah/file', async (req, res) => {
+    const relativePath = normalizePathSlash(trimText(req.query.path, 2000));
+    if (!relativePath || path.isAbsolute(relativePath) || relativePath.includes('..')) {
+        return res.status(400).json({ error: 'Invalid legacy Risalah path' });
+    }
+    const fullPath = path.resolve(LEGACY_RISALAH_ROOT, relativePath);
+    const allowedRoot = `${LEGACY_RISALAH_ROOT}${path.sep}`;
+    if (!fullPath.startsWith(allowedRoot) || path.extname(fullPath).toLowerCase() !== '.pdf') {
+        return res.status(403).json({ error: 'Legacy Risalah access denied' });
+    }
+    if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Legacy Risalah PDF not found' });
+    res.sendFile(fullPath);
 });
 
 route('get', '/meetings/:id', async (req, res) => {

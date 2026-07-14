@@ -143,6 +143,68 @@ body.bimws-page {
 .bimws-actions-row p,.bimws-panel-head p { margin: 3px 0 0; color: var(--ws-muted); }
 .bimws-quick-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+.bimws-task-toolbar {
+    display: grid;
+    grid-template-columns: minmax(260px,.78fr) minmax(520px,1.6fr) auto;
+    align-items: center;
+    gap: 10px 14px;
+    margin-bottom: 14px;
+}
+.bimws-task-toolbar-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+}
+.bimws-task-toolbar-title h3 {
+    flex: 0 0 auto;
+    margin: 0;
+    color: var(--ws-ink);
+    font: 800 18px/1.2 "Nunito", sans-serif;
+}
+.bimws-task-toolbar-title p {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--ws-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.bimws-task-toolbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.bimws-filterbar.bimws-task-filterbar {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+}
+.bimws-filterbar.bimws-task-filterbar input {
+    flex: 1 1 180px;
+    min-width: 160px;
+}
+.bimws-filterbar.bimws-task-filterbar select {
+    flex: 0 0 auto;
+    min-width: 134px;
+}
+.bimws-view-switch.bimws-task-view-switch {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    margin: 0;
+}
+.bimws-view-switch.bimws-task-view-switch button {
+    min-height: 38px;
+    padding: 6px 10px;
+}
+.bimws-task-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+
 .bimws-kpi-tabs {
     display: flex;
     gap: 4px;
@@ -275,6 +337,88 @@ body.bimws-page {
 .bimws-table-sub { display: block; margin-top: 2px; color: var(--ws-muted); font-size: 12px; }
 .bimws-row-actions { display: flex; gap: 5px; }
 .bimws-row-actions .bimws-icon-btn { width: 32px; height: 32px; }
+
+.bimws-view-switch { display: flex; flex-wrap: wrap; gap: 5px; margin: -4px 0 14px; }
+.bimws-view-switch button {
+    min-height: 34px;
+    padding: 6px 12px;
+    border: 1px solid var(--ws-line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ws-muted);
+    font-weight: 800;
+}
+.bimws-view-switch button:hover { border-color: var(--ws-teal); color: var(--ws-teal); }
+.bimws-view-switch button.is-active { border-color: var(--ws-teal); background: #e6f4f6; color: var(--ws-teal); }
+.bimws-task-groups { display: grid; gap: 14px; }
+.bimws-task-group { overflow: hidden; background: #fff; border: 1px solid var(--ws-line); border-radius: 6px; }
+.bimws-task-group > header { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--ws-line); }
+.bimws-task-group > header span { color: var(--ws-teal); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.bimws-task-group > header h4 { margin: 2px 0 0; color: var(--ws-ink); font: 800 17px/1.2 "Nunito",sans-serif; }
+.bimws-task-group-stats { display: grid; grid-template-columns: auto auto auto auto; align-items: baseline; gap: 3px 8px; color: var(--ws-muted); }
+.bimws-task-group-stats strong { color: var(--ws-ink); font: 800 22px/1 "Nunito",sans-serif; }
+.bimws-task-group-stats small { font-size: 11px; font-weight: 700; }
+.bimws-task-group-summary { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #edf0f3; background: #fbfcfd; }
+.bimws-task-group-summary span { color: var(--ws-muted); font-size: 12px; font-weight: 700; }
+
+.bimws-meeting-groups { display: grid; gap: 14px; padding: 14px; background: var(--ws-soft); }
+.bimws-meeting-group { overflow: hidden; background: #fff; border: 1px solid var(--ws-line); border-radius: 6px; }
+.bimws-meeting-group > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--ws-line);
+}
+.bimws-meeting-group > header span { color: var(--ws-teal); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.bimws-meeting-group > header h4 { margin: 2px 0 0; color: var(--ws-ink); font: 800 17px/1.2 "Nunito",sans-serif; }
+.bimws-meeting-group > header strong {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #eef2f6;
+    color: var(--ws-muted);
+    font-size: 12px;
+}
+.bimws-meeting-card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 12px; padding: 14px; }
+.bimws-meeting-card {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    min-height: 238px;
+    padding: 14px;
+    border: 1px solid var(--ws-line);
+    border-top: 3px solid var(--ws-teal);
+    border-radius: 6px;
+    background: #fff;
+}
+.bimws-meeting-card[data-status="draft"] { border-top-color: var(--ws-yellow); }
+.bimws-meeting-card[data-status="closed"] { border-top-color: var(--ws-green); }
+.bimws-meeting-card[data-status="cancelled"] { border-top-color: var(--ws-red); }
+.bimws-meeting-card[data-status="legacy_archive"] { border-top-color: #667085; }
+.bimws-meeting-card-top,
+.bimws-meeting-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bimws-meeting-card .bimws-icon-btn { text-decoration: none; }
+.bimws-meeting-no { color: var(--ws-teal); font: 800 12px/1.2 Consolas,monospace; }
+.bimws-meeting-card h5 {
+    min-height: 44px;
+    margin: 12px 0 13px;
+    color: var(--ws-ink);
+    font: 800 17px/1.28 "Nunito",sans-serif;
+}
+.bimws-meeting-card dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px 12px; margin: 0; }
+.bimws-meeting-card dt { color: var(--ws-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.bimws-meeting-card dd { margin: 2px 0 0; color: var(--ws-ink); font-size: 13px; font-weight: 600; }
+.bimws-meeting-card-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid #edf0f3; }
+.bimws-meeting-card-foot > span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ws-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 .bimws-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; background: #eef2f6; color: #475467; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .bimws-badge[data-tone="success"] { background: #e8f5ef; color: var(--ws-green); }
@@ -452,6 +596,18 @@ body.bimws-page {
 
 .bimws-report-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .bimws-report-grid .bimws-panel { min-height: 220px; }
+.bimws-guide-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 14px; }
+.bimws-guide-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #fff; border: 1px solid var(--ws-line); border-radius: 6px; }
+.bimws-guide-card h4 { display: flex; align-items: center; gap: 9px; margin: 0 0 11px; color: var(--ws-ink); font: 800 16px/1.25 "Nunito",sans-serif; }
+.bimws-guide-card h4 i { color: var(--ws-teal); }
+.bimws-guide-card ol { display: grid; flex: 1; gap: 7px; margin: 0; padding-left: 20px; color: #344054; }
+.bimws-guide-card li { padding-left: 2px; }
+.bimws-guide-card .bimws-text-btn { align-self: flex-start; }
+.bimws-guide-detail { overflow: hidden; background: #fff; border: 1px solid var(--ws-line); border-radius: 6px; }
+.bimws-guide-detail .bimws-panel-head { border-bottom: 1px solid var(--ws-line); }
+.bimws-guide-detail-steps { display: grid; gap: 10px; margin: 0; padding: 18px 22px 6px 40px; color: #344054; }
+.bimws-guide-detail-steps li { padding-left: 4px; }
+.bimws-guide-note { margin: 12px 18px 18px; padding: 12px 14px; border-left: 4px solid var(--ws-teal); background: #eef8f9; color: #344054; }
 .bimws-settings-panel { padding: 18px; }
 .bimws-settings-panel dl { margin: 16px 0 0; }
 .bimws-settings-panel dl div { display: grid; grid-template-columns: 180px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid var(--ws-line); }
@@ -489,6 +645,10 @@ body.bimws-page {
     .bimws-period-control { grid-template-columns: 34px 118px 34px; }
     .bimws-content { padding: 17px 14px 50px; }
     .bimws-actions-row { align-items: flex-start; flex-direction: column; }
+    .bimws-task-toolbar { grid-template-columns: 1fr; align-items: flex-start; }
+    .bimws-task-toolbar-title { width: 100%; }
+    .bimws-task-toolbar-controls { flex-wrap: wrap; width: 100%; }
+    .bimws-task-actions { justify-content: flex-start; }
     .bimws-metrics { grid-template-columns: repeat(2,minmax(120px,1fr)); }
     .bimws-kpi-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
     .bimws-kpi-summary > div:nth-child(2) { border-right: 0; }
@@ -497,6 +657,8 @@ body.bimws-page {
     .bimws-field-full { grid-column: auto; }
     .bimws-project-bar-row { grid-template-columns: minmax(130px,1fr) minmax(100px,1.25fr) 40px; }
     .bimws-gantt-grid { --gantt-meta-width: 260px; --gantt-day-width: 48px; }
+    .bimws-task-group > header { align-items: flex-start; flex-direction: column; }
+    .bimws-meeting-card-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
@@ -507,6 +669,10 @@ body.bimws-page {
     .bimws-metrics { grid-template-columns: 1fr; }
     .bimws-kpi-contract dl { grid-template-columns: 1fr; }
     .bimws-quick-actions,.bimws-quick-actions .bimws-btn { width: 100%; }
+    .bimws-task-toolbar-title { align-items: flex-start; flex-direction: column; gap: 2px; }
+    .bimws-filterbar.bimws-task-filterbar { flex-direction: column; width: 100%; }
+    .bimws-filterbar.bimws-task-filterbar input,.bimws-filterbar.bimws-task-filterbar select { width: 100%; min-width: 0; }
+    .bimws-view-switch.bimws-task-view-switch { width: 100%; overflow-x: auto; padding-bottom: 2px; }
     .bimws-settings-panel dl div { grid-template-columns: 1fr; }
     .bimws-donut-section,.bimws-project-chart { padding: 16px 14px 18px; }
     .bimws-donut-layout { grid-template-columns: 132px minmax(120px,1fr); gap: 15px; }
@@ -518,6 +684,9 @@ body.bimws-page {
     .bimws-gantt-controls { width: 100%; }
     .bimws-gantt-controls .bimws-btn { flex: 1; }
     .bimws-gantt-grid { --gantt-meta-width: 220px; --gantt-day-width: 46px; }
+    .bimws-meeting-groups { padding: 10px; }
+    .bimws-meeting-group > header { align-items: flex-start; flex-direction: column; }
+    .bimws-meeting-card dl { grid-template-columns: 1fr; }
 }
 
 @media print {

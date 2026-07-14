@@ -13,7 +13,7 @@
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/style.css?v=20260713a" rel="stylesheet">
     <link href="../css/navbar-footer-fix.css" rel="stylesheet">
-    <link href="../css/divisi-bim-workspace.css?v=20260713m" rel="stylesheet">
+    <link href="../css/divisi-bim-workspace.css?v=20260714f" rel="stylesheet">
 </head>
 <body class="bimws-page">
     <div id="navbar-container"></div>
@@ -56,6 +56,10 @@
                 </button>
                 <button type="button" class="bimws-nav-item" data-view="reports">
                     <i class="fas fa-file-lines"></i><span>Reports</span>
+                </button>
+                <p class="bimws-nav-group">Bantuan</p>
+                <button type="button" class="bimws-nav-item" data-view="guide">
+                    <i class="fas fa-circle-question"></i><span>Panduan</span>
                 </button>
                 <div class="bimws-settings-nav" hidden>
                     <p class="bimws-nav-group">Administrasi</p>
@@ -122,14 +126,23 @@
                 </section>
 
                 <section class="bimws-view" data-view-panel="tasks">
-                    <div class="bimws-actions-row">
-                        <div><h3>Task Bulanan</h3><p>Task kolektif, approval input, dan completion review.</p></div>
-                        <div class="bimws-quick-actions"><button class="bimws-btn bimws-btn-secondary" id="task-carry-btn"><i class="fas fa-arrow-right-arrow-left"></i>Carry Forward</button><button class="bimws-btn bimws-btn-primary" id="task-new-btn"><i class="fas fa-plus"></i>Task Baru</button></div>
-                    </div>
-                    <div class="bimws-filterbar">
-                        <input id="task-search" type="search" placeholder="Cari task atau project..." aria-label="Cari task">
-                        <select id="task-status-filter" aria-label="Filter status"><option value="">Semua status</option><option value="planned">Planned</option><option value="in_progress">In Progress</option><option value="blocked">Blocked</option><option value="submitted_for_review">Review</option><option value="approved_done">Done</option><option value="rejected_revision">Revision</option></select>
-                        <select id="task-intake-filter" aria-label="Filter approval"><option value="">Semua approval</option><option value="draft">Draft</option><option value="pending_approval">Pending Approval</option><option value="approved">Approved</option><option value="revision_required">Revision Required</option><option value="rejected">Rejected</option></select>
+                    <div class="bimws-task-toolbar">
+                        <div class="bimws-task-toolbar-title"><h3>Task Bulanan</h3><p>Task kolektif, approval input, dan completion review.</p></div>
+                        <div class="bimws-task-toolbar-controls">
+                            <div class="bimws-filterbar bimws-task-filterbar">
+                                <input id="task-search" type="search" placeholder="Cari task atau project..." aria-label="Cari task">
+                                <select id="task-status-filter" aria-label="Filter status"><option value="">Semua status</option><option value="planned">Planned</option><option value="in_progress">In Progress</option><option value="blocked">Blocked</option><option value="submitted_for_review">Review</option><option value="approved_done">Done</option><option value="rejected_revision">Revision</option></select>
+                                <select id="task-intake-filter" aria-label="Filter approval"><option value="">Semua approval</option><option value="draft">Draft</option><option value="pending_approval">Pending Approval</option><option value="approved">Approved</option><option value="revision_required">Revision Required</option><option value="rejected">Rejected</option></select>
+                            </div>
+                            <div class="bimws-view-switch bimws-task-view-switch" aria-label="Mode tampilan Task Scheduler">
+                                <button type="button" class="is-active" data-task-view="task">Task</button>
+                                <button type="button" data-task-view="pic">PIC</button>
+                                <button type="button" data-task-view="project">Project</button>
+                                <button type="button" data-task-view="status">Status</button>
+                                <button type="button" data-task-view="approval">Approval</button>
+                            </div>
+                        </div>
+                        <div class="bimws-quick-actions bimws-task-actions"><button class="bimws-btn bimws-btn-secondary" id="task-carry-btn"><i class="fas fa-arrow-right-arrow-left"></i>Carry Forward</button><button class="bimws-btn bimws-btn-primary" id="task-new-btn"><i class="fas fa-plus"></i>Task Baru</button></div>
                     </div>
                     <section class="bimws-gantt-panel" aria-labelledby="task-gantt-title">
                         <div class="bimws-gantt-toolbar">
@@ -197,6 +210,59 @@
                     <div id="reports-content"></div>
                 </section>
 
+                <section class="bimws-view" data-view-panel="guide">
+                    <div class="bimws-actions-row"><div><h3>Panduan Workspace</h3><p>Petunjuk singkat pengisian dan penggunaan menu Divisi BIM.</p></div></div>
+                    <div class="bimws-guide-grid" id="guide-card-list">
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-chart-line"></i>Dashboard</h4>
+                            <ol><li>Pilih periode bulan pada toolbar.</li><li>Lihat ringkasan task, issue, KPI, dan action rapat.</li><li>Gunakan chart untuk membaca prioritas pekerjaan divisi.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="dashboard">Detail</button>
+                        </article>
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-calendar-check"></i>Task Scheduler</h4>
+                            <ol><li>Klik <strong>Task Baru</strong> lalu isi task, project/context, PIC, tanggal, dan prioritas.</li><li>Staff dapat mengajukan task; Kadiv mereview dan approve.</li><li>Kadiv dapat mendelegasikan task ke staff yang dipilih.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="tasks">Detail</button>
+                        </article>
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-clock-rotate-left"></i>Worklog</h4>
+                            <ol><li>Pilih sumber aktivitas dari task, KPI, issue, atau action rapat.</li><li>Isi ringkasan pekerjaan, output, progress, dan evidence bila ada.</li><li>Jam kerja hanya terlihat untuk PIC terkait; manajemen melihat progress dan output.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="worklogs">Detail</button>
+                        </article>
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-people-group"></i>Risalah Rapat</h4>
+                            <ol><li>Pilih periode rapat, lalu klik <strong>Risalah Baru</strong>.</li><li>Isi header, peserta, pembahasan, action plan, dan keputusan rapat.</li><li>Action item dapat dibuat menjadi task dan dimonitor di worklog.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="meetings">Detail</button>
+                        </article>
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-triangle-exclamation"></i>Issues</h4>
+                            <ol><li>Buat issue bila ada risiko, hambatan, atau temuan yang perlu dicatat.</li><li>Lengkapi owner, severity, due date, impact, dan action note.</li><li>Issue perlu approval Kadiv sebelum dimonitor sebagai issue aktif.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="issues">Detail</button>
+                        </article>
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-bullseye"></i>KPI</h4>
+                            <ol><li>Lihat KPI Departemen dan turunan KPI Divisi BIM.</li><li>Staff dapat mengambil atau menerima delegasi program kontribusi.</li><li>Program dan task harus inline dengan KPI agar kontribusi terukur.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="kpi">Detail</button>
+                        </article>
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-file-lines"></i>Reports</h4>
+                            <ol><li>Pilih periode yang ingin direkap.</li><li>Cek task aktif, outstanding, issue, action rapat, dan output worklog.</li><li>Gunakan print atau export CSV sesuai akses user.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="reports">Detail</button>
+                        </article>
+                        <article class="bimws-guide-card">
+                            <h4><i class="fas fa-sliders"></i>Pengaturan</h4>
+                            <ol><li>Menu ini hanya muncul untuk role yang berwenang.</li><li>Akses user dan role Workspace tetap dikelola dari Admin BCL.</li><li>Default operasional dipakai sebagai acuan workflow divisi.</li></ol>
+                            <button type="button" class="bimws-text-btn" data-guide-detail="settings">Detail</button>
+                        </article>
+                    </div>
+                    <section class="bimws-guide-detail" id="guide-detail" hidden>
+                        <div class="bimws-panel-head">
+                            <div><h3 id="guide-detail-title">Panduan</h3><p id="guide-detail-subtitle">Langkah penggunaan.</p></div>
+                            <button type="button" class="bimws-btn bimws-btn-secondary" id="guide-back-btn"><i class="fas fa-arrow-left"></i>Kembali</button>
+                        </div>
+                        <div id="guide-detail-content"></div>
+                    </section>
+                </section>
+
                 <section class="bimws-view" data-view-panel="settings">
                     <div class="bimws-actions-row"><div><h3>Pengaturan Workspace</h3><p>Konfigurasi operasional. Akses akun tetap dikelola Admin BCL.</p></div></div>
                     <div class="bimws-panel bimws-settings-panel">
@@ -220,6 +286,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/loadComponents.js?v=20260713a"></script>
-    <script src="../js/divisi-bim-workspace.js?v=20260713o"></script>
+    <script src="../js/divisi-bim-workspace.js?v=20260714h"></script>
 </body>
 </html>

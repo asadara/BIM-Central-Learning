@@ -78,6 +78,9 @@ body.bimws-page {
     cursor: pointer;
 }
 .bimws-icon-btn:hover { border-color: var(--ws-teal); color: var(--ws-teal); }
+.bimws-icon-btn.is-warning { border-color: #f2c078; background: #fff7ed; color: #b54708; }
+.bimws-icon-btn.is-success { border-color: #9ed6bd; background: #edf8f2; color: var(--ws-green); }
+.bimws-icon-btn.is-danger { border-color: #f5b5af; background: #fff1ef; color: var(--ws-red); }
 .bimws-sidebar .bimws-icon-btn { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,.06); color: #fff; }
 
 .bimws-nav { padding: 12px 10px 28px; }
@@ -201,9 +204,59 @@ body.bimws-page {
     padding: 6px 10px;
 }
 .bimws-task-actions {
+    align-items: center;
     flex-wrap: nowrap;
     justify-content: flex-end;
 }
+.bimws-task-actions .bimws-btn {
+    min-height: 38px;
+    padding: 7px 11px;
+    white-space: nowrap;
+}
+.bimws-action-menu {
+    position: relative;
+    flex: 0 0 auto;
+}
+.bimws-action-menu summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+.bimws-action-menu summary::-webkit-details-marker { display: none; }
+.bimws-action-menu summary::after {
+    margin-left: 8px;
+    color: var(--ws-muted);
+    font: 900 10px/1 "Font Awesome 5 Free";
+    content: "\f078";
+}
+.bimws-action-menu[open] summary { border-color: var(--ws-teal); color: var(--ws-teal); }
+.bimws-action-menu-panel {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 174px;
+    padding: 6px;
+    border: 1px solid var(--ws-line);
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(16,24,40,.14);
+}
+.bimws-action-menu-panel button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 34px;
+    gap: 8px;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--ws-ink);
+    font: 800 13px/1.2 "Nunito",sans-serif;
+    text-align: left;
+}
+.bimws-action-menu-panel button:hover { background: #f7f8fa; color: var(--ws-teal); }
 
 .bimws-kpi-tabs {
     display: flex;
@@ -333,7 +386,12 @@ body.bimws-page {
 .bimws-table td { padding: 11px 12px; border-bottom: 1px solid #edf0f3; vertical-align: top; }
 .bimws-table tr:last-child td { border-bottom: 0; }
 .bimws-table tr:hover td { background: #fbfcfd; }
+.bimws-table tr[data-status="on_hold"] td { background: #fffaf3; }
+.bimws-table tr[data-priority="urgent"] td:first-child { box-shadow: inset 4px 0 0 #d92d20; }
+.bimws-table tr[data-priority="urgent"]:not([data-status="on_hold"]) td { background: #fff8f6; }
+.bimws-table tr[data-demo="true"] td:first-child { box-shadow: inset 4px 0 0 #667085; }
 .bimws-table-title { min-width: 190px; font-weight: 700; color: var(--ws-ink); }
+.bimws-demo-pill { display: inline-flex; align-items: center; min-height: 20px; margin-left: 7px; padding: 2px 7px; border-radius: 999px; background: #eef2f6; color: #475467; font-size: 11px; font-weight: 800; vertical-align: middle; }
 .bimws-table-sub { display: block; margin-top: 2px; color: var(--ws-muted); font-size: 12px; }
 .bimws-row-actions { display: flex; gap: 5px; }
 .bimws-row-actions .bimws-icon-btn { width: 32px; height: 32px; }
@@ -562,13 +620,17 @@ body.bimws-page {
 }
 .bimws-gantt-bar:hover { outline: 2px solid rgba(8,127,140,.2); }
 .bimws-gantt-bar[data-status="planned"] { border-color: #d88a4b; background: #fde7d6; color: #8c450f; }
+.bimws-gantt-bar[data-status="on_hold"] { border-color: #d6a557; background: repeating-linear-gradient(135deg,#fff3df 0,#fff3df 7px,#f8dfb9 7px,#f8dfb9 13px); color: #8a4b08; }
 .bimws-gantt-bar[data-status="blocked"] { border-color: #d97a74; background: #fee4e2; color: #912018; }
 .bimws-gantt-bar[data-status="approved_done"] { border-color: #61aa8b; background: #dff3ea; color: #116346; }
+.bimws-gantt-bar[data-priority="urgent"]:not([data-status="on_hold"]) { border-color: #d92d20; background: #ffe8e5; color: #912018; }
 .bimws-gantt-bar[data-intake]:not([data-intake="approved"]) { border-style: dashed; }
 .bimws-gantt-progress-fill { position: absolute; inset: 0 auto 0 0; width: var(--task-progress); background: rgba(8,127,140,.2); }
 .bimws-gantt-bar[data-status="planned"] .bimws-gantt-progress-fill { background: rgba(232,117,44,.2); }
+.bimws-gantt-bar[data-status="on_hold"] .bimws-gantt-progress-fill { background: rgba(181,71,8,.14); }
 .bimws-gantt-bar[data-status="blocked"] .bimws-gantt-progress-fill { background: rgba(180,35,24,.16); }
 .bimws-gantt-bar[data-status="approved_done"] .bimws-gantt-progress-fill { background: rgba(22,131,95,.2); }
+.bimws-gantt-bar[data-priority="urgent"]:not([data-status="on_hold"]) .bimws-gantt-progress-fill { background: rgba(217,45,32,.14); }
 .bimws-gantt-progress-label { position: relative; z-index: 1; display: block; padding: 0 7px; overflow: hidden; line-height: 26px; text-overflow: ellipsis; white-space: nowrap; }
 .bimws-gantt-empty { grid-column: 1/-1; }
 

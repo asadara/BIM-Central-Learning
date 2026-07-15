@@ -22,10 +22,21 @@ pool.on('error', (error) => {
 });
 
 const WORKSPACE_ROLES = new Set(['staff_bim', 'division_head', 'department_head', 'viewer', 'system_admin']);
-const TASK_INTAKE = new Set(['draft', 'pending_approval', 'approved', 'revision_required', 'rejected']);
-const TASK_STATUSES = new Set(['planned', 'in_progress', 'blocked', 'submitted_for_review', 'approved_done', 'rejected_revision', 'cancelled']);
+const TASK_INTAKE = new Set(['draft', 'pending_approval', 'approved', 'revision_required', 'rejected', 'replaced']);
+const TASK_STATUSES = new Set(['planned', 'in_progress', 'on_hold', 'blocked', 'submitted_for_review', 'approved_done', 'rejected_revision', 'cancelled']);
 const TASK_TYPES = new Set(['project_task', 'tender_support', 'routine_monitoring', 'coordination', 'review', 'reporting', 'support', 'internal_admin', 'other']);
 const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
+const DEMO_SOURCE_TYPE = 'demo_seed';
+const DEMO_TASK_TITLES = new Set([
+    'kickoff dan requirement',
+    'penyusunan bep awal',
+    'model baseline arsitektur',
+    'clash detection struktur-mep',
+    'quantity takeoff tahap 1',
+    'koordinasi model mep',
+    'review deliverables bim',
+    'submit paket koordinasi'
+]);
 const ISSUE_STATUSES = new Set(['draft', 'submitted', 'accepted', 'action_required', 'resolved_pending_approval', 'closed', 'rejected', 'cancelled']);
 const ISSUE_TYPES = new Set(['internal_issue', 'coordination_issue', 'model_issue', 'data_issue', 'drawing_issue', 'workflow_issue', 'resource_issue', 'risk_note', 'other']);
 const SEVERITIES = new Set(['low', 'medium', 'high', 'critical']);
@@ -50,6 +61,14 @@ function normalizeProjectName(value) {
 function normalizeEnum(value, allowed, fallback) {
     const normalized = trimText(value, 80).toLowerCase();
     return allowed.has(normalized) ? normalized : fallback;
+}
+
+function normalizedDemoTitle(value) {
+    return trimText(value, 240).replace(/^\[demo\]\s*/i, '').replace(/\s+/g, ' ').toLowerCase();
+}
+
+function isDemoTaskRow(row) {
+    return row?.source_type === DEMO_SOURCE_TYPE || /^\[demo\]\s*/i.test(row?.title || '') || DEMO_TASK_TITLES.has(normalizedDemoTitle(row?.title));
 }
 
 function normalizePeriod(value) {
@@ -323,6 +342,18 @@ async function ensureTables() {
                     approved_by_name_snapshot TEXT,
                     approved_at TIMESTAMPTZ,
                     review_note TEXT,
+                    hold_previous_status TEXT,
+                    hold_reason TEXT,
+                    hold_impact_note TEXT,
+                    hold_resume_target_date DATE,
+                    hold_urgent_task_id TEXT REFERENCES bim_ops_tasks(id) ON DELETE SET NULL,
+                    hold_by_user_id TEXT,
+                    hold_by_name_snapshot TEXT,
+                    hold_at TIMESTAMPTZ,
+                    resumed_by_user_id TEXT,
+                    resumed_by_name_snapshot TEXT,
+                    resumed_at TIMESTAMPTZ,
+                    resume_note TEXT,
                     is_routine BOOLEAN DEFAULT false,
                     carried_from_task_id TEXT REFERENCES bim_ops_tasks(id) ON DELETE SET NULL,
                     source_type TEXT DEFAULT 'manual',
@@ -338,6 +369,18 @@ async function ensureTables() {
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS delegated_by_user_id TEXT`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS delegated_by_name_snapshot TEXT`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS delegated_at TIMESTAMPTZ`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_previous_status TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_reason TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_impact_note TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_resume_target_date DATE`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_urgent_task_id TEXT REFERENCES bim_ops_tasks(id) ON DELETE SET NULL`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_by_user_id TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_by_name_snapshot TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS hold_at TIMESTAMPTZ`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS resumed_by_user_id TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS resumed_by_name_snapshot TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS resumed_at TIMESTAMPTZ`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS resume_note TEXT`);
 
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS bim_ops_worklogs (
@@ -702,7 +745,7 @@ async function ensureTables() {
 
 function classifyOperationalEvent(entityType, action, snapshot = {}) {
     if (entityType === 'task') {
-        if (['updated', 'completion_submitted'].includes(action)) return 'execution';
+        if (['updated', 'held', 'resumed', 'completion_submitted'].includes(action)) return 'execution';
         if (['approved', 'revision_requested'].includes(action) || action.startsWith('intake_')) return 'verification';
         return 'planning';
     }
@@ -1505,10 +1548,23 @@ function mapTask(row) {
         kpiAssignmentId: row.kpi_assignment_id || '',
         sourceType: row.source_type || 'manual',
         sourceId: row.source_id || '',
+        isDemo: isDemoTaskRow(row),
         createdByUserId: row.created_by_user_id,
         createdByName: row.created_by_name_snapshot,
         intakeReviewNote: row.intake_review_note || '',
         reviewNote: row.review_note || '',
+        holdPreviousStatus: row.hold_previous_status || '',
+        holdReason: row.hold_reason || '',
+        holdImpactNote: row.hold_impact_note || '',
+        holdResumeTargetDate: row.hold_resume_target_date,
+        holdUrgentTaskId: row.hold_urgent_task_id || '',
+        holdByUserId: row.hold_by_user_id || '',
+        holdByName: row.hold_by_name_snapshot || '',
+        holdAt: row.hold_at,
+        resumedByUserId: row.resumed_by_user_id || '',
+        resumedByName: row.resumed_by_name_snapshot || '',
+        resumedAt: row.resumed_at,
+        resumeNote: row.resume_note || '',
         createdAt: row.created_at,
         updatedAt: row.updated_at
     };
@@ -1598,7 +1654,7 @@ route('put', '/tasks/:id', async (req, res) => {
     const manager = isDivisionHead(req) || req.workspaceRole === 'system_admin';
     const canEditDefinition = manager || (isCreator && ['draft', 'revision_required'].includes(task.intake_status));
     if (!manager && !isCreator && !(task.intake_status === 'approved' && isPic)) return res.status(403).json({ error: 'Task edit denied' });
-    if (!manager && task.intake_status === 'pending_approval') return res.status(409).json({ error: 'Task is locked while awaiting approval' });
+    if (!manager && task.intake_status === 'pending_approval') return res.status(409).json({ error: 'Task is locked while awaiting register review' });
     if (!manager && task.status === 'submitted_for_review') return res.status(409).json({ error: 'Task is locked while awaiting completion review' });
     if (task.status === 'approved_done') return res.status(409).json({ error: 'Completed task is locked' });
     const requestedStatus = normalizeEnum(req.body.status, TASK_STATUSES, task.status);
@@ -1676,8 +1732,8 @@ route('post', '/tasks/:id/submit-intake', async (req, res) => {
          WHERE id=$1 AND created_by_user_id=$2 AND intake_status IN ('draft','revision_required') RETURNING *`,
         [req.params.id, actorId(req)]
     );
-    if (!result.rows.length) return res.status(409).json({ error: 'Task cannot be submitted' });
-    await logActivity(req, 'task', req.params.id, 'submitted', 'Task diajukan untuk approval input');
+    if (!result.rows.length) return res.status(409).json({ error: 'Task cannot be submitted to register' });
+    await logActivity(req, 'task', req.params.id, 'submitted', 'Task diajukan ke Register');
     res.json(mapTask(result.rows[0]));
 });
 
@@ -1692,8 +1748,8 @@ route('post', '/tasks/:id/intake-review', async (req, res) => {
          WHERE id=$1 AND intake_status='pending_approval' RETURNING *`,
         [req.params.id, next, actorId(req), actorName(req), trimText(req.body.note, 2000)]
     );
-    if (!result.rows.length) return res.status(409).json({ error: 'Task is not pending approval' });
-    await logActivity(req, 'task', req.params.id, `intake_${action}`, `Input task ${action}`, { note: req.body.note || '' });
+    if (!result.rows.length) return res.status(409).json({ error: 'Task is not pending register review' });
+    await logActivity(req, 'task', req.params.id, `intake_${action}`, `Register task ${action}`, { note: req.body.note || '' });
     res.json(mapTask(result.rows[0]));
 });
 
@@ -1702,7 +1758,7 @@ route('post', '/tasks/:id/submit-completion', async (req, res) => {
     const result = await pool.query(
         `UPDATE bim_ops_tasks SET status='submitted_for_review',progress_percent=100,completion_submitted_at=CURRENT_TIMESTAMP,
                 evidence_link=COALESCE(NULLIF($3,''),evidence_link),updated_at=CURRENT_TIMESTAMP
-         WHERE id=$1 AND intake_status='approved' AND status NOT IN ('approved_done','cancelled')
+         WHERE id=$1 AND intake_status='approved' AND status NOT IN ('approved_done','cancelled','on_hold')
            AND (created_by_user_id=$2 OR pic_user_id=$2) RETURNING *`,
         [req.params.id, actorId(req), trimText(req.body.evidenceLink, 2000)]
     );
@@ -1725,6 +1781,150 @@ route('post', '/tasks/:id/completion-review', async (req, res) => {
     if (!result.rows.length) return res.status(409).json({ error: 'Task is not awaiting completion review' });
     await logActivity(req, 'task', req.params.id, approve ? 'approved' : 'revision_requested', approve ? 'Task disetujui selesai' : 'Task dikembalikan untuk revisi');
     res.json(mapTask(result.rows[0]));
+});
+
+route('post', '/tasks/:id/hold', async (req, res) => {
+    if (!canManageTechnical(req)) return res.status(403).json({ error: 'Kepala Divisi BIM approval required' });
+    const existing = await pool.query(`SELECT * FROM bim_ops_tasks WHERE id=$1`, [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
+    const task = existing.rows[0];
+    if (task.intake_status !== 'approved') return res.status(409).json({ error: 'Hanya task approved yang dapat di-hold' });
+    if (['approved_done', 'cancelled', 'submitted_for_review', 'on_hold'].includes(task.status)) {
+        return res.status(409).json({ error: 'Task tidak dapat di-hold pada status saat ini' });
+    }
+    const reason = trimText(req.body.reason, 4000);
+    if (!reason) return res.status(400).json({ error: 'Alasan hold wajib diisi' });
+    const urgentTaskId = trimText(req.body.urgentTaskId, 120) || null;
+    if (urgentTaskId) {
+        const urgent = await pool.query(
+            `SELECT id FROM bim_ops_tasks
+             WHERE id=$1 AND id<>$2 AND period_month=$3 AND pic_user_id IS NOT DISTINCT FROM $4
+               AND intake_status='approved' AND status NOT IN ('approved_done','cancelled','on_hold')`,
+            [urgentTaskId, task.id, task.period_month, task.pic_user_id]
+        );
+        if (!urgent.rows.length) return res.status(400).json({ error: 'Task mendadak tidak valid untuk PIC dan periode yang sama' });
+    }
+    const result = await pool.query(
+        `UPDATE bim_ops_tasks SET status='on_hold',hold_previous_status=$2,hold_reason=$3,hold_impact_note=$4,
+                hold_resume_target_date=$5,hold_urgent_task_id=$6,hold_by_user_id=$7,hold_by_name_snapshot=$8,
+                hold_at=CURRENT_TIMESTAMP,resumed_by_user_id=NULL,resumed_by_name_snapshot=NULL,resumed_at=NULL,
+                resume_note=NULL,updated_at=CURRENT_TIMESTAMP
+         WHERE id=$1 RETURNING *`,
+        [task.id, task.status, reason, trimText(req.body.impactNote, 4000),
+         normalizeDate(req.body.resumeTargetDate), urgentTaskId, actorId(req), actorName(req)]
+    );
+    await logActivity(req, 'task', task.id, 'held', `Task di-hold: ${task.title}`, {
+        previousStatus: task.status,
+        status: 'on_hold',
+        reason,
+        impactNote: trimText(req.body.impactNote, 4000),
+        resumeTargetDate: normalizeDate(req.body.resumeTargetDate),
+        urgentTaskId
+    });
+    res.json(mapTask(result.rows[0]));
+});
+
+route('post', '/tasks/:id/resume', async (req, res) => {
+    if (!canManageTechnical(req)) return res.status(403).json({ error: 'Kepala Divisi BIM approval required' });
+    const existing = await pool.query(`SELECT * FROM bim_ops_tasks WHERE id=$1`, [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
+    const task = existing.rows[0];
+    if (task.status !== 'on_hold') return res.status(409).json({ error: 'Hanya task On Hold yang dapat di-start again' });
+    const nextDueDate = normalizeDate(req.body.dueDate);
+    const result = await pool.query(
+        `UPDATE bim_ops_tasks SET status='in_progress',
+                due_date=COALESCE($2,due_date),
+                resumed_by_user_id=$3,resumed_by_name_snapshot=$4,resumed_at=CURRENT_TIMESTAMP,
+                resume_note=$5,updated_at=CURRENT_TIMESTAMP
+         WHERE id=$1 RETURNING *`,
+        [task.id, nextDueDate, actorId(req), actorName(req), trimText(req.body.note, 4000)]
+    );
+    await logActivity(req, 'task', task.id, 'resumed', `Task dimulai kembali: ${task.title}`, {
+        previousStatus: 'on_hold',
+        status: 'in_progress',
+        previousDueDate: task.due_date,
+        dueDate: nextDueDate || task.due_date,
+        note: trimText(req.body.note, 4000)
+    });
+    res.json(mapTask(result.rows[0]));
+});
+
+async function deleteDemoTasks(taskIds) {
+    if (!taskIds.length) return 0;
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        await client.query(
+            `DELETE FROM bim_ops_worklogs
+             WHERE task_id=ANY($1::text[]) OR (source_type='task' AND source_id=ANY($1::text[]))`,
+            [taskIds]
+        );
+        await client.query(`UPDATE bim_ops_tasks SET hold_urgent_task_id=NULL WHERE hold_urgent_task_id=ANY($1::text[])`, [taskIds]);
+        await client.query(`UPDATE bim_ops_tasks SET carried_from_task_id=NULL WHERE carried_from_task_id=ANY($1::text[])`, [taskIds]);
+        await client.query(`UPDATE bim_ops_meeting_actions SET created_task_id=NULL WHERE created_task_id=ANY($1::text[])`, [taskIds]);
+        await client.query(`UPDATE bim_ops_issues SET created_task_id=NULL WHERE created_task_id=ANY($1::text[])`, [taskIds]);
+        await client.query(`DELETE FROM bim_ops_activity_events WHERE source_type='task' AND source_id=ANY($1::text[])`, [taskIds]);
+        await client.query(`DELETE FROM bim_ops_activity_log WHERE entity_type='task' AND entity_id=ANY($1::text[])`, [taskIds]);
+        const deleted = await client.query(`DELETE FROM bim_ops_tasks WHERE id=ANY($1::text[]) RETURNING id`, [taskIds]);
+        await client.query('COMMIT');
+        return deleted.rows.length;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+route('post', '/tasks/demo-classify', async (req, res) => {
+    if (!canManageTechnical(req)) return res.status(403).json({ error: 'Kepala Divisi BIM approval required' });
+    const period = normalizePeriod(req.body.period || req.body.periodMonth || req.query.period);
+    const titles = [...DEMO_TASK_TITLES];
+    const result = await pool.query(
+        `UPDATE bim_ops_tasks SET source_type=$2,updated_at=CURRENT_TIMESTAMP
+         WHERE period_month=$1
+           AND (source_type=$2 OR title ~* '^\\[demo\\]\\s*' OR lower(trim(regexp_replace(regexp_replace(title,'^\\[demo\\]\\s*','','i'),'\\s+',' ','g'))) = ANY($3::text[]))
+         RETURNING *`,
+        [period, DEMO_SOURCE_TYPE, titles]
+    );
+    await logActivity(req, 'task', `demo-classify-${period}`, 'demo_classified', `${result.rows.length} demo task diklasifikasikan pada ${period}`, { period, count: result.rows.length });
+    res.json({ count: result.rows.length, tasks: result.rows.map(mapTask) });
+});
+
+route('delete', '/tasks/demo', async (req, res) => {
+    if (!canManageTechnical(req)) return res.status(403).json({ error: 'Kepala Divisi BIM approval required' });
+    const period = normalizePeriod(req.body?.period || req.query.period);
+    const result = await pool.query(
+        `SELECT id FROM bim_ops_tasks
+         WHERE period_month=$1 AND (source_type=$2 OR title ~* '^\\[demo\\]\\s*')`,
+        [period, DEMO_SOURCE_TYPE]
+    );
+    const count = await deleteDemoTasks(result.rows.map((row) => row.id));
+    res.json({ count });
+});
+
+route('post', '/tasks/:id/demo', async (req, res) => {
+    if (!canManageTechnical(req)) return res.status(403).json({ error: 'Kepala Divisi BIM approval required' });
+    const existing = await pool.query(`SELECT * FROM bim_ops_tasks WHERE id=$1`, [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
+    const markDemo = req.body.isDemo !== false;
+    const result = await pool.query(
+        `UPDATE bim_ops_tasks SET source_type=$2,updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,
+        [req.params.id, markDemo ? DEMO_SOURCE_TYPE : 'manual']
+    );
+    await logActivity(req, 'task', req.params.id, markDemo ? 'demo_marked' : 'demo_unmarked', markDemo ? 'Task ditandai sebagai demo' : 'Label demo task dihapus');
+    res.json(mapTask(result.rows[0]));
+});
+
+route('delete', '/tasks/:id', async (req, res) => {
+    if (!canManageTechnical(req)) return res.status(403).json({ error: 'Kepala Divisi BIM approval required' });
+    const existing = await pool.query(`SELECT * FROM bim_ops_tasks WHERE id=$1`, [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
+    if (!isDemoTaskRow(existing.rows[0])) {
+        return res.status(409).json({ error: 'Hard delete hanya diizinkan untuk demo task' });
+    }
+    const count = await deleteDemoTasks([req.params.id]);
+    res.json({ count });
 });
 
 route('post', '/tasks/carry-forward', async (req, res) => {
@@ -1832,7 +2032,7 @@ async function resolveWorklogSource(req, sourceType, sourceId) {
             `SELECT id,title AS item_text,project_name AS project_context,status,progress_percent,evidence_link,
                     pic_user_id,pic_name_snapshot
              FROM bim_ops_tasks
-             WHERE id=$1 AND intake_status='approved' AND status NOT IN ('approved_done','cancelled')`, [sourceId]
+             WHERE id=$1 AND intake_status='approved' AND status NOT IN ('approved_done','cancelled','on_hold')`, [sourceId]
         );
         const row = result.rows[0];
         if (!row) return { error: 'Task aktif tidak ditemukan', status: 404 };
@@ -1939,7 +2139,7 @@ route('get', '/worklog-sources', async (req, res) => {
             `SELECT id,'task' AS source_type,title AS item_text,project_name AS project_context,status,
                     progress_percent,evidence_link
              FROM bim_ops_tasks WHERE pic_user_id=$1 AND intake_status='approved'
-               AND status NOT IN ('approved_done','cancelled') ORDER BY due_date NULLS LAST,title`, [userId]
+               AND status NOT IN ('approved_done','cancelled','on_hold') ORDER BY due_date NULLS LAST,title`, [userId]
         ),
         pool.query(
             `SELECT a.id,'kpi_assignment' AS source_type,a.commitment_title AS item_text,p.program_name AS project_context,
@@ -2033,7 +2233,7 @@ route('post', '/worklogs', async (req, res) => {
         await pool.query(
             `UPDATE bim_ops_tasks SET status=$2,
                     progress_percent=CASE WHEN $3::numeric IS NULL THEN progress_percent ELSE $3 END,
-                    updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND status NOT IN ('approved_done','cancelled')`,
+                    updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND status NOT IN ('approved_done','cancelled','on_hold')`,
             [taskId, taskStatus, progressAfter]
         );
         await logActivity(req,'task',taskId,'updated',`Progress task diperbarui melalui Worklog: ${taskItem}`,{
@@ -2053,6 +2253,7 @@ route('put', '/worklogs/:id', async (req, res) => {
     const row = existing.rows[0];
     if (row.pic_user_id !== actorId(req)) return res.status(403).json({ error: 'Only worklog owner can edit' });
     if (row.linked_task_status === 'approved_done') return res.status(409).json({ error: 'Worklog is locked after task approval' });
+    if (row.linked_task_status === 'on_hold') return res.status(409).json({ error: 'Task sedang On Hold. Start Again sebelum update worklog.' });
     const workDate = row.source_type === 'manual'
         ? normalizeDate(req.body.workDate) || String(row.work_date).slice(0,10)
         : String(row.work_date).slice(0,10);
@@ -2090,6 +2291,7 @@ route('post', '/worklogs/:id/confirm', async (req, res) => {
     const row = existing.rows[0];
     if (row.pic_user_id !== actorId(req)) return res.status(403).json({ error: 'Hanya PIC yang dapat mengonfirmasi Worklog' });
     if (row.linked_task_status === 'approved_done') return res.status(409).json({ error: 'Worklog terkunci setelah task disetujui selesai' });
+    if (row.linked_task_status === 'on_hold') return res.status(409).json({ error: 'Task sedang On Hold. Start Again sebelum konfirmasi worklog.' });
     const workSummary = trimText(req.body.workSummary,6000) || row.work_summary;
     if (!workSummary) return res.status(400).json({ error: 'Ringkasan pekerjaan wajib diisi' });
     const taskStatus = row.task_id
@@ -2112,7 +2314,7 @@ route('post', '/worklogs/:id/confirm', async (req, res) => {
         await pool.query(
             `UPDATE bim_ops_tasks SET status=$2,progress_percent=COALESCE($3,progress_percent),
                     evidence_link=COALESCE(NULLIF($4,''),evidence_link),updated_at=CURRENT_TIMESTAMP
-             WHERE id=$1 AND status NOT IN ('approved_done','cancelled')`,
+             WHERE id=$1 AND status NOT IN ('approved_done','cancelled','on_hold')`,
             [row.task_id,taskStatus,progressAfter,trimText(req.body.evidenceLink,2000)]
         );
         await logActivity(req,'task',row.task_id,'updated',`Progress task dikonfirmasi melalui Worklog: ${row.task_item_text}`,{

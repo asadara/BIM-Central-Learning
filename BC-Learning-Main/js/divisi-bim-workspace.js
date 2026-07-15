@@ -28,7 +28,7 @@
 
     const viewMeta = {
         dashboard: ['Dashboard', 'Ringkasan operasional'],
-        tasks: ['Task Scheduler', 'Perencanaan dan approval task bulanan'],
+        tasks: ['Task Scheduler', 'Perencanaan dan register task bulanan'],
         worklogs: ['Worklog', 'Activity feed dan konfirmasi pekerjaan harian'],
         meetings: ['Risalah Rapat', 'Dokumentasi rapat dan tindak lanjut'],
         issues: ['Issues', 'Dokumentasi dan monitoring issue internal'],
@@ -39,10 +39,10 @@
     };
 
     const statusLabels = {
-        planned: 'Planned', in_progress: 'In Progress', blocked: 'Blocked', submitted_for_review: 'Review',
+        planned: 'Planned', in_progress: 'In Progress', on_hold: 'On Hold', blocked: 'Blocked', submitted_for_review: 'Review',
         approved_done: 'Done', rejected_revision: 'Revision', cancelled: 'Cancelled', draft: 'Draft',
         pending_approval: 'Pending Approval', approved: 'Approved', revision_required: 'Revision Required',
-        rejected: 'Rejected', submitted: 'Submitted', accepted: 'Accepted', action_required: 'Action Required',
+        rejected: 'Rejected', replaced: 'Replaced', submitted: 'Submitted', accepted: 'Accepted', action_required: 'Action Required',
         resolved_pending_approval: 'Pending Closure', closed: 'Closed', issued: 'Issued', open: 'Open',
         target_required: 'Target Required', empty: 'Unassigned', partial: 'Partial', covered: 'Covered',
         overallocated: 'Overallocated', active: 'Active', not_started: 'Not Started', verification: 'Verification',
@@ -50,6 +50,15 @@
         auto_draft: 'Perlu Konfirmasi', confirmed: 'Confirmed', planning: 'Planning', execution: 'Execution',
         manual: 'Manual', source_confirmed: 'Source', auto_confirmed: 'Auto + Confirmed',
         legacy_archive: 'Legacy Archive'
+    };
+
+    const registerLabels = {
+        draft: 'UNREGISTERED',
+        pending_approval: 'PENDING',
+        approved: 'REGISTERED',
+        revision_required: 'REVISION',
+        rejected: 'REJECTED',
+        replaced: 'REPLACED'
     };
 
     const guideDetails = {
@@ -62,7 +71,7 @@
         tasks: {
             title: 'Task Scheduler',
             subtitle: 'Mencatat task bulanan, task pendek, task rutin, dan delegasi staff.',
-            steps: ['Klik Task Baru, isi nama task, project/context, PIC, start date, due date, prioritas, dan deskripsi.', 'Jika staff membuat task, task masuk sebagai usulan dan perlu approval Kadiv.', 'Kadiv dapat membuat atau mendelegasikan task langsung ke staff, lalu memantau progress dari table dan Gantt.'],
+            steps: ['Klik Task Baru, isi nama task, project/context, PIC, start date, due date, prioritas, dan deskripsi.', 'Jika staff membuat task, task masuk sebagai usulan register dan perlu review Kadiv.', 'Kadiv dapat membuat atau mendelegasikan task langsung ke staff, lalu memantau progress dari table dan Gantt.'],
             note: 'Gunakan project/context yang sama untuk pekerjaan dalam project yang sama agar grouping dan report tetap rapi.'
         },
         worklogs: {
@@ -205,12 +214,16 @@
     function tone(status) {
         if (['approved_done', 'approved', 'accepted', 'closed', 'issued', 'covered', 'achieved', 'confirmed', 'auto_confirmed'].includes(status)) return 'success';
         if (['blocked', 'rejected', 'cancelled', 'critical', 'at_risk', 'overallocated'].includes(status)) return 'danger';
-        if (['pending_approval', 'submitted_for_review', 'revision_required', 'rejected_revision', 'submitted', 'resolved_pending_approval', 'high', 'target_required', 'partial', 'verification', 'verification_pending', 'auto_draft'].includes(status)) return 'warning';
+        if (['on_hold', 'pending_approval', 'submitted_for_review', 'revision_required', 'rejected_revision', 'submitted', 'resolved_pending_approval', 'high', 'target_required', 'partial', 'verification', 'verification_pending', 'auto_draft'].includes(status)) return 'warning';
         return 'info';
     }
 
     function badge(value) {
         return `<span class="bimws-badge" data-tone="${tone(value)}">${escapeHtml(statusLabels[value] || value || '-')}</span>`;
+    }
+
+    function registerBadge(value) {
+        return `<span class="bimws-badge" data-tone="${tone(value)}">${escapeHtml(registerLabels[value] || value || '-')}</span>`;
     }
 
     function emptyState(message, icon = 'fa-inbox') {
@@ -355,6 +368,12 @@
             if (element) element.hidden = !canWrite();
         });
         document.getElementById('task-carry-btn').hidden = !canWrite();
+        const demoMenu = document.getElementById('task-demo-menu');
+        if (demoMenu) demoMenu.hidden = !isKpiManager();
+        ['task-demo-classify-btn', 'task-demo-clear-btn'].forEach((id) => {
+            const element = document.getElementById(id);
+            if (element) element.hidden = !isKpiManager();
+        });
         document.getElementById('report-export-btn').hidden = !state.access.permissions.canExport;
     }
 
@@ -375,6 +394,14 @@
         document.getElementById('meeting-new-btn').onclick = () => openMeetingForm();
         document.getElementById('issue-new-btn').onclick = () => openIssueForm();
         document.getElementById('task-carry-btn').onclick = openCarryForward;
+        document.getElementById('task-demo-classify-btn').onclick = () => {
+            document.getElementById('task-demo-menu')?.removeAttribute('open');
+            classifyDemoTasks();
+        };
+        document.getElementById('task-demo-clear-btn').onclick = () => {
+            document.getElementById('task-demo-menu')?.removeAttribute('open');
+            clearDemoTasks();
+        };
         document.getElementById('report-print-btn').onclick = () => window.print();
         document.getElementById('report-export-btn').onclick = exportReportCsv;
         document.getElementById('task-search').oninput = renderTasks;
@@ -428,6 +455,7 @@
         const statusConfig = [
             ['in_progress', 'In Progress', '#087f8c'],
             ['planned', 'Planned', '#3b82f6'],
+            ['on_hold', 'On Hold', '#b54708'],
             ['blocked', 'Blocked', '#b42318'],
             ['submitted_for_review', 'Review', '#e8752c'],
             ['rejected_revision', 'Revision', '#a15c00']
@@ -495,7 +523,7 @@
         document.getElementById('dashboard-metrics').innerHTML = [
             ['Task Completion', `${i.completionPercent}%`, `${i.completed} dari ${i.total} task`, '#16835f'],
             ['On-Time Completion', `${i.onTimePercent}%`, 'Task selesai tepat waktu', '#087f8c'],
-            ['Pending Approval', i.pendingApproval, 'Input dan completion review', '#a15c00'],
+            ['Pending Register', i.pendingApproval, 'Register dan completion review', '#a15c00'],
             ['Overdue', i.overdue, 'Task melewati due date', '#b42318'],
             ['Blocked', i.blocked, 'Task membutuhkan perhatian', '#e8752c']
         ].map(([label,value,help,color]) => `<article class="bimws-metric" style="--metric-color:${color}"><p>${label}</p><strong>${value}</strong><small>${help}</small></article>`).join('');
@@ -510,7 +538,7 @@
         document.getElementById('dashboard-active-tasks').innerHTML = active.length ? activeTaskCharts(active) : emptyState('Belum ada task aktif pada periode ini.', 'fa-chart-pie');
 
         const attention = [];
-        if (i.pendingApproval) attention.push(['fa-user-check','Pending approval',`${i.pendingApproval} task menunggu review`]);
+        if (i.pendingApproval) attention.push(['fa-user-check','Pending register',`${i.pendingApproval} task menunggu review register`]);
         if (i.overdue) attention.push(['fa-calendar-xmark','Task overdue',`${i.overdue} task melewati due date`]);
         if (i.blocked) attention.push(['fa-ban','Task blocked',`${i.blocked} task membutuhkan tindak lanjut`]);
         if (i.pendingIssues) attention.push(['fa-triangle-exclamation','Issue submitted',`${i.pendingIssues} issue menunggu acceptance`]);
@@ -531,9 +559,10 @@
     }
 
     function taskTable(tasks, actions = true) {
-        return `<table class="bimws-table"><thead><tr><th>Task</th><th>PIC</th><th>Periode</th><th>Progress</th><th>Approval</th><th>Status</th>${actions ? '<th>Aksi</th>' : ''}</tr></thead><tbody>${tasks.map((task) => {
+        return `<table class="bimws-table"><thead><tr><th>Task</th><th>PIC</th><th>Periode</th><th>Progress</th><th>Register</th><th>Status</th>${actions ? '<th>Aksi</th>' : ''}</tr></thead><tbody>${tasks.map((task) => {
             const overdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().toISOString().slice(0,10)) && !['approved_done','cancelled'].includes(task.status);
-            return `<tr><td><span class="bimws-table-title">${escapeHtml(task.title)}</span><span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}</span></td><td>${escapeHtml(task.picName || '-')}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span></td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${badge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
+            const demoPill = task.isDemo ? '<span class="bimws-demo-pill">Demo</span>' : '';
+            return `<tr data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-demo="${task.isDemo ? 'true' : 'false'}"><td><span class="bimws-table-title">${escapeHtml(task.title)}${demoPill}</span><span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}</span></td><td>${escapeHtml(task.picName || '-')}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span></td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${registerBadge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
         }).join('')}</tbody></table>`;
     }
 
@@ -541,21 +570,22 @@
         if (mode === 'pic') return task.picName || 'Belum ada PIC';
         if (mode === 'project') return task.projectName || 'Internal';
         if (mode === 'status') return statusLabels[task.status] || task.status || '-';
-        if (mode === 'approval') return statusLabels[task.intakeStatus] || task.intakeStatus || '-';
+        if (mode === 'approval') return registerLabels[task.intakeStatus] || task.intakeStatus || '-';
         return 'Task';
     }
 
     function taskGroupLabel(mode) {
-        return ({ pic: 'PIC', project: 'Project / Context', status: 'Status Task', approval: 'Approval' })[mode] || 'Task';
+        return ({ pic: 'PIC', project: 'Project / Context', status: 'Status Task', approval: 'Register' })[mode] || 'Task';
     }
 
     function summarizeTaskGroup(tasks) {
         const total = tasks.length;
         const done = tasks.filter((task) => task.status === 'approved_done').length;
         const blocked = tasks.filter((task) => task.status === 'blocked').length;
+        const held = tasks.filter((task) => task.status === 'on_hold').length;
         const active = tasks.filter((task) => !['approved_done','cancelled'].includes(task.status)).length;
         const progress = total ? Math.round(tasks.reduce((sum, task) => sum + Math.min(100, Math.max(0, Number(task.progressPercent) || 0)), 0) / total) : 0;
-        return { total, done, blocked, active, progress };
+        return { total, done, blocked, held, active, progress };
     }
 
     function groupedTaskView(tasks, mode) {
@@ -579,7 +609,7 @@
                     </div>
                 </header>
                 <div class="bimws-task-group-summary">
-                    <span>${summary.active} aktif</span><span>${summary.done} selesai</span><span>${summary.blocked} blocked</span>
+                    <span>${summary.active} aktif</span><span>${summary.done} selesai</span><span>${summary.blocked} blocked</span><span>${summary.held} hold</span>
                 </div>
                 <div class="bimws-table-wrap">${taskTable(items)}</div>
             </section>`;
@@ -590,11 +620,16 @@
         const buttons = [actionButton('fa-eye','Lihat task','task-view',task.id)];
         const creator = isOwn(task.createdByUserId);
         const pic = isOwn(task.picUserId);
-        if ((creator || pic || isDivisionHead()) && task.intakeStatus !== 'pending_approval' && !['submitted_for_review','approved_done'].includes(task.status)) buttons.push(actionButton('fa-pen','Edit task','task-edit',task.id));
-        if (creator && ['draft','revision_required'].includes(task.intakeStatus)) buttons.push(actionButton('fa-paper-plane','Ajukan approval','task-submit',task.id));
-        if (isDivisionHead() && task.intakeStatus === 'pending_approval') buttons.push(actionButton('fa-user-check','Review input task','task-intake-review',task.id));
-        if ((creator || pic) && task.intakeStatus === 'approved' && !['submitted_for_review','approved_done','cancelled'].includes(task.status)) buttons.push(actionButton('fa-flag-checkered','Ajukan selesai','task-complete-submit',task.id));
-        if (isDivisionHead() && task.status === 'submitted_for_review') buttons.push(actionButton('fa-check','Review penyelesaian','task-completion-review',task.id));
+        const manager = isKpiManager();
+        if ((creator || pic || manager) && task.intakeStatus !== 'pending_approval' && !['submitted_for_review','approved_done'].includes(task.status) && (manager || task.status !== 'on_hold')) buttons.push(actionButton('fa-pen','Edit task','task-edit',task.id));
+        if (creator && ['draft','revision_required'].includes(task.intakeStatus)) buttons.push(actionButton('fa-paper-plane','Ajukan register','task-submit',task.id));
+        if (manager && task.intakeStatus === 'pending_approval') buttons.push(actionButton('fa-user-check','Review register task','task-intake-review',task.id));
+        if (manager && task.intakeStatus === 'approved' && !['submitted_for_review','approved_done','cancelled','on_hold'].includes(task.status)) buttons.push(actionButton('fa-pause','Hold task','task-hold',task.id,'is-warning'));
+        if (manager && task.status === 'on_hold') buttons.push(actionButton('fa-play','Start again','task-resume',task.id,'is-success'));
+        if ((creator || pic) && task.intakeStatus === 'approved' && !['submitted_for_review','approved_done','cancelled','on_hold'].includes(task.status)) buttons.push(actionButton('fa-flag-checkered','Ajukan selesai','task-complete-submit',task.id));
+        if (manager && task.status === 'submitted_for_review') buttons.push(actionButton('fa-check','Review penyelesaian','task-completion-review',task.id));
+        if (manager && !task.isDemo) buttons.push(actionButton('fa-tag','Tandai sebagai demo','task-demo-mark',task.id));
+        if (manager && task.isDemo) buttons.push(actionButton('fa-trash','Hapus demo task','task-demo-delete',task.id,'is-danger'));
         return buttons.join('');
     }
 
@@ -656,7 +691,7 @@
                 const span = dayDifference(visibleStart, visibleEnd) + 1;
                 const progress = Math.min(100, Math.max(0, Number(task.progressPercent || 0)));
                 const duration = dayDifference(taskStart, taskEnd) + 1;
-                bar = `<button type="button" class="bimws-gantt-bar" data-action="task-view" data-id="${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-intake="${escapeHtml(task.intakeStatus)}" style="grid-column:${column}/span ${span};grid-row:${gridRow};--task-progress:${progress}%" title="${escapeHtml(`${task.title} / ${duration} hari / ${progress}%`)}"><span class="bimws-gantt-progress-fill"></span><span class="bimws-gantt-progress-label">${progress}%</span></button>`;
+                bar = `<button type="button" class="bimws-gantt-bar" data-action="task-view" data-id="${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-intake="${escapeHtml(task.intakeStatus)}" style="grid-column:${column}/span ${span};grid-row:${gridRow};--task-progress:${progress}%" title="${escapeHtml(`${task.title} / ${duration} hari / ${progress}%`)}"><span class="bimws-gantt-progress-fill"></span><span class="bimws-gantt-progress-label">${progress}%</span></button>`;
             }
 
             return `<div class="bimws-gantt-task-meta" style="grid-column:1;grid-row:${gridRow}"><span class="bimws-gantt-index">${index + 1}</span><span><strong title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</strong><small>${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.picName || 'Belum ada PIC')} / ${escapeHtml(statusLabels[task.status] || task.status)}</small></span></div>${cells}${bar}`;
@@ -682,8 +717,8 @@
         return ['project_task','tender_support','routine_monitoring','coordination','review','reporting','support','internal_admin','other'].map((value) => ({ value, label: value.replaceAll('_',' ').replace(/\b\w/g,(c)=>c.toUpperCase()) }));
     }
 
-    function taskStatusItems() {
-        return ['planned','in_progress','blocked','rejected_revision','cancelled'].map((value) => ({ value, label: statusLabels[value] }));
+    function taskStatusItems(includeHold = false) {
+        return ['planned','in_progress',...(includeHold ? ['on_hold'] : []),'blocked','rejected_revision','cancelled'].map((value) => ({ value, label: statusLabels[value] }));
     }
 
     async function refreshProjectContexts() {
@@ -722,7 +757,7 @@
                     <option value="delegate" ${delegatedTask ? 'selected' : ''}>Delegasikan ke Staff BIM</option>
                 </select><small>Delegasi mencatat pemberi tugas, PIC, dan waktu penugasan.</small></div>
                 <div class="bimws-field" id="task-delegate-field" ${delegatedTask ? '' : 'hidden'}><label>Staff BIM</label><select name="delegateUserId" id="task-delegate-user" ${definitionLocked ? 'disabled' : ''}>${staffUserOptions(delegatedTask ? task.picUserId : '')}</select><small>Hanya user aktif dengan role Staff BIM.</small></div>`
-            : `<div class="bimws-field"><label>PIC</label><input type="text" value="${escapeHtml(currentUserName)}" disabled><input type="hidden" name="picUserId" value="${escapeHtml(currentUserId)}"><small>Task dari staff menjadi usulan pribadi dan memerlukan approval Kepala Divisi.</small></div>`;
+            : `<div class="bimws-field"><label>PIC</label><input type="text" value="${escapeHtml(currentUserName)}" disabled><input type="hidden" name="picUserId" value="${escapeHtml(currentUserId)}"><small>Task dari staff menjadi usulan register dan memerlukan review Kepala Divisi.</small></div>`;
         const dialog = showDialog({
             eyebrow: task ? 'Task Scheduler' : formatMonth(state.period),
             title: task ? 'Edit Task' : 'Task Baru',
@@ -735,7 +770,7 @@
                 ${field('priority','Priority',task?.priority||'normal',{type:'select',items:['low','normal','high','urgent'].map((value)=>({value,label:value[0].toUpperCase()+value.slice(1)})),disabled:definitionLocked})}
                 ${field('startDate','Start Date',task?.startDate?String(task.startDate).slice(0,10):'',{type:'date',disabled:definitionLocked})}
                 ${field('dueDate','Due Date',task?.dueDate?String(task.dueDate).slice(0,10):'',{type:'date',disabled:definitionLocked})}
-                ${task ? field('status','Task Status',task.status,{type:'select',items:taskStatusItems().filter((item)=>isDivisionHead() || item.value !== 'cancelled')}) : ''}
+                ${task ? field('status','Task Status',task.status,{type:'select',items:taskStatusItems(isKpiManager()).filter((item)=>isKpiManager() || !['cancelled','on_hold'].includes(item.value))}) : ''}
                 ${task ? field('progressPercent','Progress (%)',task.progressPercent,{type:'number',min:0,max:99,step:'1'}) : ''}
                 ${field('description','Description',task?.description||'',{type:'textarea',full:true,disabled:definitionLocked})}
                 ${field('evidenceLink','Evidence Link',task?.evidenceLink||'',{type:'url',full:true,placeholder:'https:// atau path referensi'})}
@@ -785,28 +820,224 @@
         }
     }
 
+    function urgentTaskOptions(task) {
+        const samePicActive = state.tasks.filter((row) =>
+            row.id !== task.id &&
+            row.picUserId === task.picUserId &&
+            row.intakeStatus === 'approved' &&
+            !['approved_done','cancelled','on_hold'].includes(row.status)
+        );
+        const urgentFirst = samePicActive.sort((left, right) => {
+            const weight = { urgent: 0, high: 1, normal: 2, low: 3 };
+            return (weight[left.priority] ?? 9) - (weight[right.priority] ?? 9) || left.title.localeCompare(right.title, 'id-ID');
+        });
+        return [{ id: '', title: 'Tidak dikaitkan ke task lain', priority: '', dueDate: '' }, ...urgentFirst]
+            .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.id ? `${item.priority.toUpperCase()} / ${item.title}${item.dueDate ? ` / Due ${formatDate(item.dueDate)}` : ''}` : item.title)}</option>`)
+            .join('');
+    }
+
+    function holdUrgentTaskLabel(task) {
+        const linked = state.tasks.find((row) => row.id === task.holdUrgentTaskId);
+        return linked ? `${linked.title} / ${linked.picName || '-'} / ${statusLabels[linked.status] || linked.status}` : '';
+    }
+
+    function openHoldTaskForm(task) {
+        const dialog = showDialog({
+            eyebrow: 'Task Interruption',
+            title: `Hold Task: ${task.title}`,
+            body: `<div class="bimws-form-grid">
+                <div class="bimws-field bimws-field-full"><label>Task yang ditunda</label><div class="bimws-source-summary"><strong>${escapeHtml(task.title)}</strong><br>${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.picName || '-')} / Progress ${task.progressPercent}%</div></div>
+                <div class="bimws-field"><label>Task mendadak</label><select name="urgentTaskMode" id="hold-urgent-mode"><option value="existing">Pilih task urgent yang sudah ada</option><option value="create">Buat task urgent baru</option></select><small>Task baru otomatis masuk Task Scheduler sebagai prioritas Urgent.</small></div>
+                <div class="bimws-field" id="hold-existing-urgent"><label>Task urgent existing</label><select name="urgentTaskId">${urgentTaskOptions(task)}</select><small>Opsional. Pilih task urgent/high milik PIC yang sama jika sudah dibuat.</small></div>
+                <div class="bimws-field bimws-field-full" data-hold-urgent-create hidden><label>Task Urgent Baru</label><input name="urgentTitle" placeholder="Nama task urgent sisipan"><small>Task ini akan langsung dibuat dan didelegasikan ke PIC yang sama.</small></div>
+                ${field('urgentProjectName','Project / Context Urgent',task.projectName||'',{placeholder:'Project/context task urgent',full:true})}
+                ${field('urgentDueDate','Due Date Urgent','',{type:'date'})}
+                ${field('urgentDescription','Deskripsi Task Urgent','',{type:'textarea',full:true,placeholder:'Instruksi singkat task mendadak yang harus segera dikerjakan.'})}
+                ${field('reason','Alasan Hold','',{type:'textarea',full:true,required:true,placeholder:'Contoh: PIC dialihkan sementara untuk task urgent dari Kadiv.'})}
+                ${field('resumeTargetDate','Rencana Start Again','',{type:'date'})}
+                ${field('impactNote','Dampak / Catatan Due Date','',{type:'textarea',full:true,placeholder:'Catat apakah due date tetap atau perlu disesuaikan.'})}
+            </div>`,
+            submitLabel: 'Hold Task',
+            onSubmit: async (formData) => {
+                const payload = formJson(formData);
+                let urgentTaskId = payload.urgentTaskId || '';
+                if (payload.urgentTaskMode === 'create') {
+                    const created = await api('/tasks', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            periodMonth: state.period,
+                            title: payload.urgentTitle,
+                            projectName: payload.urgentProjectName || task.projectName || '',
+                            taskType: 'support',
+                            picUserId: task.picUserId,
+                            startDate: dateKey(new Date()),
+                            dueDate: payload.urgentDueDate || '',
+                            priority: 'urgent',
+                            description: payload.urgentDescription || `Task urgent sisipan yang menyebabkan hold pada task: ${task.title}`,
+                            sourceType: 'task_interruption',
+                            sourceId: task.id,
+                            isRoutine: false
+                        })
+                    });
+                    urgentTaskId = created.id;
+                }
+                await api(`/tasks/${task.id}/hold`, { method: 'POST', body: JSON.stringify({
+                    urgentTaskId,
+                    reason: payload.reason,
+                    resumeTargetDate: payload.resumeTargetDate,
+                    impactNote: payload.impactNote
+                }) });
+                toast(payload.urgentTaskMode === 'create' ? 'Task urgent dibuat dan task lama di-hold.' : 'Task di-hold dan tercatat di activity feed.');
+                await loadTasks(true);
+            }
+        });
+        const mode = dialog.querySelector('#hold-urgent-mode');
+        const existing = dialog.querySelector('#hold-existing-urgent');
+        const createFields = [...dialog.querySelectorAll('[data-hold-urgent-create], [name="urgentProjectName"], [name="urgentDueDate"], [name="urgentDescription"]')];
+        const urgentTitle = dialog.querySelector('[name="urgentTitle"]');
+        const urgentDueDate = dialog.querySelector('[name="urgentDueDate"]');
+        const existingUrgent = dialog.querySelector('[name="urgentTaskId"]');
+        const syncUrgentMode = () => {
+            const creating = mode?.value === 'create';
+            if (existing) existing.hidden = creating;
+            if (existingUrgent) existingUrgent.disabled = creating;
+            createFields.forEach((fieldElement) => {
+                const wrapper = fieldElement.classList?.contains('bimws-field') ? fieldElement : fieldElement.closest('.bimws-field');
+                if (wrapper) wrapper.hidden = !creating;
+                fieldElement.disabled = !creating;
+            });
+            if (urgentTitle) {
+                urgentTitle.required = creating;
+                urgentTitle.disabled = !creating;
+            }
+            if (urgentDueDate) urgentDueDate.required = creating;
+        };
+        mode?.addEventListener('change', syncUrgentMode);
+        syncUrgentMode();
+    }
+
+    function openResumeTaskForm(task) {
+        showDialog({
+            eyebrow: 'Task Interruption',
+            title: `Start Again: ${task.title}`,
+            body: `<div class="bimws-form-grid">
+                <div class="bimws-field bimws-field-full"><label>Catatan Hold</label><div class="bimws-source-summary"><strong>${escapeHtml(task.holdReason || 'Task sedang On Hold')}</strong>${task.holdResumeTargetDate ? `<br>Target resume: ${formatDate(task.holdResumeTargetDate)}` : ''}${holdUrgentTaskLabel(task) ? `<br>Task urgent: ${escapeHtml(holdUrgentTaskLabel(task))}` : ''}</div></div>
+                ${field('dueDate','Due Date Baru',task.dueDate ? String(task.dueDate).slice(0,10) : '',{type:'date',help:'Kosongkan atau biarkan sama jika target penyelesaian tidak berubah.'})}
+                ${field('note','Catatan Start Again','',{type:'textarea',full:true,placeholder:'Contoh: Task urgent selesai, PIC kembali melanjutkan pekerjaan ini.'})}
+            </div>`,
+            submitLabel: 'Start Again',
+            onSubmit: async (formData) => {
+                await api(`/tasks/${task.id}/resume`, { method: 'POST', body: JSON.stringify(formJson(formData)) });
+                toast('Task dimulai kembali.');
+                await loadTasks(true);
+            }
+        });
+    }
+
     function openTaskDetail(task) {
         showDialog({
             eyebrow: 'Task Scheduler', title: task.title,
             body: `<dl class="bimws-detail-grid">
                 <div><dt>Project</dt><dd>${escapeHtml(task.projectName||'-')}</dd></div><div><dt>PIC</dt><dd>${escapeHtml(task.picName||'-')}</dd></div><div><dt>Owner</dt><dd>${escapeHtml(task.officialOwnerName)}</dd></div>
                 <div><dt>Start</dt><dd>${formatDate(task.startDate)}</dd></div><div><dt>Due</dt><dd>${formatDate(task.dueDate)}</dd></div><div><dt>Priority</dt><dd>${escapeHtml(task.priority)}</dd></div>
-                <div><dt>Approval</dt><dd>${badge(task.intakeStatus)}</dd></div><div><dt>Status</dt><dd>${badge(task.status)}</dd></div><div><dt>Progress</dt><dd>${task.progressPercent}%</dd></div>
+                <div><dt>Register</dt><dd>${registerBadge(task.intakeStatus)}</dd></div><div><dt>Status</dt><dd>${badge(task.status)}</dd></div><div><dt>Progress</dt><dd>${task.progressPercent}%</dd></div>
                 <div><dt>Penugasan</dt><dd>${task.delegatedByName ? `Delegasi oleh ${escapeHtml(task.delegatedByName)}${task.delegatedAt ? ` / ${formatDateTime(task.delegatedAt)}` : ''}` : 'Task langsung / usulan staff'}</dd></div>
-            </dl><div class="mt-3"><h3>Deskripsi</h3><p>${escapeHtml(task.description||'-')}</p></div>${task.intakeReviewNote?`<div class="mt-3"><h3>Catatan approval</h3><p>${escapeHtml(task.intakeReviewNote)}</p></div>`:''}${task.reviewNote?`<div class="mt-3"><h3>Catatan review</h3><p>${escapeHtml(task.reviewNote)}</p></div>`:''}`,
+                ${task.holdReason ? `<div><dt>Hold</dt><dd>${escapeHtml(task.holdByName || '-')} ${task.holdAt ? `/ ${formatDateTime(task.holdAt)}` : ''}</dd></div><div><dt>Target Resume</dt><dd>${formatDate(task.holdResumeTargetDate)}</dd></div><div><dt>Start Again</dt><dd>${task.resumedAt ? `${escapeHtml(task.resumedByName || '-')} / ${formatDateTime(task.resumedAt)}` : '-'}</dd></div>` : ''}
+            </dl><div class="mt-3"><h3>Deskripsi</h3><p>${escapeHtml(task.description||'-')}</p></div>${task.holdReason?`<div class="mt-3"><h3>Catatan hold</h3><p>${escapeHtml(task.holdReason)}</p>${task.holdImpactNote?`<p><strong>Dampak:</strong> ${escapeHtml(task.holdImpactNote)}</p>`:''}${holdUrgentTaskLabel(task)?`<p><strong>Task urgent:</strong> ${escapeHtml(holdUrgentTaskLabel(task))}</p>`:''}${task.resumeNote?`<p><strong>Start again:</strong> ${escapeHtml(task.resumeNote)}</p>`:''}</div>`:''}${task.intakeReviewNote?`<div class="mt-3"><h3>Catatan register</h3><p>${escapeHtml(task.intakeReviewNote)}</p></div>`:''}${task.reviewNote?`<div class="mt-3"><h3>Catatan review</h3><p>${escapeHtml(task.reviewNote)}</p></div>`:''}`,
             onSubmit: null
         });
     }
 
     function reviewDialog(title, approveLabel, rejectLabel, handler) {
         showDialog({
-            eyebrow:'Approval Kepala Divisi', title,
+            eyebrow:'Review Kepala Divisi', title,
             body:`<div class="bimws-form-grid">${field('note','Catatan review','',{type:'textarea',full:true,required:true})}</div>`,
             onSubmit:null,
             secondary:[
                 {action:'reject',label:rejectLabel,className:'bimws-btn-secondary',handler:async(dialog,form)=>{try{await handler('reject',new FormData(form).get('note'));dialog.close();}catch(error){toast(error.message,true);}}},
                 {action:'approve',label:approveLabel,className:'bimws-btn-primary',handler:async(dialog,form)=>{try{await handler('approve',new FormData(form).get('note'));dialog.close();}catch(error){toast(error.message,true);}}}
             ]
+        });
+    }
+
+    function confirmAction({ title, message, confirmLabel = 'Lanjutkan', className = 'bimws-btn-primary', onConfirm }) {
+        showDialog({
+            eyebrow: 'Konfirmasi',
+            title,
+            body: `<p>${escapeHtml(message)}</p>`,
+            onSubmit: null,
+            secondary: [{
+                action: 'confirm',
+                label: confirmLabel,
+                className,
+                handler: async (dialog) => {
+                    try {
+                        await onConfirm();
+                        dialog.close();
+                    } catch (error) {
+                        toast(error.message, true);
+                    }
+                }
+            }]
+        });
+    }
+
+    function classifyDemoTasks() {
+        confirmAction({
+            title: 'Tandai Dummy Task Sebagai Demo',
+            message: `Sistem akan menandai dummy task seed pada ${formatMonth(state.period)} sebagai Demo. Task operasional biasa tidak dihapus.`,
+            confirmLabel: 'Tandai Demo',
+            onConfirm: async () => {
+                const result = await api('/tasks/demo-classify', { method: 'POST', body: JSON.stringify({ period: state.period }) });
+                toast(`${result.count || 0} task demo diklasifikasikan.`);
+                await loadTasks(true);
+            }
+        });
+    }
+
+    function clearDemoTasks() {
+        const demoCount = state.tasks.filter((task) => task.isDemo).length;
+        if (!demoCount) {
+            toast('Tidak ada demo task pada periode aktif.');
+            return;
+        }
+        confirmAction({
+            title: 'Hapus Semua Demo Task',
+            message: `Hapus ${demoCount} demo task pada ${formatMonth(state.period)}? Task operasional non-demo tidak akan ikut terhapus.`,
+            confirmLabel: 'Hapus Demo',
+            className: 'bimws-btn-danger',
+            onConfirm: async () => {
+                const result = await api(`/tasks/demo?period=${encodeURIComponent(state.period)}`, { method: 'DELETE' });
+                toast(`${result.count || 0} demo task dihapus.`);
+                await loadTasks(true);
+            }
+        });
+    }
+
+    function markDemoTask(task) {
+        confirmAction({
+            title: 'Tandai Task Sebagai Demo',
+            message: `Tandai "${task.title}" sebagai demo task? Setelah ditandai, task ini bisa dihapus permanen oleh Kadiv/Admin.`,
+            confirmLabel: 'Tandai Demo',
+            onConfirm: async () => {
+                await api(`/tasks/${task.id}/demo`, { method: 'POST', body: JSON.stringify({ isDemo: true }) });
+                toast('Task ditandai sebagai Demo.');
+                await loadTasks(true);
+            }
+        });
+    }
+
+    function deleteDemoTask(task) {
+        confirmAction({
+            title: 'Hapus Demo Task',
+            message: `Hapus permanen demo task "${task.title}"? Aksi ini hanya berlaku untuk task berlabel Demo.`,
+            confirmLabel: 'Hapus Demo',
+            className: 'bimws-btn-danger',
+            onConfirm: async () => {
+                await api(`/tasks/${task.id}`, { method: 'DELETE' });
+                toast('Demo task dihapus.');
+                await loadTasks(true);
+            }
         });
     }
 
@@ -1257,8 +1488,12 @@
             if(action==='kpi-verify')openKpiVerifyForm(state.kpi.individual.assignments.find((row)=>row.id===id));
             if(action==='task-view')openTaskDetail(state.tasks.find((row)=>row.id===id));
             if(action==='task-edit')openTaskForm(state.tasks.find((row)=>row.id===id));
-            if(action==='task-submit'){await api(`/tasks/${id}/submit-intake`,{method:'POST',body:'{}'});toast('Task diajukan untuk approval.');await loadTasks(true);}
-            if(action==='task-intake-review')reviewDialog('Review Input Task','Approve','Kembalikan Revisi',async(decision,note)=>{await api(`/tasks/${id}/intake-review`,{method:'POST',body:JSON.stringify({action:decision==='approve'?'approve':'revision',note})});toast('Review task disimpan.');await loadTasks(true);});
+            if(action==='task-hold')openHoldTaskForm(state.tasks.find((row)=>row.id===id));
+            if(action==='task-resume')openResumeTaskForm(state.tasks.find((row)=>row.id===id));
+            if(action==='task-demo-mark')markDemoTask(state.tasks.find((row)=>row.id===id));
+            if(action==='task-demo-delete')deleteDemoTask(state.tasks.find((row)=>row.id===id));
+            if(action==='task-submit'){await api(`/tasks/${id}/submit-intake`,{method:'POST',body:'{}'});toast('Task diajukan ke Register.');await loadTasks(true);}
+            if(action==='task-intake-review')reviewDialog('Review Register Task','REGISTERED','Kembalikan Revisi',async(decision,note)=>{await api(`/tasks/${id}/intake-review`,{method:'POST',body:JSON.stringify({action:decision==='approve'?'approve':'revision',note})});toast('Review register disimpan.');await loadTasks(true);});
             if(action==='task-complete-submit'){showDialog({eyebrow:'Completion Review',title:'Ajukan Task Selesai',body:`<div class="bimws-form-grid">${field('evidenceLink','Evidence Link','',{type:'url',full:true})}</div>`,submitLabel:'Ajukan Selesai',onSubmit:async(formData)=>{await api(`/tasks/${id}/submit-completion`,{method:'POST',body:JSON.stringify(formJson(formData))});toast('Task diajukan untuk completion review.');await loadTasks(true);}});}
             if(action==='task-completion-review')reviewDialog('Review Penyelesaian Task','Approve Done','Kembalikan Revisi',async(decision,note)=>{await api(`/tasks/${id}/completion-review`,{method:'POST',body:JSON.stringify({action:decision,note})});toast('Completion review disimpan.');await loadTasks(true);});
             if(action==='worklog-edit')await openWorklogForm(state.worklogs.find((row)=>row.id===id));

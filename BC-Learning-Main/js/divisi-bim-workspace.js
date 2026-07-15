@@ -7,6 +7,7 @@
         ganttStart: '',
         ganttPeriod: '',
         taskViewMode: 'task',
+        taskMineOnly: false,
         access: null,
         users: [],
         projectContexts: [],
@@ -407,6 +408,10 @@
         document.getElementById('task-search').oninput = renderTasks;
         document.getElementById('task-status-filter').onchange = renderTasks;
         document.getElementById('task-intake-filter').onchange = renderTasks;
+        document.getElementById('task-mine-filter').onclick = () => {
+            state.taskMineOnly = !state.taskMineOnly;
+            renderTasks();
+        };
         document.querySelectorAll('[data-task-view]').forEach((button) => button.addEventListener('click', () => {
             state.taskViewMode = button.dataset.taskView || 'task';
             renderTasks();
@@ -578,6 +583,10 @@
         return ({ pic: 'PIC', project: 'Project / Context', status: 'Status Task', approval: 'Register' })[mode] || 'Task';
     }
 
+    function isMyTask(task) {
+        return isOwn(task.picUserId) || isOwn(task.createdByUserId);
+    }
+
     function summarizeTaskGroup(tasks) {
         const total = tasks.length;
         const done = tasks.filter((task) => task.status === 'approved_done').length;
@@ -637,7 +646,12 @@
         const query = document.getElementById('task-search').value.toLowerCase();
         const status = document.getElementById('task-status-filter').value;
         const intake = document.getElementById('task-intake-filter').value;
-        const filtered = state.tasks.filter((task) => (!query || `${task.title} ${task.projectName} ${task.picName}`.toLowerCase().includes(query)) && (!status || task.status === status) && (!intake || task.intakeStatus === intake));
+        const mineButton = document.getElementById('task-mine-filter');
+        if (mineButton) {
+            mineButton.classList.toggle('is-active', state.taskMineOnly);
+            mineButton.setAttribute('aria-pressed', state.taskMineOnly ? 'true' : 'false');
+        }
+        const filtered = state.tasks.filter((task) => (!state.taskMineOnly || isMyTask(task)) && (!query || `${task.title} ${task.projectName} ${task.picName}`.toLowerCase().includes(query)) && (!status || task.status === status) && (!intake || task.intakeStatus === intake));
         document.querySelectorAll('[data-task-view]').forEach((button) => button.classList.toggle('is-active', button.dataset.taskView === state.taskViewMode));
         renderTaskGantt(filtered);
         document.getElementById('tasks-table').innerHTML = filtered.length

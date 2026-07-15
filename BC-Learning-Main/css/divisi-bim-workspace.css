@@ -148,10 +148,15 @@ body.bimws-page {
 
 .bimws-task-toolbar {
     display: grid;
-    grid-template-columns: minmax(260px,.78fr) minmax(520px,1.6fr) auto;
-    align-items: center;
-    gap: 10px 14px;
+    gap: 10px;
     margin-bottom: 14px;
+}
+.bimws-task-toolbar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
 }
 .bimws-task-toolbar-title {
     display: flex;
@@ -174,7 +179,8 @@ body.bimws-page {
     white-space: nowrap;
 }
 .bimws-task-toolbar-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(420px,1fr) auto;
     align-items: center;
     gap: 8px;
     min-width: 0;
@@ -187,13 +193,30 @@ body.bimws-page {
     margin: 0;
 }
 .bimws-filterbar.bimws-task-filterbar input {
-    flex: 1 1 180px;
+    flex: 1 1 220px;
     min-width: 160px;
 }
 .bimws-filterbar.bimws-task-filterbar select {
     flex: 0 0 auto;
     min-width: 134px;
 }
+.bimws-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-height: 40px;
+    gap: 7px;
+    padding: 8px 11px;
+    border: 1px solid #cfd6de;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ws-muted);
+    font: 800 14px/1.1 "Nunito",sans-serif;
+    white-space: nowrap;
+}
+.bimws-filter-toggle:hover { border-color: var(--ws-teal); color: var(--ws-teal); }
+.bimws-filter-toggle.is-active { border-color: var(--ws-teal); background: #e6f4f6; color: var(--ws-teal); }
 .bimws-view-switch.bimws-task-view-switch {
     flex: 0 0 auto;
     flex-wrap: nowrap;
@@ -692,6 +715,8 @@ body.bimws-page {
     .bimws-span-2 { grid-column: auto; }
     .bimws-bi-overview { grid-template-columns: 1fr; }
     .bimws-project-chart { border-top: 1px solid var(--ws-line); border-left: 0; }
+    .bimws-task-toolbar-controls { grid-template-columns: 1fr; }
+    .bimws-view-switch.bimws-task-view-switch { justify-self: start; }
 }
 
 @media (max-width: 860px) {
@@ -707,9 +732,9 @@ body.bimws-page {
     .bimws-period-control { grid-template-columns: 34px 118px 34px; }
     .bimws-content { padding: 17px 14px 50px; }
     .bimws-actions-row { align-items: flex-start; flex-direction: column; }
-    .bimws-task-toolbar { grid-template-columns: 1fr; align-items: flex-start; }
+    .bimws-task-toolbar-top { align-items: flex-start; flex-wrap: wrap; width: 100%; }
     .bimws-task-toolbar-title { width: 100%; }
-    .bimws-task-toolbar-controls { flex-wrap: wrap; width: 100%; }
+    .bimws-task-toolbar-controls { width: 100%; }
     .bimws-task-actions { justify-content: flex-start; }
     .bimws-metrics { grid-template-columns: repeat(2,minmax(120px,1fr)); }
     .bimws-kpi-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -723,6 +748,11 @@ body.bimws-page {
     .bimws-meeting-card-grid { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 760px) {
+    .bimws-filterbar.bimws-task-filterbar { flex-wrap: wrap; }
+    .bimws-filterbar.bimws-task-filterbar input { flex: 1 1 100%; }
+}
+
 @media (max-width: 480px) {
     .bimws-title-block p { display: none; }
     .bimws-title-block h2 { font-size: 19px; }
@@ -733,7 +763,7 @@ body.bimws-page {
     .bimws-quick-actions,.bimws-quick-actions .bimws-btn { width: 100%; }
     .bimws-task-toolbar-title { align-items: flex-start; flex-direction: column; gap: 2px; }
     .bimws-filterbar.bimws-task-filterbar { flex-direction: column; width: 100%; }
-    .bimws-filterbar.bimws-task-filterbar input,.bimws-filterbar.bimws-task-filterbar select { width: 100%; min-width: 0; }
+    .bimws-filterbar.bimws-task-filterbar input,.bimws-filterbar.bimws-task-filterbar select,.bimws-filterbar.bimws-task-filterbar .bimws-filter-toggle { width: 100%; min-width: 0; }
     .bimws-view-switch.bimws-task-view-switch { width: 100%; overflow-x: auto; padding-bottom: 2px; }
     .bimws-settings-panel dl div { grid-template-columns: 1fr; }
     .bimws-donut-section,.bimws-project-chart { padding: 16px 14px 18px; }

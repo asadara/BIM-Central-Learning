@@ -338,7 +338,7 @@ class ComponentLoader {
                 // Fallback: load navbar directly
                 const navbarPath = '/components/navbar.html';
 
-                const response = await fetch(navbarPath);
+                const response = await fetch(navbarPath, { cache: 'no-store' });
                 if (!response.ok) {
                     throw new Error(`Failed to load navbar: ${response.status}`);
                 }
@@ -487,8 +487,19 @@ class ComponentLoader {
     applyNavbarAccessProfile(rootElement, accessProfile) {
         const profile = accessProfile || {};
         const root = rootElement || document;
+        const storedUser = safeReadStoredJson('user');
+        const storedUserData = safeReadStoredJson('userData');
+        const role = String(
+            localStorage.getItem('role') ||
+            storedUser.role ||
+            storedUser.jobRole ||
+            storedUserData.role ||
+            ''
+        ).toLowerCase();
+        const isAdmin = !!profile.isAdmin || role.includes('admin');
         this.setAccessLinksVisibility(rootElement, '.dokumen-access-link', !!profile.dokumenAccess);
         this.setAccessLinksVisibility(rootElement, '.audit-2026-access-link', !!profile.audit2026Access);
+        this.setAccessLinksVisibility(rootElement, '.bim-workspace-access-link', isAdmin || !!profile.bimWorkspaceAccess);
         const competencyLink = root.querySelector('#competency-link');
         if (competencyLink) {
             competencyLink.hidden = !profile.mappingKompetensiAccess;

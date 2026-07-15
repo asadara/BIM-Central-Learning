@@ -35,6 +35,7 @@ watchdog.lock/
 
 # Local IDE / tool state
 .vs/
+.vscode/
 .cline/
 .codex/
 .playwright-cli/
@@ -44,6 +45,7 @@ backup/
 backups/
 edit-backups/
 migrations/
+docs/BCL_PUSAT_BELAJAR_JALUR_BELAJAR_SYNC_BLUEPRINT_20260714.md
 *.bak
 *.bak*
 *.bak_*

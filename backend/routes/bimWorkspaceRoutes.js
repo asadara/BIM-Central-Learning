@@ -25,6 +25,7 @@ const WORKSPACE_ROLES = new Set(['staff_bim', 'division_head', 'department_head'
 const TASK_INTAKE = new Set(['draft', 'pending_approval', 'approved', 'revision_required', 'rejected', 'replaced']);
 const TASK_STATUSES = new Set(['planned', 'in_progress', 'on_hold', 'blocked', 'submitted_for_review', 'approved_done', 'rejected_revision', 'cancelled']);
 const TASK_TYPES = new Set(['project_task', 'tender_support', 'routine_monitoring', 'coordination', 'review', 'reporting', 'support', 'internal_admin', 'other']);
+const TASK_CATEGORIES = new Set(['regular', 'routine', 'flexible', 'urgent']);
 const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
 const DEMO_SOURCE_TYPE = 'demo_seed';
 const DEMO_TASK_TITLES = new Set([
@@ -61,6 +62,12 @@ function normalizeProjectName(value) {
 function normalizeEnum(value, allowed, fallback) {
     const normalized = trimText(value, 80).toLowerCase();
     return allowed.has(normalized) ? normalized : fallback;
+}
+
+function normalizeTaskCategory(value, priority = 'normal', fallback = 'regular') {
+    const normalized = normalizeEnum(value, TASK_CATEGORIES, '');
+    if (normalized) return normalized;
+    return priority === 'urgent' ? 'urgent' : fallback;
 }
 
 function normalizedDemoTitle(value) {
@@ -320,6 +327,9 @@ async function ensureTables() {
                     description TEXT,
                     project_name TEXT,
                     task_type TEXT NOT NULL DEFAULT 'project_task',
+                    task_category TEXT NOT NULL DEFAULT 'regular',
+                    is_critical BOOLEAN NOT NULL DEFAULT false,
+                    critical_reason TEXT,
                     official_owner_name TEXT NOT NULL DEFAULT 'Kepala Divisi BIM',
                     pic_user_id TEXT,
                     pic_name_snapshot TEXT,
@@ -366,6 +376,9 @@ async function ensureTables() {
                     completed_at TIMESTAMPTZ
                 )
             `);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS task_category TEXT NOT NULL DEFAULT 'regular'`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS is_critical BOOLEAN NOT NULL DEFAULT false`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS critical_reason TEXT`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS delegated_by_user_id TEXT`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS delegated_by_name_snapshot TEXT`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS delegated_at TIMESTAMPTZ`);
@@ -996,6 +1009,156 @@ route('get', '/users', async (req, res) => {
     })));
 });
 
+function versionSignature(row) {
+    const count = Number(row?.total || 0);
+    const versionAt = row?.version_at ? new Date(row.version_at).toISOString() : '';
+    return {
+        count,
+        versionAt,
+        signature: `${count}:${versionAt || 'none'}`
+    };
+}
+
+route('get', '/updates', async (req, res) => {
+    const period = normalizePeriod(req.query.period);
+    const year = normalizeYear(req.query.year || period.slice(0, 4));
+    const userId = actorId(req);
+    const manager = isDivisionHead(req) || req.workspaceRole === 'system_admin';
+    const visibleIssueStatuses = ['submitted', 'accepted', 'action_required', 'resolved_pending_approval', 'closed'];
+
+    const [tasks, worklogs, meetings, issues, kpi, reports, activity] = await Promise.all([
+        pool.query(
+            `SELECT COUNT(*)::int AS total, MAX(updated_at) AS version_at
+             FROM bim_ops_tasks
+             WHERE period_month=$1
+               AND (intake_status='approved' OR created_by_user_id=$2 OR $3::boolean=true)`,
+            [period, userId, manager]
+        ),
+        pool.query(
+            `WITH visible_worklogs AS (
+                SELECT COUNT(*)::int AS total, MAX(updated_at) AS version_at
+                FROM bim_ops_worklogs
+                WHERE period_month=$1
+             ),
+             visible_events AS (
+                SELECT COUNT(*)::int AS total, MAX(occurred_at) AS version_at
+                FROM bim_ops_activity_events
+                WHERE event_date >= ($1 || '-01')::date
+                  AND event_date < (($1 || '-01')::date + INTERVAL '1 month')
+             )
+             SELECT (COALESCE(w.total,0)+COALESCE(e.total,0))::int AS total,
+                    GREATEST(COALESCE(w.version_at,'epoch'::timestamptz), COALESCE(e.version_at,'epoch'::timestamptz)) AS version_at
+             FROM visible_worklogs w CROSS JOIN visible_events e`,
+            [period]
+        ),
+        pool.query(
+            `WITH visible_meetings AS (
+                SELECT m.*
+                FROM bim_ops_meetings m
+                WHERE m.period_month=$1
+                  AND (m.status<>'draft' OR m.created_by_user_id=$2 OR $3::boolean=true)
+             ),
+             visible_actions AS (
+                SELECT a.*
+                FROM bim_ops_meeting_actions a
+                JOIN visible_meetings m ON m.id=a.meeting_id
+             )
+             SELECT (SELECT COUNT(*)::int FROM visible_meetings) + (SELECT COUNT(*)::int FROM visible_actions) AS total,
+                    GREATEST(
+                        COALESCE((SELECT MAX(updated_at) FROM visible_meetings),'epoch'::timestamptz),
+                        COALESCE((SELECT MAX(updated_at) FROM visible_actions),'epoch'::timestamptz)
+                    ) AS version_at`,
+            [period, userId, manager]
+        ),
+        pool.query(
+            `SELECT COUNT(*)::int AS total, MAX(updated_at) AS version_at
+             FROM bim_ops_issues
+             WHERE period_month=$1
+               AND (status=ANY($4::text[]) OR reported_by_user_id=$2 OR $3::boolean=true)`,
+            [period, userId, manager, visibleIssueStatuses]
+        ),
+        pool.query(
+            `WITH visible_assignments AS (
+                SELECT a.updated_at
+                FROM bim_kpi_assignments a
+                JOIN bim_kpi_individual_scorecards s ON s.id=a.scorecard_id
+                WHERE s.period_year=$1 AND (a.staff_user_id=$2 OR $3::boolean=true)
+             ),
+             kpi_versions AS (
+                SELECT updated_at FROM bim_kpi_scorecards WHERE period_year=$1
+                UNION ALL SELECT i.updated_at FROM bim_kpi_indicators i JOIN bim_kpi_scorecards s ON s.id=i.scorecard_id WHERE s.period_year=$1
+                UNION ALL SELECT updated_at FROM bim_kpi_programs WHERE period_year=$1
+                UNION ALL SELECT updated_at FROM visible_assignments
+             ),
+             kpi_counts AS (
+                SELECT COUNT(*)::int AS total FROM visible_assignments
+             )
+             SELECT kpi_counts.total, MAX(kpi_versions.updated_at) AS version_at
+             FROM kpi_counts CROSS JOIN kpi_versions
+             GROUP BY kpi_counts.total`,
+            [year, userId, manager]
+        ),
+        pool.query(
+            `WITH visible_tasks AS (
+                SELECT updated_at FROM bim_ops_tasks WHERE period_month=$1 AND intake_status='approved'
+             ),
+             visible_issues AS (
+                SELECT updated_at FROM bim_ops_issues WHERE period_month=$1 AND status NOT IN ('draft','rejected','cancelled')
+             ),
+             visible_actions AS (
+                SELECT a.updated_at
+                FROM bim_ops_meeting_actions a JOIN bim_ops_meetings m ON m.id=a.meeting_id
+                WHERE m.period_month=$1 AND a.status NOT IN ('closed','cancelled')
+             ),
+             visible_worklogs AS (
+                SELECT updated_at FROM bim_ops_worklogs WHERE period_month=$1
+             ),
+             report_versions AS (
+                SELECT updated_at FROM visible_tasks
+                UNION ALL SELECT updated_at FROM visible_issues
+                UNION ALL SELECT updated_at FROM visible_actions
+                UNION ALL SELECT updated_at FROM visible_worklogs
+             )
+             SELECT COUNT(*)::int AS total, MAX(updated_at) AS version_at FROM report_versions`,
+            [period]
+        ),
+        pool.query(
+            `SELECT COUNT(*)::int AS total, MAX(created_at) AS version_at
+             FROM bim_ops_activity_log
+             WHERE created_at >= ($1 || '-01')::date
+               AND created_at < (($1 || '-01')::date + INTERVAL '1 month')`,
+            [period]
+        )
+    ]);
+
+    const versions = {
+        tasks: versionSignature(tasks.rows[0]),
+        worklogs: versionSignature(worklogs.rows[0]),
+        meetings: versionSignature(meetings.rows[0]),
+        issues: versionSignature(issues.rows[0]),
+        kpi: versionSignature(kpi.rows[0]),
+        reports: versionSignature(reports.rows[0])
+    };
+
+    const dashboardVersionAt = [tasks.rows[0], worklogs.rows[0], meetings.rows[0], issues.rows[0], activity.rows[0]]
+        .map((row) => row?.version_at ? new Date(row.version_at).getTime() : 0)
+        .reduce((max, value) => Math.max(max, value), 0);
+    const dashboardCount = [tasks.rows[0], worklogs.rows[0], meetings.rows[0], issues.rows[0], activity.rows[0]]
+        .reduce((sum, row) => sum + Number(row?.total || 0), 0);
+    versions.dashboard = {
+        count: dashboardCount,
+        versionAt: dashboardVersionAt ? new Date(dashboardVersionAt).toISOString() : '',
+        signature: `${dashboardCount}:${dashboardVersionAt || 'none'}`
+    };
+
+    res.json({
+        period,
+        year,
+        checkedAt: new Date().toISOString(),
+        versions
+    });
+});
+
 function mapKpiIndicator(row) {
     return {
         id: row.id,
@@ -1531,6 +1694,9 @@ function mapTask(row) {
         description: row.description || '',
         projectName: row.project_name || '',
         taskType: row.task_type,
+        taskCategory: row.task_category || 'regular',
+        isCritical: !!row.is_critical,
+        criticalReason: row.critical_reason || '',
         officialOwnerName: row.official_owner_name,
         picUserId: row.pic_user_id || '',
         picName: row.pic_name_snapshot || '',
@@ -1616,18 +1782,21 @@ route('post', '/tasks', async (req, res) => {
     const kpiLink = await resolveKpiTaskLink(req, req.body.kpiAssignmentId, assignment.picId);
     if (kpiLink?.error) return res.status(kpiLink.status).json({ error: kpiLink.error });
     const kpiAssignmentId = kpiLink?.id || null;
+    const priority = normalizeEnum(req.body.priority, PRIORITIES, 'normal');
+    const taskCategory = normalizeTaskCategory(req.body.taskCategory, priority, req.body.isRoutine ? 'routine' : 'regular');
+    const critical = !!req.body.isCritical || priority === 'urgent' || taskCategory === 'urgent';
     const result = await pool.query(
         `INSERT INTO bim_ops_tasks
-         (id,period_month,title,description,project_name,task_type,pic_user_id,pic_name_snapshot,start_date,due_date,
+         (id,period_month,title,description,project_name,task_type,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,start_date,due_date,
           priority,intake_status,status,progress_percent,is_routine,source_type,source_id,evidence_link,
           kpi_assignment_id,created_by_user_id,created_by_name_snapshot,intake_reviewed_by_user_id,intake_reviewed_by_name_snapshot,intake_reviewed_at,
           delegated_by_user_id,delegated_by_name_snapshot,delegated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'planned',0,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'planned',0,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
          RETURNING *`,
         [id, period, title, trimText(req.body.description), normalizeProjectName(req.body.projectName),
-         normalizeEnum(req.body.taskType, TASK_TYPES, 'project_task'), assignment.picId, assignment.picName,
-         normalizeDate(req.body.startDate), normalizeDate(req.body.dueDate), normalizeEnum(req.body.priority, PRIORITIES, 'normal'),
-         directApproval ? 'approved' : 'draft', !!req.body.isRoutine, trimText(req.body.sourceType, 40) || 'manual',
+         normalizeEnum(req.body.taskType, TASK_TYPES, 'project_task'), taskCategory, critical, trimText(req.body.criticalReason, 1000),
+         assignment.picId, assignment.picName, normalizeDate(req.body.startDate), normalizeDate(req.body.dueDate), priority,
+         directApproval ? 'approved' : 'draft', taskCategory === 'routine' || !!req.body.isRoutine, trimText(req.body.sourceType, 40) || 'manual',
          trimText(req.body.sourceId, 120) || null, trimText(req.body.evidenceLink, 2000) || null, kpiAssignmentId,
          actorId(req), actorName(req), directApproval ? actorId(req) : null, directApproval ? actorName(req) : null,
          directApproval ? new Date() : null, assignment.delegated ? actorId(req) : null,
@@ -1682,25 +1851,34 @@ route('put', '/tasks/:id', async (req, res) => {
         : { id: task.kpi_assignment_id };
     if (kpiLink?.error) return res.status(kpiLink.status).json({ error: kpiLink.error });
     const kpiAssignmentId = kpiLink?.id || null;
+    const nextPriority = canEditDefinition ? normalizeEnum(req.body.priority, PRIORITIES, task.priority) : task.priority;
+    const nextCategory = canEditDefinition
+        ? normalizeTaskCategory(req.body.taskCategory, nextPriority, task.task_category || (task.is_routine ? 'routine' : 'regular'))
+        : task.task_category;
+    const nextCritical = canEditDefinition
+        ? (!!req.body.isCritical || nextPriority === 'urgent' || nextCategory === 'urgent')
+        : task.is_critical;
     const result = await pool.query(
         `UPDATE bim_ops_tasks SET
             title=COALESCE(NULLIF($2,''),title), description=$3, project_name=$4,
-            task_type=$5, pic_user_id=$6, pic_name_snapshot=$7, start_date=$8, due_date=$9,
-            priority=$10, status=$11, progress_percent=$12, is_routine=$13, evidence_link=$14,
-            delegated_by_user_id=$15, delegated_by_name_snapshot=$16, delegated_at=$17,
-            kpi_assignment_id=$18,
+            task_type=$5, task_category=$6, is_critical=$7, critical_reason=$8,
+            pic_user_id=$9, pic_name_snapshot=$10, start_date=$11, due_date=$12,
+            priority=$13, status=$14, progress_percent=$15, is_routine=$16, evidence_link=$17,
+            delegated_by_user_id=$18, delegated_by_name_snapshot=$19, delegated_at=$20,
+            kpi_assignment_id=$21,
             updated_at=CURRENT_TIMESTAMP
          WHERE id=$1 RETURNING *`,
         [req.params.id, canEditDefinition ? trimText(req.body.title, 240) : task.title,
          canEditDefinition ? trimText(req.body.description) : task.description,
          canEditDefinition ? normalizeProjectName(req.body.projectName) : task.project_name,
          canEditDefinition ? normalizeEnum(req.body.taskType, TASK_TYPES, task.task_type) : task.task_type,
+         nextCategory, nextCritical, canEditDefinition ? trimText(req.body.criticalReason, 1000) : task.critical_reason,
          assignment.picId, assignment.picName,
          canEditDefinition ? normalizeDate(req.body.startDate) : task.start_date,
          canEditDefinition ? normalizeDate(req.body.dueDate) : task.due_date,
-         canEditDefinition ? normalizeEnum(req.body.priority, PRIORITIES, task.priority) : task.priority,
+         nextPriority,
          nextStatus, normalizeNumber(req.body.progressPercent, Number(task.progress_percent || 0), 0, 100),
-         canEditDefinition ? !!req.body.isRoutine : task.is_routine,
+         canEditDefinition ? (nextCategory === 'routine' || !!req.body.isRoutine) : task.is_routine,
          trimText(req.body.evidenceLink, 2000) || null,
          assignment.delegatedByUserId, assignment.delegatedByName, assignment.delegatedAt, kpiAssignmentId]
     );
@@ -1952,13 +2130,14 @@ route('post', '/tasks/carry-forward', async (req, res) => {
         const id = newId('task');
         const row = await pool.query(
             `INSERT INTO bim_ops_tasks
-             (id,period_month,title,description,project_name,task_type,pic_user_id,pic_name_snapshot,start_date,due_date,
+             (id,period_month,title,description,project_name,task_type,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,start_date,due_date,
               priority,intake_status,status,progress_percent,is_routine,carried_from_task_id,source_type,source_id,evidence_link,
               created_by_user_id,created_by_name_snapshot)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NULL,NULL,$9,'approved',$10,$11,$12,$13,'carry_forward',$13,$14,$15,$16)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NULL,NULL,$12,'approved',$13,$14,$15,$16,'carry_forward',$16,$17,$18,$19)
              RETURNING *`,
-            [id,targetPeriod,task.title,task.description,task.project_name,task.task_type,task.pic_user_id,task.pic_name_snapshot,
-             task.priority,task.status === 'approved_done' ? 'planned' : task.status,
+            [id,targetPeriod,task.title,task.description,task.project_name,task.task_type,
+             task.task_category || (task.is_routine ? 'routine' : 'regular'), task.is_critical, task.critical_reason,
+             task.pic_user_id,task.pic_name_snapshot,task.priority,task.status === 'approved_done' ? 'planned' : task.status,
              task.status === 'approved_done' ? 0 : task.progress_percent,task.is_routine,task.id,task.evidence_link,actorId(req),actorName(req)]
         );
         await logActivity(req, 'task', id, 'carried_forward', `Task dibawa dari ${sourcePeriod}`, { sourceTaskId: task.id });
@@ -2717,11 +2896,13 @@ route('post', '/issues/:id/create-task', async (req, res) => {
     const directApproval = isDivisionHead(req);
     const task = await pool.query(
         `INSERT INTO bim_ops_tasks
-         (id,period_month,title,description,project_name,task_type,pic_user_id,pic_name_snapshot,due_date,priority,
+         (id,period_month,title,description,project_name,task_type,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,due_date,priority,
           intake_status,status,source_type,source_id,created_by_user_id,created_by_name_snapshot)
-         VALUES ($1,$2,$3,$4,$5,'coordination',$6,$7,$8,$9,$10,'planned','issue',$11,$12,$13) RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,'coordination',$6,$7,$8,$9,$10,$11,$12,$13,'planned','issue',$14,$15,$16) RETURNING *`,
         [id,normalizePeriod(req.body.period||issue.period_month),trimText(req.body.title,240)||issue.title,issue.description,
-         issue.project_context,issue.owner_user_id,issue.owner_name_snapshot,issue.due_date,
+         issue.project_context,issue.severity==='critical'?'urgent':'regular',issue.severity==='critical',
+         issue.severity==='critical'?'Issue critical':issue.severity==='high'?'Issue high severity':'',
+         issue.owner_user_id,issue.owner_name_snapshot,issue.due_date,
          issue.severity==='critical'?'urgent':issue.severity==='high'?'high':'normal',directApproval?'approved':'draft',
          issue.id,actorId(req),actorName(req)]
     );

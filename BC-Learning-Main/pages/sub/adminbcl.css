@@ -662,3 +662,130 @@ body.adminbcl-page .sticky-top {
     background: #fff;
     border-top: 1px solid #dee2e6;
 }
+
+/* Server Control */
+.server-control-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+    gap: 1rem;
+}
+
+.server-control-panel {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+    padding: 1.1rem;
+    box-shadow: var(--shadow-light);
+}
+
+.server-control-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.server-control-panel-head h5 {
+    margin: 0;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.server-control-panel-head p,
+.server-control-note {
+    margin: .2rem 0 0;
+    color: #6b7280;
+    font-size: .9rem;
+    line-height: 1.4;
+}
+
+.server-state-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 92px;
+    padding: .35rem .65rem;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-weight: 800;
+    font-size: .78rem;
+    text-transform: uppercase;
+}
+
+.server-state-pill[data-state="healthy"],
+.server-state-pill[data-state="running"] {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.server-state-pill[data-state="timeout"],
+.server-state-pill[data-state="failed"] {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.server-control-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(90px, 1fr));
+    gap: .75rem;
+}
+
+.server-control-metrics div {
+    border: 1px solid #eef2f7;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: .75rem;
+}
+
+.server-control-metrics span {
+    display: block;
+    color: #64748b;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.server-control-metrics strong {
+    display: block;
+    margin-top: .25rem;
+    color: #0f172a;
+    font-size: .95rem;
+    word-break: break-word;
+}
+
+.server-control-message {
+    margin-top: 1rem;
+    border-left: 4px solid #2563eb;
+    background: #eff6ff;
+    color: #1e3a8a;
+    border-radius: 8px;
+    padding: .75rem .9rem;
+    font-weight: 700;
+}
+
+.server-control-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+    margin-bottom: .85rem;
+}
+
+.server-control-log {
+    max-height: 280px;
+    margin: 0;
+    overflow: auto;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #dbeafe;
+    padding: 1rem;
+    font: 12px/1.5 Consolas, "Courier New", monospace;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 991px) {
+    .server-control-grid,
+    .server-control-metrics {
+        grid-template-columns: 1fr;
+    }
+}

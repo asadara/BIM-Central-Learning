@@ -756,27 +756,31 @@ function findVideosInFolder(folder, baseFolder = null, tagsData = null, adminTag
     return videoFiles;
 }
 
+async function loadTutorialCatalog() {
+    const tagsData = readLegacyTagsData();
+    const adminTagsLookup = await loadAdminVideoTagsLookup();
+    const videos = findVideosInFolder(videoFolder, null, tagsData, adminTagsLookup);
+    const keywordCounts = buildKeywordFrequencyIndex(videos);
+
+    return videos.map((video) => {
+        const resolvedCategory = normalizeFinalCategory(resolveVideoCategory(video, keywordCounts));
+        return {
+            ...video,
+            category: resolvedCategory.label,
+            categoryKey: resolvedCategory.key,
+            categorySource: resolvedCategory.source
+        };
+    });
+}
+
 // API untuk mendapatkan daftar video dari semua subfolder
 router.get("/", async (req, res) => {
     console.log("📂 Mencari video di dalam:", videoFolder);
 
     try {
-        const tagsData = readLegacyTagsData();
-        const adminTagsLookup = await loadAdminVideoTagsLookup();
-
-        const videos = findVideosInFolder(videoFolder, null, tagsData, adminTagsLookup);
-        console.log("🎥 Video ditemukan:", videos);
-        const keywordCounts = buildKeywordFrequencyIndex(videos);
-        const normalizedVideos = videos.map((video) => {
-            const resolvedCategory = normalizeFinalCategory(resolveVideoCategory(video, keywordCounts));
-            return {
-                ...video,
-                category: resolvedCategory.label,
-                categoryKey: resolvedCategory.key,
-                categorySource: resolvedCategory.source
-            };
-        });
-        res.json(normalizedVideos);
+        const videos = await loadTutorialCatalog();
+        console.log("🎥 Video ditemukan:", videos.length);
+        res.json(videos);
     } catch (err) {
         console.error("❌ Error membaca folder:", err);
         res.status(500).json({ error: "Gagal membaca folder video" });
@@ -1041,5 +1045,8 @@ router.put("/:videoId/view", (req, res) => {
         res.status(500).json({ error: "Failed to increment view count", detail: err.message });
     }
 });
+
+// Reuse the exact legacy catalog source in additive adapters without an HTTP loop.
+router.loadTutorialCatalog = loadTutorialCatalog;
 
 module.exports = router;

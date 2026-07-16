@@ -34,6 +34,17 @@ function getNumberEnv(name, fallback) {
     return parsed;
 }
 
+function getBooleanEnv(name, fallback = false) {
+    const rawValue = getOptionalEnv(name);
+    if (!rawValue) return fallback;
+
+    const normalized = rawValue.toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) return true;
+    if (["0", "false", "no", "off"].includes(normalized)) return false;
+
+    throw new Error(`Invalid boolean environment variable: ${name}`);
+}
+
 function createPgConfig(overrides = {}) {
     return {
         host: getOptionalEnv("DB_HOST") || "localhost",
@@ -71,6 +82,7 @@ function getGoogleClientId() {
 
 module.exports = {
     createPgConfig,
+    getBooleanEnv,
     getDefaultAdminPassword,
     getGoogleClientId,
     getJwtSecret,

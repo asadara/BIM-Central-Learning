@@ -31,7 +31,8 @@
         integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 
     <!-- Custom Admin Styles -->
-    <link href="adminbcl.css?v=20260608b" rel="stylesheet">
+    <link href="adminbcl.css?v=20260715a" rel="stylesheet">
+    <link href="admin-learning-mapping.css?v=20260715a" rel="stylesheet">
     <script>
         window.BCL_SKIP_GLOBAL_ADMIN_SESSION_UI_PROBE = true;
         window.BCL_SKIP_ADMIN_PANEL_SESSION_CHECK = true;
@@ -166,6 +167,11 @@
                         onclick="showSection('pdf-management'); safeCall('contentManagement', 'loadPDFManagement');">
                         <i class="fas fa-file-pdf"></i>
                         Manajemen PDF
+                    </a>
+                    <a class="nav-link-modern mb-2" href="#learning-mapping"
+                        onclick="showSection('learning-mapping'); window.learningMappingQueue?.open();">
+                        <i class="fas fa-route"></i>
+                        Mapping Materi
                     </a>
                     <a class="nav-link-modern mb-2" href="#bim-media"
                         onclick="showSection('bim-media'); safeCall('contentManagement', 'loadBIMMedia');">
@@ -1127,6 +1133,78 @@
                         </div>
                     </div>
 
+                    <!-- Learning Mapping Queue Section -->
+                    <div id="learning-mapping-section" class="admin-section d-none">
+                        <section class="lmq-shell" aria-labelledby="lmq-title">
+                            <header class="lmq-header">
+                                <div>
+                                    <p class="lmq-eyebrow">Unified Learning / Draft Review</p>
+                                    <h2 id="lmq-title">Admin Mapping Queue</h2>
+                                    <p>Review keputusan materi sebelum path draft dan publish workflow diaktifkan.</p>
+                                </div>
+                                <button class="lmq-button lmq-button-secondary" id="lmq-refresh" type="button">
+                                    <i class="fas fa-rotate"></i>
+                                    Refresh
+                                </button>
+                            </header>
+
+                            <div class="lmq-publish-lock" role="status">
+                                <i class="fas fa-lock"></i>
+                                <span><strong>Publish terkunci.</strong> Queue ini hanya menyimpan review draft dan audit trail.</span>
+                            </div>
+
+                            <div class="lmq-metrics" id="lmq-metrics" aria-label="Ringkasan mapping queue">
+                                <div><span>Total</span><strong id="lmq-metric-total">—</strong></div>
+                                <div><span>Pending</span><strong id="lmq-metric-pending">—</strong></div>
+                                <div><span>Needs review</span><strong id="lmq-metric-unresolved">—</strong></div>
+                                <div><span>Approved</span><strong id="lmq-metric-approved">—</strong></div>
+                            </div>
+
+                            <div class="lmq-filters" aria-label="Filter mapping queue">
+                                <label class="lmq-search">
+                                    <i class="fas fa-search"></i>
+                                    <input id="lmq-search" type="search" placeholder="Cari judul atau canonical ID" autocomplete="off">
+                                </label>
+                                <select id="lmq-status-filter" aria-label="Filter status review">
+                                    <option value="">Semua status</option>
+                                </select>
+                                <select id="lmq-decision-filter" aria-label="Filter keputusan">
+                                    <option value="">Semua keputusan</option>
+                                </select>
+                                <select id="lmq-type-filter" aria-label="Filter tipe materi">
+                                    <option value="">Semua tipe</option>
+                                </select>
+                                <select id="lmq-path-filter" aria-label="Filter jalur belajar">
+                                    <option value="">Semua jalur</option>
+                                </select>
+                            </div>
+
+                            <div class="lmq-workspace">
+                                <div class="lmq-queue-panel">
+                                    <div class="lmq-queue-heading">
+                                        <div>
+                                            <strong id="lmq-result-count">Memuat antrean…</strong>
+                                            <span>Urutan memprioritaskan materi yang perlu diperiksa.</span>
+                                        </div>
+                                        <div class="lmq-page-actions">
+                                            <button id="lmq-prev" type="button" aria-label="Halaman sebelumnya"><i class="fas fa-chevron-left"></i></button>
+                                            <button id="lmq-next" type="button" aria-label="Halaman berikutnya"><i class="fas fa-chevron-right"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="lmq-list" id="lmq-list" role="listbox" aria-label="Materi untuk direview"></div>
+                                </div>
+
+                                <aside class="lmq-inspector" id="lmq-inspector" aria-live="polite">
+                                    <div class="lmq-empty">
+                                        <i class="fas fa-arrow-left"></i>
+                                        <h3>Pilih materi</h3>
+                                        <p>Detail mapping, preview, dan audit trail akan muncul di sini.</p>
+                                    </div>
+                                </aside>
+                            </div>
+                        </section>
+                    </div>
+
                     <!-- Berita Section -->
                     <div id="news-section" class="admin-section d-none">
                         <div class="content-card">
@@ -1349,27 +1427,61 @@
                                     <i class="fas fa-power-off"></i>
                                     Server Control
                                 </div>
-                                <a id="server-control-full-link" class="btn btn-outline-primary" href="/elearning-assets/phase4-dashboard.html" target="_blank" rel="noopener">
-                                    <i class="fas fa-external-link-alt me-2"></i>Buka Tab Penuh
-                                </a>
+                                <button class="btn btn-outline-primary" type="button" onclick="loadServerControlStatus()">
+                                    <i class="fas fa-sync me-2"></i>Refresh Status
+                                </button>
                             </div>
-                            <div class="card-body-modern p-0">
-                                <iframe
-                                    id="server-control-frame"
-                                    src="about:blank"
-                                    title="BCL Server Control"
-                                    style="width: 100%; min-height: 760px; border: 0; display: block; background: #f8fafc;"
-                                ></iframe>
-                                <script>
-                                    (() => {
-                                        const dashboardUrl = new URL('/elearning-assets/phase4-dashboard.html', window.location.href);
-                                        if (dashboardUrl.port === '5052') dashboardUrl.port = '';
-                                        const frame = document.getElementById('server-control-frame');
-                                        const fullLink = document.getElementById('server-control-full-link');
-                                        if (frame) frame.src = dashboardUrl.href;
-                                        if (fullLink) fullLink.href = dashboardUrl.href;
-                                    })();
-                                </script>
+                            <div class="card-body-modern">
+                                <div class="server-control-grid">
+                                    <section class="server-control-panel">
+                                        <div class="server-control-panel-head">
+                                            <div>
+                                                <h5>BCL Runtime</h5>
+                                                <p>Status proses backend dan restart terakhir.</p>
+                                            </div>
+                                            <span class="server-state-pill" id="server-control-state">Checking</span>
+                                        </div>
+                                        <div class="server-control-metrics" id="server-control-metrics">
+                                            <div><span>Backend</span><strong>-</strong></div>
+                                            <div><span>Uptime</span><strong>-</strong></div>
+                                            <div><span>PID</span><strong>-</strong></div>
+                                            <div><span>Restart</span><strong>-</strong></div>
+                                        </div>
+                                        <div class="server-control-message" id="server-control-message">
+                                            Klik Refresh Status untuk membaca kondisi server.
+                                        </div>
+                                    </section>
+
+                                    <section class="server-control-panel">
+                                        <div class="server-control-panel-head">
+                                            <div>
+                                                <h5>Restart Action</h5>
+                                                <p>Gunakan Full Restart untuk menerapkan perubahan backend tanpa restart PC.</p>
+                                            </div>
+                                        </div>
+                                        <div class="server-control-actions">
+                                            <button class="btn btn-outline-secondary" type="button" id="server-soft-restart-btn" onclick="requestBclServerRestart('soft')">
+                                                <i class="fas fa-broom me-2"></i>Soft Reload
+                                            </button>
+                                            <button class="btn btn-danger" type="button" id="server-full-restart-btn" onclick="requestBclServerRestart('full')">
+                                                <i class="fas fa-power-off me-2"></i>Full Restart BCL
+                                            </button>
+                                        </div>
+                                        <div class="server-control-note">
+                                            Full Restart menjalankan stop/start BCL, menunggu backend <code>/ping</code> sehat, dan dicegah bentrok dengan watchdog melalui restart flag.
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <section class="server-control-panel mt-3">
+                                    <div class="server-control-panel-head">
+                                        <div>
+                                            <h5>Restart Log</h5>
+                                            <p>Log ringkas dari API restart dan wrapper restart terakhir.</p>
+                                        </div>
+                                    </div>
+                                    <pre class="server-control-log" id="server-control-log">Belum ada log dimuat.</pre>
+                                </section>
                             </div>
                         </div>
                     </div>
@@ -1438,7 +1550,8 @@
     <div id="footer-container"></div>
 
     <!-- Load Panel Admin JavaScript -->
-    <script src="adminbcl.js?v=20260313d"></script>
+    <script src="adminbcl.js?v=20260715a"></script>
+    <script src="admin-learning-mapping.js?v=20260715a"></script>
 
     <!-- Back to Top -->
     <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>

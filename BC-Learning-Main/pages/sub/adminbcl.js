@@ -49,6 +49,7 @@ let savedBIMTags = {};
 let bimCustomCategories = {};
 let allBIMTags = [];
 let isScanningMedia = false;
+let serverControlPollTimer = null;
 
 // PDF Materials Management
 let allPDFMaterials = [];
@@ -82,6 +83,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showSection(hash);
                 setTimeout(() => {
                     loadTrainingBatches();
+                }, 50);
+            } else if (hash === 'learning-mapping') {
+                showSection(hash);
+                setTimeout(() => {
+                    window.learningMappingQueue?.open();
                 }, 50);
             } else {
                 showSection(hash);
@@ -390,6 +396,9 @@ function showSection(sectionName) {
         return;
     }
     selectedSection.classList.remove('d-none');
+    if (sectionName === 'server-control') {
+        setTimeout(() => loadServerControlStatus(), 50);
+    }
 
     // Add active class to clicked nav link
     if (event && event.target) {
@@ -397,6 +406,163 @@ function showSection(sectionName) {
         if (activeLink && activeLink.classList) {
             activeLink.classList.add('active');
         }
+    }
+}
+
+function getAdminFetchHeaders(extraHeaders = {}) {
+    const token = getStoredAdminToken();
+    return {
+        ...extraHeaders,
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+}
+
+function formatServerSeconds(value) {
+    const seconds = Math.max(0, Math.floor(Number(value) || 0));
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours) return `${hours}h ${minutes}m ${secs}s`;
+    if (minutes) return `${minutes}m ${secs}s`;
+    return `${secs}s`;
+}
+
+function setServerControlBusy(isBusy) {
+    ['server-soft-restart-btn', 'server-full-restart-btn'].forEach((id) => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = isBusy;
+    });
+}
+
+function renderServerControlStatus(data, transientMessage = '') {
+    const stateElement = document.getElementById('server-control-state');
+    const metricsElement = document.getElementById('server-control-metrics');
+    const messageElement = document.getElementById('server-control-message');
+    const logElement = document.getElementById('server-control-log');
+    const restart = data?.restart || {};
+    const server = data?.server || data || {};
+    const state = restart.state || server.status || 'unknown';
+
+    if (stateElement) {
+        stateElement.textContent = state;
+        stateElement.dataset.state = state;
+    }
+
+    if (metricsElement) {
+        metricsElement.innerHTML = [
+            ['Backend', server.status || 'running'],
+            ['Uptime', formatServerSeconds(server.uptime)],
+            ['PID', server.pid || '-'],
+            ['Restart', restart.requestId || '-']
+        ].map(([label, value]) => `<div><span>${bclEscapeHtml(label)}</span><strong>${bclEscapeHtml(value)}</strong></div>`).join('');
+    }
+
+    if (messageElement) {
+        messageElement.textContent = transientMessage || restart.message || 'Server status terbaca.';
+    }
+
+    if (logElement) {
+        const lines = Array.isArray(data?.logTail) ? data.logTail : [];
+        logElement.textContent = lines.length ? lines.join('\n') : 'Belum ada restart log.';
+    }
+}
+
+async function fetchServerControlStatus() {
+    const response = await fetch('/api/server/restart-status', {
+        method: 'GET',
+        credentials: 'include',
+        headers: getAdminFetchHeaders()
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(data.error || `Status server gagal (${response.status})`);
+    }
+    return data;
+}
+
+async function loadServerControlStatus() {
+    const messageElement = document.getElementById('server-control-message');
+    if (messageElement) messageElement.textContent = 'Membaca status server...';
+    try {
+        const data = await fetchServerControlStatus();
+        renderServerControlStatus(data);
+    } catch (error) {
+        if (messageElement) messageElement.textContent = `Status belum terbaca: ${error.message}`;
+    }
+}
+
+function startServerRestartPolling() {
+    if (serverControlPollTimer) {
+        clearInterval(serverControlPollTimer);
+    }
+
+    const startedAt = Date.now();
+    serverControlPollTimer = setInterval(async () => {
+        try {
+            const data = await fetchServerControlStatus();
+            renderServerControlStatus(data, 'Server kembali merespons. Memverifikasi status restart...');
+            const state = data?.restart?.state || '';
+            if (['healthy', 'timeout', 'failed'].includes(state) || Date.now() - startedAt > 150000) {
+                clearInterval(serverControlPollTimer);
+                serverControlPollTimer = null;
+                setServerControlBusy(false);
+                renderServerControlStatus(data, state === 'healthy' ? 'Restart selesai. Backend sudah sehat.' : (data?.restart?.message || 'Polling restart selesai.'));
+            }
+        } catch (error) {
+            const messageElement = document.getElementById('server-control-message');
+            if (messageElement) {
+                messageElement.textContent = `Restart sedang berlangsung atau server belum tersedia (${Math.floor((Date.now() - startedAt) / 1000)}s).`;
+            }
+            if (Date.now() - startedAt > 150000) {
+                clearInterval(serverControlPollTimer);
+                serverControlPollTimer = null;
+                setServerControlBusy(false);
+                if (messageElement) messageElement.textContent = 'Polling restart timeout. Cek log/server manual jika halaman belum kembali.';
+            }
+        }
+    }, 4000);
+}
+
+async function requestBclServerRestart(mode = 'full') {
+    const fullRestart = mode === 'full';
+    const confirmed = confirm(fullRestart
+        ? 'Full Restart BCL akan menghentikan dan menyalakan ulang backend/nginx. Lanjutkan?'
+        : 'Soft Reload hanya membersihkan cache proses backend. Lanjutkan?');
+    if (!confirmed) return;
+
+    setServerControlBusy(true);
+    renderServerControlStatus({ server: { status: 'requesting', uptime: 0 }, restart: { state: 'requesting', message: 'Mengirim request restart...' }, logTail: [] });
+
+    try {
+        const response = await fetch(fullRestart ? '/api/server/restart-full' : '/api/server/restart', {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAdminFetchHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ source: 'adminbcl-server-control' })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.success === false) {
+            throw new Error(data.error || `Restart gagal (${response.status})`);
+        }
+
+        renderServerControlStatus({
+            server: { status: 'scheduled', uptime: 0 },
+            restart: data.restartState || { state: fullRestart ? 'scheduled' : 'soft_restart', message: data.message, requestId: data.requestId },
+            logTail: []
+        }, data.message || 'Restart dijadwalkan.');
+
+        if (fullRestart) {
+            startServerRestartPolling();
+        } else {
+            setTimeout(async () => {
+                setServerControlBusy(false);
+                await loadServerControlStatus();
+            }, 1200);
+        }
+    } catch (error) {
+        setServerControlBusy(false);
+        const messageElement = document.getElementById('server-control-message');
+        if (messageElement) messageElement.textContent = `Restart gagal: ${error.message}`;
     }
 }
 

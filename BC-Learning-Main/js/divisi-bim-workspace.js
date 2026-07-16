@@ -6,8 +6,10 @@
         view: 'dashboard',
         ganttStart: '',
         ganttPeriod: '',
+        ganttMode: '2w',
         taskViewMode: 'task',
         taskMineOnly: false,
+        taskLoad: null,
         access: null,
         users: [],
         projectContexts: [],
@@ -24,7 +26,13 @@
         kpiTab: 'overview',
         kpi: null,
         kpiYear: '',
-        report: null
+        report: null,
+        updateVersions: {},
+        latestVersions: {},
+        pendingUpdates: new Set(),
+        updatePollTimer: null,
+        updateSyncTimer: null,
+        lastUpdateCheck: ''
     };
 
     const viewMeta = {
@@ -62,6 +70,26 @@
         replaced: 'REPLACED'
     };
 
+    const taskCategoryLabels = {
+        regular: 'Regular',
+        routine: 'Rutin',
+        flexible: 'Fleksibel',
+        urgent: 'Urgent'
+    };
+
+    const picColorPalette = [
+        { border: '#087f8c', bg: '#dff3f5', fill: 'rgba(8,127,140,.24)', stripe: '#c6e7eb', text: '#075f68' },
+        { border: '#7a5af8', bg: '#ebe7ff', fill: 'rgba(122,90,248,.22)', stripe: '#d9d1ff', text: '#4b2fb7' },
+        { border: '#16835f', bg: '#dff3ea', fill: 'rgba(22,131,95,.22)', stripe: '#c7e8d8', text: '#116346' },
+        { border: '#c11574', bg: '#fce7f3', fill: 'rgba(193,21,116,.18)', stripe: '#f9cfe5', text: '#851651' },
+        { border: '#b54708', bg: '#fff0d5', fill: 'rgba(181,71,8,.18)', stripe: '#f8ddb1', text: '#8a4b08' },
+        { border: '#175cd3', bg: '#dbeafe', fill: 'rgba(23,92,211,.2)', stripe: '#bfdbfe', text: '#1849a9' },
+        { border: '#9f1ab1', bg: '#f4e5f7', fill: 'rgba(159,26,177,.18)', stripe: '#eac7f0', text: '#6f1877' },
+        { border: '#667085', bg: '#eaecf0', fill: 'rgba(102,112,133,.2)', stripe: '#d0d5dd', text: '#344054' },
+        { border: '#be123c', bg: '#ffe4e8', fill: 'rgba(190,18,60,.17)', stripe: '#fecdd6', text: '#9f1239' },
+        { border: '#0f766e', bg: '#ccfbf1', fill: 'rgba(15,118,110,.2)', stripe: '#99f6e4', text: '#115e59' }
+    ];
+
     const guideDetails = {
         dashboard: {
             title: 'Dashboard',
@@ -72,8 +100,8 @@
         tasks: {
             title: 'Task Scheduler',
             subtitle: 'Mencatat task bulanan, task pendek, task rutin, dan delegasi staff.',
-            steps: ['Klik Task Baru, isi nama task, project/context, PIC, start date, due date, prioritas, dan deskripsi.', 'Jika staff membuat task, task masuk sebagai usulan register dan perlu review Kadiv.', 'Kadiv dapat membuat atau mendelegasikan task langsung ke staff, lalu memantau progress dari table dan Gantt.'],
-            note: 'Gunakan project/context yang sama untuk pekerjaan dalam project yang sama agar grouping dan report tetap rapi.'
+            steps: ['Klik Task Baru, isi nama task, project/context, PIC, start date, due date, prioritas, kategori beban, dan deskripsi.', 'Gunakan Regular untuk task normal, Rutin untuk pekerjaan berulang, Fleksibel untuk pekerjaan yang dapat dikerjakan saat kapasitas tersedia, dan Urgent untuk task sisipan prioritas tinggi.', 'Centang Critical hanya jika task berdampak besar: blocking deliverable, deadline management/project, berpengaruh ke tender/KPI, atau berisiko tinggi bila terlambat.', 'Jika staff membuat task, task masuk sebagai usulan register dan perlu review Kadiv.', 'Kadiv dapat membuat atau mendelegasikan task langsung ke staff, lalu memantau progress dari table dan Gantt.'],
+            note: 'Urgent berarti perlu segera dikerjakan; Critical berarti dampaknya besar bila gagal atau terlambat. Task bisa urgent saja, critical saja, atau keduanya. Gunakan project/context yang sama untuk pekerjaan dalam project yang sama agar grouping dan report tetap rapi.'
         },
         worklogs: {
             title: 'Worklog',
@@ -134,6 +162,10 @@
             error.status = response.status;
             throw error;
         }
+        const method = String(options.method || 'GET').toUpperCase();
+        if (!['GET', 'HEAD'].includes(method) && !path.startsWith('/updates')) {
+            scheduleUpdateVersionSync();
+        }
         return data;
     }
 
@@ -189,17 +221,28 @@
         return result;
     }
 
+    function daysInPeriod(period) {
+        const [year, month] = period.split('-').map(Number);
+        return new Date(year, month, 0).getDate();
+    }
+
     function resetGanttWindow() {
         const currentPeriod = new Date().toISOString().slice(0, 7);
         const baseDate = state.period === currentPeriod
             ? new Date()
             : parseDateOnly(`${state.period}-01`);
-        state.ganttStart = dateKey(startOfWeek(baseDate || new Date()));
+        state.ganttStart = state.ganttMode === 'month'
+            ? `${state.period}-01`
+            : dateKey(startOfWeek(baseDate || new Date()));
         state.ganttPeriod = state.period;
     }
 
     function shiftGanttWindow(amount) {
         if (!state.ganttStart || state.ganttPeriod !== state.period) resetGanttWindow();
+        if (state.ganttMode === 'month') {
+            shiftMonth(amount > 0 ? 1 : -1);
+            return;
+        }
         state.ganttStart = dateKey(addDays(parseDateOnly(state.ganttStart), amount));
         renderTasks();
     }
@@ -209,7 +252,17 @@
         const date = new Date(year, month - 1 + offset, 1);
         state.period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         document.getElementById('period-current').textContent = formatMonth(state.period);
+        resetUpdateMonitorForPeriod();
         loadView(state.view, true);
+    }
+
+    function resetUpdateMonitorForPeriod() {
+        state.updateVersions = {};
+        state.latestVersions = {};
+        state.pendingUpdates.clear();
+        state.lastUpdateCheck = '';
+        renderUpdateIndicators();
+        checkWorkspaceUpdates({ adoptAll: true }).catch(() => {});
     }
 
     function tone(status) {
@@ -311,6 +364,99 @@
         return value;
     }
 
+    function updateVersionSignature(version) {
+        return String(version?.signature || `${version?.count ?? 0}:${version?.versionAt || 'none'}`);
+    }
+
+    function updateViewLabel(view) {
+        return viewMeta[view]?.[0] || view;
+    }
+
+    function setStoredVersion(view, version) {
+        if (!view || !version) return;
+        state.updateVersions[view] = updateVersionSignature(version);
+    }
+
+    function markViewFresh(view) {
+        if (!view) return;
+        const latest = state.latestVersions[view];
+        if (latest) setStoredVersion(view, latest);
+        state.pendingUpdates.delete(view);
+        renderUpdateIndicators();
+    }
+
+    function renderUpdateIndicators() {
+        document.querySelectorAll('.bimws-nav-item[data-view]').forEach((button) => {
+            const view = button.dataset.view;
+            let badge = button.querySelector('.bimws-update-dot');
+            if (state.pendingUpdates.has(view)) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'bimws-update-dot';
+                    badge.textContent = 'Baru';
+                    button.appendChild(badge);
+                }
+            } else if (badge) {
+                badge.remove();
+            }
+        });
+
+        const banner = document.getElementById('bimws-update-banner');
+        const refreshButton = document.getElementById('bimws-refresh-view');
+        const text = document.getElementById('bimws-update-text');
+        if (!banner || !refreshButton || !text) return;
+
+        const currentHasUpdate = state.pendingUpdates.has(state.view);
+        const pendingLabels = [...state.pendingUpdates].map(updateViewLabel);
+        banner.hidden = !state.pendingUpdates.size;
+        banner.classList.toggle('is-active-view', currentHasUpdate);
+        refreshButton.hidden = !currentHasUpdate;
+        text.textContent = currentHasUpdate
+            ? `${updateViewLabel(state.view)} punya update baru.`
+            : pendingLabels.length ? `Update baru: ${pendingLabels.slice(0, 3).join(', ')}${pendingLabels.length > 3 ? '...' : ''}.` : 'Data terkini.';
+    }
+
+    async function checkWorkspaceUpdates({ adoptAll = false, adoptView = '' } = {}) {
+        if (!state.access) return;
+        const result = await api(`/updates?period=${state.period}&year=${state.period.slice(0, 4)}`);
+        const versions = result.versions || {};
+        state.latestVersions = versions;
+        state.lastUpdateCheck = result.checkedAt || new Date().toISOString();
+
+        Object.entries(versions).forEach(([view, version]) => {
+            const signature = updateVersionSignature(version);
+            if (adoptAll || !state.updateVersions[view] || view === adoptView) {
+                state.updateVersions[view] = signature;
+                state.pendingUpdates.delete(view);
+                return;
+            }
+            if (state.updateVersions[view] !== signature) {
+                state.pendingUpdates.add(view);
+            }
+        });
+
+        if (adoptView) markViewFresh(adoptView);
+        renderUpdateIndicators();
+    }
+
+    function scheduleUpdateVersionSync() {
+        window.clearTimeout(state.updateSyncTimer);
+        state.updateSyncTimer = window.setTimeout(() => {
+            checkWorkspaceUpdates({ adoptView: state.view }).catch(() => {});
+        }, 1200);
+    }
+
+    function startUpdateMonitor() {
+        window.clearInterval(state.updatePollTimer);
+        state.updatePollTimer = window.setInterval(() => {
+            if (document.hidden || !state.access) return;
+            checkWorkspaceUpdates().catch(() => {});
+        }, 30000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && state.access) checkWorkspaceUpdates().catch(() => {});
+        });
+    }
+
     async function init() {
         bindNavigation();
         try {
@@ -326,6 +472,8 @@
             document.getElementById('period-current').textContent = formatMonth(state.period);
             applyWriteVisibility();
             await loadView('dashboard', true);
+            await checkWorkspaceUpdates({ adoptAll: true });
+            startUpdateMonitor();
         } catch (error) {
             renderAccessError(error);
         }
@@ -378,7 +526,80 @@
         document.getElementById('report-export-btn').hidden = !state.access.permissions.canExport;
     }
 
+    function syncSidebarCollapseState() {
+        const collapsed = document.getElementById('bimws-app').classList.contains('is-collapsed');
+        const toggle = document.getElementById('bimws-sidebar-toggle');
+        if (toggle) {
+            toggle.title = collapsed ? 'Lebarkan sidebar' : 'Ciutkan sidebar';
+            toggle.setAttribute('aria-label', collapsed ? 'Lebarkan sidebar' : 'Ciutkan sidebar');
+            toggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+            toggle.innerHTML = `<i class="fas ${collapsed ? 'fa-angles-right' : 'fa-angles-left'}"></i>`;
+        }
+        document.querySelectorAll('.bimws-nav-item[data-view]').forEach((button) => {
+            const label = button.querySelector('span')?.textContent?.trim() || updateViewLabel(button.dataset.view);
+            button.title = label;
+            button.setAttribute('aria-label', label);
+        });
+    }
+
+    function bindGanttPan() {
+        const wrap = document.getElementById('tasks-gantt');
+        if (!wrap) return;
+        let activePointer = null;
+        let startX = 0;
+        let startY = 0;
+        let startScrollLeft = 0;
+        let startScrollTop = 0;
+        let didPan = false;
+        let suppressClickUntil = 0;
+
+        const stopPan = () => {
+            if (activePointer != null) {
+                try { wrap.releasePointerCapture(activePointer); } catch (_) {}
+            }
+            activePointer = null;
+            wrap.classList.remove('is-panning');
+            if (didPan) suppressClickUntil = Date.now() + 180;
+        };
+
+        wrap.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey) return;
+            const canScroll = wrap.scrollWidth > wrap.clientWidth || wrap.scrollHeight > wrap.clientHeight;
+            if (!canScroll) return;
+            activePointer = event.pointerId;
+            didPan = false;
+            startX = event.clientX;
+            startY = event.clientY;
+            startScrollLeft = wrap.scrollLeft;
+            startScrollTop = wrap.scrollTop;
+            wrap.setPointerCapture(event.pointerId);
+        });
+
+        wrap.addEventListener('pointermove', (event) => {
+            if (activePointer !== event.pointerId) return;
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+            if (!didPan && Math.hypot(dx, dy) > 4) didPan = true;
+            if (!didPan) return;
+            wrap.classList.add('is-panning');
+            wrap.scrollLeft = startScrollLeft - dx;
+            wrap.scrollTop = startScrollTop - dy;
+            event.preventDefault();
+        });
+
+        wrap.addEventListener('pointerup', stopPan);
+        wrap.addEventListener('pointercancel', stopPan);
+        wrap.addEventListener('lostpointercapture', stopPan);
+        wrap.addEventListener('click', (event) => {
+            if (Date.now() > suppressClickUntil) return;
+            event.preventDefault();
+            event.stopPropagation();
+        }, true);
+    }
+
     function bindNavigation() {
+        syncSidebarCollapseState();
+        bindGanttPan();
         document.querySelectorAll('.bimws-nav-item').forEach((button) => button.addEventListener('click', () => loadView(button.dataset.view)));
         document.querySelectorAll('[data-go-view]').forEach((button) => button.addEventListener('click', () => loadView(button.dataset.goView)));
         document.querySelectorAll('[data-kpi-tab]').forEach((button) => button.addEventListener('click', () => {
@@ -387,8 +608,12 @@
         }));
         document.getElementById('period-prev').onclick = () => shiftMonth(-1);
         document.getElementById('period-next').onclick = () => shiftMonth(1);
-        document.getElementById('period-current').onclick = () => { state.period = new Date().toISOString().slice(0,7); document.getElementById('period-current').textContent = formatMonth(state.period); loadView(state.view, true); };
-        document.getElementById('bimws-sidebar-toggle').onclick = () => document.getElementById('bimws-app').classList.toggle('is-collapsed');
+        document.getElementById('period-current').onclick = () => { state.period = new Date().toISOString().slice(0,7); document.getElementById('period-current').textContent = formatMonth(state.period); resetUpdateMonitorForPeriod(); loadView(state.view, true); };
+        document.getElementById('bimws-refresh-view').onclick = () => loadView(state.view, true);
+        document.getElementById('bimws-sidebar-toggle').onclick = () => {
+            document.getElementById('bimws-app').classList.toggle('is-collapsed');
+            syncSidebarCollapseState();
+        };
         document.getElementById('bimws-mobile-menu').onclick = () => document.getElementById('bimws-sidebar').classList.toggle('is-open');
         document.getElementById('task-new-btn').onclick = () => openTaskForm();
         document.getElementById('worklog-new-btn').onclick = () => openWorklogForm();
@@ -416,8 +641,13 @@
             state.taskViewMode = button.dataset.taskView || 'task';
             renderTasks();
         }));
-        document.getElementById('task-gantt-prev').onclick = () => shiftGanttWindow(-14);
-        document.getElementById('task-gantt-next').onclick = () => shiftGanttWindow(14);
+        document.querySelectorAll('[data-gantt-mode]').forEach((button) => button.addEventListener('click', () => {
+            state.ganttMode = button.dataset.ganttMode || '2w';
+            resetGanttWindow();
+            renderTasks();
+        }));
+        document.getElementById('task-gantt-prev').onclick = () => shiftGanttWindow(state.ganttMode === 'month' ? -1 : -14);
+        document.getElementById('task-gantt-next').onclick = () => shiftGanttWindow(state.ganttMode === 'month' ? 1 : 14);
         document.getElementById('task-gantt-today').onclick = () => { resetGanttWindow(); renderTasks(); };
         document.getElementById('worklog-search').oninput = renderWorklogs;
         document.getElementById('worklog-mine-only').onchange = renderWorklogs;
@@ -444,6 +674,8 @@
             if (view === 'issues') await loadIssues(force);
             if (view === 'kpi') await loadKpi(force);
             if (view === 'reports') await loadReports(force);
+            markViewFresh(view);
+            checkWorkspaceUpdates({ adoptView: view }).catch(() => {});
         } catch (error) {
             toast(error.message, true);
         }
@@ -563,11 +795,151 @@
         renderTasks();
     }
 
+    function taskPicKey(task) {
+        return String(task.picUserId || task.picName || 'unassigned').toLowerCase();
+    }
+
+    function taskDateRange(task) {
+        let start = parseDateOnly(task.startDate || task.dueDate);
+        let end = parseDateOnly(task.dueDate || task.startDate);
+        if (!start && !end) return null;
+        if (!start) start = new Date(end);
+        if (!end) end = new Date(start);
+        if (end < start) end = new Date(start);
+        return { start, end };
+    }
+
+    function taskRangeDays(task, maxDays = 120) {
+        const range = taskDateRange(task);
+        if (!range) return [];
+        const total = Math.min(dayDifference(range.start, range.end), maxDays - 1);
+        return Array.from({ length: total + 1 }, (_, index) => addDays(range.start, index));
+    }
+
+    function taskWeekKey(date) {
+        return dateKey(startOfWeek(date));
+    }
+
+    function isLoadActiveTask(task) {
+        return !['approved_done', 'cancelled', 'on_hold'].includes(task.status) && !['rejected', 'replaced'].includes(task.intakeStatus);
+    }
+
+    function isTaskCritical(task) {
+        const today = parseDateOnly(dateKey(new Date()));
+        const due = parseDateOnly(task.dueDate);
+        const daysToDue = due ? dayDifference(today, due) : null;
+        return !!task.isCritical ||
+            task.priority === 'urgent' ||
+            task.taskCategory === 'urgent' ||
+            task.status === 'blocked' ||
+            (daysToDue != null && daysToDue <= 2 && Number(task.progressPercent || 0) < 80);
+    }
+
+    function analyzeTaskLoad(tasks) {
+        const active = tasks.filter((task) => isLoadActiveTask(task) && taskDateRange(task));
+        const byId = new Map();
+        const byPicDay = new Map();
+        const byPicWeek = new Map();
+        const addToSetMap = (map, key, id) => {
+            if (!map.has(key)) map.set(key, new Set());
+            map.get(key).add(id);
+        };
+
+        active.forEach((task) => {
+            taskRangeDays(task).forEach((date) => {
+                const pic = taskPicKey(task);
+                addToSetMap(byPicDay, `${pic}|${dateKey(date)}`, task.id);
+                addToSetMap(byPicWeek, `${pic}|${taskWeekKey(date)}`, task.id);
+            });
+        });
+
+        tasks.forEach((task) => {
+            const days = taskRangeDays(task);
+            const pic = taskPicKey(task);
+            let maxDayLoad = 0;
+            let maxWeekLoad = 0;
+            let clashCount = 0;
+            days.forEach((date) => {
+                const daySet = byPicDay.get(`${pic}|${dateKey(date)}`) || new Set();
+                const weekSet = byPicWeek.get(`${pic}|${taskWeekKey(date)}`) || new Set();
+                maxDayLoad = Math.max(maxDayLoad, daySet.size);
+                maxWeekLoad = Math.max(maxWeekLoad, weekSet.size);
+                if (daySet.has(task.id) && daySet.size > 1) clashCount = Math.max(clashCount, daySet.size - 1);
+            });
+            const critical = isTaskCritical(task);
+            const today = parseDateOnly(dateKey(new Date()));
+            const due = parseDateOnly(task.dueDate);
+            const daysToDue = due ? dayDifference(today, due) : null;
+            const canHold = task.taskCategory === 'flexible' &&
+                isLoadActiveTask(task) &&
+                !critical &&
+                !['high', 'urgent'].includes(task.priority) &&
+                (daysToDue == null || daysToDue > 3);
+            byId.set(task.id, {
+                clash: clashCount > 0,
+                clashCount,
+                overload: maxDayLoad >= 3 || maxWeekLoad > 6,
+                maxDayLoad,
+                maxWeekLoad,
+                critical,
+                canHold
+            });
+        });
+
+        return {
+            byId,
+            clash: [...byId.values()].filter((item) => item.clash).length,
+            overload: [...byId.values()].filter((item) => item.overload).length,
+            critical: [...byId.values()].filter((item) => item.critical).length,
+            canHold: [...byId.values()].filter((item) => item.canHold).length
+        };
+    }
+
+    function taskCategoryBadge(task) {
+        return `<span class="bimws-task-chip" data-category="${escapeHtml(task.taskCategory || 'regular')}">${escapeHtml(taskCategoryLabels[task.taskCategory] || 'Regular')}</span>`;
+    }
+
+    function taskRiskBadges(task) {
+        const risk = state.taskLoad?.byId?.get(task.id) || {};
+        const chips = [taskCategoryBadge(task)];
+        if (risk.critical) chips.push('<span class="bimws-risk-chip" data-risk="critical">Critical</span>');
+        if (risk.clash) chips.push(`<span class="bimws-risk-chip" data-risk="clash">Clash${risk.clashCount ? ` +${risk.clashCount}` : ''}</span>`);
+        if (risk.overload) chips.push('<span class="bimws-risk-chip" data-risk="overload">Overload</span>');
+        if (risk.canHold) chips.push('<span class="bimws-risk-chip" data-risk="hold">Can Hold</span>');
+        return `<div class="bimws-risk-badges">${chips.join('')}</div>`;
+    }
+
+    function taskGanttRiskIcons(task) {
+        const risk = state.taskLoad?.byId?.get(task.id) || {};
+        const icons = [];
+        if (risk.critical) icons.push('<span data-risk="critical" title="Critical task">!</span>');
+        if (risk.clash) icons.push('<span data-risk="clash" title="Clash task">C</span>');
+        if (risk.overload) icons.push('<span data-risk="overload" title="Overload">O</span>');
+        if (risk.canHold) icons.push('<span data-risk="hold" title="Flexible / can hold">H</span>');
+        return icons.length ? `<span class="bimws-gantt-risk-icons">${icons.join('')}</span>` : '';
+    }
+
+    function renderTaskLoadSummary(load) {
+        const element = document.getElementById('task-load-summary');
+        if (!element) return;
+        const items = [
+            ['critical', 'Critical', load.critical, 'Task urgent, blocked, manual critical, atau due dekat progress rendah'],
+            ['clash', 'Clash', load.clash, 'Task aktif PIC yang overlap tanggal'],
+            ['overload', 'Overload', load.overload, 'Beban harian atau mingguan PIC melewati threshold'],
+            ['hold', 'Flexible', load.canHold, 'Task fleksibel yang bisa ditunda saat ada urgent']
+        ];
+        element.innerHTML = items.map(([risk,label,count,help]) => `
+            <article class="bimws-load-card" data-load-risk="${risk}" title="${escapeHtml(help)}">
+                <span>${escapeHtml(label)}</span><strong>${count}</strong>
+            </article>
+        `).join('');
+    }
+
     function taskTable(tasks, actions = true) {
-        return `<table class="bimws-table"><thead><tr><th>Task</th><th>PIC</th><th>Periode</th><th>Progress</th><th>Register</th><th>Status</th>${actions ? '<th>Aksi</th>' : ''}</tr></thead><tbody>${tasks.map((task) => {
+        return `<table class="bimws-table"><thead><tr><th>Task</th><th>PIC</th><th>Periode</th><th>Progress</th><th>Risk / Load</th><th>Register</th><th>Status</th>${actions ? '<th>Aksi</th>' : ''}</tr></thead><tbody>${tasks.map((task) => {
             const overdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().toISOString().slice(0,10)) && !['approved_done','cancelled'].includes(task.status);
             const demoPill = task.isDemo ? '<span class="bimws-demo-pill">Demo</span>' : '';
-            return `<tr data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-demo="${task.isDemo ? 'true' : 'false'}"><td><span class="bimws-table-title">${escapeHtml(task.title)}${demoPill}</span><span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}</span></td><td>${escapeHtml(task.picName || '-')}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span></td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${registerBadge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
+            return `<tr data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-demo="${task.isDemo ? 'true' : 'false'}"><td><span class="bimws-table-title">${escapeHtml(task.title)}${demoPill}</span><span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}</span></td><td>${escapeHtml(task.picName || '-')}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span></td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${taskRiskBadges(task)}</td><td>${registerBadge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
         }).join('')}</tbody></table>`;
     }
 
@@ -652,6 +1024,8 @@
             mineButton.setAttribute('aria-pressed', state.taskMineOnly ? 'true' : 'false');
         }
         const filtered = state.tasks.filter((task) => (!state.taskMineOnly || isMyTask(task)) && (!query || `${task.title} ${task.projectName} ${task.picName}`.toLowerCase().includes(query)) && (!status || task.status === status) && (!intake || task.intakeStatus === intake));
+        state.taskLoad = analyzeTaskLoad(filtered);
+        renderTaskLoadSummary(state.taskLoad);
         document.querySelectorAll('[data-task-view]').forEach((button) => button.classList.toggle('is-active', button.dataset.taskView === state.taskViewMode));
         renderTaskGantt(filtered);
         document.getElementById('tasks-table').innerHTML = filtered.length
@@ -663,19 +1037,47 @@
         return new Intl.DateTimeFormat('id-ID', options).format(date);
     }
 
+    function hashPicKey(value) {
+        return String(value || 'unassigned').split('').reduce((hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0, 0);
+    }
+
+    function getPicTimelineColor(task) {
+        const key = task.picUserId || task.picName || 'unassigned';
+        return picColorPalette[Math.abs(hashPicKey(key)) % picColorPalette.length];
+    }
+
+    function picTimelineStyle(color) {
+        return [
+            `--task-color:${color.border}`,
+            `--task-bg:${color.bg}`,
+            `--task-fill:${color.fill}`,
+            `--task-hold-stripe:${color.stripe}`,
+            `--task-text:${color.text}`
+        ].join(';');
+    }
+
     function renderTaskGantt(tasks) {
         if (!state.ganttStart || state.ganttPeriod !== state.period) resetGanttWindow();
         const windowStart = parseDateOnly(state.ganttStart);
-        const windowEnd = addDays(windowStart, 13);
+        const dayCount = state.ganttMode === 'month' ? daysInPeriod(state.period) : 14;
+        const windowEnd = addDays(windowStart, dayCount - 1);
         const todayKey = dateKey(new Date());
-        const days = Array.from({ length: 14 }, (_, index) => addDays(windowStart, index));
+        const days = Array.from({ length: dayCount }, (_, index) => addDays(windowStart, index));
         const sortedTasks = [...tasks].sort((left, right) => {
             const leftDate = String(left.startDate || left.dueDate || '9999-12-31');
             const rightDate = String(right.startDate || right.dueDate || '9999-12-31');
             return leftDate.localeCompare(rightDate) || left.title.localeCompare(right.title);
         });
 
+        document.getElementById('task-gantt-title').textContent = state.ganttMode === 'month' ? 'Timeline 1 Bulan' : 'Timeline 2 Minggu';
         document.getElementById('task-gantt-range').textContent = `${ganttDateLabel(windowStart, { day: 'numeric', month: 'short' })} - ${ganttDateLabel(windowEnd, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        document.getElementById('task-gantt-prev').title = state.ganttMode === 'month' ? 'Bulan sebelumnya' : 'Dua minggu sebelumnya';
+        document.getElementById('task-gantt-next').title = state.ganttMode === 'month' ? 'Bulan berikutnya' : 'Dua minggu berikutnya';
+        document.querySelectorAll('[data-gantt-mode]').forEach((button) => {
+            const active = button.dataset.ganttMode === state.ganttMode;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
 
         const header = [
             '<div class="bimws-gantt-meta-head" style="grid-column:1;grid-row:1">Task / Project / PIC</div>',
@@ -705,14 +1107,17 @@
                 const span = dayDifference(visibleStart, visibleEnd) + 1;
                 const progress = Math.min(100, Math.max(0, Number(task.progressPercent || 0)));
                 const duration = dayDifference(taskStart, taskEnd) + 1;
-                bar = `<button type="button" class="bimws-gantt-bar" data-action="task-view" data-id="${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-intake="${escapeHtml(task.intakeStatus)}" style="grid-column:${column}/span ${span};grid-row:${gridRow};--task-progress:${progress}%" title="${escapeHtml(`${task.title} / ${duration} hari / ${progress}%`)}"><span class="bimws-gantt-progress-fill"></span><span class="bimws-gantt-progress-label">${progress}%</span></button>`;
+                const picColor = getPicTimelineColor(task);
+                const risk = state.taskLoad?.byId?.get(task.id) || {};
+                bar = `<button type="button" class="bimws-gantt-bar" data-action="task-view" data-id="${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-intake="${escapeHtml(task.intakeStatus)}" data-critical="${risk.critical ? 'true' : 'false'}" data-clash="${risk.clash ? 'true' : 'false'}" data-overload="${risk.overload ? 'true' : 'false'}" data-can-hold="${risk.canHold ? 'true' : 'false'}" style="grid-column:${column}/span ${span};grid-row:${gridRow};--task-progress:${progress}%;${picTimelineStyle(picColor)}" title="${escapeHtml(`${task.title} / ${task.picName || 'Belum ada PIC'} / ${duration} hari / ${progress}%`)}"><span class="bimws-gantt-progress-fill"></span><span class="bimws-gantt-progress-label">${progress}%</span></button>`;
             }
 
-            return `<div class="bimws-gantt-task-meta" style="grid-column:1;grid-row:${gridRow}"><span class="bimws-gantt-index">${index + 1}</span><span><strong title="${escapeHtml(task.title)}">${escapeHtml(task.title)}</strong><small>${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.picName || 'Belum ada PIC')} / ${escapeHtml(statusLabels[task.status] || task.status)}</small></span></div>${cells}${bar}`;
+            const picColor = getPicTimelineColor(task);
+            return `<div class="bimws-gantt-task-meta" style="grid-column:1;grid-row:${gridRow};--pic-color:${picColor.border}"><span class="bimws-gantt-index">${index + 1}</span><span class="bimws-gantt-pic-dot" title="${escapeHtml(`PIC: ${task.picName || 'Belum ada PIC'}`)}"></span><span><strong title="${escapeHtml(task.title)}">${escapeHtml(task.title)}${taskGanttRiskIcons(task)}</strong><small>${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.picName || 'Belum ada PIC')} / ${escapeHtml(statusLabels[task.status] || task.status)}</small></span></div>${cells}${bar}`;
         }).join('');
 
         document.getElementById('tasks-gantt').innerHTML = sortedTasks.length
-            ? `<div class="bimws-gantt-grid">${header}${rows}</div>`
+            ? `<div class="bimws-gantt-grid" style="--gantt-day-count:${dayCount}">${header}${rows}</div>`
             : `<div class="bimws-empty"><i class="fas fa-chart-gantt"></i>Tidak ada task untuk ditampilkan pada timeline.</div>`;
     }
 
@@ -729,6 +1134,10 @@
 
     function taskTypeItems() {
         return ['project_task','tender_support','routine_monitoring','coordination','review','reporting','support','internal_admin','other'].map((value) => ({ value, label: value.replaceAll('_',' ').replace(/\b\w/g,(c)=>c.toUpperCase()) }));
+    }
+
+    function taskCategoryItems() {
+        return Object.entries(taskCategoryLabels).map(([value, label]) => ({ value, label }));
     }
 
     function taskStatusItems(includeHold = false) {
@@ -779,20 +1188,24 @@
                 ${field('title','Task Item',task?.title||'',{required:true,full:true,disabled:definitionLocked})}
                 ${field('projectName','Project / Context',task?.projectName||'',{placeholder:'Ketik atau pilih project yang sudah ada',disabled:definitionLocked,suggestions:state.projectContexts,help:'Pilih nama yang sudah ada agar task lintas staf memakai konteks project yang sama.'})}
                 ${field('taskType','Task Type',task?.taskType||'project_task',{type:'select',items:taskTypeItems(),disabled:definitionLocked})}
+                ${field('taskCategory','Kategori Beban',task?.taskCategory||'regular',{type:'select',items:taskCategoryItems(),disabled:definitionLocked,help:'Regular = task normal. Rutin = berulang. Fleksibel = dikerjakan saat tidak ada urgent/kapasitas tersedia. Urgent = sisipan prioritas tinggi yang perlu segera dikerjakan.'})}
                 ${assignmentFields}
                 <div class="bimws-field bimws-field-full"><label>Kontribusi KPI</label><select name="kpiAssignmentId" id="task-kpi-assignment" ${definitionLocked ? 'disabled' : ''}>${kpiTaskOptions(initialKpiOptions,task?.kpiAssignmentId||'')}</select><small>Hanya kontribusi milik PIC yang sudah approved.</small></div>
                 ${field('priority','Priority',task?.priority||'normal',{type:'select',items:['low','normal','high','urgent'].map((value)=>({value,label:value[0].toUpperCase()+value.slice(1)})),disabled:definitionLocked})}
                 ${field('startDate','Start Date',task?.startDate?String(task.startDate).slice(0,10):'',{type:'date',disabled:definitionLocked})}
                 ${field('dueDate','Due Date',task?.dueDate?String(task.dueDate).slice(0,10):'',{type:'date',disabled:definitionLocked})}
+                <div class="bimws-task-load-preview bimws-field-full" data-task-load-preview hidden></div>
                 ${task ? field('status','Task Status',task.status,{type:'select',items:taskStatusItems(isKpiManager()).filter((item)=>isKpiManager() || !['cancelled','on_hold'].includes(item.value))}) : ''}
                 ${task ? field('progressPercent','Progress (%)',task.progressPercent,{type:'number',min:0,max:99,step:'1'}) : ''}
                 ${field('description','Description',task?.description||'',{type:'textarea',full:true,disabled:definitionLocked})}
                 ${field('evidenceLink','Evidence Link',task?.evidenceLink||'',{type:'url',full:true,placeholder:'https:// atau path referensi'})}
+                ${field('isCritical','Critical task',task?.isCritical||false,{type:'checkbox',full:true,checkboxLabel:'Tandai sebagai critical task',disabled:definitionLocked,help:'Critical berarti dampaknya besar bila gagal atau terlambat. Gunakan untuk task blocking deliverable, deadline management/project, tender/KPI penting, atau risiko tinggi. Tidak semua task urgent harus critical.'})}
+                ${field('criticalReason','Alasan Critical',task?.criticalReason||'',{type:'textarea',full:true,disabled:definitionLocked,placeholder:'Contoh: blocking deliverable koordinasi, deadline tender besok, output diminta manajemen, berdampak ke KPI divisi.'})}
                 ${field('isRoutine','Task rutin',task?.isRoutine||false,{type:'checkbox',full:true,checkboxLabel:'Bisa digenerate ke periode berikutnya',disabled:definitionLocked})}
             </div>`,
             submitLabel: task ? 'Simpan Perubahan' : (isDivisionHead() ? 'Buat Task' : 'Buat Draft Task'),
             onSubmit: async (formData) => {
-                const payload = formJson(formData,['isRoutine']);
+                const payload = formJson(formData,['isRoutine','isCritical']);
                 payload.periodMonth = state.period;
                 if (isDivisionHead()) {
                     payload.picUserId = payload.assignmentMode === 'delegate' ? payload.delegateUserId : currentUserId;
@@ -814,11 +1227,55 @@
         const delegateField = dialog.querySelector('#task-delegate-field');
         const delegateUser = dialog.querySelector('#task-delegate-user');
         const kpiAssignment = dialog.querySelector('#task-kpi-assignment');
+        const preview = dialog.querySelector('[data-task-load-preview]');
+        const priorityInput = dialog.querySelector('[name="priority"]');
+        const categoryInput = dialog.querySelector('[name="taskCategory"]');
+        const routineInput = dialog.querySelector('[name="isRoutine"]');
+        const criticalInput = dialog.querySelector('[name="isCritical"]');
+        const currentPic = () => assignmentMode?.value === 'delegate' ? delegateUser?.value : currentUserId;
+        const currentPicName = () => {
+            const id = currentPic();
+            return String(id) === currentUserId ? currentUserName : (state.users.find((user) => String(user.id) === String(id))?.username || '');
+        };
         const refreshKpiAssignment = async () => {
             if (!kpiAssignment) return;
-            const picUserId = assignmentMode?.value === 'delegate' ? delegateUser?.value : currentUserId;
+            const picUserId = currentPic();
             const selected = kpiAssignment.value;
             kpiAssignment.innerHTML = kpiTaskOptions(await loadKpiTaskOptions(picUserId), selected);
+        };
+        const renderLoadPreview = () => {
+            if (!preview) return;
+            const draft = {
+                ...(task || {}),
+                id: task?.id || '__draft_task__',
+                title: dialog.querySelector('[name="title"]')?.value || 'Task baru',
+                picUserId: currentPic(),
+                picName: currentPicName(),
+                startDate: dialog.querySelector('[name="startDate"]')?.value || '',
+                dueDate: dialog.querySelector('[name="dueDate"]')?.value || '',
+                priority: priorityInput?.value || 'normal',
+                taskCategory: categoryInput?.value || 'regular',
+                isCritical: criticalInput?.checked || false,
+                status: dialog.querySelector('[name="status"]')?.value || task?.status || 'planned',
+                intakeStatus: task?.intakeStatus || 'approved',
+                progressPercent: task?.progressPercent || 0
+            };
+            if (!draft.picUserId || (!draft.startDate && !draft.dueDate)) {
+                preview.hidden = true;
+                preview.innerHTML = '';
+                return;
+            }
+            const pool = [...state.tasks.filter((item) => item.id !== draft.id), draft];
+            const risk = analyzeTaskLoad(pool).byId.get(draft.id) || {};
+            const messages = [];
+            if (risk.critical) messages.push(['critical', 'Critical', 'Task ini masuk kategori critical/urgent/due dekat atau blocked.']);
+            if (risk.clash) messages.push(['clash', 'Clash', `PIC memiliki overlap dengan ${risk.clashCount} task lain pada tanggal yang sama.`]);
+            if (risk.overload) messages.push(['overload', 'Overload', `Beban PIC mencapai ${risk.maxDayLoad} task/hari atau ${risk.maxWeekLoad} task/minggu.`]);
+            if (risk.canHold) messages.push(['hold', 'Can Hold', 'Task fleksibel ini aman menjadi kandidat hold jika ada urgent task.']);
+            preview.hidden = false;
+            preview.innerHTML = messages.length
+                ? `<strong>Load warning</strong>${messages.map(([riskName,label,text]) => `<span data-risk="${riskName}"><b>${label}</b>${escapeHtml(text)}</span>`).join('')}`
+                : '<strong>Load check</strong><span data-risk="clear"><b>Aman</b>Belum terdeteksi clash atau overload untuk PIC dan tanggal ini.</span>';
         };
         const syncDelegation = () => {
             if (!assignmentMode || !delegateField || !delegateUser) return;
@@ -826,12 +1283,33 @@
             delegateField.hidden = !delegated;
             delegateUser.required = delegated;
             refreshKpiAssignment();
+            renderLoadPreview();
         };
+        priorityInput?.addEventListener('change', () => {
+            if (priorityInput.value === 'urgent') {
+                if (categoryInput) categoryInput.value = 'urgent';
+                if (criticalInput) criticalInput.checked = true;
+            }
+            renderLoadPreview();
+        });
+        categoryInput?.addEventListener('change', () => {
+            if (categoryInput.value === 'routine' && routineInput) routineInput.checked = true;
+            if (categoryInput.value === 'urgent') {
+                if (priorityInput) priorityInput.value = 'urgent';
+                if (criticalInput) criticalInput.checked = true;
+            }
+            renderLoadPreview();
+        });
+        ['title','startDate','dueDate','status','isCritical'].forEach((name) => {
+            dialog.querySelector(`[name="${name}"]`)?.addEventListener('input', renderLoadPreview);
+            dialog.querySelector(`[name="${name}"]`)?.addEventListener('change', renderLoadPreview);
+        });
         if (assignmentMode) {
             assignmentMode.addEventListener('change', syncDelegation);
-            delegateUser?.addEventListener('change', refreshKpiAssignment);
+            delegateUser?.addEventListener('change', () => { refreshKpiAssignment(); renderLoadPreview(); });
             syncDelegation();
         }
+        renderLoadPreview();
     }
 
     function urgentTaskOptions(task) {

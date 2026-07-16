@@ -19,6 +19,7 @@ const { getRequestUser } = require("./utils/auth");
 const { resolveAccessProfile } = require("./utils/userAccess");
 const {
     createPgConfig,
+    getBooleanEnv,
     getDefaultAdminPassword,
     getGoogleClientId,
     getJwtSecret,
@@ -513,6 +514,12 @@ const createProjectPathResolverService = require('./services/projectPathResolver
 const createUserAuthService = require('./services/userAuthService');
 const createProjectMediaUtilityService = require('./services/projectMediaUtilityService');
 const createVideoCatalogService = require('./services/videoCatalogService');
+const createUnifiedLearningCatalogService = require('./services/unifiedLearningCatalogService');
+const createUnifiedLearningRoutes = require('./routes/unifiedLearningRoutes');
+const createLearningMappingQueueService = require('./services/learningMappingQueueService');
+const createLearningMappingAdminRoutes = require('./routes/learningMappingAdminRoutes');
+const { loadLearningMaterialsData } = require('./services/learningMaterialsSource');
+const { readLearningPaths } = require('./elearning/services/learningPathService');
 
 const AUDIT_2026_ROOT = process.env.AUDIT_2026_ROOT || "\\\\pc-bim02\\Dokumen Audit 2026";
 
@@ -896,6 +903,28 @@ const projectCatalogService = createProjectCatalogService({
     validModelExt: VALID_MODEL_EXT,
     validVideoExt: VALID_VIDEO_EXT
 });
+
+if (getBooleanEnv('UNIFIED_LEARNING_CATALOG_ENABLED', false)) {
+    const unifiedLearningCatalogService = createUnifiedLearningCatalogService({
+        loadVideos: tutorialRoutes.loadTutorialCatalog,
+        loadMaterials: loadLearningMaterialsData,
+        readLearningPaths,
+        pgPool
+    });
+    app.use('/api/learning', createUnifiedLearningRoutes({
+        catalogService: unifiedLearningCatalogService
+    }));
+    console.log('Unified learning catalog enabled at /api/learning/catalog');
+} else {
+    console.log('Unified learning catalog disabled (UNIFIED_LEARNING_CATALOG_ENABLED=false)');
+}
+
+const learningMappingQueueService = createLearningMappingQueueService({ pgPool });
+app.use('/api/admin/learning-mapping', createLearningMappingAdminRoutes({
+    queueService: learningMappingQueueService
+}));
+console.log('Admin learning mapping queue enabled at /api/admin/learning-mapping/*');
+
 app.use(createProjectMediaMountRoutes({
     backendDir: __dirname,
     baseProjectDir: BASE_PROJECT_DIR,

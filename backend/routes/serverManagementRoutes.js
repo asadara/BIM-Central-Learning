@@ -4,6 +4,7 @@ const path = require("path");
 
 function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, videoCache }) {
     const router = express.Router();
+    const serverStartedAt = new Date();
 
     function authorizeServerManagement(req) {
         if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
@@ -41,6 +42,58 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
         }
     }
 
+    function getBclRoot() {
+        return path.resolve(backendDir, "..");
+    }
+
+    function getLogDir() {
+        const logDir = path.resolve(getBclRoot(), "logs");
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+        return logDir;
+    }
+
+    function getRestartStatePath() {
+        return path.join(getLogDir(), "restart-state.json");
+    }
+
+    function getAdminRestartFlagPath() {
+        return path.join(getBclRoot(), "admin-restart-in-progress.flag");
+    }
+
+    function writeRestartState(update) {
+        try {
+            const state = {
+                updatedAt: new Date().toISOString(),
+                ...update
+            };
+            fs.writeFileSync(getRestartStatePath(), JSON.stringify(state, null, 2), "utf8");
+            return state;
+        } catch (error) {
+            appendServerRestartLog(`restart-state write failed: ${error.message}`);
+            return null;
+        }
+    }
+
+    function readRestartState() {
+        try {
+            const file = getRestartStatePath();
+            if (!fs.existsSync(file)) return null;
+            return JSON.parse(fs.readFileSync(file, "utf8"));
+        } catch (error) {
+            return { state: "unknown", error: error.message };
+        }
+    }
+
+    function readRestartLogTail(maxLines = 80) {
+        try {
+            const file = path.join(getLogDir(), "restart-api.log");
+            if (!fs.existsSync(file)) return [];
+            return fs.readFileSync(file, "utf8").trim().split(/\r?\n/).slice(-maxLines);
+        } catch (error) {
+            return [`Unable to read restart log: ${error.message}`];
+        }
+    }
+
     function clearVideoCache() {
         if (!videoCache) return false;
         videoCache.tutorials = null;
@@ -71,11 +124,12 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
             return res.status(401).json({ error: "Unauthorized access" });
         }
 
-        const bclRoot = path.resolve(backendDir, "..");
+        const bclRoot = getBclRoot();
         const stopScript = path.join(bclRoot, "stop-bcl-http.bat");
         const hiddenStartScript = path.join(bclRoot, "start-bcl-http-hidden.bat");
         const visibleStartScript = path.join(bclRoot, "start-bcl-http.bat");
         const startScript = fs.existsSync(hiddenStartScript) ? hiddenStartScript : visibleStartScript;
+        const backendPort = String(process.env.BCL_BACKEND_PORT || process.env.HTTP_PORT || "5052");
 
         if (!fs.existsSync(stopScript)) {
             return res.status(500).json({ error: "Missing stop-bcl-http.bat script" });
@@ -88,8 +142,9 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
         const stopEscaped = escapeForPs(stopScript);
         const startEscaped = escapeForPs(startScript);
         const runlockEscaped = escapeForPs(path.join(bclRoot, "runlock"));
-        const logDir = path.resolve(bclRoot, "logs");
-        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+        const restartFlagEscaped = escapeForPs(getAdminRestartFlagPath());
+        const restartStateEscaped = escapeForPs(getRestartStatePath());
+        const logDir = getLogDir();
         const useHiddenStarter = path.basename(startScript).toLowerCase() === "start-bcl-http-hidden.bat";
 
         const startCommand = useHiddenStarter
@@ -99,19 +154,38 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
         const timestamp = Date.now();
         const wrapperScriptPath = path.join(logDir, `restart-full-${timestamp}.ps1`);
         const wrapperScriptEscaped = escapeForPs(wrapperScriptPath);
+        const requestId = `restart-${timestamp}`;
         const wrapperScriptContent = [
+            `$ErrorActionPreference = 'Continue'`,
+            `function Write-RestartState([string]$State, [string]$Message) { $payload = [ordered]@{ requestId = '${requestId}'; state = $State; message = $Message; updatedAt = (Get-Date).ToUniversalTime().ToString('o'); backendPort = '${backendPort}' }; $payload | ConvertTo-Json -Compress | Set-Content -Path '${restartStateEscaped}' -Encoding UTF8 }`,
+            `New-Item -ItemType File -Path '${restartFlagEscaped}' -Force | Out-Null`,
+            `Write-RestartState 'stopping' 'Stopping BCL services'`,
             "Start-Sleep -Milliseconds 800",
             `& '${stopEscaped}'`,
             "Start-Sleep -Seconds 2",
             `if (Test-Path '${runlockEscaped}') { Remove-Item -Recurse -Force '${runlockEscaped}' -ErrorAction SilentlyContinue }`,
+            `Write-RestartState 'starting' 'Starting BCL services'`,
             "Start-Sleep -Milliseconds 800",
             startCommand,
+            `Write-RestartState 'waiting' 'Waiting for backend health check'`,
+            `$healthy = $false`,
+            `for ($i = 0; $i -lt 45; $i++) { Start-Sleep -Seconds 2; try { $response = Invoke-WebRequest -UseBasicParsing -TimeoutSec 4 -Uri 'http://127.0.0.1:${backendPort}/ping'; if ($response.StatusCode -eq 200) { $healthy = $true; break } } catch {} }`,
+            `if ($healthy) { Write-RestartState 'healthy' 'BCL restart completed and backend /ping is healthy' } else { Write-RestartState 'timeout' 'BCL start was invoked but backend /ping did not become healthy before timeout' }`,
+            `Remove-Item -Force '${restartFlagEscaped}' -ErrorAction SilentlyContinue`,
             `Remove-Item -Force '${wrapperScriptEscaped}' -ErrorAction SilentlyContinue`
         ].join("; ");
 
         try {
             fs.writeFileSync(wrapperScriptPath, wrapperScriptContent, "utf8");
             appendServerRestartLog(`restart-full accepted via ${auth.method}; start=${path.basename(startScript)}`);
+            const restartState = writeRestartState({
+                requestId,
+                state: "scheduled",
+                message: "Full restart scheduled",
+                backendPort,
+                authorizedBy: auth.method,
+                startScript: path.basename(startScript)
+            });
             const child = spawn("cmd.exe", [
                 "/c",
                 "start",
@@ -135,6 +209,8 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
                 success: true,
                 message: "Full restart scheduled via batch launcher scripts",
                 authorizedBy: auth.method,
+                requestId,
+                restartState,
                 scripts: {
                     stop: path.basename(stopScript),
                     start: path.basename(startScript),
@@ -162,6 +238,13 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
 
         console.log("ðŸ”„ Server restart requested by admin dashboard");
         appendServerRestartLog(`restart accepted via ${auth.method}`);
+        writeRestartState({
+            requestId: `soft-${Date.now()}`,
+            state: "soft_restart",
+            message: "Soft restart requested",
+            authorizedBy: auth.method,
+            backendPort: String(process.env.BCL_BACKEND_PORT || process.env.HTTP_PORT || "5052")
+        });
 
         const isManagedProcess = process.env.PM2_HOME || process.env.FOREVER_ROOT || process.env.pm_id !== undefined;
         if (isManagedProcess) {
@@ -243,6 +326,8 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
 
         res.json({
             status: "running",
+            pid: process.pid,
+            startedAt: serverStartedAt.toISOString(),
             uptime,
             uptimeFormatted: formatUptime(uptime),
             memory: {
@@ -256,6 +341,27 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
                 courses: videoCache.courses ? videoCache.courses.length : 0,
                 cacheAge: videoCache.lastUpdated ? Math.round((Date.now() - videoCache.lastUpdated) / 1000) + "s" : "never"
             },
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    router.get("/api/server/restart-status", (req, res) => {
+        const auth = authorizeServerManagement(req);
+        if (!auth.ok) {
+            return res.status(401).json({ error: "Unauthorized access" });
+        }
+
+        res.json({
+            success: true,
+            server: {
+                status: "running",
+                pid: process.pid,
+                startedAt: serverStartedAt.toISOString(),
+                uptime: process.uptime()
+            },
+            restart: readRestartState(),
+            adminRestartInProgress: fs.existsSync(getAdminRestartFlagPath()),
+            logTail: readRestartLogTail(),
             timestamp: new Date().toISOString()
         });
     });

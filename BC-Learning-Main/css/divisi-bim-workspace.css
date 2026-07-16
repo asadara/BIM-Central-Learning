@@ -110,7 +110,7 @@ body.bimws-page {
     top: 78px;
     z-index: 20;
     display: grid;
-    grid-template-columns: minmax(180px,1fr) auto auto;
+    grid-template-columns: minmax(180px,1fr) auto auto auto;
     align-items: center;
     gap: 16px;
     min-height: 82px;
@@ -127,6 +127,59 @@ body.bimws-page {
 .bimws-user-chip span,.bimws-user-chip small { display: block; }
 .bimws-user-chip span { font-weight: 700; }
 .bimws-user-chip small { color: var(--ws-muted); }
+
+.bimws-update-banner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    max-width: 300px;
+    min-height: 34px;
+    padding: 5px 10px;
+    border: 1px solid #cfd6de;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ws-muted);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.bimws-update-banner[hidden] { display: none; }
+.bimws-update-banner.is-active-view {
+    border-color: #f2c078;
+    background: #fff7ed;
+    color: #8a4b08;
+}
+.bimws-update-banner span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.bimws-update-banner .bimws-text-btn {
+    flex: 0 0 auto;
+    min-height: 26px;
+    padding: 2px 8px;
+    border: 1px solid #f2c078;
+    border-radius: 999px;
+    background: #fff;
+    color: #8a4b08;
+    font-size: 12px;
+}
+.bimws-update-dot {
+    margin-left: auto;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #fff7ed;
+    color: #b54708;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+.bimws-nav-item.is-active .bimws-update-dot {
+    background: rgba(255,255,255,.22);
+    color: #fff;
+}
 
 .bimws-content { padding: 22px 24px 60px; }
 .bimws-view { display: none; }
@@ -280,6 +333,55 @@ body.bimws-page {
     text-align: left;
 }
 .bimws-action-menu-panel button:hover { background: #f7f8fa; color: var(--ws-teal); }
+
+.bimws-task-load-summary {
+    display: grid;
+    grid-template-columns: repeat(4,minmax(120px,1fr));
+    gap: 8px;
+    margin: 0 0 12px;
+}
+.bimws-load-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 38px;
+    padding: 8px 11px;
+    border: 1px solid var(--ws-line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ws-muted);
+    font: 800 12px/1.1 "Nunito",sans-serif;
+    text-align: left;
+}
+.bimws-load-card strong { color: var(--ws-ink); font-size: 18px; }
+.bimws-load-card[data-load-risk="critical"] strong { color: #b42318; }
+.bimws-load-card[data-load-risk="clash"] strong { color: #c11574; }
+.bimws-load-card[data-load-risk="overload"] strong { color: #b54708; }
+.bimws-load-card[data-load-risk="hold"] strong { color: #087f8c; }
+.bimws-risk-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 190px;
+}
+.bimws-task-chip,
+.bimws-risk-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font: 800 11px/1 "Nunito",sans-serif;
+    white-space: nowrap;
+}
+.bimws-task-chip { background: #eef4ff; color: #175cd3; }
+.bimws-task-chip[data-category="routine"] { background: #e8f7ef; color: #16835f; }
+.bimws-task-chip[data-category="flexible"] { background: #eef2f6; color: #475467; }
+.bimws-task-chip[data-category="urgent"] { background: #fee4e2; color: #b42318; }
+.bimws-risk-chip[data-risk="critical"] { background: #fee4e2; color: #b42318; }
+.bimws-risk-chip[data-risk="clash"] { background: #fce7f3; color: #c11574; }
+.bimws-risk-chip[data-risk="overload"] { background: #fff0d5; color: #b54708; }
+.bimws-risk-chip[data-risk="hold"] { background: #dff3f5; color: #087f8c; }
 
 .bimws-kpi-tabs {
     display: flex;
@@ -558,13 +660,50 @@ body.bimws-page {
 .bimws-gantt-toolbar h3 { margin: 0; font: 800 17px/1.2 "Nunito",sans-serif; }
 .bimws-gantt-toolbar p { margin: 3px 0 0; color: var(--ws-muted); font-size: 13px; }
 .bimws-gantt-controls { display: flex; align-items: center; gap: 7px; }
-.bimws-gantt-wrap { width: 100%; max-height: 520px; overflow: auto; }
+.bimws-gantt-mode {
+    display: inline-flex;
+    overflow: hidden;
+    border: 1px solid var(--ws-line);
+    border-radius: 6px;
+    background: #fff;
+}
+.bimws-gantt-mode button {
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 0;
+    border-right: 1px solid var(--ws-line);
+    background: transparent;
+    color: var(--ws-muted);
+    font: 800 13px/1 "Nunito",sans-serif;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.bimws-gantt-mode button:last-child { border-right: 0; }
+.bimws-gantt-mode button:hover { color: var(--ws-teal); }
+.bimws-gantt-mode button.is-active { background: #e6f4f6; color: var(--ws-teal); }
+.bimws-gantt-wrap {
+    width: 100%;
+    max-height: 520px;
+    overflow: auto;
+    cursor: grab;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+.bimws-gantt-wrap.is-panning {
+    cursor: grabbing;
+    user-select: none;
+}
+.bimws-gantt-wrap.is-panning * { cursor: grabbing !important; }
+.bimws-gantt-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.bimws-gantt-wrap::-webkit-scrollbar-thumb { border-radius: 999px; background: #c8d0da; }
+.bimws-gantt-wrap::-webkit-scrollbar-track { background: #f2f4f7; }
 .bimws-gantt-grid {
     --gantt-meta-width: 330px;
     --gantt-day-width: 52px;
+    --gantt-day-count: 14;
     display: grid;
-    grid-template-columns: var(--gantt-meta-width) repeat(14,var(--gantt-day-width));
-    min-width: calc(var(--gantt-meta-width) + (14 * var(--gantt-day-width)));
+    grid-template-columns: var(--gantt-meta-width) repeat(var(--gantt-day-count),var(--gantt-day-width));
+    min-width: calc(var(--gantt-meta-width) + (var(--gantt-day-count) * var(--gantt-day-width)));
 }
 .bimws-gantt-header,
 .bimws-gantt-row { display: contents; }
@@ -601,8 +740,9 @@ body.bimws-page {
     left: 0;
     z-index: 4;
     display: grid;
-    grid-template-columns: 28px minmax(0,1fr);
+    grid-template-columns: 24px 10px minmax(0,1fr);
     align-items: center;
+    column-gap: 6px;
     min-height: 58px;
     padding: 8px 12px;
     border-right: 1px solid var(--ws-line);
@@ -610,8 +750,35 @@ body.bimws-page {
     background: #fff;
 }
 .bimws-gantt-index { color: #98a2b3; font-size: 12px; font-weight: 700; }
+.bimws-gantt-pic-dot {
+    width: 8px;
+    height: 8px;
+    border: 1px solid rgba(255,255,255,.9);
+    border-radius: 999px;
+    background: var(--pic-color,#087f8c);
+    box-shadow: 0 0 0 1px rgba(16,24,40,.12);
+}
 .bimws-gantt-task-meta strong { display: block; overflow: hidden; color: var(--ws-ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .bimws-gantt-task-meta small { display: block; overflow: hidden; margin-top: 2px; color: var(--ws-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.bimws-gantt-risk-icons {
+    display: inline-flex;
+    gap: 3px;
+    margin-left: 6px;
+    vertical-align: 1px;
+}
+.bimws-gantt-risk-icons span {
+    display: inline-grid;
+    place-items: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 999px;
+    color: #fff;
+    font: 900 9px/1 "Nunito",sans-serif;
+}
+.bimws-gantt-risk-icons [data-risk="critical"] { background: #b42318; }
+.bimws-gantt-risk-icons [data-risk="clash"] { background: #c11574; }
+.bimws-gantt-risk-icons [data-risk="overload"] { background: #b54708; }
+.bimws-gantt-risk-icons [data-risk="hold"] { background: #087f8c; }
 .bimws-gantt-day-cell {
     position: relative;
     min-height: 58px;
@@ -633,27 +800,34 @@ body.bimws-page {
     height: 28px;
     margin: 0 3px;
     overflow: hidden;
-    border: 1px solid #58a9b3;
+    border: 1px solid var(--task-color,#58a9b3);
     border-radius: 4px;
-    background: #d9eef1;
-    color: #075f68;
+    background: var(--task-bg,#d9eef1);
+    color: var(--task-text,#075f68);
     font: 700 11px/1 "Heebo",sans-serif;
     text-align: left;
     cursor: pointer;
 }
-.bimws-gantt-bar:hover { outline: 2px solid rgba(8,127,140,.2); }
-.bimws-gantt-bar[data-status="planned"] { border-color: #d88a4b; background: #fde7d6; color: #8c450f; }
-.bimws-gantt-bar[data-status="on_hold"] { border-color: #d6a557; background: repeating-linear-gradient(135deg,#fff3df 0,#fff3df 7px,#f8dfb9 7px,#f8dfb9 13px); color: #8a4b08; }
-.bimws-gantt-bar[data-status="blocked"] { border-color: #d97a74; background: #fee4e2; color: #912018; }
-.bimws-gantt-bar[data-status="approved_done"] { border-color: #61aa8b; background: #dff3ea; color: #116346; }
-.bimws-gantt-bar[data-priority="urgent"]:not([data-status="on_hold"]) { border-color: #d92d20; background: #ffe8e5; color: #912018; }
+.bimws-gantt-bar:hover { outline: 2px solid rgba(8,127,140,.16); }
+.bimws-gantt-bar[data-status="on_hold"] { background: repeating-linear-gradient(135deg,var(--task-bg,#d9eef1) 0,var(--task-bg,#d9eef1) 7px,var(--task-hold-stripe,#c6e7eb) 7px,var(--task-hold-stripe,#c6e7eb) 13px); }
+.bimws-gantt-bar[data-status="blocked"] { box-shadow: inset 0 -3px 0 rgba(180,35,24,.35); }
+.bimws-gantt-bar[data-status="approved_done"] { box-shadow: inset 0 -3px 0 rgba(22,131,95,.35); }
+.bimws-gantt-bar[data-priority="urgent"]:not([data-status="on_hold"]) { box-shadow: inset 0 0 0 2px rgba(217,45,32,.32); }
+.bimws-gantt-bar[data-category="flexible"] { opacity: .78; }
+.bimws-gantt-bar[data-critical="true"]::after,
+.bimws-gantt-bar[data-clash="true"]::after,
+.bimws-gantt-bar[data-overload="true"]::after {
+    position: absolute;
+    inset: 0 0 auto auto;
+    width: 5px;
+    height: 100%;
+    content: "";
+}
+.bimws-gantt-bar[data-critical="true"]::after { background: #b42318; }
+.bimws-gantt-bar[data-clash="true"]::after { background: #c11574; }
+.bimws-gantt-bar[data-overload="true"]::after { background: #b54708; }
 .bimws-gantt-bar[data-intake]:not([data-intake="approved"]) { border-style: dashed; }
-.bimws-gantt-progress-fill { position: absolute; inset: 0 auto 0 0; width: var(--task-progress); background: rgba(8,127,140,.2); }
-.bimws-gantt-bar[data-status="planned"] .bimws-gantt-progress-fill { background: rgba(232,117,44,.2); }
-.bimws-gantt-bar[data-status="on_hold"] .bimws-gantt-progress-fill { background: rgba(181,71,8,.14); }
-.bimws-gantt-bar[data-status="blocked"] .bimws-gantt-progress-fill { background: rgba(180,35,24,.16); }
-.bimws-gantt-bar[data-status="approved_done"] .bimws-gantt-progress-fill { background: rgba(22,131,95,.2); }
-.bimws-gantt-bar[data-priority="urgent"]:not([data-status="on_hold"]) .bimws-gantt-progress-fill { background: rgba(217,45,32,.14); }
+.bimws-gantt-progress-fill { position: absolute; inset: 0 auto 0 0; width: var(--task-progress); background: var(--task-fill,rgba(8,127,140,.2)); }
 .bimws-gantt-progress-label { position: relative; z-index: 1; display: block; padding: 0 7px; overflow: hidden; line-height: 26px; text-overflow: ellipsis; white-space: nowrap; }
 .bimws-gantt-empty { grid-column: 1/-1; }
 
@@ -670,6 +844,35 @@ body.bimws-page {
 .bimws-dialog footer { display: flex; justify-content: flex-end; gap: 8px; padding: 13px 18px; border-top: 1px solid var(--ws-line); }
 .bimws-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .bimws-field { display: grid; gap: 5px; }
+.bimws-task-load-preview {
+    display: grid;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--ws-muted);
+    font-size: 12px;
+}
+.bimws-task-load-preview[hidden] { display: none; }
+.bimws-task-load-preview > strong {
+    color: var(--ws-ink);
+    font: 800 13px/1.2 "Nunito",sans-serif;
+}
+.bimws-task-load-preview span {
+    display: block;
+    padding-left: 9px;
+    border-left: 3px solid #98a2b3;
+}
+.bimws-task-load-preview b {
+    margin-right: 6px;
+    color: var(--ws-ink);
+}
+.bimws-task-load-preview [data-risk="critical"] { border-left-color: #b42318; }
+.bimws-task-load-preview [data-risk="clash"] { border-left-color: #c11574; }
+.bimws-task-load-preview [data-risk="overload"] { border-left-color: #b54708; }
+.bimws-task-load-preview [data-risk="hold"] { border-left-color: #087f8c; }
+.bimws-task-load-preview [data-risk="clear"] { border-left-color: #16835f; }
 .bimws-field label { color: #344054; font-weight: 700; }
 .bimws-field small { color: var(--ws-muted); }
 .bimws-field textarea { min-height: 86px; resize: vertical; }
@@ -703,8 +906,21 @@ body.bimws-page {
 .bimws-toast.is-error { background: var(--ws-red); }
 
 .bimws-layout.is-collapsed { grid-template-columns: 72px minmax(0,1fr); }
-.bimws-layout.is-collapsed .bimws-sidebar-head { grid-template-columns: 38px; justify-content: center; }
-.bimws-layout.is-collapsed .bimws-sidebar-head > div,.bimws-layout.is-collapsed .bimws-sidebar-toggle,.bimws-layout.is-collapsed .bimws-nav-group,.bimws-layout.is-collapsed .bimws-nav-item span { display: none; }
+.bimws-layout.is-collapsed .bimws-sidebar-head {
+    grid-template-columns: 38px;
+    justify-content: center;
+    min-height: 94px;
+}
+.bimws-layout.is-collapsed .bimws-sidebar-head > div,
+.bimws-layout.is-collapsed .bimws-nav-group,
+.bimws-layout.is-collapsed .bimws-nav-item span { display: none; }
+.bimws-layout.is-collapsed .bimws-sidebar-toggle {
+    display: inline-grid;
+    grid-column: 1;
+    justify-self: center;
+    width: 34px;
+    height: 34px;
+}
 .bimws-layout.is-collapsed .bimws-nav-item { justify-content: center; padding-inline: 0; }
 
 @media (max-width: 1180px) {
@@ -717,6 +933,7 @@ body.bimws-page {
     .bimws-project-chart { border-top: 1px solid var(--ws-line); border-left: 0; }
     .bimws-task-toolbar-controls { grid-template-columns: 1fr; }
     .bimws-view-switch.bimws-task-view-switch { justify-self: start; }
+    .bimws-task-load-summary { grid-template-columns: repeat(2,minmax(120px,1fr)); }
 }
 
 @media (max-width: 860px) {
@@ -729,7 +946,8 @@ body.bimws-page {
     .bimws-toolbar { top: 70px; grid-template-columns: 40px minmax(0,1fr) auto; padding: 10px 14px; }
     .bimws-mobile-menu { display: inline-grid; }
     .bimws-user-chip { display: none; }
-    .bimws-period-control { grid-template-columns: 34px 118px 34px; }
+    .bimws-update-banner { grid-column: 1/-1; grid-row: 2; justify-self: stretch; max-width: none; }
+    .bimws-period-control { grid-column: 3; grid-row: 1; grid-template-columns: 34px 118px 34px; }
     .bimws-content { padding: 17px 14px 50px; }
     .bimws-actions-row { align-items: flex-start; flex-direction: column; }
     .bimws-task-toolbar-top { align-items: flex-start; flex-wrap: wrap; width: 100%; }
@@ -757,7 +975,8 @@ body.bimws-page {
     .bimws-title-block p { display: none; }
     .bimws-title-block h2 { font-size: 19px; }
     .bimws-toolbar { grid-template-columns: 36px minmax(0,1fr); }
-    .bimws-period-control { grid-column: 1/-1; width: 100%; grid-template-columns: 36px 1fr 36px; }
+    .bimws-update-banner { grid-column: 1/-1; grid-row: 2; }
+    .bimws-period-control { grid-column: 1/-1; grid-row: 3; width: 100%; grid-template-columns: 36px 1fr 36px; }
     .bimws-metrics { grid-template-columns: 1fr; }
     .bimws-kpi-contract dl { grid-template-columns: 1fr; }
     .bimws-quick-actions,.bimws-quick-actions .bimws-btn { width: 100%; }
@@ -765,6 +984,7 @@ body.bimws-page {
     .bimws-filterbar.bimws-task-filterbar { flex-direction: column; width: 100%; }
     .bimws-filterbar.bimws-task-filterbar input,.bimws-filterbar.bimws-task-filterbar select,.bimws-filterbar.bimws-task-filterbar .bimws-filter-toggle { width: 100%; min-width: 0; }
     .bimws-view-switch.bimws-task-view-switch { width: 100%; overflow-x: auto; padding-bottom: 2px; }
+    .bimws-task-load-summary { grid-template-columns: 1fr; }
     .bimws-settings-panel dl div { grid-template-columns: 1fr; }
     .bimws-donut-section,.bimws-project-chart { padding: 16px 14px 18px; }
     .bimws-donut-layout { grid-template-columns: 132px minmax(120px,1fr); gap: 15px; }
@@ -773,7 +993,9 @@ body.bimws-page {
     .bimws-project-bar-track { grid-column: 1/-1; grid-row: 2; height: 14px; }
     .bimws-project-bar-value { grid-column: 2; grid-row: 1; }
     .bimws-gantt-toolbar { align-items: flex-start; flex-direction: column; }
-    .bimws-gantt-controls { width: 100%; }
+    .bimws-gantt-controls { flex-wrap: wrap; width: 100%; }
+    .bimws-gantt-mode { flex: 1 1 100%; }
+    .bimws-gantt-mode button { flex: 1; }
     .bimws-gantt-controls .bimws-btn { flex: 1; }
     .bimws-gantt-grid { --gantt-meta-width: 220px; --gantt-day-width: 46px; }
     .bimws-meeting-groups { padding: 10px; }

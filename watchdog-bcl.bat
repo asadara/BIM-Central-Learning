@@ -17,11 +17,24 @@ set "LOGFILE=logs\watchdog-%DATESTAMP%.log"
 set "LOCKDIR=watchdog-user.lock"
 if "%RUN_AS_SYSTEM%"=="1" set "LOCKDIR=watchdog-system.lock"
 set "FORCE_BACKEND_RELOAD_FLAG=force-backend-reload.flag"
+set "ADMIN_RESTART_FLAG=admin-restart-in-progress.flag"
 
 if exist "%LOCKDIR%" rmdir "%LOCKDIR%" >nul 2>&1
 if exist "%LOCKDIR%" del /f /q "%LOCKDIR%" >nul 2>&1
 mkdir "%LOCKDIR%" 2>nul
 if errorlevel 1 exit /b 0
+
+if exist "%ADMIN_RESTART_FLAG%" (
+    set "ADMIN_RESTART_FLAG_STATE=active"
+    for /f "usebackq delims=" %%s in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$flag = '%CD%\%ADMIN_RESTART_FLAG%'; if (!(Test-Path $flag)) { 'none' } elseif (((Get-Date) - (Get-Item $flag).LastWriteTime).TotalMinutes -gt 15) { Remove-Item -Force $flag -ErrorAction SilentlyContinue; 'stale' } else { 'active' }"`) do set "ADMIN_RESTART_FLAG_STATE=%%s"
+    if "!ADMIN_RESTART_FLAG_STATE!"=="active" (
+        call :log "[INFO] Watchdog skipped recovery because admin restart is in progress"
+        goto :end
+    )
+    if "!ADMIN_RESTART_FLAG_STATE!"=="stale" (
+        call :log "[WARNING] Removed stale admin restart flag"
+    )
+)
 
 if exist "%FORCE_BACKEND_RELOAD_FLAG%" (
     call :log "[WARNING] Forced backend recycle requested via %FORCE_BACKEND_RELOAD_FLAG%"

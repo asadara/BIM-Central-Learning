@@ -5,6 +5,18 @@
   "scripts": {
     "build:ifc-viewer": "esbuild BC-Learning-Main/src/ifc-viewer.js --bundle --format=iife --target=es2020 --outfile=BC-Learning-Main/js/ifc-viewer.bundle.js",
     "smoke:projects-client": "node scripts/smoke-projects-client.js",
+    "smoke:unified-learning": "node scripts/smoke-unified-learning-catalog.js",
+    "review:learning-mapping": "node scripts/generate-learning-mapping-candidates.js",
+    "migrate:unified-learning:dry-run": "node backend/scripts/run-unified-learning-migration.js",
+    "migrate:unified-learning": "node backend/scripts/run-unified-learning-migration.js --apply",
+    "sync:unified-learning-registry:dry-run": "node backend/scripts/sync-unified-learning-registry.js",
+    "sync:unified-learning-registry": "node backend/scripts/sync-unified-learning-registry.js --apply",
+    "check:unified-learning-schema": "node scripts/check-unified-learning-schema.js",
+    "migrate:learning-mapping-queue:dry-run": "node backend/scripts/run-learning-mapping-queue-migration.js",
+    "migrate:learning-mapping-queue": "node backend/scripts/run-learning-mapping-queue-migration.js --apply",
+    "seed:learning-mapping-queue:dry-run": "node backend/scripts/seed-learning-mapping-queue.js",
+    "seed:learning-mapping-queue": "node backend/scripts/seed-learning-mapping-queue.js --apply",
+    "smoke:learning-mapping-queue": "node scripts/smoke-learning-mapping-queue.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

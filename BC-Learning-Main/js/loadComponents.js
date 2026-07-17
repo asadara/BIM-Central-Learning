@@ -495,7 +495,7 @@ function loadFooter() {
 }
 
 function ensureFavicon() {
-    const faviconHref = '/logos/fav_logo_BCL.ico?v=20260424b';
+    const faviconHref = '/img/icons/trimmed/main_ico_bcl.ico';
     const iconRels = ['icon', 'shortcut icon', 'apple-touch-icon'];
 
     document

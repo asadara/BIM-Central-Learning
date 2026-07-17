@@ -54,40 +54,66 @@ function normalizeLevel(level) {
     return allowed.has(value) ? value : null;
 }
 
-function defaultToNextLevel(currentLevel) {
-    if (currentLevel === 'BIM Modeller') return 0;
-    if (currentLevel === 'BIM Coordinator') return 0;
-    return 0;
+async function ensureEvidenceSchema() {
+    await pgPool.query(`ALTER TABLE learning_attempts ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
+    await pgPool.query(`ALTER TABLE user_certificates ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
 }
 
-async function fetchUserAndProgress(userId) {
-    const query = `
-        SELECT
-            u.id AS user_id,
-            u.bim_level AS user_bim_level,
-            up.user_id AS progress_user_id,
-            up.courses_completed,
-            up.practice_attempts,
-            up.exams_passed,
-            up.certificates_earned,
-            up.current_level,
-            up.to_next_level,
-            up.updated_at
-        FROM users u
-        LEFT JOIN user_progress up ON up.user_id = u.id
-        WHERE u.id = $1
-        LIMIT 1
-    `;
-    const result = await pgPool.query(query, [userId]);
-    if (result.rows.length === 0) return null;
-    return result.rows[0];
+async function deriveAuthoritativeProgress(userId) {
+    await ensureEvidenceSchema();
+
+    const userResult = await pgPool.query(
+        `SELECT id, bim_level FROM users WHERE id = $1 LIMIT 1`,
+        [userId]
+    );
+    if (userResult.rows.length === 0) return null;
+
+    const attemptsResult = await pgPool.query(
+        `SELECT
+            COUNT(*) FILTER (WHERE source_type = 'practice')::int AS practice_attempts,
+            COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed
+         FROM learning_attempts
+         WHERE user_id = $1 AND is_verified = true`,
+        [userId]
+    );
+    const certificatesResult = await pgPool.query(
+        `SELECT COUNT(*)::int AS certificates_earned
+         FROM user_certificates
+         WHERE user_id = $1 AND is_verified = true`,
+        [userId]
+    );
+
+    let coursesCompleted = 0;
+    try {
+        const activityResult = await pgPool.query(
+            `SELECT COUNT(DISTINCT (module_type, module_id))::int AS courses_completed
+             FROM learning_activity_events
+             WHERE user_id = $1 AND event_type = 'completed'`,
+            [userId]
+        );
+        coursesCompleted = toNonNegativeInt(activityResult.rows[0]?.courses_completed, 0);
+    } catch (error) {
+        if (error.code !== '42P01') throw error;
+    }
+
+    const currentLevel = normalizeLevel(userResult.rows[0].bim_level) || 'BIM Modeller';
+    const attempts = attemptsResult.rows[0] || {};
+    const certificates = certificatesResult.rows[0] || {};
+
+    return {
+        userId,
+        userBimLevel: currentLevel,
+        coursesCompleted,
+        practiceAttempts: toNonNegativeInt(attempts.practice_attempts, 0),
+        examsPassed: toNonNegativeInt(attempts.exams_passed, 0),
+        certificatesEarned: toNonNegativeInt(certificates.certificates_earned, 0),
+        currentLevel,
+        toNextLevel: 0
+    };
 }
 
-async function ensureUserProgressRow(userId, fallbackLevel) {
-    const currentLevel = normalizeLevel(fallbackLevel) || 'BIM Modeller';
-    const toNext = defaultToNextLevel(currentLevel);
-
-    await pgPool.query(
+async function persistAuthoritativeProgress(progress) {
+    const result = await pgPool.query(
         `INSERT INTO user_progress (
             user_id,
             courses_completed,
@@ -98,12 +124,35 @@ async function ensureUserProgressRow(userId, fallbackLevel) {
             to_next_level,
             created_at,
             updated_at
-        ) VALUES (
-            $1, 0, 0, 0, 0, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-        )
-        ON CONFLICT (user_id) DO NOTHING`,
-        [userId, currentLevel, toNext]
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id) DO UPDATE SET
+            courses_completed = EXCLUDED.courses_completed,
+            practice_attempts = EXCLUDED.practice_attempts,
+            exams_passed = EXCLUDED.exams_passed,
+            certificates_earned = EXCLUDED.certificates_earned,
+            current_level = EXCLUDED.current_level,
+            to_next_level = EXCLUDED.to_next_level,
+            updated_at = CURRENT_TIMESTAMP
+        RETURNING
+            user_id AS progress_user_id,
+            courses_completed,
+            practice_attempts,
+            exams_passed,
+            certificates_earned,
+            current_level,
+            to_next_level,
+            updated_at`,
+        [
+            progress.userId,
+            progress.coursesCompleted,
+            progress.practiceAttempts,
+            progress.examsPassed,
+            progress.certificatesEarned,
+            progress.currentLevel,
+            progress.toNextLevel
+        ]
     );
+    return result.rows[0];
 }
 
 function mapProgressRow(row) {
@@ -128,22 +177,20 @@ router.get('/me', requireAuth, async (req, res) => {
             });
         }
 
-        let row = await fetchUserAndProgress(userId);
-        if (!row) {
+        const derived = await deriveAuthoritativeProgress(userId);
+        if (!derived) {
             return res.status(404).json({
                 success: false,
                 error: 'User not found'
             });
         }
 
-        if (!row.progress_user_id) {
-            await ensureUserProgressRow(userId, row.user_bim_level);
-            row = await fetchUserAndProgress(userId);
-        }
+        const row = await persistAuthoritativeProgress(derived);
 
         return res.json({
             success: true,
-            progress: mapProgressRow(row)
+            progress: mapProgressRow({ ...row, user_bim_level: derived.userBimLevel }),
+            source: 'server-evidence'
         });
     } catch (error) {
         console.error('Progress GET /me error:', error.message);
@@ -164,81 +211,26 @@ async function upsertProgress(req, res) {
             });
         }
 
-        const payload = req.body || {};
-        const coursesCompleted = toNonNegativeInt(payload.coursesCompleted, 0);
-        const practiceAttempts = toNonNegativeInt(payload.practiceAttempts, 0);
-        const examsPassed = toNonNegativeInt(payload.examsPassed, 0);
-        const certificatesEarned = toNonNegativeInt(payload.certificatesEarned, 0);
-
-        const userRowResult = await pgPool.query(
-            `SELECT id, bim_level
-             FROM users
-             WHERE id = $1
-             LIMIT 1`,
-            [userId]
-        );
-
-        if (userRowResult.rows.length === 0) {
+        const derived = await deriveAuthoritativeProgress(userId);
+        if (!derived) {
             return res.status(404).json({
                 success: false,
                 error: 'User not found'
             });
         }
 
-        const userBimLevel = userRowResult.rows[0].bim_level;
-        const currentLevel = normalizeLevel(payload.currentLevel) || normalizeLevel(userBimLevel) || 'BIM Modeller';
-        const toNextLevel = toNonNegativeInt(payload.toNextLevel, defaultToNextLevel(currentLevel));
-
-        const upsertResult = await pgPool.query(
-            `INSERT INTO user_progress (
-                user_id,
-                courses_completed,
-                practice_attempts,
-                exams_passed,
-                certificates_earned,
-                current_level,
-                to_next_level,
-                created_at,
-                updated_at
-            ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-            )
-            ON CONFLICT (user_id) DO UPDATE SET
-                courses_completed = GREATEST(user_progress.courses_completed, EXCLUDED.courses_completed),
-                practice_attempts = GREATEST(user_progress.practice_attempts, EXCLUDED.practice_attempts),
-                exams_passed = GREATEST(user_progress.exams_passed, EXCLUDED.exams_passed),
-                certificates_earned = GREATEST(user_progress.certificates_earned, EXCLUDED.certificates_earned),
-                current_level = COALESCE(EXCLUDED.current_level, user_progress.current_level),
-                to_next_level = GREATEST(user_progress.to_next_level, EXCLUDED.to_next_level),
-                updated_at = CURRENT_TIMESTAMP
-            RETURNING
-                user_id AS progress_user_id,
-                courses_completed,
-                practice_attempts,
-                exams_passed,
-                certificates_earned,
-                current_level,
-                to_next_level,
-                updated_at`,
-            [
-                userId,
-                coursesCompleted,
-                practiceAttempts,
-                examsPassed,
-                certificatesEarned,
-                currentLevel,
-                toNextLevel
-            ]
-        );
+        const savedRow = await persistAuthoritativeProgress(derived);
 
         const progress = mapProgressRow({
-            ...upsertResult.rows[0],
-            user_bim_level: userBimLevel
+            ...savedRow,
+            user_bim_level: derived.userBimLevel
         });
 
         return res.json({
             success: true,
-            progress
+            progress,
+            source: 'server-evidence',
+            ignoredClientSnapshot: true
         });
     } catch (error) {
         console.error('Progress upsert error:', error.message);

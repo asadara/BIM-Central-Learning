@@ -6,13 +6,32 @@ class NewsModule {
         this.adminPanel = adminPanel;
         this.newsData = [];
         this.currentEditId = null;
+        this.mediaDraft = [];
         this.defaultNewsImage = '/img/ready.jpg';
-        // Keep payload safely under common proxy limits when image is sent as base64 in JSON.
-        this.maxImageDataBytes = 60 * 1024;
+        this.loadPromise = null;
     }
 
     initialize() {
         console.log('Initializing News Module');
+    }
+
+    getRequestHeaders(extraHeaders = {}) {
+        const headers = { ...extraHeaders };
+        const token = this.adminPanel?.getStoredAdminToken?.();
+        if (token && !headers.Authorization) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+        return headers;
+    }
+
+    async load() {
+        if (this.loadPromise) return this.loadPromise;
+        this.loadPromise = this.loadNews();
+        try {
+            return await this.loadPromise;
+        } finally {
+            this.loadPromise = null;
+        }
     }
 
     async loadNews() {
@@ -88,10 +107,11 @@ class NewsModule {
 
     async refreshNews() {
         try {
-            const response = await fetch('/api/news/local-news', {
+            const response = await fetch('/api/news/local-news/admin', {
                 method: 'GET',
                 cache: 'no-store',
-                credentials: 'include'
+                credentials: 'include',
+                headers: this.getRequestHeaders({ Accept: 'application/json' })
             });
 
             if (!response.ok) {
@@ -133,7 +153,11 @@ class NewsModule {
         }
 
         tbody.innerHTML = newsList.map((news, index) => {
-            const image = this.escapeAttr(this.resolveImageUrl(news.urlToImage));
+            const mediaItems = this.normalizeMediaItems(news.media, news.urlToImage);
+            const image = this.escapeAttr(mediaItems.find((item) => item.type === 'image')?.url || this.defaultNewsImage);
+            const mediaLabel = mediaItems.length > 1
+                ? `<small class="text-muted d-block mt-1"><i class="fas fa-photo-video me-1"></i>${mediaItems.length} media</small>`
+                : '';
             const sticker = this.escapeHtml(this.truncate(news.stickerText || news.description || '-', 95));
             const title = this.escapeHtml(news.title || '-');
             const source = this.escapeHtml(news.source?.name || 'BCL Admin');
@@ -144,6 +168,7 @@ class NewsModule {
                     <td class="text-center fw-bold">${index + 1}</td>
                     <td>
                         <img src="${image}" alt="news image" style="width:56px;height:40px;object-fit:cover;border-radius:6px;" onerror="this.onerror=null;this.src='${this.defaultNewsImage}'">
+                        ${mediaLabel}
                     </td>
                     <td>
                         <div class="fw-semibold">${title}</div>
@@ -196,6 +221,7 @@ class NewsModule {
     showCreateNewsModal(newsId = null) {
         this.currentEditId = newsId;
         const editingNews = newsId ? this.newsData.find((item) => item.id === newsId) : null;
+        this.mediaDraft = this.normalizeMediaItems(editingNews?.media, editingNews?.urlToImage);
         const modalId = 'newsModal';
         const existing = document.getElementById(modalId);
         if (existing) existing.remove();
@@ -206,13 +232,6 @@ class NewsModule {
         const categoryValue = editingNews?.category || 'BIM';
         const sourceValue = editingNews?.source?.name || 'BCL Admin';
         const urlValue = editingNews?.url && editingNews.url !== '#' ? editingNews.url : '';
-        const normalizedEditImage = this.resolveImageUrl(editingNews?.urlToImage || '');
-        const imageValue =
-            normalizedEditImage &&
-            !normalizedEditImage.startsWith('data:') &&
-            normalizedEditImage !== this.defaultNewsImage
-                ? normalizedEditImage
-                : '';
         const publishValue = this.formatDateTimeLocal(editingNews?.publishedAt);
 
         const modalHtml = `
@@ -260,22 +279,45 @@ class NewsModule {
                                         <label class="form-label">Link Referensi (Opsional)</label>
                                         <input type="url" class="form-control" id="newsUrl" value="${this.escapeAttr(urlValue)}" placeholder="https://...">
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">URL Gambar (Opsional)</label>
-                                        <input type="url" class="form-control" id="newsImageUrl" value="${this.escapeAttr(imageValue)}"
-                                            placeholder="https://example.com/image.jpg">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Upload Gambar (Opsional)</label>
-                                        <input type="file" class="form-control" id="newsImageFile" accept="image/*">
-                                        <small class="text-muted">Jika diisi, file upload diprioritaskan daripada URL gambar. Gambar dioptimasi otomatis agar aman untuk batas upload server.</small>
+                                    <div class="col-12">
+                                        <section class="news-media-editor" aria-labelledby="newsMediaHeading">
+                                            <div class="news-media-editor__heading">
+                                                <div>
+                                                    <h6 id="newsMediaHeading" class="mb-1"><i class="fas fa-photo-video me-2"></i>Foto & Video</h6>
+                                                    <p class="mb-0">Gambar pertama menjadi thumbnail. Maksimal 12 media per berita.</p>
+                                                </div>
+                                                <span class="news-media-count" id="newsMediaCount">0 media</span>
+                                            </div>
+                                            <div class="news-media-editor__controls">
+                                                <div>
+                                                    <label class="form-label" for="newsMediaType">Jenis URL</label>
+                                                    <select class="form-select" id="newsMediaType">
+                                                        <option value="image">Foto</option>
+                                                        <option value="video">Video / YouTube</option>
+                                                    </select>
+                                                </div>
+                                                <div class="news-media-url-field">
+                                                    <label class="form-label" for="newsMediaUrl">URL media</label>
+                                                    <input type="url" class="form-control" id="newsMediaUrl" placeholder="https://...">
+                                                </div>
+                                                <button type="button" class="btn btn-outline-primary news-media-add" id="newsAddMediaUrlBtn">
+                                                    <i class="fas fa-plus me-1"></i>Tambah URL
+                                                </button>
+                                            </div>
+                                            <div class="news-media-upload">
+                                                <label class="form-label" for="newsMediaFiles">Upload beberapa foto atau video</label>
+                                                <input type="file" class="form-control" id="newsMediaFiles" multiple
+                                                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/ogg">
+                                                <small>Foto JPG/PNG/WebP/GIF maksimal 12MB; video MP4/WebM/Ogg maksimal 80MB. Maksimal 10 file sekali pilih.</small>
+                                                <div id="newsPendingFiles" class="news-pending-files" aria-live="polite"></div>
+                                            </div>
+                                            <div id="newsMediaList" class="news-media-list" aria-live="polite"></div>
+                                        </section>
                                     </div>
                                     <div class="col-12">
-                                        <div id="newsImagePreviewWrapper" class="d-none">
-                                            <label class="form-label">Preview Gambar</label>
-                                            <div>
-                                                <img id="newsImagePreview" src="" alt="Preview" style="max-width:220px;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
-                                            </div>
+                                        <div class="alert alert-light border mb-0 py-2">
+                                            <i class="fas fa-circle-info me-2 text-info"></i>
+                                            Video YouTube dapat ditambahkan melalui URL. Urutan media dapat diubah dengan tombol panah.
                                         </div>
                                     </div>
                                 </div>
@@ -294,43 +336,64 @@ class NewsModule {
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         this.bindNewsModalEvents(editingNews);
+        this.renderMediaDraft();
 
         const modal = new bootstrap.Modal(document.getElementById(modalId));
         modal.show();
     }
 
-    bindNewsModalEvents(editingNews) {
+    bindNewsModalEvents() {
         const form = document.getElementById('newsForm');
-        const imageFileInput = document.getElementById('newsImageFile');
-        const imageUrlInput = document.getElementById('newsImageUrl');
-        const previewWrapper = document.getElementById('newsImagePreviewWrapper');
-        const previewImage = document.getElementById('newsImagePreview');
+        const mediaUrlInput = document.getElementById('newsMediaUrl');
+        const mediaTypeInput = document.getElementById('newsMediaType');
+        const mediaFilesInput = document.getElementById('newsMediaFiles');
+        const addMediaButton = document.getElementById('newsAddMediaUrlBtn');
+        const mediaList = document.getElementById('newsMediaList');
 
-        const updatePreview = async () => {
-            let previewSrc = this.resolveImageUrl((imageUrlInput?.value || '').trim());
-
-            if (imageFileInput?.files?.length) {
-                try {
-                    previewSrc = await this.fileToDataUrl(imageFileInput.files[0]);
-                } catch (error) {
-                    console.error('Failed to preview image file:', error);
-                }
-            } else if (!previewSrc && editingNews?.urlToImage) {
-                previewSrc = this.resolveImageUrl(editingNews.urlToImage);
+        const addMediaUrl = () => {
+            const type = mediaTypeInput?.value === 'video' ? 'video' : 'image';
+            const url = this.normalizeMediaUrl(mediaUrlInput?.value, type);
+            if (!url) {
+                alert('Masukkan URL media HTTP/HTTPS yang valid.');
+                mediaUrlInput?.focus();
+                return;
             }
-
-            if (previewSrc) {
-                previewImage.src = previewSrc;
-                previewWrapper.classList.remove('d-none');
-            } else {
-                previewImage.src = '';
-                previewWrapper.classList.add('d-none');
+            if (this.mediaDraft.length >= 12) {
+                alert('Maksimal 12 media per berita.');
+                return;
             }
+            if (this.mediaDraft.some((item) => item.type === type && item.url === url)) {
+                alert('Media tersebut sudah ada di daftar.');
+                return;
+            }
+            this.mediaDraft.push({ type, url, caption: '' });
+            if (mediaUrlInput) mediaUrlInput.value = '';
+            this.renderMediaDraft();
         };
 
-        imageFileInput?.addEventListener('change', () => updatePreview());
-        imageUrlInput?.addEventListener('input', () => updatePreview());
-        updatePreview();
+        addMediaButton?.addEventListener('click', addMediaUrl);
+        mediaUrlInput?.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addMediaUrl();
+            }
+        });
+        mediaFilesInput?.addEventListener('change', () => this.renderPendingFiles());
+        mediaList?.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-media-action]');
+            if (!button) return;
+            const index = Number(button.dataset.mediaIndex);
+            if (!Number.isInteger(index) || !this.mediaDraft[index]) return;
+
+            if (button.dataset.mediaAction === 'remove') {
+                this.mediaDraft.splice(index, 1);
+            } else if (button.dataset.mediaAction === 'up' && index > 0) {
+                [this.mediaDraft[index - 1], this.mediaDraft[index]] = [this.mediaDraft[index], this.mediaDraft[index - 1]];
+            } else if (button.dataset.mediaAction === 'down' && index < this.mediaDraft.length - 1) {
+                [this.mediaDraft[index + 1], this.mediaDraft[index]] = [this.mediaDraft[index], this.mediaDraft[index + 1]];
+            }
+            this.renderMediaDraft();
+        });
 
         form?.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -379,7 +442,10 @@ class NewsModule {
             }
             const response = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getRequestHeaders({
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json'
+                }),
                 credentials: 'include',
                 body: requestBody
             });
@@ -414,24 +480,30 @@ class NewsModule {
         const category = (document.getElementById('newsCategory')?.value || 'BIM').trim();
         const sourceName = (document.getElementById('newsSource')?.value || 'BCL Admin').trim();
         const url = (document.getElementById('newsUrl')?.value || '#').trim() || '#';
-        const imageUrlInput = (document.getElementById('newsImageUrl')?.value || '').trim();
         const publishedInput = (document.getElementById('newsPublishedAt')?.value || '').trim();
-        const imageFile = document.getElementById('newsImageFile')?.files?.[0];
+        const mediaFiles = Array.from(document.getElementById('newsMediaFiles')?.files || []);
 
         if (!title || !stickerText || !fullContent) {
             throw new Error('Judul, kalimat utama, dan berita lengkap wajib diisi.');
         }
 
-        let urlToImage = this.resolveImageUrl(imageUrlInput || '');
-        if (/^data:image\//i.test(urlToImage) && this.estimateDataUrlBytes(urlToImage) > this.maxImageDataBytes) {
-            throw new Error('Data URL gambar terlalu besar. Gunakan gambar yang lebih kecil.');
+        if (this.mediaDraft.length + mediaFiles.length > 12) {
+            throw new Error('Maksimal 12 media per berita. Kurangi file atau media URL.');
         }
-        if (imageFile) {
-            urlToImage = await this.fileToDataUrl(imageFile);
-        } else if (!urlToImage && this.currentEditId) {
-            const existing = this.newsData.find((item) => item.id === this.currentEditId);
-            urlToImage = this.resolveImageUrl(existing?.urlToImage || '');
+        if (mediaFiles.length > 10) {
+            throw new Error('Maksimal 10 file dalam satu kali upload.');
         }
+        if (mediaFiles.length) {
+            const uploadedMedia = await this.uploadMediaFiles(mediaFiles);
+            this.mediaDraft.push(...uploadedMedia);
+            const input = document.getElementById('newsMediaFiles');
+            if (input) input.value = '';
+            this.renderPendingFiles();
+            this.renderMediaDraft();
+        }
+
+        const media = this.normalizeMediaItems(this.mediaDraft).slice(0, 12);
+        const urlToImage = media.find((item) => item.type === 'image')?.url || '';
 
         return {
             title,
@@ -441,103 +513,128 @@ class NewsModule {
             category,
             source: { name: sourceName || 'BCL Admin' },
             url: url || '#',
-            urlToImage: this.resolveImageUrl(urlToImage || this.defaultNewsImage),
+            urlToImage,
+            media,
             publishedAt: publishedInput ? new Date(publishedInput).toISOString() : new Date().toISOString(),
             status: 'published'
         };
     }
 
-    async fileToDataUrl(file) {
-        if (!file) {
-            throw new Error('File gambar tidak ditemukan.');
-        }
-
-        const fileType = String(file.type || '').toLowerCase();
-        if (!fileType.startsWith('image/')) {
-            throw new Error('File harus berupa gambar.');
-        }
-        if (file.size > 20 * 1024 * 1024) {
-            throw new Error('Ukuran file gambar terlalu besar. Maksimal 20MB.');
-        }
-
-        const image = await this.loadImageFromFile(file);
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-            throw new Error('Gagal memproses gambar (canvas context tidak tersedia).');
-        }
-
-        const dimensionSteps = [1280, 1100, 960, 840, 720, 640, 560, 480];
-        const qualitySteps = [0.82, 0.72, 0.62, 0.54, 0.46, 0.38, 0.32];
-        let bestDataUrl = '';
-
-        for (const maxDimension of dimensionSteps) {
-            const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
-            const targetWidth = Math.max(1, Math.round(image.width * scale));
-            const targetHeight = Math.max(1, Math.round(image.height * scale));
-
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-            ctx.clearRect(0, 0, targetWidth, targetHeight);
-            ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
-
-            for (const quality of qualitySteps) {
-                const webpCandidate = canvas.toDataURL('image/webp', quality);
-                if (webpCandidate.startsWith('data:image/webp')) {
-                    bestDataUrl = webpCandidate;
-                    if (this.estimateDataUrlBytes(webpCandidate) <= this.maxImageDataBytes) {
-                        return webpCandidate;
-                    }
-                }
-
-                const jpegCandidate = canvas.toDataURL('image/jpeg', quality);
-                bestDataUrl = jpegCandidate;
-                if (this.estimateDataUrlBytes(jpegCandidate) <= this.maxImageDataBytes) {
-                    return jpegCandidate;
-                }
+    async uploadMediaFiles(files) {
+        const formData = new FormData();
+        files.forEach((file) => {
+            const type = String(file.type || '').toLowerCase();
+            const isImage = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(type);
+            const isVideo = ['video/mp4', 'video/webm', 'video/ogg'].includes(type);
+            if (!isImage && !isVideo) {
+                throw new Error(`Format file ${file.name} tidak didukung.`);
             }
+            if (isImage && file.size > 12 * 1024 * 1024) {
+                throw new Error(`Gambar ${file.name} melebihi 12MB.`);
+            }
+            if (isVideo && file.size > 80 * 1024 * 1024) {
+                throw new Error(`Video ${file.name} melebihi 80MB.`);
+            }
+            formData.append('media', file, file.name);
+        });
+
+        const response = await fetch('/api/news/media-upload', {
+            method: 'POST',
+            headers: this.getRequestHeaders(),
+            credentials: 'include',
+            body: formData
+        });
+        if (!response.ok) {
+            throw new Error(this.formatApiError(response.status, await response.text()));
+        }
+        const payload = await response.json();
+        return this.normalizeMediaItems(payload.media);
+    }
+
+    normalizeMediaUrl(value, type = 'image') {
+        const raw = String(value || '').trim().replace(/\\/g, '/');
+        if (!raw) return '';
+        if (type === 'image' && /^data:image\/(?:png|jpe?g|gif|webp);base64,/i.test(raw)) return raw;
+        if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
+        try {
+            const url = new URL(raw, window.location.origin);
+            return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+        } catch {
+            return '';
+        }
+    }
+
+    normalizeMediaItems(items, legacyImage = '') {
+        const result = [];
+        const seen = new Set();
+        const source = Array.isArray(items) ? items : [];
+        source.forEach((item) => {
+            if (!item || typeof item !== 'object') return;
+            const type = item.type === 'video' ? 'video' : 'image';
+            const url = this.normalizeMediaUrl(item.url || item.src, type);
+            if (!url || seen.has(`${type}:${url}`)) return;
+            seen.add(`${type}:${url}`);
+            result.push({ type, url, caption: String(item.caption || '').trim().slice(0, 240) });
+        });
+
+        const normalizedLegacy = this.normalizeMediaUrl(legacyImage, 'image');
+        if (normalizedLegacy && !result.some((item) => item.type === 'image' && item.url === normalizedLegacy)) {
+            result.unshift({ type: 'image', url: normalizedLegacy, caption: '' });
+        }
+        return result.slice(0, 12);
+    }
+
+    renderPendingFiles() {
+        const container = document.getElementById('newsPendingFiles');
+        if (!container) return;
+        const files = Array.from(document.getElementById('newsMediaFiles')?.files || []);
+        container.innerHTML = files.length
+            ? files.map((file) => `
+                <span class="news-pending-file">
+                    <i class="fas ${String(file.type).startsWith('video/') ? 'fa-video' : 'fa-image'}"></i>
+                    ${this.escapeHtml(this.truncate(file.name, 34))}
+                </span>`).join('')
+            : '';
+    }
+
+    renderMediaDraft() {
+        const container = document.getElementById('newsMediaList');
+        const counter = document.getElementById('newsMediaCount');
+        if (counter) counter.textContent = `${this.mediaDraft.length} media`;
+        if (!container) return;
+        if (!this.mediaDraft.length) {
+            container.innerHTML = `
+                <div class="news-media-empty">
+                    <i class="far fa-images"></i>
+                    <span>Belum ada media. Tambahkan foto atau video dari URL maupun file.</span>
+                </div>`;
+            return;
         }
 
-        if (bestDataUrl && this.estimateDataUrlBytes(bestDataUrl) <= this.maxImageDataBytes) {
-            return bestDataUrl;
-        }
-
-        throw new Error('Gambar tidak bisa diperkecil ke batas upload server. Coba gambar lain atau isi URL gambar.');
-    }
-
-    readFileAsDataUrl(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ''));
-            reader.onerror = () => reject(new Error('Gagal membaca file gambar.'));
-            reader.readAsDataURL(file);
-        });
-    }
-
-    loadImageFromFile(file) {
-        return new Promise((resolve, reject) => {
-            const objectUrl = URL.createObjectURL(file);
-            const image = new Image();
-
-            image.onload = () => {
-                URL.revokeObjectURL(objectUrl);
-                resolve(image);
-            };
-            image.onerror = () => {
-                URL.revokeObjectURL(objectUrl);
-                reject(new Error('Gagal memuat file gambar.'));
-            };
-
-            image.src = objectUrl;
-        });
-    }
-
-    estimateDataUrlBytes(dataUrl) {
-        const value = String(dataUrl || '');
-        const commaIndex = value.indexOf(',');
-        if (commaIndex < 0) return 0;
-        const base64Part = value.slice(commaIndex + 1);
-        return Math.floor((base64Part.length * 3) / 4);
+        let firstImageMarked = false;
+        container.innerHTML = this.mediaDraft.map((item, index) => {
+            const isPrimary = item.type === 'image' && !firstImageMarked;
+            if (isPrimary) firstImageMarked = true;
+            const mediaVisual = item.type === 'image'
+                ? `<img src="${this.escapeAttr(item.url)}" alt="Preview media ${index + 1}" onerror="this.onerror=null;this.src='${this.defaultNewsImage}'">`
+                : `<span class="news-media-video-icon"><i class="fas fa-play"></i></span>`;
+            return `
+                <article class="news-media-item">
+                    <div class="news-media-item__visual">${mediaVisual}</div>
+                    <div class="news-media-item__info">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <strong>${item.type === 'video' ? 'Video' : 'Foto'} ${index + 1}</strong>
+                            ${isPrimary ? '<span class="badge bg-primary">Thumbnail utama</span>' : ''}
+                        </div>
+                        <span title="${this.escapeAttr(item.url)}">${this.escapeHtml(this.truncate(item.url, 74))}</span>
+                    </div>
+                    <div class="news-media-item__actions" aria-label="Atur media">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-media-action="up" data-media-index="${index}" ${index === 0 ? 'disabled' : ''} title="Naikkan"><i class="fas fa-arrow-up"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-media-action="down" data-media-index="${index}" ${index === this.mediaDraft.length - 1 ? 'disabled' : ''} title="Turunkan"><i class="fas fa-arrow-down"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-media-action="remove" data-media-index="${index}" title="Hapus"><i class="fas fa-trash"></i></button>
+                    </div>
+                </article>`;
+        }).join('');
     }
 
     formatApiError(status, rawText) {
@@ -579,6 +676,7 @@ class NewsModule {
         const modalId = 'newsPreviewModal';
         const existing = document.getElementById(modalId);
         if (existing) existing.remove();
+        const previewMedia = this.normalizeMediaItems(news.media, news.urlToImage);
 
         const previewHtml = `
             <div class="modal fade" id="${modalId}" tabindex="-1">
@@ -590,10 +688,10 @@ class NewsModule {
                         </div>
                         <div class="modal-body">
                             <div class="row g-4">
-                                <div class="col-md-4">
-                                    <img src="${this.escapeAttr(this.resolveImageUrl(news.urlToImage))}" alt="News Image" class="img-fluid rounded border" onerror="this.onerror=null;this.src='${this.defaultNewsImage}'">
+                                <div class="col-md-5">
+                                    ${this.renderAdminMediaGallery(previewMedia, news.title)}
                                 </div>
-                                <div class="col-md-8">
+                                <div class="col-md-7">
                                     <h4>${this.escapeHtml(news.title || '-')}</h4>
                                     <p class="mb-2"><strong>Kalimat Utama:</strong></p>
                                     <div class="p-3 border rounded bg-light mb-3">${this.escapeHtml(news.stickerText || news.description || '-')}</div>
@@ -617,6 +715,37 @@ class NewsModule {
         new bootstrap.Modal(document.getElementById(modalId)).show();
     }
 
+    renderAdminMediaGallery(media, title) {
+        if (!media.length) {
+            return `<img src="${this.defaultNewsImage}" alt="Media belum tersedia" class="img-fluid rounded border">`;
+        }
+        return `<div class="news-preview-gallery">${media.map((item, index) => {
+            if (item.type === 'image') {
+                return `<img src="${this.escapeAttr(item.url)}" alt="${this.escapeAttr(title)} ${index + 1}" onerror="this.onerror=null;this.src='${this.defaultNewsImage}'">`;
+            }
+            const youtubeId = this.getYoutubeId(item.url);
+            if (youtubeId) {
+                return `<div class="ratio ratio-16x9"><iframe src="https://www.youtube-nocookie.com/embed/${youtubeId}" title="Video ${this.escapeAttr(title)}" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
+            }
+            return `<video controls preload="metadata" playsinline><source src="${this.escapeAttr(item.url)}">Browser tidak mendukung video ini.</video>`;
+        }).join('')}</div>`;
+    }
+
+    getYoutubeId(value) {
+        try {
+            const url = new URL(String(value || ''), window.location.origin);
+            const host = url.hostname.replace(/^www\./, '').toLowerCase();
+            if (host === 'youtu.be') return /^[\w-]{6,15}$/.test(url.pathname.slice(1)) ? url.pathname.slice(1) : '';
+            if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+                const candidate = url.searchParams.get('v') || url.pathname.match(/\/(?:embed|shorts)\/([\w-]{6,15})/)?.[1] || '';
+                return /^[\w-]{6,15}$/.test(candidate) ? candidate : '';
+            }
+        } catch {
+            return '';
+        }
+        return '';
+    }
+
     async deleteNews(newsId, title) {
         const ok = confirm(`Hapus berita "${title}"?\n\nTindakan ini tidak dapat dibatalkan.`);
         if (!ok) return;
@@ -624,7 +753,8 @@ class NewsModule {
         try {
             const response = await fetch(`/api/news/local-news/${encodeURIComponent(newsId)}`, {
                 method: 'DELETE',
-                credentials: 'include'
+                credentials: 'include',
+                headers: this.getRequestHeaders({ Accept: 'application/json' })
             });
 
             if (!response.ok) {
@@ -681,7 +811,7 @@ class NewsModule {
 
     resolveImageUrl(value) {
         const raw = String(value || '').trim();
-        if (!raw) return this.defaultNewsImage;
+        if (!raw) return '';
         if (/^data:image\//i.test(raw)) return raw;
         if (/^https?:\/\//i.test(raw) || raw.startsWith('//')) return raw;
         if (raw.startsWith('/')) return raw;

@@ -7,12 +7,12 @@
     <title>Mapping Kompetensi - BCL</title>
 
     <!-- Favicon -->
-    <link href="/img/icon.png" rel="icon">
+    <link href="/img/icons/trimmed/main_ico_bcl.ico" rel="icon">
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
 
     <!-- Icon Font Stylesheet -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
@@ -611,9 +611,12 @@
             margin-top: 1rem;
         }
     </style>
+
+    <!-- Workspace theme: scoped override loaded after legacy page styles -->
+    <link href="../../css/mapping-kompetensi-workspace.css?v=20260717c" rel="stylesheet">
 </head>
 
-<body>
+<body class="competency-workspace-page">
     <!-- Navbar Universal -->
     <div id="navbar-container"></div>
 
@@ -660,6 +663,17 @@
 
             <!-- Main Content -->
             <div id="competencyContent" class="col-md-10">
+
+    <header class="competency-workspace-toolbar">
+        <div>
+            <p>Learning governance</p>
+            <h1>Mapping Kompetensi</h1>
+        </div>
+        <div class="competency-workspace-toolbar__context">
+            <i class="fas fa-chart-line" aria-hidden="true"></i>
+            <span id="rubricContext">Assessment &amp; reporting workspace</span>
+        </div>
+    </header>
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay d-none">
@@ -762,6 +776,7 @@
                                     </select>
                                     <select class="form-select form-select-sm" id="levelFilter" style="width: 120px;">
                                         <option value="">All Levels</option>
+                                        <option value="unassessed">Unassessed</option>
                                         <option value="novice">Novice</option>
                                         <option value="beginner">Beginner</option>
                                         <option value="intermediate">Intermediate</option>
@@ -876,7 +891,7 @@
                                                     <i class="fas fa-chart-line text-info"></i>
                                                 </div>
                                                 <div class="insight-text">
-                                                    <div class="insight-value" id="avgImprovement">0%</div>
+                                                    <div class="insight-value" id="avgImprovement">N/A</div>
                                                     <div class="insight-label">Avg Improvement</div>
                                                 </div>
                                             </div>
@@ -888,7 +903,7 @@
                                                 </div>
                                                 <div class="insight-text">
                                                     <div class="insight-value" id="activeUsers">0</div>
-                                                    <div class="insight-label">Active This Month</div>
+                                                    <div class="insight-label">Active 30 Days</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1290,6 +1305,7 @@
 
         function buildLevelDistributionFromUsers(users) {
             const levels = {
+                unassessed: 0,
                 novice: 0,
                 beginner: 0,
                 intermediate: 0,
@@ -1305,6 +1321,16 @@
             });
 
             return levels;
+        }
+
+        function getAssessedUsers(users) {
+            return (users || []).filter(user => user.competencyStatus === 'assessed');
+        }
+
+        function calculateAssessedAverage(users) {
+            const assessedUsers = getAssessedUsers(users);
+            if (!assessedUsers.length) return null;
+            return Math.round(assessedUsers.reduce((sum, user) => sum + Number(user.competencyScore || 0), 0) / assessedUsers.length);
         }
 
         function getFilteredDashboardUsers() {
@@ -1362,6 +1388,9 @@
 
         function applyDashboardFilters() {
             const filteredUsers = getFilteredDashboardUsers();
+            const average = calculateAssessedAverage(filteredUsers);
+            document.getElementById('totalUsers').textContent = filteredUsers.length;
+            document.getElementById('avgCompetency').textContent = average === null ? 'N/A' : average;
             loadCompetencyChart(buildLevelDistributionFromUsers(filteredUsers));
             loadTopPerformers(filteredUsers);
             loadOrganizationSummary(filteredUsers);
@@ -1395,7 +1424,7 @@
 
             select.innerHTML = '<option value="">Pilih user...</option>' + sortedUsers.map(user => `
                 <option value="${escapeHtml(user.id)}">
-                    ${escapeHtml(user.username || user.name || user.email || 'User')} - ${escapeHtml(user.organization || 'N/A')} (${Number(user.competencyScore || 0)})
+                    ${escapeHtml(user.username || user.name || user.email || 'User')} - ${escapeHtml(user.organization || 'N/A')} (${user.competencyStatus === 'assessed' ? Number(user.competencyScore || 0) : 'Unassessed'})
                 </option>
             `).join('');
 
@@ -1546,6 +1575,7 @@
 
             const user = detail.user || {};
             const progress = user.progress || {};
+            const coverage = (user.dimensions && user.dimensions.coverage) || {};
             const attemptSummary = detail.attemptSummary || {};
             const activitySummary = detail.activitySummary || {};
 
@@ -1557,8 +1587,8 @@
                             <div class="text-muted small">${escapeHtml(user.email || '-')} - ${escapeHtml(user.organization || 'N/A')}</div>
                         </div>
                         <div class="text-end">
-                            <div class="fs-4 fw-bold">${Number(user.competencyScore || 0)}</div>
-                            <span class="badge bg-primary">${escapeHtml(user.competencyLevel || 'Novice')}</span>
+                            <div class="fs-4 fw-bold">${user.competencyStatus === 'assessed' ? Number(user.competencyScore || 0) : 'N/A'}</div>
+                            <span class="badge bg-primary">${escapeHtml(user.competencyLevel || 'Unassessed')}</span>
                         </div>
                     </div>
                     <div class="card-body">
@@ -1568,7 +1598,7 @@
                             ${renderUserHistoryMetric('Practice', Number(progress.practiceAttempts || 0), 'fa-pen-to-square', 'success')}
                             ${renderUserHistoryMetric('Exam Attempts', Number(progress.examAttempts || 0), 'fa-clipboard-check', 'warning')}
                             ${renderUserHistoryMetric('Avg Score', `${Number(progress.averageAttemptScore || attemptSummary.averageScore || 0)}%`, 'fa-chart-line', 'success')}
-                            ${renderUserHistoryMetric('Theory Coverage', `${Number(progress.theoryCategoriesAttempted || 0)}/3`, 'fa-layer-group', 'primary')}
+                            ${renderUserHistoryMetric('Assessment Coverage', `${Number(coverage.covered || 0)}/${Number(coverage.required || 0)}`, 'fa-layer-group', 'primary')}
                             ${renderUserHistoryMetric('PDF Reads', Number(activitySummary.pdfReads || 0), 'fa-file-pdf', 'danger')}
                             ${renderUserHistoryMetric('Completed Modules', Number(activitySummary.completedModules || 0), 'fa-check-circle', 'success')}
                         </div>
@@ -1667,22 +1697,40 @@
             return reports.find(report => String(report.id) === String(reportId)) || null;
         }
 
-        function renderProgressRows(progress) {
-            const safeProgress = progress || {};
+        function renderEvidenceRows(content) {
+            const learning = content.learningProgress || {};
+            const assessment = content.assessment || {};
+            const credentials = content.credentials || {};
+            const competency = content.competency || {};
+            const dimensions = competency.dimensions || {};
+            const coverage = dimensions.coverage || {};
+
+            if (!content.competency && content.progress) {
+                return `<div class="text-muted small mb-2">Legacy report snapshot</div>${renderLegacyProgressRows(content.progress)}`;
+            }
+
             return `
                 <table class="table table-sm report-preview-table mb-0">
                     <tbody>
-                        <tr><th>Courses Completed</th><td>${Number(safeProgress.coursesCompleted || 0)}</td></tr>
-                        <tr><th>Quiz Attempts</th><td>${Number(safeProgress.quizAttempts || 0)}</td></tr>
-                        <tr><th>Practice Attempts</th><td>${Number(safeProgress.practiceAttempts || 0)}</td></tr>
-                        <tr><th>Exam Attempts</th><td>${Number(safeProgress.examAttempts || 0)}</td></tr>
-                        <tr><th>Exams Passed</th><td>${Number(safeProgress.examsPassed || 0)}</td></tr>
-                        <tr><th>Certificates Earned</th><td>${Number(safeProgress.certificatesEarned || 0)}</td></tr>
-                        <tr><th>Average Attempt Score</th><td>${Number(safeProgress.averageAttemptScore || 0)}%</td></tr>
-                        <tr><th>Theory Categories</th><td>${Number(safeProgress.theoryCategoriesAttempted || 0)}/3</td></tr>
+                        <tr><th>BIM Role</th><td>${escapeHtml(content.userInfo && content.userInfo.bimRole || '-')}</td></tr>
+                        <tr><th>Learning Modules Completed</th><td>${Number(learning.coursesCompleted || 0)}</td></tr>
+                        <tr><th>Verified Attempts</th><td>${Number(assessment.totalAttempts || 0)}</td></tr>
+                        <tr><th>Verified Average</th><td>${Number(assessment.averageAttemptScore || 0)}%</td></tr>
+                        <tr><th>Assessment Coverage</th><td>${Number(coverage.covered || 0)}/${Number(coverage.required || 0)}</td></tr>
+                        <tr><th>Verified Certificates</th><td>${Number(credentials.certificatesEarned || 0)}</td></tr>
+                        <tr><th>Rubric</th><td>${escapeHtml(content.rubricVersion || competency.rubricVersion || '-')}</td></tr>
                     </tbody>
                 </table>
             `;
+        }
+
+        function renderLegacyProgressRows(progress) {
+            const safeProgress = progress || {};
+            return `<table class="table table-sm report-preview-table mb-0"><tbody>
+                <tr><th>Courses Completed</th><td>${Number(safeProgress.coursesCompleted || 0)}</td></tr>
+                <tr><th>Attempts</th><td>${Number(safeProgress.totalAttempts || safeProgress.quizAttempts || 0)}</td></tr>
+                <tr><th>Certificates</th><td>${Number(safeProgress.certificatesEarned || 0)}</td></tr>
+            </tbody></table>`;
         }
 
         function renderLevelDistributionTable(levelDistribution) {
@@ -1822,22 +1870,22 @@
                                 <div class="value">${escapeHtml(content.userInfo && content.userInfo.organization)}</div>
                             </div>
                             <div class="report-preview-kv">
-                                <div class="label">BIM Level</div>
-                                <div class="value">${escapeHtml(content.userInfo && content.userInfo.bimLevel)}</div>
+                                <div class="label">BIM Role</div>
+                                <div class="value">${escapeHtml(content.userInfo && (content.userInfo.bimRole || content.userInfo.bimLevel))}</div>
                             </div>
                             <div class="report-preview-kv">
                                 <div class="label">Competency Score</div>
-                                <div class="value">${Number(content.competencyScore || 0)}</div>
+                                <div class="value">${content.competency ? Number(content.competency.competencyScore || 0) : Number(content.competencyScore || 0)}</div>
                             </div>
                             <div class="report-preview-kv">
                                 <div class="label">Competency Level</div>
-                                <div class="value">${escapeHtml(content.competencyLevel || '-')}</div>
+                                <div class="value">${escapeHtml(content.competency ? content.competency.competencyLevel : (content.competencyLevel || '-'))}</div>
                             </div>
                         </div>
                     </div>
                     <div class="report-preview-block section">
-                        <h6>Progress Snapshot</h6>
-                        ${renderProgressRows(content.progress)}
+                        <h6>Evidence Snapshot</h6>
+                        ${renderEvidenceRows(content)}
                     </div>
                 `;
             } else if (report.type === 'organization') {
@@ -2268,9 +2316,13 @@
 
                 // Update metrics
                 document.getElementById('totalUsers').textContent = competencyData.totalUsers || 0;
-                document.getElementById('avgCompetency').textContent = competencyData.averageCompetency || 0;
+                document.getElementById('avgCompetency').textContent = competencyData.averageCompetency === null ? 'N/A' : competencyData.averageCompetency;
                 document.getElementById('totalReports').textContent = competencyData.totalReports || 0;
                 document.getElementById('pendingApprovals').textContent = competencyData.pendingApprovals || 0;
+                const rubricContext = document.getElementById('rubricContext');
+                if (rubricContext && competencyData.rubric && competencyData.rubric.rubric) {
+                    rubricContext.textContent = `Rubric ${competencyData.rubric.rubric.id} • verified evidence only`;
+                }
 
                 // Load charts and additional data
                 populateDashboardOrganizationFilter(getCompetencyUsers());
@@ -2297,9 +2349,10 @@
             chartInstances.competencyChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert'],
+                    labels: ['Unassessed', 'Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert'],
                     datasets: [{
                         data: [
+                            levelsData.unassessed || 0,
                             levelsData.novice || 0,
                             levelsData.beginner || 0,
                             levelsData.intermediate || 0,
@@ -2307,20 +2360,36 @@
                             levelsData.expert || 0
                         ],
                         backgroundColor: [
-                            '#94a3b8',
-                            '#22c55e',
-                            '#f59e0b',
-                            '#dc2626',
-                            '#7c3aed'
-                        ]
+                            '#d0d5dd',
+                            '#98a2b3',
+                            '#6bbd96',
+                            '#f2c078',
+                            '#e8752c',
+                            '#087f8c'
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
                     }]
                 },
                 options: {
-                    responsive: false,
+                    responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '66%',
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                                color: '#667085',
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 12,
+                                boxWidth: 8,
+                                font: {
+                                    family: 'Heebo',
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
                         }
                     }
                 }
@@ -2638,13 +2707,14 @@
         function loadTopPerformers(users) {
             const container = document.getElementById('topPerformersList');
 
-            if (!users || users.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted py-2"><small>No users data available</small></div>';
+            const assessedUsers = getAssessedUsers(users);
+            if (assessedUsers.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-2"><small>No assessed users available</small></div>';
                 return;
             }
 
             // Sort users by competency score and get top 3
-            const topPerformers = [...users]
+            const topPerformers = [...assessedUsers]
                 .sort((a, b) => (b.competencyScore || 0) - (a.competencyScore || 0))
                 .slice(0, 3);
 
@@ -2688,10 +2758,13 @@
             users.forEach(user => {
                 const org = user.organization || 'Unspecified';
                 if (!orgGroups[org]) {
-                    orgGroups[org] = { count: 0, totalScore: 0, users: [] };
+                    orgGroups[org] = { count: 0, assessedCount: 0, totalScore: 0, users: [] };
                 }
                 orgGroups[org].count++;
-                orgGroups[org].totalScore += (user.competencyScore || 0);
+                if (user.competencyStatus === 'assessed') {
+                    orgGroups[org].assessedCount++;
+                    orgGroups[org].totalScore += Number(user.competencyScore || 0);
+                }
                 orgGroups[org].users.push(user);
             });
 
@@ -2700,10 +2773,11 @@
                 .map(([org, data]) => ({
                     name: org,
                     count: data.count,
-                    avgScore: Math.round(data.totalScore / data.count),
+                    assessedCount: data.assessedCount,
+                    avgScore: data.assessedCount ? Math.round(data.totalScore / data.assessedCount) : null,
                     users: data.users
                 }))
-                .sort((a, b) => b.avgScore - a.avgScore)
+                .sort((a, b) => Number(b.avgScore ?? -1) - Number(a.avgScore ?? -1))
                 .slice(0, 3);
 
             let html = '';
@@ -2715,8 +2789,8 @@
                             <div class="text-muted small">${org.count} users</div>
                         </div>
                         <div class="text-end">
-                            <div class="fw-bold small">${org.avgScore}</div>
-                            <div class="text-muted small">avg score</div>
+                            <div class="fw-bold small">${org.avgScore === null ? 'N/A' : org.avgScore}</div>
+                            <div class="text-muted small">${org.assessedCount} assessed</div>
                         </div>
                     </div>
                 `;
@@ -2733,10 +2807,14 @@
             const expertCount = data.competencyLevels.expert || 0;
             document.getElementById('expertCount').textContent = expertCount;
 
-            const avgImprovement = Number.isFinite(Number(data.avgImprovement))
-                ? Number(data.avgImprovement)
-                : 0;
-            document.getElementById('avgImprovement').textContent = `${avgImprovement}%`;
+            const improvementElement = document.getElementById('avgImprovement');
+            if (data.avgImprovement === null || data.avgImprovement === undefined) {
+                improvementElement.textContent = 'N/A';
+                improvementElement.title = 'Belum ada pengguna dengan bukti pada kedua periode 30 hari.';
+            } else {
+                improvementElement.textContent = `${Number(data.avgImprovement)} pp`;
+                improvementElement.title = `${Number(data.improvementSampleSize || 0)} pengguna dengan data berpasangan.`;
+            }
 
             const activeUsers = Number.isFinite(Number(data.activeUsers))
                 ? Number(data.activeUsers)
@@ -3127,7 +3205,7 @@
                         datasets: [{
                             label: 'User Count',
                             data: Object.values(distribution),
-                            backgroundColor: ['#94a3b8', '#22c55e', '#f59e0b', '#dc2626', '#7c3aed']
+                            backgroundColor: ['#d0d5dd', '#98a2b3', '#6bbd96', '#f2c078', '#e8752c', '#087f8c']
                         }]
                     }
                 };
@@ -3145,14 +3223,14 @@
                         datasets: [{
                             label: 'Courses Completed',
                             data: topUsers.map(user => Number((user.progress && user.progress.coursesCompleted) || 0)),
-                            backgroundColor: '#06b6d4'
+                            backgroundColor: '#087f8c'
                         }]
                     }
                 };
             }
 
             const orgMap = {};
-            users.forEach(user => {
+            getAssessedUsers(users).forEach(user => {
                 const org = user.organization || 'Unspecified';
                 if (!orgMap[org]) {
                     orgMap[org] = { total: 0, count: 0 };
@@ -3175,7 +3253,7 @@
                     datasets: [{
                         label: 'Average Score',
                         data: organizationSeries.map(item => item.value),
-                        backgroundColor: '#6366f1'
+                        backgroundColor: '#087f8c'
                     }]
                 }
             };
@@ -3239,7 +3317,7 @@
                             statusDistribution.approved,
                             statusDistribution.rejected
                         ],
-                        backgroundColor: ['#94a3b8', '#f59e0b', '#22c55e', '#dc2626']
+                        backgroundColor: ['#98a2b3', '#f2c078', '#6bbd96', '#b42318']
                     }]
                 },
                 options: {
@@ -3259,7 +3337,7 @@
             if (!container) return;
 
             const orgMap = {};
-            users.forEach(user => {
+            getAssessedUsers(users).forEach(user => {
                 const org = user.organization || 'Unspecified';
                 if (!orgMap[org]) {
                     orgMap[org] = { total: 0, count: 0 };
@@ -3439,9 +3517,7 @@
                 filters: getSelectedDashboardFilters(),
                 summary: {
                     totalUsers: users.length,
-                    averageCompetency: users.length
-                        ? Math.round(users.reduce((sum, user) => sum + Number(user.competencyScore || 0), 0) / users.length)
-                        : 0,
+                    averageCompetency: calculateAssessedAverage(users),
                     levelDistribution: buildLevelDistributionFromUsers(users)
                 },
                 users
@@ -3526,6 +3602,3 @@
 </body>
 
 </html>
-
-
-

@@ -1,0 +1,817 @@
+:root {
+    --competency-ink: #172033;
+    --competency-muted: #667085;
+    --competency-line: #dfe4ea;
+    --competency-soft: #f4f6f8;
+    --competency-surface: #ffffff;
+    --competency-teal: #087f8c;
+    --competency-teal-soft: #e6f4f6;
+    --competency-orange: #e8752c;
+    --competency-green: #16835f;
+    --competency-red: #b42318;
+    --competency-yellow: #a15c00;
+    --competency-sidebar: #202b3c;
+}
+
+body.competency-workspace-page {
+    min-height: 100vh;
+    margin: 0;
+    padding-top: 0 !important;
+    overflow-x: hidden;
+    background: var(--competency-soft);
+    color: var(--competency-ink);
+    font-family: "Heebo", "Inter", sans-serif;
+}
+
+.competency-workspace-page *,
+.competency-workspace-page *::before,
+.competency-workspace-page *::after {
+    box-sizing: border-box;
+}
+
+.competency-workspace-page #competencyInterface {
+    width: 100%;
+    max-width: none;
+    margin-top: 0 !important;
+    padding: 0;
+}
+
+.competency-workspace-page #competencyInterface > .row {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    min-height: 100vh;
+    margin: 0;
+    padding-top: 78px;
+}
+
+/* Workspace sidebar */
+.competency-workspace-page #competencySidebar {
+    position: sticky;
+    top: 78px;
+    align-self: start;
+    width: auto;
+    height: calc(100vh - 78px);
+    padding: 0;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255, 255, 255, .08);
+    background: var(--competency-sidebar);
+    scrollbar-color: rgba(255, 255, 255, .22) transparent;
+    scrollbar-width: thin;
+}
+
+.competency-workspace-page .sidebar-menu {
+    position: static;
+    min-height: 100%;
+    padding: 0 10px 28px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.competency-workspace-page .sidebar-menu > .text-center {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    min-height: 82px;
+    gap: 10px;
+    margin: 0 -10px 12px !important;
+    padding: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, .1) !important;
+    text-align: left !important;
+}
+
+.competency-workspace-page .sidebar-menu > .text-center h5 {
+    display: contents;
+    color: #fff !important;
+    font: 800 18px/1.12 "Nunito", sans-serif;
+}
+
+.competency-workspace-page .sidebar-menu > .text-center h5 i {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin: 0 !important;
+    border-radius: 6px;
+    background: var(--competency-orange);
+    color: #fff;
+    font-size: 16px;
+}
+
+.competency-workspace-page #authorityBadge {
+    grid-column: 2;
+    min-width: 0;
+    margin-top: -9px;
+}
+
+.competency-workspace-page #authorityBadge:empty {
+    display: none;
+}
+
+.competency-workspace-page #authorityBadge .badge {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 3px 7px;
+    background: rgba(255, 255, 255, .1) !important;
+    color: #bdc8d8 !important;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.competency-workspace-page .sidebar-title {
+    margin: 18px 10px 6px;
+    color: #8290a5;
+    font: 700 11px/1.2 "Heebo", sans-serif;
+    letter-spacing: .04em;
+}
+
+.competency-workspace-page .sidebar-title i {
+    display: none;
+}
+
+.competency-workspace-page .sidebar-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 42px;
+    gap: 11px;
+    margin: 0 0 3px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #c9d2df;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    transition: background-color .16s ease, color .16s ease;
+}
+
+.competency-workspace-page .sidebar-link i {
+    width: 20px;
+    margin: 0 !important;
+    text-align: center;
+}
+
+.competency-workspace-page .sidebar-link:hover,
+.competency-workspace-page .sidebar-link:focus-visible {
+    background: rgba(255, 255, 255, .07);
+    color: #fff;
+}
+
+.competency-workspace-page .sidebar-link.active {
+    background: var(--competency-teal);
+    color: #fff;
+}
+
+.competency-workspace-page #authorityMenu[style*="display: block"] {
+    display: flex !important;
+}
+
+.competency-workspace-page .sidebar-divider {
+    margin: 14px 10px;
+    border-color: rgba(255, 255, 255, .1);
+    opacity: 1;
+}
+
+/* Main workspace */
+.competency-workspace-page #competencyContent {
+    min-width: 0;
+    width: auto;
+    padding: 0;
+}
+
+.competency-workspace-page #competencySidebar.d-none + #competencyContent {
+    grid-column: 1 / -1;
+}
+
+.competency-workspace-toolbar {
+    position: sticky;
+    top: 78px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 82px;
+    gap: 18px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--competency-line);
+    background: rgba(255, 255, 255, .97);
+}
+
+.competency-workspace-toolbar p {
+    margin: 0;
+    color: var(--competency-muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.competency-workspace-toolbar h1 {
+    margin: 2px 0 0;
+    color: var(--competency-ink);
+    font: 800 24px/1.1 "Nunito", sans-serif;
+}
+
+.competency-workspace-toolbar__context {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    gap: 8px;
+    padding: 7px 11px;
+    border: 1px solid var(--competency-line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--competency-muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.competency-workspace-toolbar__context i {
+    color: var(--competency-teal);
+}
+
+.competency-workspace-page .competency-section {
+    padding: 22px 24px 60px;
+    animation: competency-section-in .2s ease-out;
+}
+
+@keyframes competency-section-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Metrics and panels */
+.competency-workspace-page .competency-metric-small,
+.competency-workspace-page .competency-card,
+.competency-workspace-page .report-generator,
+.competency-workspace-page .analytics-summary-card,
+.competency-workspace-page .authority-summary-card {
+    border: 1px solid var(--competency-line);
+    border-radius: 6px;
+    background: var(--competency-surface);
+    box-shadow: none;
+}
+
+.competency-workspace-page .competency-metric-small {
+    position: relative;
+    min-height: 92px;
+    padding: 16px;
+    overflow: hidden;
+    border-top: 3px solid var(--competency-teal);
+    transition: border-color .16s ease, transform .16s ease;
+}
+
+.competency-workspace-page .competency-metric-small:hover {
+    border-top-color: var(--competency-orange);
+    transform: translateY(-1px);
+}
+
+.competency-workspace-page .metric-value-small {
+    margin: 0 0 4px;
+    color: var(--competency-teal);
+    font: 800 26px/1 "Nunito", sans-serif;
+}
+
+.competency-workspace-page .metric-label-small {
+    color: var(--competency-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+}
+
+.competency-workspace-page .metric-icon-small {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    background: var(--competency-teal-soft);
+    opacity: 1;
+}
+
+.competency-workspace-page .metric-icon-small i,
+.competency-workspace-page .metric-icon-small .text-primary,
+.competency-workspace-page .metric-icon-small .text-success,
+.competency-workspace-page .metric-icon-small .text-info,
+.competency-workspace-page .metric-icon-small .text-warning {
+    color: var(--competency-teal) !important;
+    font-size: 16px;
+}
+
+.competency-workspace-page .competency-card {
+    height: 100%;
+    overflow: hidden;
+}
+
+.competency-workspace-page .competency-card .card-header {
+    min-height: 52px;
+    padding: 13px 16px !important;
+    border-bottom: 1px solid var(--competency-line);
+    background: #fff;
+}
+
+.competency-workspace-page .competency-card .card-header h5,
+.competency-workspace-page .competency-card .card-header h6 {
+    color: var(--competency-ink);
+    font-family: "Nunito", sans-serif;
+    font-weight: 800;
+}
+
+.competency-workspace-page .competency-card .card-header i {
+    color: var(--competency-teal);
+}
+
+.competency-workspace-page .competency-card .card-body {
+    padding: 16px !important;
+}
+
+.competency-workspace-page #competencyChart {
+    display: block;
+    width: 100% !important;
+    height: 360px !important;
+}
+
+.competency-workspace-page #topPerformersList i {
+    color: var(--competency-teal) !important;
+}
+
+.competency-workspace-page .insight-item {
+    min-height: 72px;
+    padding: 12px;
+    border: 0;
+    border-left: 2px solid var(--competency-line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transition: border-color .16s ease, background-color .16s ease;
+}
+
+.competency-workspace-page .insight-item:hover {
+    border-left-color: var(--competency-teal);
+    background: #f8fafb;
+    box-shadow: none;
+    transform: none;
+}
+
+.competency-workspace-page .insight-value {
+    color: var(--competency-ink);
+    font-family: "Nunito", sans-serif;
+}
+
+.competency-workspace-page .insight-label {
+    color: var(--competency-muted);
+}
+
+/* Dashboard action bar */
+.competency-workspace-page #dashboard-section > .row:nth-child(2) .bg-light {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 58px;
+    gap: 12px;
+    padding: 10px 12px !important;
+    border: 1px solid var(--competency-line);
+    border-radius: 6px !important;
+    background: #fff !important;
+}
+
+.competency-workspace-page #dashboard-section > .row:nth-child(2) .bg-light > .d-flex:last-child {
+    margin-left: auto;
+}
+
+/* Buttons and controls */
+.competency-workspace-page .btn {
+    min-height: 38px;
+    border-radius: 6px;
+    font-weight: 700;
+    box-shadow: none !important;
+    transition: border-color .16s ease, background-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.competency-workspace-page .btn:hover {
+    transform: translateY(-1px);
+}
+
+.competency-workspace-page .btn-primary,
+.competency-workspace-page .btn-success {
+    border-color: var(--competency-orange);
+    background: var(--competency-orange);
+    color: #fff;
+}
+
+.competency-workspace-page .btn-primary:hover,
+.competency-workspace-page .btn-success:hover,
+.competency-workspace-page .btn-primary:focus,
+.competency-workspace-page .btn-success:focus {
+    border-color: #cf6425;
+    background: #cf6425;
+    color: #fff;
+}
+
+.competency-workspace-page .btn-outline-primary,
+.competency-workspace-page .btn-outline-info {
+    border-color: #b9d8dc;
+    color: var(--competency-teal);
+}
+
+.competency-workspace-page .btn-outline-primary:hover,
+.competency-workspace-page .btn-outline-info:hover {
+    border-color: var(--competency-teal);
+    background: var(--competency-teal);
+    color: #fff;
+}
+
+.competency-workspace-page .btn-outline-success {
+    border-color: #add8c6;
+    color: var(--competency-green);
+}
+
+.competency-workspace-page .btn-outline-success:hover {
+    border-color: var(--competency-green);
+    background: var(--competency-green);
+    color: #fff;
+}
+
+.competency-workspace-page .btn-outline-secondary {
+    border-color: var(--competency-line);
+    background: #fff;
+    color: var(--competency-muted);
+}
+
+.competency-workspace-page .form-control,
+.competency-workspace-page .form-select {
+    min-height: 40px;
+    border-color: #cfd6de;
+    border-radius: 6px;
+    color: var(--competency-ink);
+    box-shadow: none;
+}
+
+.competency-workspace-page .form-control:focus,
+.competency-workspace-page .form-select:focus {
+    border-color: var(--competency-teal);
+    box-shadow: 0 0 0 3px rgba(8, 127, 140, .1);
+}
+
+.competency-workspace-page .form-label {
+    margin-bottom: 6px;
+    color: var(--competency-ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* Report configuration */
+.competency-workspace-page .report-generator {
+    margin: 0;
+    padding: 20px;
+}
+
+.competency-workspace-page .report-generator > h4 {
+    color: var(--competency-ink);
+    font: 800 20px/1.2 "Nunito", sans-serif;
+}
+
+.competency-workspace-page .report-generator > h4 i {
+    color: var(--competency-teal);
+}
+
+.competency-workspace-page .report-type-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.competency-workspace-page .report-type-card {
+    padding: 18px 14px;
+    border: 1px solid var(--competency-line);
+    border-radius: 6px;
+    background: #fff;
+    text-align: left;
+    transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
+}
+
+.competency-workspace-page .report-type-card:hover,
+.competency-workspace-page .report-type-card.selected {
+    border-color: var(--competency-teal);
+    background: var(--competency-teal-soft);
+    transform: translateY(-1px);
+}
+
+.competency-workspace-page .report-type-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    background: var(--competency-teal-soft);
+    color: var(--competency-teal);
+    font-size: 16px;
+}
+
+.competency-workspace-page .report-type-card h6 {
+    color: var(--competency-ink);
+    font-family: "Nunito", sans-serif;
+    font-weight: 800;
+}
+
+.competency-workspace-page .report-type-card p {
+    margin-bottom: 0;
+}
+
+/* Tables and generated content */
+.competency-workspace-page .table-responsive {
+    border: 1px solid var(--competency-line);
+    border-radius: 6px;
+}
+
+.competency-workspace-page .table {
+    margin-bottom: 0;
+    color: var(--competency-ink);
+}
+
+.competency-workspace-page .table > :not(caption) > * > * {
+    padding: 11px 12px;
+    border-bottom-color: #edf0f3;
+    vertical-align: middle;
+}
+
+.competency-workspace-page .table thead th {
+    border-bottom: 1px solid var(--competency-line);
+    background: #f7f8fa;
+    color: var(--competency-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.competency-workspace-page .table tbody tr {
+    transition: background-color .14s ease;
+}
+
+.competency-workspace-page .table tbody tr:hover {
+    background: #f7fbfb;
+}
+
+.competency-workspace-page .badge.bg-primary {
+    background: var(--competency-teal-soft) !important;
+    color: var(--competency-teal) !important;
+}
+
+.competency-workspace-page .progress {
+    height: 7px;
+    border-radius: 999px;
+    background: #e9edf1;
+}
+
+.competency-workspace-page .progress-bar {
+    background: var(--competency-teal);
+}
+
+.competency-workspace-page .report-preview-block,
+.competency-workspace-page .report-preview-kv,
+.competency-workspace-page .empty-state-box {
+    border-color: var(--competency-line);
+    border-radius: 6px;
+    background: #f8fafb;
+}
+
+.competency-workspace-page .report-preview-kv {
+    background: #fff;
+}
+
+.competency-workspace-page .analytics-summary-card .label,
+.competency-workspace-page .authority-summary-card .label,
+.competency-workspace-page .report-preview-kv .label {
+    color: var(--competency-muted);
+}
+
+.competency-workspace-page .analytics-summary-card .value,
+.competency-workspace-page .authority-summary-card .value,
+.competency-workspace-page .report-preview-kv .value {
+    color: var(--competency-ink);
+    font-family: "Nunito", sans-serif;
+}
+
+.competency-workspace-page .authority-role-badge {
+    border-radius: 999px;
+}
+
+.competency-workspace-page .authority-role-badge.manager,
+.competency-workspace-page .authority-role-badge.mapping-access {
+    background: var(--competency-teal-soft);
+    color: var(--competency-teal);
+}
+
+.competency-workspace-page .dashboard-inline-note {
+    border-color: #b9d8dc;
+    border-radius: 6px;
+    background: var(--competency-teal-soft);
+    color: #075f69;
+}
+
+/* Access, loading, modal and toast */
+.competency-workspace-page .loading-overlay {
+    background: rgba(23, 32, 51, .62);
+    backdrop-filter: blur(2px);
+}
+
+.competency-workspace-page .spinner-modern {
+    border-color: rgba(255, 255, 255, .32);
+    border-top-color: var(--competency-orange);
+}
+
+.competency-workspace-page .access-denied {
+    min-height: calc(100vh - 160px);
+    padding: 24px;
+}
+
+.competency-workspace-page .access-denied-card {
+    width: min(520px, 100%);
+    padding: 36px;
+    border: 1px solid var(--competency-line);
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.competency-workspace-page .access-denied-card h2 {
+    color: var(--competency-ink);
+    font: 800 24px/1.2 "Nunito", sans-serif;
+}
+
+.competency-workspace-page .modal-content {
+    overflow: hidden;
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 18px 48px rgba(16, 24, 40, .18);
+}
+
+.competency-workspace-page .modal-header {
+    border-bottom-color: rgba(255, 255, 255, .1);
+    background: var(--competency-sidebar);
+    color: #fff;
+}
+
+.competency-workspace-page .modal-title {
+    font-family: "Nunito", sans-serif;
+    font-weight: 800;
+}
+
+.competency-workspace-page .modal-header .btn-close {
+    filter: invert(1) grayscale(1);
+}
+
+.competency-workspace-page .modal-footer {
+    border-top-color: var(--competency-line);
+    background: #f8fafb;
+}
+
+.competency-workspace-page .toast {
+    border: 1px solid var(--competency-line);
+    border-radius: 6px;
+    box-shadow: 0 12px 32px rgba(16, 24, 40, .14);
+}
+
+@media (max-width: 991.98px) {
+    .competency-workspace-page #competencyInterface > .row {
+        display: block;
+        padding-top: 70px;
+    }
+
+    .competency-workspace-page #competencySidebar {
+        position: sticky;
+        top: 70px;
+        z-index: 25;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .competency-workspace-page .sidebar-menu {
+        min-height: 0;
+        padding: 8px 12px;
+    }
+
+    .competency-workspace-page .sidebar-menu > .text-center,
+    .competency-workspace-page .sidebar-title,
+    .competency-workspace-page .sidebar-divider {
+        display: none;
+    }
+
+    .competency-workspace-page .sidebar-menu .nav {
+        display: flex;
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .competency-workspace-page .sidebar-menu .nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .competency-workspace-page .sidebar-link {
+        flex: 0 0 auto;
+        width: auto;
+        min-height: 38px;
+        margin: 0;
+        padding: 8px 11px;
+        white-space: nowrap;
+    }
+
+    .competency-workspace-toolbar {
+        position: static;
+        min-height: 72px;
+        padding: 12px 18px;
+    }
+
+    .competency-workspace-page .competency-section {
+        padding: 18px 16px 88px;
+    }
+
+    .competency-workspace-page .report-type-selector {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .competency-workspace-toolbar h1 {
+        font-size: 20px;
+    }
+
+    .competency-workspace-toolbar__context {
+        display: none;
+    }
+
+    .competency-workspace-page #dashboard-section > .row:nth-child(2) .bg-light,
+    .competency-workspace-page #dashboard-section > .row:nth-child(2) .bg-light > .d-flex {
+        align-items: stretch !important;
+        width: 100%;
+    }
+
+    .competency-workspace-page #dashboard-section > .row:nth-child(2) .bg-light > .d-flex {
+        flex-wrap: wrap;
+    }
+
+    .competency-workspace-page #dashboard-section > .row:nth-child(2) .bg-light > .d-flex:last-child {
+        margin-left: 0;
+    }
+
+    .competency-workspace-page #dashboard-section > .row:nth-child(2) select.form-select {
+        width: auto !important;
+        flex: 1 1 140px;
+    }
+
+    .competency-workspace-page .competency-card .card-header {
+        align-items: flex-start !important;
+        gap: 10px;
+    }
+
+    .competency-workspace-page .report-generator {
+        padding: 16px;
+    }
+
+    .competency-workspace-page .access-denied-card {
+        padding: 28px 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .competency-workspace-page *,
+    .competency-workspace-page *::before,
+    .competency-workspace-page *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+@media print {
+    body.competency-workspace-page {
+        background: #fff;
+    }
+
+    .competency-workspace-page #navbar-container,
+    .competency-workspace-page #competencySidebar,
+    .competency-workspace-page .competency-workspace-toolbar {
+        display: none !important;
+    }
+
+    .competency-workspace-page #competencyInterface > .row {
+        display: block;
+        min-height: 0;
+        padding: 0;
+    }
+
+    .competency-workspace-page .competency-section {
+        padding: 0;
+    }
+}

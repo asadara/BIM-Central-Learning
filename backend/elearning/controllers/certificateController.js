@@ -1,5 +1,7 @@
 const { Pool } = require('pg');
 const { createPgConfig } = require('../../config/runtimeConfig');
+const { getRequestUser } = require('../../utils/auth');
+const { getRubricContext } = require('../../services/competencyScoringService');
 
 const pool = new Pool(createPgConfig({
     max: 10,
@@ -30,9 +32,17 @@ function ensureTables() {
                     score INTEGER DEFAULT 0,
                     certificate_url TEXT,
                     metadata JSONB DEFAULT '{}'::jsonb,
+                    is_verified BOOLEAN DEFAULT false,
+                    verification_method TEXT,
                     issued_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(user_identifier, quiz_id)
                 );
+            `);
+
+            await pool.query(`
+                ALTER TABLE user_certificates
+                ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false,
+                ADD COLUMN IF NOT EXISTS verification_method TEXT;
             `);
 
             await pool.query(`
@@ -46,6 +56,10 @@ function ensureTables() {
             await pool.query(`
                 CREATE INDEX IF NOT EXISTS idx_user_certificates_issued_at
                 ON user_certificates(issued_at DESC);
+            `);
+            await pool.query(`
+                CREATE INDEX IF NOT EXISTS idx_user_certificates_verified_user
+                ON user_certificates(user_id, is_verified, issued_at DESC);
             `);
         })().catch((error) => {
             ensureTablesPromise = null;
@@ -124,13 +138,29 @@ function mapCertificateRow(row) {
         score: toNonNegativeInt(row.score, 0),
         issuedAt,
         url: certificateUrl,
-        certificateUrl
+        certificateUrl,
+        isVerified: row.is_verified === true,
+        verificationMethod: row.verification_method || null
     };
+}
+
+function canReadCertificates(req, requestedIdentity) {
+    const authUser = getRequestUser(req);
+    if (!authUser) return false;
+    if (authUser.isAdmin) return true;
+    const requested = String(requestedIdentity || '').trim().toLowerCase();
+    return [authUser.id, authUser.email, authUser.username]
+        .map((value) => String(value || '').trim().toLowerCase())
+        .filter(Boolean)
+        .includes(requested);
 }
 
 exports.getUserCertificates = async (req, res) => {
     try {
         await ensureTables();
+        if (!canReadCertificates(req, req.params.userId)) {
+            return res.status(403).json({ error: 'Insufficient privileges' });
+        }
         const userRef = await resolveUserIdentity(req.params.userId);
         if (!userRef.userIdentifier && !userRef.userId) {
             return res.json([]);
@@ -149,12 +179,17 @@ exports.getUserCertificates = async (req, res) => {
                 issuer,
                 score,
                 certificate_url,
+                is_verified,
+                verification_method,
                 issued_at
              FROM user_certificates
-             WHERE ($1::int IS NOT NULL AND user_id = $1)
-                OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+             WHERE is_verified = true
+               AND (
+                    ($1::int IS NOT NULL AND user_id = $1)
+                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+               )
              ORDER BY issued_at DESC`,
             [userRef.userId, userRef.matchValues]
         );
@@ -178,6 +213,9 @@ exports.issueCertificate = async (req, res) => {
 
         const userRef = await resolveUserIdentity(identity);
         const quizId = trimText(payload.quizId, 120) || null;
+        if (!quizId || !getRubricContext().officialExamIds.includes(quizId)) {
+            return res.status(400).json({ error: 'Official exam quizId is required' });
+        }
         const moduleId = trimText(payload.moduleId, 120) || null;
         const title = trimText(payload.title || payload.certificateTitle, 255) || 'Certificate';
         const issuer = trimText(payload.issuer, 120) || 'BC Learning Academy';
@@ -201,18 +239,22 @@ exports.issueCertificate = async (req, res) => {
                 score,
                 certificate_url,
                 metadata,
+                is_verified,
+                verification_method,
                 issued_at
              ) VALUES (
                 $1, $2, $3, $4, $5,
                 $6, $7, $8, $9, $10,
-                $11, $12::jsonb, CURRENT_TIMESTAMP
+                $11, $12::jsonb, true, 'admin-manual-v1', CURRENT_TIMESTAMP
              )
              ON CONFLICT (user_identifier, quiz_id) DO UPDATE SET
                 title = EXCLUDED.title,
                 issuer = EXCLUDED.issuer,
                 score = EXCLUDED.score,
                 certificate_url = EXCLUDED.certificate_url,
-                metadata = EXCLUDED.metadata
+                metadata = EXCLUDED.metadata,
+                is_verified = EXCLUDED.is_verified,
+                verification_method = EXCLUDED.verification_method
              RETURNING
                 id,
                 user_id,
@@ -225,6 +267,8 @@ exports.issueCertificate = async (req, res) => {
                 issuer,
                 score,
                 certificate_url,
+                is_verified,
+                verification_method,
                 issued_at`,
             [
                 certificateId,

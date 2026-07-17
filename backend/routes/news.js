@@ -3,12 +3,33 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
+const multer = require('multer');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 const { createPgConfig } = require('../config/runtimeConfig');
+const { requireAdmin } = require('../utils/auth');
 
 const router = express.Router();
 const LOCAL_NEWS_FILE = path.join(__dirname, '../uploads/localNews.json');
-const DEFAULT_NEWS_IMAGE = '/img/ready.jpg';
+const NEWS_MEDIA_DIR = path.join(__dirname, '../uploads/news-media');
+const MAX_NEWS_MEDIA_ITEMS = 12;
+const MAX_NEWS_MEDIA_FILES = 10;
+const MAX_NEWS_IMAGE_BYTES = 12 * 1024 * 1024;
+const MAX_NEWS_VIDEO_BYTES = 80 * 1024 * 1024;
+const NEWS_API_KEY = String(process.env.NEWS_API_KEY || '').trim();
+const SCRAPE_TIMEOUT_MS = 7000;
+const SCRAPER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 BCL-News/1.0';
+const EXTERNAL_NEWS_QUERY = [
+    '"building information modeling"',
+    '"building information modelling"',
+    '"konstruksi digital"',
+    '"digital construction"',
+    '"ISO 19650"',
+    'openBIM',
+    '"common data environment"',
+    '"digital twin construction"',
+    '"teknologi konstruksi"'
+].join(' OR ');
 
 const dbConfig = createPgConfig({
     max: 10,
@@ -23,6 +44,39 @@ pool.on('error', (err) => {
 });
 
 let dbReadyPromise = null;
+
+fs.mkdirSync(NEWS_MEDIA_DIR, { recursive: true });
+
+const newsMediaStorage = multer.diskStorage({
+    destination: (_req, _file, callback) => callback(null, NEWS_MEDIA_DIR),
+    filename: (_req, file, callback) => {
+        const extensionByMime = {
+            'image/jpeg': '.jpg',
+            'image/png': '.png',
+            'image/webp': '.webp',
+            'image/gif': '.gif',
+            'video/mp4': '.mp4',
+            'video/webm': '.webm',
+            'video/ogg': '.ogv'
+        };
+        callback(null, `${Date.now()}-${crypto.randomUUID()}${extensionByMime[file.mimetype] || ''}`);
+    }
+});
+
+const uploadNewsMedia = multer({
+    storage: newsMediaStorage,
+    limits: {
+        files: MAX_NEWS_MEDIA_FILES,
+        fileSize: MAX_NEWS_VIDEO_BYTES
+    },
+    fileFilter: (_req, file, callback) => {
+        const allowedTypes = new Set([
+            'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+            'video/mp4', 'video/webm', 'video/ogg'
+        ]);
+        callback(allowedTypes.has(file.mimetype) ? null : new Error('Format media tidak didukung.'), allowedTypes.has(file.mimetype));
+    }
+});
 
 function normalizeText(value) {
     if (typeof value !== 'string') return '';
@@ -44,7 +98,7 @@ function normalizeSourceName(source) {
     return value || 'BCL Admin';
 }
 
-function normalizeImageUrl(value, fallback = DEFAULT_NEWS_IMAGE) {
+function normalizeImageUrl(value, fallback = '') {
     const raw = normalizeText(value);
     if (!raw) return fallback;
 
@@ -58,6 +112,109 @@ function normalizeImageUrl(value, fallback = DEFAULT_NEWS_IMAGE) {
     }
 
     return raw;
+}
+
+function normalizeMediaUrl(value, type) {
+    const raw = normalizeText(value).replace(/\\/g, '/');
+    if (!raw) return '';
+    if (type === 'image' && /^data:image\/(?:png|jpe?g|gif|webp);base64,/i.test(raw)) return raw;
+    if (/^https?:\/\//i.test(raw) || raw.startsWith('//') || raw.startsWith('/')) return raw;
+    if (type === 'image') {
+        const cleaned = raw.replace(/^[./]+/, '');
+        if (cleaned.toLowerCase().startsWith('img/')) return `/${cleaned}`;
+    }
+    return '';
+}
+
+function normalizeMediaItems(value) {
+    if (!Array.isArray(value)) return [];
+
+    const seen = new Set();
+    const normalized = [];
+    for (const item of value) {
+        if (!item || typeof item !== 'object') continue;
+        const type = normalizeText(item.type).toLowerCase() === 'video' ? 'video' : 'image';
+        const url = normalizeMediaUrl(item.url || item.src, type);
+        if (!url || seen.has(`${type}:${url}`)) continue;
+        seen.add(`${type}:${url}`);
+        normalized.push({
+            type,
+            url,
+            caption: normalizeText(item.caption).slice(0, 240)
+        });
+        if (normalized.length >= MAX_NEWS_MEDIA_ITEMS) break;
+    }
+    return normalized;
+}
+
+function parseIndonesianPublishedDate(value) {
+    const raw = normalizeText(value).toLowerCase();
+    if (!raw) return new Date().toISOString();
+
+    const monthMap = {
+        januari: 0, februari: 1, maret: 2, april: 3, mei: 4, juni: 5,
+        juli: 6, agustus: 7, september: 8, oktober: 9, november: 10, desember: 11,
+        jan: 0, feb: 1, mar: 2, apr: 3, jun: 5, jul: 6, agu: 7, sep: 8,
+        okt: 9, nov: 10, des: 11
+    };
+    const match = raw.match(/(\d{1,2})\s+(januari|jan|februari|feb|maret|mar|april|apr|mei|juni|jun|juli|jul|agustus|agu|september|sep|oktober|okt|november|nov|desember|des)\s+(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/i);
+    if (!match) return new Date().toISOString();
+
+    const parsed = new Date(Date.UTC(
+        Number(match[3]),
+        monthMap[match[2]],
+        Number(match[1]),
+        Number(match[4] || 0) - 7,
+        Number(match[5] || 0)
+    ));
+    return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+}
+
+function classifyExternalArticle(article) {
+    const text = [
+        article?.title,
+        article?.description,
+        article?.stickerText,
+        article?.fullContent
+    ].map(normalizeText).join(' ').toLowerCase();
+
+    if (!text) return '';
+
+    const hasBimPhrase = /building information model(?:ing|ling)|pemodelan informasi bangunan|openbim|scan[ -]to[ -]bim/i.test(text);
+    const hasBimAcronym = /\bbim\b/i.test(text);
+    const hasConstructionContext = /konstruksi|construction|arsitek|architecture|engineering|proyek|project|bangunan|infrastruktur|revit|navisworks|autodesk|model|digital/i.test(text);
+    const hasInformationStandard = /iso\s*19650|common data environment|\bcde\b|industry foundation classes|\bifc\b/i.test(text);
+    const hasDigitalConstruction = /konstruksi digital|digital construction|construction 4\.0|smart construction|teknologi konstruksi|3d (?:concrete )?print|cetak (?:beton|bangunan) 3d/i.test(text);
+    const hasConstructionTwin = /digital twin/i.test(text) && hasConstructionContext;
+
+    if (!(hasBimPhrase || (hasBimAcronym && hasConstructionContext) || hasInformationStandard || hasDigitalConstruction || hasConstructionTwin)) {
+        return '';
+    }
+
+    if (/iso\s*19650|regulasi|peraturan|standard|standar|mandat|kebijakan/i.test(text)) return 'Regulation';
+    if (/pelatihan|training|kursus|sertifikasi|pendidikan|universitas/i.test(text)) return 'Education';
+    if (/infrastruktur|jalan|jembatan|bendungan|kereta|mrt|ikn/i.test(text)) return 'Infrastructure';
+    if (/digital twin|openbim|\bifc\b|\bcde\b|software|revit|navisworks|autodesk|otomasi|automation|3d print|cetak .*3d/i.test(text)) return 'Technology';
+    return 'BIM';
+}
+
+function filterAndNormalizeExternalArticles(articles, sourceName) {
+    if (!Array.isArray(articles)) return [];
+
+    return articles.reduce((accepted, article) => {
+        const category = classifyExternalArticle(article);
+        if (!category) return accepted;
+
+        accepted.push({
+            ...article,
+            stickerText: summarizeText(article.stickerText || article.description || article.title, 160),
+            fullContent: normalizeText(article.fullContent || article.content || article.description || ''),
+            source: { name: normalizeSourceName(article.source || sourceName) },
+            category,
+            origin: 'external'
+        });
+        return accepted;
+    }, []);
 }
 
 function normalizeNewsPayload(input, fallback = {}) {
@@ -85,6 +242,23 @@ function normalizeNewsPayload(input, fallback = {}) {
 
     const numericViews = Number(merged.views);
 
+    const hasPrimaryImage = Object.prototype.hasOwnProperty.call(input || {}, 'urlToImage') ||
+        Object.prototype.hasOwnProperty.call(input || {}, 'image');
+    const primaryImageInput = hasPrimaryImage
+        ? input.urlToImage || input.image
+        : fallback.urlToImage || fallback.image;
+    let urlToImage = normalizeImageUrl(primaryImageInput, '');
+    const hasMedia = Object.prototype.hasOwnProperty.call(input || {}, 'media');
+    let media = normalizeMediaItems(hasMedia ? input.media : fallback.media);
+
+    if (!urlToImage) {
+        urlToImage = media.find((item) => item.type === 'image')?.url || '';
+    }
+    if (urlToImage && !media.some((item) => item.type === 'image' && item.url === urlToImage)) {
+        media.unshift({ type: 'image', url: urlToImage, caption: '' });
+        media = media.slice(0, MAX_NEWS_MEDIA_ITEMS);
+    }
+
     return {
         id: normalizeText(merged.id) || fallback.id || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         title,
@@ -92,18 +266,25 @@ function normalizeNewsPayload(input, fallback = {}) {
         fullContent,
         description,
         url: normalizeText(merged.url || fallback.url) || '#',
-        urlToImage: normalizeImageUrl(merged.urlToImage || merged.image || fallback.urlToImage || fallback.image),
+        urlToImage,
+        media,
         sourceName: normalizeSourceName(merged.sourceName || merged.source || fallback.sourceName || fallback.source),
         publishedAt,
         category: normalizeText(merged.category || fallback.category) || 'BIM',
         author: normalizeText(merged.author || fallback.author) || 'AdminBCL',
         status: normalizeText(merged.status || fallback.status) || 'published',
+        origin: normalizeText(merged.origin || merged.sourceType || fallback.origin) || 'local',
         views: Number.isFinite(numericViews) ? numericViews : Number(fallback.views || 0),
         updatedAt
     };
 }
 
 function mapDbRowToArticle(row) {
+    const urlToImage = normalizeImageUrl(row.url_to_image, '');
+    let media = normalizeMediaItems(row.media_json);
+    if (urlToImage && !media.some((item) => item.type === 'image' && item.url === urlToImage)) {
+        media.unshift({ type: 'image', url: urlToImage, caption: '' });
+    }
     return {
         id: row.id,
         title: row.title,
@@ -111,12 +292,14 @@ function mapDbRowToArticle(row) {
         fullContent: row.full_content,
         description: row.description,
         url: row.url || '#',
-        urlToImage: normalizeImageUrl(row.url_to_image),
+        urlToImage,
+        media,
         source: { name: row.source_name || 'BCL Admin' },
         publishedAt: row.published_at,
         category: row.category || 'BIM',
         author: row.author || 'AdminBCL',
         status: row.status || 'published',
+        origin: 'local',
         views: Number(row.views || 0),
         updatedAt: row.updated_at
     };
@@ -175,6 +358,7 @@ async function ensureNewsTable() {
             description TEXT,
             url TEXT DEFAULT '#',
             url_to_image TEXT,
+            media_json JSONB NOT NULL DEFAULT '[]'::jsonb,
             source_name TEXT,
             category TEXT,
             author TEXT,
@@ -184,6 +368,14 @@ async function ensureNewsTable() {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
+    `);
+
+    await pool.query("ALTER TABLE news_articles ADD COLUMN IF NOT EXISTS media_json JSONB NOT NULL DEFAULT '[]'::jsonb");
+    await pool.query(`
+        UPDATE news_articles
+        SET media_json = jsonb_build_array(jsonb_build_object('type', 'image', 'url', url_to_image, 'caption', ''))
+        WHERE COALESCE(url_to_image, '') <> ''
+          AND jsonb_array_length(COALESCE(media_json, '[]'::jsonb)) = 0
     `);
 
     await pool.query('CREATE INDEX IF NOT EXISTS idx_news_articles_published_at ON news_articles(published_at DESC)');
@@ -259,7 +451,7 @@ async function migrateLegacyJsonIfNeeded() {
 async function normalizeStoredImagePaths() {
     const result = await pool.query('SELECT id, url_to_image FROM news_articles');
     for (const row of result.rows) {
-        const normalized = normalizeImageUrl(row.url_to_image);
+        const normalized = normalizeImageUrl(row.url_to_image, '');
         if ((row.url_to_image || '') !== normalized) {
             await pool.query(
                 'UPDATE news_articles SET url_to_image = $2, updated_at = NOW() WHERE id = $1',
@@ -284,67 +476,132 @@ async function initializeNewsStorage() {
     return dbReadyPromise;
 }
 
-async function fetchLocalNewsFromDb() {
+async function fetchLocalNewsFromDb({ publishedOnly = false } = {}) {
     await initializeNewsStorage();
+    const publishedCondition = publishedOnly ? "WHERE LOWER(COALESCE(status, 'published')) = 'published'" : '';
     const result = await pool.query(`
         SELECT
-            id, title, sticker_text, full_content, description, url, url_to_image,
+            id, title, sticker_text, full_content, description, url, url_to_image, media_json,
             source_name, category, author, status, views, published_at, updated_at
         FROM news_articles
+        ${publishedCondition}
         ORDER BY published_at DESC, created_at DESC
     `);
     return result.rows.map(mapDbRowToArticle);
 }
 
+async function scrapeKompasArticles() {
+    const url = 'https://www.kompas.com/tag/building-information-modelling-bim';
+    const { data } = await axios.get(url, {
+        timeout: SCRAPE_TIMEOUT_MS,
+        headers: { 'User-Agent': SCRAPER_USER_AGENT }
+    });
+    const $ = cheerio.load(data);
+    const articles = [];
+
+    $('.articleItem').each((index, element) => {
+        if (articles.length >= 15) return false;
+
+        const title = $(element).find('.articleTitle').text().trim();
+        const articleUrl = $(element).find('a.article-link').attr('href');
+        const description = $(element).find('.articleItem-box p').first().text().trim();
+        const dateText = $(element).find('.articlePost-date').text().trim();
+        const imgSrc = $(element).find('.articleItem-img img').attr('src');
+
+        if (title && articleUrl) {
+            articles.push({
+                title,
+                stickerText: summarizeText(description || title, 140),
+                description,
+                fullContent: description,
+                url: articleUrl,
+                urlToImage: normalizeImageUrl(imgSrc),
+                source: { name: 'Kompas.com' },
+                    publishedAt: parseIndonesianPublishedDate(dateText),
+                    category: 'BIM',
+                    origin: 'external'
+                });
+        }
+    });
+
+    return filterAndNormalizeExternalArticles(articles, 'Kompas.com');
+}
+
+async function scrapeDetikArticles() {
+    const url = 'https://www.detik.com/tag/teknologi-konstruksi/';
+    const { data } = await axios.get(url, {
+        timeout: SCRAPE_TIMEOUT_MS,
+        headers: { 'User-Agent': SCRAPER_USER_AGENT }
+    });
+    const $ = cheerio.load(data);
+    const articles = [];
+
+    $('.list.media_rows.list-berita article').each((index, element) => {
+        if (articles.length >= 10) return false;
+
+        const title = $(element).find('h2.title').text().trim();
+        const articleUrl = $(element).find('a').first().attr('href');
+        const description = $(element).find('.box_text p').text().trim();
+        const dateNode = $(element).find('.date').first().clone();
+        dateNode.find('.category').remove();
+        const dateText = dateNode.text().trim();
+        const image = $(element).find('.box_thumb img');
+        const imgSrc = image.attr('data-src') || image.attr('src');
+
+        if (title && articleUrl) {
+            articles.push({
+                title,
+                stickerText: summarizeText(description || title, 140),
+                description,
+                fullContent: description,
+                url: articleUrl.startsWith('http') ? articleUrl : `https://www.detik.com${articleUrl}`,
+                urlToImage: normalizeImageUrl(imgSrc),
+                source: { name: 'Detik.com' },
+                    publishedAt: parseIndonesianPublishedDate(dateText),
+                    category: 'Technology',
+                    origin: 'external'
+                });
+        }
+    });
+
+    return filterAndNormalizeExternalArticles(articles, 'Detik.com');
+}
+
+async function fetchNewsApiArticles() {
+    if (!NEWS_API_KEY) return [];
+
+    const response = await axios.get('https://newsapi.org/v2/everything', {
+        timeout: SCRAPE_TIMEOUT_MS,
+        headers: { 'X-Api-Key': NEWS_API_KEY },
+        params: {
+            q: EXTERNAL_NEWS_QUERY,
+            searchIn: 'title,description',
+            sortBy: 'publishedAt',
+            pageSize: 30
+        }
+    });
+
+    return filterAndNormalizeExternalArticles(response.data.articles || [], 'NewsAPI');
+}
+
 // Scraping berita dari Kompas.com
 router.get('/scrape-kompas', async (req, res) => {
     try {
-        const url = 'https://www.kompas.com/tag/building-information-modelling-bim';
-        const { data } = await axios.get(url);
-        const $ = cheerio.load(data);
-        const articles = [];
-
-        $('.latest--indeks .article__list').each((index, element) => {
-            const title = $(element).find('.article__title a').text().trim();
-            const articleUrl = $(element).find('.article__title a').attr('href');
-            const description = $(element).find('.article__lead').text().trim();
-            const imgSrc =
-                $(element).find('.article__asset img').attr('data-src') ||
-                $(element).find('.article__asset img').attr('src');
-
-            if (title && articleUrl) {
-                articles.push({
-                    title,
-                    stickerText: summarizeText(description || title, 140),
-                    description,
-                    fullContent: description,
-                    url: articleUrl,
-                    urlToImage: normalizeImageUrl(imgSrc),
-                    source: { name: 'Kompas.com' },
-                    publishedAt: new Date().toISOString(),
-                    category: 'BIM'
-                });
-            }
-        });
-
-        res.json(articles);
+        res.json(await scrapeKompasArticles());
     } catch (error) {
-        console.error('Error scraping Kompas:', error);
-        res.status(500).json({ error: 'Gagal mengambil berita dari Kompas' });
+        console.warn('[NEWS] Kompas scraping failed:', error.message);
+        res.status(502).json({ error: 'Gagal mengambil berita dari Kompas' });
     }
 });
 
 // Fetch external news API
 router.get('/external-news', async (req, res) => {
+    if (!NEWS_API_KEY) {
+        return res.status(503).json({ error: 'External news provider is not configured' });
+    }
+
     try {
-        const response = await axios.get('https://newsapi.org/v2/everything?q=BIM&apiKey=b2b458b5656947f9986209076616e740');
-        const normalized = (response.data.articles || []).map((article) => ({
-            ...article,
-            stickerText: summarizeText(article.description || article.title, 140),
-            fullContent: normalizeText(article.content || article.description || article.title),
-            source: { name: normalizeSourceName(article.source) }
-        }));
-        res.json(normalized);
+        res.json(await fetchNewsApiArticles());
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch external news' });
     }
@@ -353,7 +610,7 @@ router.get('/external-news', async (req, res) => {
 // Get local news (PostgreSQL)
 router.get('/local-news', async (req, res) => {
     try {
-        const news = await fetchLocalNewsFromDb();
+        const news = await fetchLocalNewsFromDb({ publishedOnly: true });
         res.json(news);
     } catch (error) {
         console.error('[NEWS] Failed to get local news from PostgreSQL:', error);
@@ -361,19 +618,62 @@ router.get('/local-news', async (req, res) => {
     }
 });
 
+// Get all local news for administration, including non-published entries.
+router.get('/local-news/admin', requireAdmin, async (req, res) => {
+    try {
+        const news = await fetchLocalNewsFromDb();
+        res.set('Cache-Control', 'no-store');
+        res.json(news);
+    } catch (error) {
+        console.error('[NEWS] Failed to get admin news list from PostgreSQL:', error);
+        res.status(500).json({ error: 'Failed to get admin news list from PostgreSQL' });
+    }
+});
+
+// Upload supporting photos/videos before saving the news JSON payload.
+router.post('/media-upload', requireAdmin, (req, res) => {
+    uploadNewsMedia.array('media', MAX_NEWS_MEDIA_FILES)(req, res, (error) => {
+        if (error) {
+            (Array.isArray(req.files) ? req.files : []).forEach((file) => fs.unlink(file.path, () => {}));
+            const status = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+            return res.status(status).json({
+                error: error.code === 'LIMIT_FILE_COUNT'
+                    ? `Maksimal ${MAX_NEWS_MEDIA_FILES} file per upload.`
+                    : error.message || 'Upload media gagal.'
+            });
+        }
+
+        const files = Array.isArray(req.files) ? req.files : [];
+        const oversizedImage = files.find((file) => file.mimetype.startsWith('image/') && file.size > MAX_NEWS_IMAGE_BYTES);
+        if (oversizedImage) {
+            files.forEach((file) => fs.unlink(file.path, () => {}));
+            return res.status(413).json({ error: 'Ukuran setiap gambar maksimal 12MB.' });
+        }
+
+        return res.status(201).json({
+            media: files.map((file) => ({
+                type: file.mimetype.startsWith('video/') ? 'video' : 'image',
+                url: `/uploads/news-media/${file.filename}`,
+                caption: '',
+                name: path.basename(file.originalname || file.filename)
+            }))
+        });
+    });
+});
+
 // Add local news (PostgreSQL)
-router.post('/local-news', async (req, res) => {
+router.post('/local-news', requireAdmin, async (req, res) => {
     try {
         await initializeNewsStorage();
         const payload = normalizeNewsPayload(req.body);
         const result = await pool.query(
             `
                 INSERT INTO news_articles (
-                    id, title, sticker_text, full_content, description, url, url_to_image,
+                    id, title, sticker_text, full_content, description, url, url_to_image, media_json,
                     source_name, category, author, status, views, published_at, updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::timestamptz, $14::timestamptz)
-                RETURNING id, title, sticker_text, full_content, description, url, url_to_image,
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14::timestamptz, $15::timestamptz)
+                RETURNING id, title, sticker_text, full_content, description, url, url_to_image, media_json,
                           source_name, category, author, status, views, published_at, updated_at
             `,
             [
@@ -384,6 +684,7 @@ router.post('/local-news', async (req, res) => {
                 payload.description,
                 payload.url,
                 payload.urlToImage,
+                JSON.stringify(payload.media),
                 payload.sourceName,
                 payload.category,
                 payload.author,
@@ -405,13 +706,13 @@ router.post('/local-news', async (req, res) => {
 });
 
 // Update local news (PostgreSQL)
-router.put('/local-news/:id', async (req, res) => {
+router.put('/local-news/:id', requireAdmin, async (req, res) => {
     try {
         await initializeNewsStorage();
         const targetId = normalizeText(req.params.id);
         const existingResult = await pool.query(
             `
-                SELECT id, title, sticker_text, full_content, description, url, url_to_image,
+                SELECT id, title, sticker_text, full_content, description, url, url_to_image, media_json,
                        source_name, category, author, status, views, published_at, updated_at
                 FROM news_articles
                 WHERE id = $1
@@ -437,15 +738,16 @@ router.put('/local-news/:id', async (req, res) => {
                     description = $5,
                     url = $6,
                     url_to_image = $7,
-                    source_name = $8,
-                    category = $9,
-                    author = $10,
-                    status = $11,
-                    views = $12,
-                    published_at = $13::timestamptz,
-                    updated_at = $14::timestamptz
+                    media_json = $8::jsonb,
+                    source_name = $9,
+                    category = $10,
+                    author = $11,
+                    status = $12,
+                    views = $13,
+                    published_at = $14::timestamptz,
+                    updated_at = $15::timestamptz
                 WHERE id = $1
-                RETURNING id, title, sticker_text, full_content, description, url, url_to_image,
+                RETURNING id, title, sticker_text, full_content, description, url, url_to_image, media_json,
                           source_name, category, author, status, views, published_at, updated_at
             `,
             [
@@ -456,6 +758,7 @@ router.put('/local-news/:id', async (req, res) => {
                 merged.description,
                 merged.url,
                 merged.urlToImage,
+                JSON.stringify(merged.media),
                 merged.sourceName,
                 merged.category,
                 merged.author,
@@ -477,7 +780,7 @@ router.put('/local-news/:id', async (req, res) => {
 });
 
 // Delete local news (PostgreSQL)
-router.delete('/local-news/:id', async (req, res) => {
+router.delete('/local-news/:id', requireAdmin, async (req, res) => {
     try {
         await initializeNewsStorage();
         const targetId = normalizeText(req.params.id);
@@ -497,42 +800,10 @@ router.delete('/local-news/:id', async (req, res) => {
 // Scraping berita dari Detik.com
 router.get('/scrape-detik', async (req, res) => {
     try {
-        const url = 'https://www.detik.com/tag/konstruksi/';
-        const { data } = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
-        const $ = cheerio.load(data);
-        const articles = [];
-
-        $('.list-content__item').each((index, element) => {
-            if (articles.length >= 10) return false;
-
-            const title = $(element).find('h3 a').text().trim();
-            const articleUrl = $(element).find('h3 a').attr('href');
-            const description = $(element).find('.media__desc').text().trim();
-            const imgSrc = $(element).find('.media__image img').attr('src');
-
-            if (title && articleUrl) {
-                articles.push({
-                    title,
-                    stickerText: summarizeText(description || title, 140),
-                    description,
-                    fullContent: description,
-                    url: articleUrl.startsWith('http') ? articleUrl : `https://www.detik.com${articleUrl}`,
-                    urlToImage: normalizeImageUrl(imgSrc),
-                    source: { name: 'Detik.com' },
-                    publishedAt: new Date().toISOString(),
-                    category: 'Construction'
-                });
-            }
-        });
-
-        res.json(articles);
+        res.json(await scrapeDetikArticles());
     } catch (error) {
-        console.error('Error scraping Detik:', error);
-        res.status(500).json({ error: 'Gagal mengambil berita dari Detik' });
+        console.warn('[NEWS] Detik scraping failed:', error.message);
+        res.status(502).json({ error: 'Gagal mengambil berita dari Detik' });
     }
 });
 
@@ -541,30 +812,24 @@ router.get('/all-news', async (req, res) => {
     try {
         console.log('[NEWS] Starting news aggregation...');
 
-        const baseUrl = process.env.BCL_BASE_URL || `${req.protocol}://${req.get('host')}`;
         let scrapedArticles = [];
+        const scrapeResults = await Promise.allSettled([
+            scrapeKompasArticles(),
+            scrapeDetikArticles(),
+            fetchNewsApiArticles()
+        ]);
 
-        try {
-            const kompasResponse = await axios.get(`${baseUrl}/api/news/scrape-kompas`);
-            if (Array.isArray(kompasResponse.data)) {
-                scrapedArticles.push(...kompasResponse.data);
-                console.log(`[NEWS] Kompas: ${kompasResponse.data.length} articles`);
+        scrapeResults.forEach((result, index) => {
+            const sourceName = ['Kompas', 'Detik', 'NewsAPI'][index];
+            if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+                scrapedArticles.push(...result.value);
+                console.log(`[NEWS] ${sourceName}: ${result.value.length} articles`);
+            } else if (result.status === 'rejected') {
+                console.warn(`[NEWS] ${sourceName} scraping failed:`, result.reason?.message || result.reason);
             }
-        } catch (kompasError) {
-            console.warn('[NEWS] Kompas scraping failed:', kompasError.message);
-        }
+        });
 
-        try {
-            const detikResponse = await axios.get(`${baseUrl}/api/news/scrape-detik`);
-            if (Array.isArray(detikResponse.data)) {
-                scrapedArticles.push(...detikResponse.data);
-                console.log(`[NEWS] Detik: ${detikResponse.data.length} articles`);
-            }
-        } catch (detikError) {
-            console.warn('[NEWS] Detik scraping failed:', detikError.message);
-        }
-
-        const localNews = await fetchLocalNewsFromDb();
+        const localNews = await fetchLocalNewsFromDb({ publishedOnly: true });
         console.log(`[NEWS] Local PostgreSQL news: ${localNews.length} articles`);
 
         const mergedArticles = [...scrapedArticles, ...localNews].map((article) => {
@@ -577,11 +842,13 @@ router.get('/all-news', async (req, res) => {
                 description: normalized.description,
                 url: normalized.url,
                 urlToImage: normalized.urlToImage,
+                media: normalized.media,
                 source: { name: normalized.sourceName },
                 publishedAt: normalized.publishedAt,
                 category: normalized.category,
                 author: normalized.author,
                 status: normalized.status,
+                origin: normalized.origin,
                 views: normalized.views
             };
         });
@@ -590,57 +857,11 @@ router.get('/all-news', async (req, res) => {
             (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0)
         );
 
-        if (uniqueNews.length === 0) {
-            return res.json(getStaticFallbackNews());
-        }
-
         return res.json(uniqueNews);
     } catch (error) {
         console.error('[NEWS] Error in all-news:', error);
-        return res.json(getStaticFallbackNews());
+        return res.status(500).json({ error: 'Failed to aggregate news' });
     }
 });
-
-function getStaticFallbackNews() {
-    const nowIso = new Date().toISOString();
-    return [
-        {
-            id: 'fallback-1',
-            title: 'Peraturan BIM Terbaru dari Kementerian PUPR',
-            stickerText: 'Kementerian PUPR mengeluarkan regulasi terbaru implementasi BIM di proyek nasional.',
-            description: 'Kementerian PUPR mengeluarkan regulasi terbaru implementasi BIM di proyek nasional.',
-            fullContent: 'Kementerian PUPR mengeluarkan regulasi terbaru mengenai implementasi BIM di Indonesia, termasuk pedoman standar data, kolaborasi lintas disiplin, dan target adopsi pada proyek strategis.',
-            url: '#',
-            urlToImage: DEFAULT_NEWS_IMAGE,
-            source: { name: 'Kementerian PUPR' },
-            publishedAt: nowIso,
-            category: 'Regulation'
-        },
-        {
-            id: 'fallback-2',
-            title: 'Teknologi BIM 2025: Inovasi Terbaru',
-            stickerText: 'Inovasi BIM 2025 menyoroti AI, VR/AR, dan otomatisasi kolaborasi proyek.',
-            description: 'Inovasi BIM 2025 menyoroti AI, VR/AR, dan otomatisasi kolaborasi proyek.',
-            fullContent: 'Eksplorasi teknologi BIM terbaru termasuk AI, VR/AR, dan otomasi alur kerja untuk mempercepat koordinasi desain dan konstruksi serta meningkatkan kualitas keputusan proyek.',
-            url: '#',
-            urlToImage: DEFAULT_NEWS_IMAGE,
-            source: { name: 'Teknologi Indonesia' },
-            publishedAt: nowIso,
-            category: 'Technology'
-        },
-        {
-            id: 'fallback-3',
-            title: 'Program BIM untuk Universitas Indonesia',
-            stickerText: 'Universitas Indonesia meluncurkan program magister BIM terintegrasi.',
-            description: 'Universitas Indonesia meluncurkan program magister BIM terintegrasi.',
-            fullContent: 'Universitas Indonesia meluncurkan program magister BIM terintegrasi untuk mempersiapkan ahli konstruksi digital dengan fokus pada manajemen informasi, koordinasi model, dan standar internasional.',
-            url: 'https://ui.ac.id',
-            urlToImage: DEFAULT_NEWS_IMAGE,
-            source: { name: 'Universitas Indonesia' },
-            publishedAt: nowIso,
-            category: 'Education'
-        }
-    ];
-}
 
 module.exports = router;

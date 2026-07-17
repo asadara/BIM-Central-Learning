@@ -582,12 +582,20 @@ goto :error_exit
 
 :: Boot delay for --auto/--boot flags
 if "%BOOT_DELAY%"=="1" (
-    echo [INFO] Boot delay active - waiting 20 seconds for services to settle...
-    call :sleep 20
+    if exist "%~dp0admin-restart-in-progress.flag" (
+        echo [INFO] Admin restart detected - skipping boot delay because PostgreSQL remains online
+    ) else (
+        echo [INFO] Boot delay active - waiting 20 seconds for services to settle...
+        call :sleep 20
+    )
 )
 
 if not "%RUN_AS_SYSTEM%"=="1" (
-    call :wait_for_pc_bim02_audit_unc
+    if exist "%~dp0admin-restart-in-progress.flag" (
+        echo [INFO] Admin restart detected - deferring PC-BIM02 Audit UNC recovery to watchdog
+    ) else (
+        call :wait_for_pc_bim02_audit_unc
+    )
 )
 
 :: Reset mode: perform targeted cleanup if requested

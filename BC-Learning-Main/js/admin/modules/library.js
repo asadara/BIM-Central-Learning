@@ -9,6 +9,7 @@ class LibraryModule {
         this.currentPage = 1;
         this.itemsPerPage = 20;
         this.currentPath = '/';
+        this.loadPromise = null;
     }
 
     /**
@@ -29,6 +30,16 @@ class LibraryModule {
     /**
      * Load library management
      */
+    async load() {
+        if (this.loadPromise) return this.loadPromise;
+        this.loadPromise = this.loadLibrary();
+        try {
+            return await this.loadPromise;
+        } finally {
+            this.loadPromise = null;
+        }
+    }
+
     async loadLibrary() {
         console.log('📚 Loading library management...');
 

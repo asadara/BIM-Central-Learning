@@ -200,7 +200,7 @@ async function fetchQuizStatsFromApi(userIdentity) {
     if (!userIdentity) return null;
 
     try {
-        const response = await fetch(`/api/elearning/quiz/user/${encodeURIComponent(userIdentity)}/stats`);
+        const response = await authFetch(`/api/elearning/quiz/user/${encodeURIComponent(userIdentity)}/stats`);
         if (!response.ok) return null;
         return response.json();
     } catch (error) {
@@ -213,7 +213,7 @@ async function fetchCertificatesFromApi(userIdentity) {
     if (!userIdentity) return [];
 
     try {
-        const response = await fetch(`/api/elearning/certificate/${encodeURIComponent(userIdentity)}`);
+        const response = await authFetch(`/api/elearning/certificate/${encodeURIComponent(userIdentity)}`);
         if (!response.ok) return [];
         const data = await response.json();
         return Array.isArray(data) ? data : [];
@@ -347,7 +347,7 @@ function loadLearningActivityStats(summary) {
 
 async function loadQuizHistory(userIdentity) {
     try {
-        const response = await fetch(`/api/elearning/quiz/user/${encodeURIComponent(userIdentity)}/history?page=1&limit=5`);
+        const response = await authFetch(`/api/elearning/quiz/user/${encodeURIComponent(userIdentity)}/history?page=1&limit=5`);
         if (!response.ok) {
             renderQuizHistory([]);
             return;

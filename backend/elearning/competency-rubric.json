@@ -1,0 +1,24 @@
+{
+  "id": "BCL-COMP-2026.1",
+  "scaleMax": 1000,
+  "method": "verified-evidence-weighted-coverage",
+  "weights": {
+    "assessmentAccuracy": 0.60,
+    "assessmentCoverage": 0.20,
+    "verifiedCredentials": 0.20
+  },
+  "rules": {
+    "adjustAccuracyByCoverage": true,
+    "unverifiedEvidenceScores": false,
+    "jobRoleScores": false,
+    "loginActivityScores": false,
+    "learningProgressScores": false
+  },
+  "levels": [
+    { "minimum": 800, "name": "Expert" },
+    { "minimum": 600, "name": "Advanced" },
+    { "minimum": 400, "name": "Intermediate" },
+    { "minimum": 200, "name": "Beginner" },
+    { "minimum": 0, "name": "Novice" }
+  ]
+}

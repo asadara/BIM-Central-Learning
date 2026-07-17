@@ -6,9 +6,13 @@ const path = require('path');
 const { Pool } = require('pg');
 const { getRequestUser } = require('../utils/auth');
 const { createPgConfig } = require('../config/runtimeConfig');
+const {
+    RUBRIC,
+    getRubricContext,
+    calculateCompetencyProfile
+} = require('../services/competencyScoringService');
 
 // Competency data storage
-const COMPETENCY_DATA_FILE = path.join(__dirname, '..', 'competency-data.json');
 const REPORTS_DATA_FILE = path.join(__dirname, '..', 'competency-reports.json');
 const AUTHORITY_DATA_FILE = path.join(__dirname, '..', 'competency-authorities.json');
 const USERS_FILE = path.join(__dirname, '..', 'users.json');
@@ -25,40 +29,6 @@ const pool = new Pool(dbConfig);
 pool.on('error', (err) => {
     console.warn('WARN: PostgreSQL pool error in competencyRoutes:', err.message);
 });
-
-// Competency Roles
-const COMPETENCY_ROLES = {
-    MANAGER: {
-        level: 1,
-        name: 'Manager Kompetensi',
-        permissions: ['view_reports', 'generate_reports', 'export_reports']
-    },
-    AUTHORITY: {
-        level: 2,
-        name: 'Otoritas Legal',
-        permissions: ['view_reports', 'generate_reports', 'export_reports',
-                     'approve_reports', 'reject_reports', 'legal_signing']
-    }
-};
-
-// Helper function to read competency data
-async function readCompetencyData() {
-    try {
-        const data = await fs.readFile(COMPETENCY_DATA_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        // Return default structure if file doesn't exist
-        return {
-            users: [],
-            lastUpdated: new Date().toISOString()
-        };
-    }
-}
-
-// Helper function to write competency data
-async function writeCompetencyData(data) {
-    await fs.writeFile(COMPETENCY_DATA_FILE, JSON.stringify(data, null, 2));
-}
 
 // Helper function to read reports data
 async function readReportsData() {
@@ -124,68 +94,48 @@ async function fetchMappingAccessFromJson(userId, email) {
     return !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
 }
 
-// Competency Scoring Algorithm
-function calculateCompetencyScore(user) {
-    let totalScore = 0;
-
-    // BIM Level Score (Base score)
-    const bimLevelScores = {
-        'BIM Modeller': 100,
-        'BIM Coordinator': 200,
-        'BIM Manager': 300,
-        'Expert': 400
-    };
-    totalScore += bimLevelScores[user.bimLevel] || 0;
-
-    // Learning Activities Score
-    const progress = user.progress || {};
-    totalScore += Math.min((progress.coursesCompleted || 0) * 40, 200);
-    totalScore += Math.min((progress.quizAttempts || 0) * 10, 120);
-    totalScore += Math.min((progress.practiceAttempts || 0) * 15, 150);
-    totalScore += Math.min((progress.examAttempts || 0) * 20, 120);
-    totalScore += Math.min((progress.examsPassed || 0) * 50, 150);
-    totalScore += Math.min((progress.certificatesEarned || 0) * 100, 200);
-
-    const averageAttemptScore = Number(progress.averageAttemptScore || 0);
-    if (averageAttemptScore > 0) {
-        totalScore += Math.min(Math.round(averageAttemptScore), 100);
-    }
-
-    const theoryCategoriesAttempted = Number(progress.theoryCategoriesAttempted || 0);
-    totalScore += Math.min(theoryCategoriesAttempted * 25, 75);
-
-    // Activity Score (based on login count and recency)
-    const loginCount = user.loginCount || 0;
-    const lastLogin = user.lastLogin ? new Date(user.lastLogin) : new Date(0);
-    const daysSinceLastLogin = (new Date() - lastLogin) / (1000 * 60 * 60 * 24);
-
-    // Bonus for recent activity (max 50 points)
-    const activityBonus = Math.max(0, 50 - Math.floor(daysSinceLastLogin / 7));
-    totalScore += activityBonus;
-
-    return Math.min(totalScore, 1000); // Cap at 1000 points
+async function ensureCompetencyEvidenceSchema() {
+    await pool.query(`ALTER TABLE learning_attempts ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
+    await pool.query(`ALTER TABLE user_certificates ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false`);
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS learning_activity_events (
+            id BIGSERIAL PRIMARY KEY,
+            user_id TEXT,
+            user_email TEXT,
+            module_id TEXT NOT NULL,
+            module_type TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            title TEXT,
+            category TEXT,
+            source TEXT,
+            progress_percent INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
 }
 
-// Determine competency level from score
-function getCompetencyLevel(score) {
-    if (score >= 800) return 'Expert';
-    if (score >= 600) return 'Advanced';
-    if (score >= 400) return 'Intermediate';
-    if (score >= 200) return 'Beginner';
-    return 'Novice';
+function applyCompetencyProfile(user, evidence = user.competencyEvidence || {}) {
+    const profile = calculateCompetencyProfile(evidence, getRubricContext());
+    return {
+        ...user,
+        ...profile,
+        competency: profile
+    };
 }
 
 function normalizeLevelName(level) {
     const value = String(level || '').trim().toLowerCase();
+    if (value === 'unassessed') return 'Unassessed';
     if (value === 'expert') return 'Expert';
     if (value === 'advanced') return 'Advanced';
     if (value === 'intermediate') return 'Intermediate';
     if (value === 'beginner') return 'Beginner';
-    return 'Novice';
+    return 'Unassessed';
 }
 
 function buildLevelDistribution(users) {
     const distribution = {
+        unassessed: 0,
         novice: 0,
         beginner: 0,
         intermediate: 0,
@@ -202,12 +152,15 @@ function buildLevelDistribution(users) {
 }
 
 function computeAverageCompetency(users) {
-    if (!Array.isArray(users) || users.length === 0) return 0;
-    const total = users.reduce((sum, user) => sum + Number(user.competencyScore || 0), 0);
-    return Math.round(total / users.length);
+    const assessedUsers = (Array.isArray(users) ? users : [])
+        .filter((user) => user.competencyStatus === 'assessed');
+    if (assessedUsers.length === 0) return null;
+    const total = assessedUsers.reduce((sum, user) => sum + Number(user.competencyScore || 0), 0);
+    return Math.round(total / assessedUsers.length);
 }
 
 async function fetchCompetencyUsersFromDb() {
+    await ensureCompetencyEvidenceSchema();
     const result = await pool.query(
         `WITH attempt_stats AS (
             SELECT
@@ -217,19 +170,27 @@ async function fetchCompetencyUsersFromDb() {
                 COUNT(*) FILTER (WHERE source_type = 'practice')::int AS practice_attempts,
                 COUNT(*) FILTER (WHERE source_type = 'exam')::int AS exam_attempts,
                 COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed,
-                COUNT(*) FILTER (
-                    WHERE quiz_category IN ('mindset', 'governance', 'workflow', 'bim-mindset', 'bim-governance', 'delivery-workflow')
-                )::int AS theory_attempts,
-                COUNT(DISTINCT quiz_category) FILTER (
-                    WHERE quiz_category IN ('mindset', 'governance', 'workflow', 'bim-mindset', 'bim-governance', 'delivery-workflow')
-                )::int AS theory_categories_attempted,
+                COUNT(*) FILTER (WHERE passed = true)::int AS passed_attempts,
                 COALESCE(ROUND(AVG(percentage)), 0)::int AS average_attempt_score,
-                COALESCE(ROUND(AVG(percentage) FILTER (
-                    WHERE quiz_category IN ('mindset', 'governance', 'workflow', 'bim-mindset', 'bim-governance', 'delivery-workflow')
-                )), 0)::int AS theory_average_score,
                 MAX(submitted_at) AS last_attempt_at,
                 ARRAY_REMOVE(ARRAY_AGG(DISTINCT quiz_category), NULL) AS categories_attempted
             FROM learning_attempts
+            WHERE user_id IS NOT NULL AND is_verified = true
+            GROUP BY user_id
+        ), certificate_stats AS (
+            SELECT
+                user_id,
+                COUNT(*)::int AS certificate_count,
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT quiz_id), NULL) AS certificate_exam_ids
+            FROM user_certificates
+            WHERE user_id IS NOT NULL AND is_verified = true
+            GROUP BY user_id
+        ), activity_stats AS (
+            SELECT
+                user_id,
+                COUNT(DISTINCT (module_type, module_id)) FILTER (WHERE event_type = 'completed')::int AS completed_modules,
+                COUNT(*)::int AS total_events
+            FROM learning_activity_events
             WHERE user_id IS NOT NULL
             GROUP BY user_id
         )
@@ -242,46 +203,48 @@ async function fetchCompetencyUsersFromDb() {
             u.login_count,
             u.last_login,
             u.registration_date,
-            COALESCE(up.courses_completed, 0) AS courses_completed,
-            COALESCE(up.practice_attempts, 0) AS practice_attempts,
-            COALESCE(up.exams_passed, 0) AS exams_passed,
-            COALESCE(up.certificates_earned, 0) AS certificates_earned,
-            COALESCE(up.current_level, u.bim_level, 'BIM Modeller') AS current_level,
-            COALESCE(up.to_next_level, 0) AS to_next_level,
+            COALESCE(act.completed_modules, 0) AS courses_completed,
+            COALESCE(act.total_events, 0) AS learning_events,
             COALESCE(ast.total_attempts, 0) AS total_attempts,
             COALESCE(ast.quiz_attempts, 0) AS quiz_attempts,
-            COALESCE(ast.practice_attempts, 0) AS db_practice_attempts,
+            COALESCE(ast.practice_attempts, 0) AS practice_attempts,
             COALESCE(ast.exam_attempts, 0) AS exam_attempts,
-            COALESCE(ast.exams_passed, 0) AS db_exams_passed,
-            COALESCE(ast.theory_attempts, 0) AS theory_attempts,
-            COALESCE(ast.theory_categories_attempted, 0) AS theory_categories_attempted,
+            COALESCE(ast.exams_passed, 0) AS exams_passed,
+            COALESCE(ast.passed_attempts, 0) AS passed_attempts,
             COALESCE(ast.average_attempt_score, 0) AS average_attempt_score,
-            COALESCE(ast.theory_average_score, 0) AS theory_average_score,
             COALESCE(ast.categories_attempted, ARRAY[]::text[]) AS categories_attempted,
-            ast.last_attempt_at
+            ast.last_attempt_at,
+            COALESCE(cert.certificate_count, 0) AS certificates_earned,
+            COALESCE(cert.certificate_exam_ids, ARRAY[]::text[]) AS certificate_exam_ids
          FROM users u
-         LEFT JOIN user_progress up ON up.user_id = u.id
          LEFT JOIN attempt_stats ast ON ast.user_id = u.id
+         LEFT JOIN certificate_stats cert ON cert.user_id = u.id
+         LEFT JOIN activity_stats act ON act.user_id = u.id::text
          WHERE COALESCE(u.is_active, true) = true
          ORDER BY u.id ASC`
     );
 
     return result.rows.map((row) => {
-        const practiceAttempts = Math.max(Number(row.practice_attempts || 0), Number(row.db_practice_attempts || 0));
-        const examsPassed = Math.max(Number(row.exams_passed || 0), Number(row.db_exams_passed || 0));
-        const progress = {
+        const learningProgress = {
             coursesCompleted: Number(row.courses_completed || 0),
+            totalEvents: Number(row.learning_events || 0),
+            source: 'authenticated-activity-events'
+        };
+        const assessment = {
             quizAttempts: Number(row.quiz_attempts || 0),
-            practiceAttempts,
+            practiceAttempts: Number(row.practice_attempts || 0),
             examAttempts: Number(row.exam_attempts || 0),
-            examsPassed,
-            certificatesEarned: Number(row.certificates_earned || 0),
+            examsPassed: Number(row.exams_passed || 0),
+            passedAttempts: Number(row.passed_attempts || 0),
             totalAttempts: Number(row.total_attempts || 0),
-            theoryAttempts: Number(row.theory_attempts || 0),
-            theoryCategoriesAttempted: Number(row.theory_categories_attempted || 0),
             averageAttemptScore: Number(row.average_attempt_score || 0),
-            theoryAverageScore: Number(row.theory_average_score || 0),
-            categoriesAttempted: Array.isArray(row.categories_attempted) ? row.categories_attempted.filter(Boolean) : []
+            categoriesAttempted: Array.isArray(row.categories_attempted) ? row.categories_attempted.filter(Boolean) : [],
+            source: 'verified-server-attempts'
+        };
+        const credentials = {
+            certificatesEarned: Number(row.certificates_earned || 0),
+            examIds: Array.isArray(row.certificate_exam_ids) ? row.certificate_exam_ids.filter(Boolean) : [],
+            source: 'verified-server-certificates'
         };
 
         const normalizedUser = {
@@ -289,33 +252,33 @@ async function fetchCompetencyUsersFromDb() {
             username: row.username,
             email: row.email || null,
             organization: row.organization || 'Unspecified',
-            bimLevel: row.current_level || row.bim_level || 'BIM Modeller',
+            bimLevel: row.bim_level || 'BIM Modeller',
+            bimRole: row.bim_level || 'BIM Modeller',
             loginCount: Number(row.login_count || 0),
             lastLogin: row.last_login || row.last_attempt_at || row.registration_date || null,
-            progress
-        };
-
-        const competencyScore = calculateCompetencyScore({
-            bimLevel: normalizedUser.bimLevel,
-            loginCount: normalizedUser.loginCount,
-            lastLogin: normalizedUser.lastLogin,
+            learningProgress,
+            assessment,
+            credentials,
             progress: {
-                coursesCompleted: progress.coursesCompleted,
-                quizAttempts: progress.quizAttempts,
-                practiceAttempts: progress.practiceAttempts,
-                examAttempts: progress.examAttempts,
-                examsPassed: progress.examsPassed,
-                certificatesEarned: progress.certificatesEarned,
-                averageAttemptScore: progress.averageAttemptScore,
-                theoryCategoriesAttempted: progress.theoryCategoriesAttempted
+                coursesCompleted: learningProgress.coursesCompleted,
+                quizAttempts: assessment.quizAttempts,
+                practiceAttempts: assessment.practiceAttempts,
+                examAttempts: assessment.examAttempts,
+                examsPassed: assessment.examsPassed,
+                certificatesEarned: credentials.certificatesEarned,
+                totalAttempts: assessment.totalAttempts,
+                averageAttemptScore: assessment.averageAttemptScore,
+                categoriesAttempted: assessment.categoriesAttempted
             }
-        });
-
-        return {
-            ...normalizedUser,
-            competencyScore,
-            competencyLevel: getCompetencyLevel(competencyScore)
         };
+
+        return applyCompetencyProfile(normalizedUser, {
+            verifiedAttempts: assessment.totalAttempts,
+            verifiedPassedAttempts: assessment.passedAttempts,
+            verifiedAverageScore: assessment.averageAttemptScore,
+            verifiedCategories: assessment.categoriesAttempted,
+            verifiedCertificateExamIds: credentials.examIds
+        });
     });
 }
 
@@ -338,9 +301,10 @@ async function fetchCompetencyUserDetailFromDb(userId) {
             percentage,
             passed,
             time_taken,
+            verification_method,
             submitted_at
          FROM learning_attempts
-         WHERE user_id::text = $1::text
+         WHERE user_id::text = $1::text AND is_verified = true
          ORDER BY submitted_at DESC
          LIMIT 100`,
         [String(userId)]
@@ -426,6 +390,8 @@ async function fetchCompetencyUserDetailFromDb(userId) {
         percentage: Number(attempt.percentage || 0),
         passed: !!attempt.passed,
         timeTaken: Number(attempt.time_taken || 0),
+        verified: true,
+        verificationMethod: attempt.verification_method || null,
         submittedAt: attempt.submitted_at
     }));
 
@@ -499,12 +465,16 @@ async function fetchCompetencyUserDetailFromDb(userId) {
 
 async function fetchDashboardInsightsFromDb(users) {
     let certificatesIssued = 0;
-    let avgImprovement = 0;
+    let avgImprovement = null;
+    let improvementSampleSize = 0;
     let activeUsers = 0;
+    await ensureCompetencyEvidenceSchema();
 
     try {
         const certResult = await pool.query(
-            `SELECT COUNT(*)::int AS certificates_issued FROM user_certificates`
+            `SELECT COUNT(*)::int AS certificates_issued
+             FROM user_certificates
+             WHERE is_verified = true`
         );
         certificatesIssued = Number(certResult.rows[0]?.certificates_issued || 0);
     } catch (error) {
@@ -515,43 +485,50 @@ async function fetchDashboardInsightsFromDb(users) {
 
     try {
         const attemptsResult = await pool.query(
-            `SELECT
-                COALESCE(ROUND(AVG(CASE
-                    WHEN submitted_at >= CURRENT_TIMESTAMP - INTERVAL '30 days' THEN percentage
-                END)), 0)::int AS recent_avg,
-                COALESCE(ROUND(AVG(CASE
-                    WHEN submitted_at < CURRENT_TIMESTAMP - INTERVAL '30 days'
-                     AND submitted_at >= CURRENT_TIMESTAMP - INTERVAL '60 days'
-                    THEN percentage
-                END)), 0)::int AS previous_avg,
-                COUNT(DISTINCT CASE
-                    WHEN submitted_at >= CURRENT_TIMESTAMP - INTERVAL '30 days'
-                    THEN COALESCE(user_id::text, user_identifier)
-                END)::int AS active_users_30d
-             FROM learning_attempts`
+            `WITH per_user AS (
+                SELECT
+                    COALESCE(user_id::text, user_identifier) AS evidence_user,
+                    AVG(percentage) FILTER (
+                        WHERE submitted_at >= CURRENT_TIMESTAMP - INTERVAL '30 days'
+                    ) AS recent_avg,
+                    AVG(percentage) FILTER (
+                        WHERE submitted_at < CURRENT_TIMESTAMP - INTERVAL '30 days'
+                          AND submitted_at >= CURRENT_TIMESTAMP - INTERVAL '60 days'
+                    ) AS previous_avg
+                FROM learning_attempts
+                WHERE is_verified = true
+                GROUP BY COALESCE(user_id::text, user_identifier)
+             )
+             SELECT
+                (SELECT ROUND(AVG(recent_avg - previous_avg))::int
+                 FROM per_user
+                 WHERE recent_avg IS NOT NULL AND previous_avg IS NOT NULL) AS avg_improvement_points,
+                (SELECT COUNT(*)::int
+                 FROM per_user
+                 WHERE recent_avg IS NOT NULL AND previous_avg IS NOT NULL) AS improvement_sample_size,
+                (SELECT COUNT(DISTINCT COALESCE(user_id::text, user_identifier))::int
+                 FROM learning_attempts
+                 WHERE is_verified = true
+                   AND submitted_at >= CURRENT_TIMESTAMP - INTERVAL '30 days') AS active_users_30d`
         );
 
-        const recentAvg = Number(attemptsResult.rows[0]?.recent_avg || 0);
-        const previousAvg = Number(attemptsResult.rows[0]?.previous_avg || 0);
         activeUsers = Number(attemptsResult.rows[0]?.active_users_30d || 0);
-
-        if (previousAvg > 0) {
-            avgImprovement = Math.round(((recentAvg - previousAvg) / previousAvg) * 100);
-        } else {
-            avgImprovement = recentAvg > 0 ? recentAvg : 0;
-        }
+        improvementSampleSize = Number(attemptsResult.rows[0]?.improvement_sample_size || 0);
+        avgImprovement = improvementSampleSize > 0
+            ? Number(attemptsResult.rows[0]?.avg_improvement_points || 0)
+            : null;
     } catch (error) {
-        const activeCutoff = Date.now() - (30 * 24 * 60 * 60 * 1000);
-        activeUsers = users.filter((user) => {
-            const time = user.lastLogin ? new Date(user.lastLogin).getTime() : 0;
-            return time > activeCutoff;
-        }).length;
-        avgImprovement = 0;
+        activeUsers = 0;
+        avgImprovement = null;
+        improvementSampleSize = 0;
     }
 
     return {
         avgImprovement,
+        improvementUnit: 'percentage-points',
+        improvementSampleSize,
         activeUsers,
+        activeWindowDays: 30,
         certificatesIssued
     };
 }
@@ -564,11 +541,13 @@ async function requireCompetencyAuthority(req, res, next) {
     }
 
     try {
-        let hasAccess = null;
-        try {
-            hasAccess = await fetchMappingAccessFromDb(authUser.id, authUser.email);
-        } catch (dbError) {
-            console.warn('WARN: PostgreSQL not available for mapping access, falling back to JSON:', dbError.message);
+        let hasAccess = authUser.isAdmin ? true : null;
+        if (hasAccess === null) {
+            try {
+                hasAccess = await fetchMappingAccessFromDb(authUser.id, authUser.email);
+            } catch (dbError) {
+                console.warn('WARN: PostgreSQL not available for mapping access, falling back to JSON:', dbError.message);
+            }
         }
 
         if (hasAccess === null) {
@@ -582,7 +561,7 @@ async function requireCompetencyAuthority(req, res, next) {
         req.user = {
             userId: authUser.id || authUser.email || authUser.username,
             username: authUser.username || authUser.email || 'user',
-            role: authUser.role || (authUser.isAdmin ? 'admin' : 'user')
+            role: authUser.isAdmin ? 'admin' : String(authUser.role || 'user').toLowerCase()
         };
         next();
     } catch (error) {
@@ -596,37 +575,26 @@ router.get('/dashboard', requireCompetencyAuthority, async (req, res) => {
     try {
         const reports = await readReportsData();
         let users = [];
-        let usingDb = true;
 
         try {
             users = await fetchCompetencyUsersFromDb();
         } catch (dbError) {
-            usingDb = false;
-            console.warn('WARN: Failed to load competency users from PostgreSQL, fallback to JSON:', dbError.message);
+            console.error('Failed to load verified competency evidence from PostgreSQL:', dbError.message);
+            return res.status(503).json({ error: 'Verified competency evidence is unavailable' });
         }
 
-        if (!Array.isArray(users) || users.length === 0) {
-            const competencyData = await readCompetencyData();
-            users = (competencyData.users || []).map((user) => {
-                const score = calculateCompetencyScore(user);
-                return {
-                    ...user,
-                    competencyScore: score,
-                    competencyLevel: getCompetencyLevel(score)
-                };
-            });
-            usingDb = false;
-        }
-
+        const visibleReports = req.user?.role === 'admin'
+            ? reports
+            : reports.filter((report) => String(report.generated_by) === String(req.user?.userId) || report.status === 'approved');
         const totalUsers = users.length;
-        const totalReports = reports.length;
-        const pendingApprovals = reports.filter(r => r.status === 'pending_approval').length;
+        const totalReports = visibleReports.length;
+        const pendingApprovals = visibleReports.filter(r => r.status === 'pending_approval').length;
         const averageCompetency = computeAverageCompetency(users);
         const competencyLevels = buildLevelDistribution(users);
         const insights = await fetchDashboardInsightsFromDb(users);
 
         // Recent reports
-        const recentReports = reports
+        const recentReports = visibleReports
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 10);
 
@@ -637,11 +605,15 @@ router.get('/dashboard', requireCompetencyAuthority, async (req, res) => {
             pendingApprovals,
             competencyLevels,
             avgImprovement: insights.avgImprovement,
+            improvementUnit: insights.improvementUnit,
+            improvementSampleSize: insights.improvementSampleSize,
             activeUsers: insights.activeUsers,
+            activeWindowDays: insights.activeWindowDays,
             certificatesIssued: insights.certificatesIssued,
             recentReports,
             users: users || [],
-            dataSource: usingDb ? 'postgresql' : 'json-fallback'
+            dataSource: 'postgresql',
+            rubric: getRubricContext()
         });
 
     } catch (error) {
@@ -658,23 +630,8 @@ router.get('/users', requireCompetencyAuthority, async (req, res) => {
         try {
             usersWithCompetency = await fetchCompetencyUsersFromDb();
         } catch (dbError) {
-            console.warn('WARN: Failed to load competency users from PostgreSQL, fallback to JSON:', dbError.message);
-        }
-
-        if (!Array.isArray(usersWithCompetency) || usersWithCompetency.length === 0) {
-            const competencyData = await readCompetencyData();
-            usersWithCompetency = (competencyData.users || []).map((user) => {
-                const score = calculateCompetencyScore(user);
-                return {
-                    ...user,
-                    competencyScore: score,
-                    competencyLevel: getCompetencyLevel(score)
-                };
-            });
-
-            competencyData.users = usersWithCompetency;
-            competencyData.lastUpdated = new Date().toISOString();
-            await writeCompetencyData(competencyData);
+            console.error('Failed to load verified competency evidence from PostgreSQL:', dbError.message);
+            return res.status(503).json({ error: 'Verified competency evidence is unavailable' });
         }
 
         res.json(usersWithCompetency);
@@ -693,7 +650,8 @@ router.get('/users/:userId/detail', requireCompetencyAuthority, async (req, res)
         try {
             detail = await fetchCompetencyUserDetailFromDb(req.params.userId);
         } catch (dbError) {
-            console.warn('WARN: Failed to load competency user detail from PostgreSQL:', dbError.message);
+            console.error('Failed to load verified competency user detail:', dbError.message);
+            return res.status(503).json({ error: 'Verified competency evidence is unavailable' });
         }
 
         if (!detail) {
@@ -786,7 +744,7 @@ router.get('/', requireCompetencyAuthority, async (req, res) => {
         // If user is not admin, only show their own reports or public approved reports
         if (req.user && req.user.role !== 'admin') {
             filteredReports = reports.filter(report =>
-                report.generated_by === req.user.userId ||
+                String(report.generated_by) === String(req.user.userId) ||
                 report.status === 'approved'
             );
         }
@@ -817,7 +775,7 @@ router.post('/:id/approve', requireCompetencyAuthority, async (req, res) => {
         // Check if user has authority to approve
         const authorities = await readAuthoritiesData();
         const userAuthority = authorities.find(a =>
-            a.user_id === req.user.userId &&
+            String(a.user_id) === String(req.user.userId) &&
             a.role === 'authority' &&
             a.is_active
         );
@@ -869,7 +827,7 @@ router.post('/:id/reject', requireCompetencyAuthority, async (req, res) => {
         // Check authority (same as approve)
         const authorities = await readAuthoritiesData();
         const userAuthority = authorities.find(a =>
-            a.user_id === req.user.userId &&
+            String(a.user_id) === String(req.user.userId) &&
             a.role === 'authority' &&
             a.is_active
         );
@@ -902,17 +860,17 @@ router.post('/:id/reject', requireCompetencyAuthority, async (req, res) => {
 // GET /api/competency/authorities/check - Check user authority
 router.get('/authorities/check', requireCompetencyAuthority, async (req, res) => {
     try {
-        // For testing mode, always return authority for admin user
         if (req.user && req.user.role === 'admin') {
             res.json({
                 hasAuthority: true,
                 authority: {
-                    id: 1736263066599,
-                    user_id: 'admin_default',
-                    username: 'admin',
+                    id: `admin:${req.user.userId}`,
+                    user_id: req.user.userId,
+                    username: req.user.username,
                     role: 'authority',
                     status: 'approved',
-                    is_active: true
+                    is_active: true,
+                    source: 'admin-privilege'
                 }
             });
             return;
@@ -920,7 +878,7 @@ router.get('/authorities/check', requireCompetencyAuthority, async (req, res) =>
 
         const authorities = await readAuthoritiesData();
         const userAuthority = authorities.find(a =>
-            a.user_id === req.user.userId && a.is_active
+            String(a.user_id) === String(req.user.userId) && a.is_active
         );
 
         if (userAuthority) {
@@ -957,7 +915,7 @@ router.post('/authorities/request', async (req, res) => {
         const authorities = await readAuthoritiesData();
 
         // Check if user already has authority
-        const existingAuthority = authorities.find(a => a.user_id === req.user.userId);
+        const existingAuthority = authorities.find(a => String(a.user_id) === String(req.user.userId));
         if (existingAuthority && existingAuthority.is_active) {
             return res.status(409).json({ error: 'User already has authority' });
         }
@@ -1077,14 +1035,7 @@ router.get('/admin/authorities', requireAdminSession, async (req, res) => {
 
 // Helper Functions for Report Generation
 async function generateIndividualReport(userId) {
-    let users = [];
-    try {
-        users = await fetchCompetencyUsersFromDb();
-    } catch (dbError) {
-        console.warn('WARN: Failed to load individual report user from PostgreSQL, fallback to JSON:', dbError.message);
-        const competencyData = await readCompetencyData();
-        users = competencyData.users || [];
-    }
+    const users = await fetchCompetencyUsersFromDb();
 
     const user = users.find(u => String(u.id) === String(userId));
 
@@ -1092,55 +1043,47 @@ async function generateIndividualReport(userId) {
         throw new Error('User not found');
     }
 
-    const score = Number(user.competencyScore || calculateCompetencyScore(user));
-    const level = user.competencyLevel || getCompetencyLevel(score);
-
     return {
+        rubricVersion: user.rubricVersion || RUBRIC.id,
         userInfo: {
             name: user.username,
             email: user.email,
             organization: user.organization,
-            bimLevel: user.bimLevel,
+            bimRole: user.bimRole || user.bimLevel,
             jobRole: user.jobRole || null
         },
-        competencyScore: score,
-        competencyLevel: level,
-        progress: user.progress || {},
+        learningProgress: user.learningProgress || {},
+        assessment: user.assessment || {},
+        credentials: user.credentials || {},
+        competency: user.competency || {
+            rubricVersion: user.rubricVersion,
+            competencyStatus: user.competencyStatus,
+            competencyScore: user.competencyScore,
+            competencyLevel: user.competencyLevel,
+            dimensions: user.dimensions
+        },
         generatedAt: new Date().toISOString()
     };
 }
 
 async function generateOrganizationReport(organizationId) {
-    let users = [];
-    try {
-        users = await fetchCompetencyUsersFromDb();
-    } catch (dbError) {
-        console.warn('WARN: Failed to load organization report users from PostgreSQL, fallback to JSON:', dbError.message);
-        const competencyData = await readCompetencyData();
-        users = competencyData.users || [];
-    }
+    const users = await fetchCompetencyUsersFromDb();
 
     const orgUsers = users.filter(u => u.organization === organizationId);
 
     const totalUsers = orgUsers.length;
-    const avgScore = orgUsers.length > 0 ?
-        Math.round(orgUsers.reduce((sum, u) => sum + Number(u.competencyScore || calculateCompetencyScore(u)), 0) / orgUsers.length) : 0;
-
-    const levelDistribution = {
-        novice: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Novice').length,
-        beginner: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Beginner').length,
-        intermediate: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Intermediate').length,
-        advanced: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Advanced').length,
-        expert: orgUsers.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Expert').length
-    };
+    const avgScore = computeAverageCompetency(orgUsers);
+    const levelDistribution = buildLevelDistribution(orgUsers);
 
     return {
         organization: organizationId,
         totalUsers,
         averageScore: avgScore,
+        rubricVersion: RUBRIC.id,
         levelDistribution,
         topPerformers: orgUsers
-            .map(u => ({ ...u, score: Number(u.competencyScore || calculateCompetencyScore(u)) }))
+            .filter((user) => user.competencyStatus === 'assessed')
+            .map(u => ({ ...u, score: Number(u.competencyScore || 0) }))
             .sort((a, b) => b.score - a.score)
             .slice(0, 5),
         generatedAt: new Date().toISOString()
@@ -1148,49 +1091,41 @@ async function generateOrganizationReport(organizationId) {
 }
 
 async function generateSummaryReport() {
-    let users = [];
-    try {
-        users = await fetchCompetencyUsersFromDb();
-    } catch (dbError) {
-        console.warn('WARN: Failed to load summary report users from PostgreSQL, fallback to JSON:', dbError.message);
-        const competencyData = await readCompetencyData();
-        users = competencyData.users || [];
-    }
+    const users = await fetchCompetencyUsersFromDb();
 
     const totalUsers = users.length;
-    const avgScore = users.length > 0 ?
-        Math.round(users.reduce((sum, u) => sum + Number(u.competencyScore || calculateCompetencyScore(u)), 0) / users.length) : 0;
-
-    const levelDistribution = {
-        novice: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Novice').length,
-        beginner: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Beginner').length,
-        intermediate: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Intermediate').length,
-        advanced: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Advanced').length,
-        expert: users.filter(u => normalizeLevelName(u.competencyLevel || getCompetencyLevel(calculateCompetencyScore(u))) === 'Expert').length
-    };
+    const avgScore = computeAverageCompetency(users);
+    const levelDistribution = buildLevelDistribution(users);
 
     // Organization breakdown
     const orgBreakdown = {};
     users.forEach(user => {
         const org = user.organization || 'Unspecified';
         if (!orgBreakdown[org]) {
-            orgBreakdown[org] = { count: 0, totalScore: 0 };
+            orgBreakdown[org] = { count: 0, assessedCount: 0, totalScore: 0 };
         }
         orgBreakdown[org].count++;
-        orgBreakdown[org].totalScore += Number(user.competencyScore || calculateCompetencyScore(user));
+        if (user.competencyStatus === 'assessed') {
+            orgBreakdown[org].assessedCount = (orgBreakdown[org].assessedCount || 0) + 1;
+            orgBreakdown[org].totalScore += Number(user.competencyScore || 0);
+        }
     });
 
     Object.keys(orgBreakdown).forEach(org => {
-        orgBreakdown[org].averageScore = Math.round(orgBreakdown[org].totalScore / orgBreakdown[org].count);
+        orgBreakdown[org].averageScore = orgBreakdown[org].assessedCount
+            ? Math.round(orgBreakdown[org].totalScore / orgBreakdown[org].assessedCount)
+            : null;
     });
 
     return {
         totalUsers,
         averageScore: avgScore,
+        rubricVersion: RUBRIC.id,
         levelDistribution,
         organizationBreakdown: orgBreakdown,
         topPerformers: users
-            .map(u => ({ ...u, score: Number(u.competencyScore || calculateCompetencyScore(u)) }))
+            .filter((user) => user.competencyStatus === 'assessed')
+            .map(u => ({ ...u, score: Number(u.competencyScore || 0) }))
             .sort((a, b) => b.score - a.score)
             .slice(0, 10),
         generatedAt: new Date().toISOString()

@@ -304,6 +304,7 @@ function createUserAuthService({
         const query = `
             SELECT id, username, email, password, bim_level, job_role, organization,
                    login_count, last_login, is_active, profile_image, metadata,
+                   registration_date, created_at, updated_at,
                    CASE
                        WHEN lower(coalesce(job_role, '')) LIKE '%admin%' THEN true
                        WHEN lower(coalesce(metadata->>'isAdmin', 'false')) = 'true' THEN true
@@ -326,6 +327,7 @@ function createUserAuthService({
         const query = `
             SELECT id, username, email, password, bim_level, job_role, organization,
                    login_count, last_login, is_active, profile_image, metadata,
+                   registration_date, created_at, updated_at,
                    CASE
                        WHEN lower(coalesce(job_role, '')) LIKE '%admin%' THEN true
                        WHEN lower(coalesce(metadata->>'isAdmin', 'false')) = 'true' THEN true
@@ -496,6 +498,7 @@ function createUserAuthService({
                 OR ($${emailIndex}::text IS NOT NULL AND lower(email) = lower($${emailIndex}))
              RETURNING id, username, email, password, bim_level, job_role, organization,
                        login_count, last_login, is_active, profile_image, metadata,
+                       registration_date, created_at, updated_at,
                        CASE
                            WHEN lower(coalesce(job_role, '')) LIKE '%admin%' THEN true
                            WHEN lower(coalesce(metadata->>'isAdmin', 'false')) = 'true' THEN true

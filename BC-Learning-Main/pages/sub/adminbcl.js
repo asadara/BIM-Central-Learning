@@ -50,6 +50,9 @@ let bimCustomCategories = {};
 let allBIMTags = [];
 let isScanningMedia = false;
 let serverControlPollTimer = null;
+const SERVER_RESTART_POLL_INTERVAL_MS = 4000;
+const SERVER_RESTART_POLL_TIMEOUT_MS = 6 * 60 * 1000;
+const SERVER_RESTART_ACTIVE_STATES = new Set(['requesting', 'scheduled', 'stopping', 'starting', 'waiting']);
 
 // PDF Materials Management
 let allPDFMaterials = [];
@@ -486,23 +489,30 @@ async function loadServerControlStatus() {
     try {
         const data = await fetchServerControlStatus();
         renderServerControlStatus(data);
+        const state = String(data?.restart?.state || '').toLowerCase();
+        const isRestartActive = SERVER_RESTART_ACTIVE_STATES.has(state) || data?.adminRestartInProgress === true;
+        setServerControlBusy(isRestartActive);
+        if (isRestartActive) {
+            const stateTime = Date.parse(data?.restart?.updatedAt || '');
+            startServerRestartPolling(Number.isNaN(stateTime) ? Date.now() : stateTime);
+        }
     } catch (error) {
         if (messageElement) messageElement.textContent = `Status belum terbaca: ${error.message}`;
     }
 }
 
-function startServerRestartPolling() {
+function startServerRestartPolling(initialStartedAt = Date.now()) {
     if (serverControlPollTimer) {
         clearInterval(serverControlPollTimer);
     }
 
-    const startedAt = Date.now();
+    const startedAt = Math.min(Number(initialStartedAt) || Date.now(), Date.now());
     serverControlPollTimer = setInterval(async () => {
         try {
             const data = await fetchServerControlStatus();
             renderServerControlStatus(data, 'Server kembali merespons. Memverifikasi status restart...');
-            const state = data?.restart?.state || '';
-            if (['healthy', 'timeout', 'failed'].includes(state) || Date.now() - startedAt > 150000) {
+            const state = String(data?.restart?.state || '').toLowerCase();
+            if (['healthy', 'timeout', 'failed'].includes(state) || Date.now() - startedAt > SERVER_RESTART_POLL_TIMEOUT_MS) {
                 clearInterval(serverControlPollTimer);
                 serverControlPollTimer = null;
                 setServerControlBusy(false);
@@ -513,14 +523,14 @@ function startServerRestartPolling() {
             if (messageElement) {
                 messageElement.textContent = `Restart sedang berlangsung atau server belum tersedia (${Math.floor((Date.now() - startedAt) / 1000)}s).`;
             }
-            if (Date.now() - startedAt > 150000) {
+            if (Date.now() - startedAt > SERVER_RESTART_POLL_TIMEOUT_MS) {
                 clearInterval(serverControlPollTimer);
                 serverControlPollTimer = null;
                 setServerControlBusy(false);
-                if (messageElement) messageElement.textContent = 'Polling restart timeout. Cek log/server manual jika halaman belum kembali.';
+                if (messageElement) messageElement.textContent = 'Polling restart melewati 6 menit. Gunakan Refresh Status; backend dapat tetap menyelesaikan startup di latar belakang.';
             }
         }
-    }, 4000);
+    }, SERVER_RESTART_POLL_INTERVAL_MS);
 }
 
 async function requestBclServerRestart(mode = 'full') {

@@ -9,7 +9,7 @@
     <meta name="robots" content="noindex, nofollow">
 
     <!-- Favicon -->
-    <link href="/img/icon.png" rel="icon" type="image/png">
+    <link href="/img/icons/trimmed/main_ico_bcl.ico" rel="icon" type="image/x-icon">
 
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
     <!-- Google Web Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 
     <!-- Icon Font Stylesheet -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"
@@ -33,6 +33,7 @@
     <!-- Custom Admin Styles -->
     <link href="adminbcl.css?v=20260715a" rel="stylesheet">
     <link href="admin-learning-mapping.css?v=20260715a" rel="stylesheet">
+    <link href="adminbcl-workspace.css?v=20260717c" rel="stylesheet">
     <script>
         window.BCL_SKIP_GLOBAL_ADMIN_SESSION_UI_PROBE = true;
         window.BCL_SKIP_ADMIN_PANEL_SESSION_CHECK = true;
@@ -226,7 +227,17 @@
 
             <!-- Main Content -->
             <div id="admin-content" class="col-md-9">
-                <div class="container-fluid py-4">
+                <header class="admin-workspace-toolbar">
+                    <div class="admin-workspace-title">
+                        <p id="admin-workspace-section-eyebrow">Ringkasan sistem</p>
+                        <h1 id="admin-workspace-section-title">Dasbor Admin</h1>
+                    </div>
+                    <div class="admin-workspace-context">
+                        <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                        <span>Administrative operations workspace</span>
+                    </div>
+                </header>
+                <div class="container-fluid admin-workspace-content">
 
                     <!-- Dasbor Section -->
                     <div id="dashboard-section" class="admin-section">
@@ -1213,7 +1224,7 @@
                                     <i class="fas fa-newspaper"></i>
                                     Berita Management
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('news', 'loadBerita')">
+                                <button class="btn btn-modern-primary" onclick="safeCall('news', 'loadNews')">
                                     <i class="fas fa-sync me-2"></i>Load Berita
                                 </button>
                             </div>
@@ -1236,7 +1247,7 @@
                                     <i class="fas fa-plug"></i>
                                     Plugin Management
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('plugins', 'loadPlugin')">
+                                <button class="btn btn-modern-primary" onclick="safeCall('plugins', 'loadPlugins')">
                                     <i class="fas fa-sync me-2"></i>Load Plugin
                                 </button>
                             </div>
@@ -1259,7 +1270,7 @@
                                     <i class="fas fa-book"></i>
                                     Pustaka Management
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('library', 'loadPustaka')">
+                                <button class="btn btn-modern-primary" onclick="safeCall('library', 'loadLibrary')">
                                     <i class="fas fa-sync me-2"></i>Load Pustaka
                                 </button>
                             </div>
@@ -1404,7 +1415,7 @@
                                     <i class="fas fa-server"></i>
                                     Sistem Information
                                 </div>
-                                <button class="btn btn-modern-primary" onclick="safeCall('system', 'loadSistem')">
+                                <button class="btn btn-modern-primary" onclick="safeCall('system', 'loadSystem')">
                                     <i class="fas fa-sync me-2"></i>Load Sistem Info
                                 </button>
                             </div>
@@ -1550,7 +1561,7 @@
     <div id="footer-container"></div>
 
     <!-- Load Panel Admin JavaScript -->
-    <script src="adminbcl.js?v=20260715a"></script>
+    <script src="adminbcl.js?v=20260717b"></script>
     <script src="admin-learning-mapping.js?v=20260715a"></script>
 
     <!-- Back to Top -->
@@ -1579,10 +1590,10 @@
     <script src="../../js/admin/modules/videos.js?v=20260313b"></script>
     <script src="../../js/admin/modules/video-display.js"></script>
     <script src="../../js/admin/modules/content-management.js?v=20260313c"></script>
-    <script src="../../js/admin/modules/news.js?v=20260303g"></script>
-    <script src="../../js/admin/modules/plugins.js"></script>
-    <script src="../../js/admin/modules/library.js"></script>
-    <script src="../../js/admin/modules/system.js"></script>
+    <script src="../../js/admin/modules/news.js?v=20260717d"></script>
+    <script src="../../js/admin/modules/plugins.js?v=20260717a"></script>
+    <script src="../../js/admin/modules/library.js?v=20260717a"></script>
+    <script src="../../js/admin/modules/system.js?v=20260717a"></script>
 
     <!-- Safe wrapper functions for onclick handlers -->
     <script>
@@ -1863,6 +1874,7 @@
             }, 2000);
         });
     </script>
+    <script src="adminbcl-workspace.js?v=20260717b"></script>
 </body>
 
 </html>

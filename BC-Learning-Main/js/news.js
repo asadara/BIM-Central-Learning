@@ -1,209 +1,605 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
     const defaultImage = '/img/ready.jpg';
-    const defaultFallbackImage = '/img/ready.jpg';
-    const fullReadLabel = 'Baca Berita Lengkap';
-
-    let allNews = [];
-    let featuredNews = [];
-    let currentFilters = {
-        topic: '',
-        source: '',
-        category: 'all'
-    };
-    let currentPage = 0;
-    let isApiAvailable = true;
-    let searchTimeout = null;
-
-    const articlesPerPage = 12;
+    const articlesPerPage = 9;
 
     const newsContainer = document.getElementById('news-container');
     const featuredContainer = document.getElementById('featured-articles');
     const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const newsCount = document.getElementById('news-count');
+    const feedStatus = document.getElementById('feed-status');
     const loadMoreBtn = document.getElementById('load-more-btn');
     const resetBtn = document.getElementById('reset-btn');
-    const filterButtons = document.querySelectorAll('.filter-btn');
+    const filterButtons = Array.from(document.querySelectorAll('.filter-btn[data-filter]'));
 
-    const debouncedSearch = () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            performSearch();
-        }, 500);
-    };
+    if (!newsContainer || !featuredContainer) return;
 
-    window.debouncedSearch = debouncedSearch;
-    window.performSearch = performSearch;
+    let allNews = [];
+    let activeNews = [];
+    let currentCategory = 'all';
+    let currentPage = 0;
+    let searchTerm = '';
+    let searchTimer = null;
 
-    showLoadingState();
     attachEventListeners();
+    showLoadingState();
     loadNews();
 
     async function loadNews() {
         const stamp = Date.now();
-        const [allNewsResult, localNewsResult] = await Promise.allSettled([
-            fetchNewsArray(`/api/news/all-news?_ts=${stamp}`),
-            fetchNewsArray(`/api/news/local-news?_ts=${stamp}`)
-        ]);
+        const localRequest = settle(fetchNewsArray(`/api/news/local-news?_ts=${stamp}`));
+        const aggregateRequest = settle(fetchNewsArray(`/api/news/all-news?_ts=${stamp}`));
 
-        if (allNewsResult.status === 'rejected') {
-            console.warn('all-news endpoint failed:', allNewsResult.reason?.message || allNewsResult.reason);
-        }
-        if (localNewsResult.status === 'rejected') {
-            console.warn('local-news endpoint failed:', localNewsResult.reason?.message || localNewsResult.reason);
-        }
+        const localResult = await localRequest;
+        let localNews = [];
 
-        const allNewsList = allNewsResult.status === 'fulfilled' ? allNewsResult.value : [];
-        const localNewsList = localNewsResult.status === 'fulfilled' ? localNewsResult.value : [];
-        const mergedNews = mergeNewsSources(allNewsList, localNewsList);
-
-        if (mergedNews.length > 0) {
-            allNews = normalizeNewsArray(mergedNews);
-            isApiAvailable = true;
+        if (localResult.ok) {
+            localNews = normalizeNewsArray(localResult.value);
+            if (localNews.length) {
+                setNews(localNews);
+            }
         } else {
-            console.warn('News endpoints returned empty data, fallback to static');
-            allNews = normalizeNewsArray(getStaticFallbackNews());
-            isApiAvailable = false;
+            console.warn('[NEWS] Local feed unavailable:', localResult.error?.message || localResult.error);
         }
 
-        initializeNewsDisplay();
-        checkApiStatus();
+        const aggregateResult = await aggregateRequest;
+        if (!aggregateResult.ok) {
+            console.warn('[NEWS] Aggregate feed unavailable:', aggregateResult.error?.message || aggregateResult.error);
+        }
+
+        if (aggregateResult.ok) {
+            setNews(normalizeNewsArray(mergeNewsSources(aggregateResult.value, localNews)));
+            return;
+        }
+
+        if (localResult.ok) {
+            setNews(localNews);
+            return;
+        }
+
+        showErrorState();
+    }
+
+    function settle(promise) {
+        return promise
+            .then((value) => ({ ok: true, value }))
+            .catch((error) => ({ ok: false, error }));
     }
 
     async function fetchNewsArray(url) {
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetch(url, {
+            cache: 'no-store',
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json' }
+        });
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            throw new Error(`HTTP ${response.status}`);
         }
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-            throw new Error('Invalid news format');
+        const payload = await response.json();
+        if (!Array.isArray(payload)) {
+            throw new Error('Format feed berita tidak valid');
         }
-        return data;
+        return payload;
     }
 
-    function mergeNewsSources(primaryNews, secondaryNews) {
-        const combined = [...primaryNews, ...secondaryNews];
-        const deduped = [];
-        const seen = new Set();
-
-        for (const article of combined) {
-            const key = buildNewsKey(article);
-            if (seen.has(key)) continue;
-            seen.add(key);
-            deduped.push(article);
-        }
-
-        return deduped;
-    }
-
-    function buildNewsKey(article) {
-        const id = safeText(article?.id);
-        if (id) return `id:${id}`;
-
-        const url = safeText(article?.url).toLowerCase();
-        if (url && url !== '#') return `url:${url}`;
-
-        const title = safeText(article?.title).toLowerCase();
-        const sourceName = safeText(article?.source?.name || article?.source).toLowerCase();
-        const publishedAt = safeText(article?.publishedAt || article?.published_date).toLowerCase();
-        return `fallback:${title}|${sourceName}|${publishedAt}`;
-    }
-
-    function initializeNewsDisplay() {
-        featuredNews = extractFeaturedNews(allNews);
+    function setNews(news) {
+        allNews = news;
+        updateFeedStatus();
         displayFeaturedNews();
-        displayNewsPaginated(0);
-
-        if (!isApiAvailable) {
-            showFallbackContent();
-        }
-
-        hideLoadingState();
+        applyFilters();
     }
 
     function normalizeNewsArray(newsArray) {
         return newsArray
+            .filter((article) => article && typeof article === 'object')
             .map((article, index) => normalizeSingleArticle(article, index))
-            .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+            .sort((a, b) => dateValue(b.publishedAt) - dateValue(a.publishedAt));
     }
 
     function normalizeSingleArticle(article, index) {
-        const fullContent = safeText(article.fullContent || article.content || '');
+        const fullContent = safeText(article.fullContent || article.content);
         const stickerText = safeText(
             article.stickerText ||
             article.mainSentence ||
+            article.summary ||
             article.description ||
             summarizeText(fullContent, 160)
         );
-        const title = safeText(article.title) || summarizeText(stickerText, 90) || 'Judul Tidak Tersedia';
-        const description = safeText(article.description) || stickerText || summarizeText(fullContent, 180) || 'Deskripsi tidak tersedia';
-        const sourceName = safeText(article.source?.name || article.source) || 'Sumber Tidak Diketahui';
-        const url = safeText(article.url) || '#';
-        const id = buildStableArticleId(article, index);
-        const publishedAt = article.publishedAt || article.published_date || new Date().toISOString();
+        const title = safeText(article.title) || summarizeText(stickerText, 90) || 'Berita tanpa judul';
+        const description = safeText(article.description) || stickerText || summarizeText(fullContent, 180);
+        const publishedAt = safeText(article.publishedAt || article.published_date);
+        const media = normalizeMediaItems(article.media, article.urlToImage || article.image);
+        const primaryImage = media.find((item) => item.type === 'image')?.url || defaultImage;
 
         return {
-            ...article,
-            id,
+            id: buildStableArticleId(article, index),
             title,
             stickerText,
             description,
             fullContent,
-            source: { name: sourceName },
-            url,
-            urlToImage: resolveImageUrl(article.urlToImage || article.image),
-            category: article.category || detectNewsCategory(article),
+            source: { name: safeText(article.source?.name || article.source || article.sourceName) || 'Sumber tidak diketahui' },
+            url: normalizeExternalUrl(article.url),
+            urlToImage: primaryImage,
+            media,
+            category: safeText(article.category) || detectNewsCategory(article),
+            origin: safeText(article.origin || article.sourceType).toLowerCase() === 'external' ? 'external' : 'local',
             publishedAt,
             displayDate: formatDisplayDate(publishedAt)
         };
     }
 
-    function safeText(value) {
-        return typeof value === 'string' ? value.trim() : '';
+    function mergeNewsSources(primary, secondary) {
+        const unique = [];
+        const seen = new Set();
+
+        [...primary, ...secondary].forEach((article) => {
+            const key = buildNewsKey(article);
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            unique.push(article);
+        });
+
+        return unique;
+    }
+
+    function buildNewsKey(article) {
+        const explicitId = safeText(article?.id);
+        if (explicitId) return `id:${explicitId}`;
+
+        const url = normalizeExternalUrl(article?.url);
+        if (url) return `url:${url.toLowerCase()}`;
+
+        const title = safeText(article?.title).toLowerCase();
+        const source = safeText(article?.source?.name || article?.source).toLowerCase();
+        const date = safeText(article?.publishedAt || article?.published_date).toLowerCase();
+        return title ? `content:${title}|${source}|${date}` : '';
     }
 
     function buildStableArticleId(article, index) {
         const explicitId = safeText(article?.id);
         if (explicitId) return explicitId;
 
-        const url = safeText(article?.url);
-        if (url && url !== '#') return url;
+        const url = normalizeExternalUrl(article?.url);
+        if (url) return url;
 
-        const titleBase = safeText(article?.title || article?.stickerText || article?.description)
+        const titlePart = safeText(article?.title || article?.description)
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '')
-            .slice(0, 80);
-        const dateBase = safeText(article?.publishedAt || article?.published_date)
+            .slice(0, 70);
+        const datePart = safeText(article?.publishedAt || article?.published_date)
             .replace(/[^0-9]/g, '')
             .slice(0, 14);
-
-        return `news-${dateBase || 'nodate'}-${titleBase || 'untitled'}-${index}`;
+        return `news-${datePart || 'undated'}-${titlePart || 'article'}-${index}`;
     }
 
-    function resolveImageUrl(value) {
-        const raw = safeText(value);
-        if (!raw) return defaultImage;
-        if (/^data:image\//i.test(raw)) return raw;
-        if (/^https?:\/\//i.test(raw) || raw.startsWith('//')) return raw;
-        if (raw.startsWith('/')) return raw;
-
-        const cleaned = raw.replace(/\\/g, '/').replace(/^[./]+/, '');
-        if (cleaned.toLowerCase().startsWith('img/')) {
-            return `/${cleaned}`;
+    function displayFeaturedNews() {
+        const lead = allNews[0];
+        if (!lead) {
+            featuredContainer.replaceChildren();
+            return;
         }
 
-        return raw;
+        const railItems = allNews.slice(1, 4).map((article, index) => `
+            <button class="news-rail-item" type="button" data-news-action="open" data-news-id="${escapeAttribute(article.id)}">
+                <span class="news-rail-item__number">0${index + 1}</span>
+                <span class="news-rail-item__content">
+                    ${buildOriginTag(article)}
+                    <strong>${escapeHtml(summarizeText(article.title, 95))}</strong>
+                    <span class="news-meta"><span><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(article.displayDate)}</span></span>
+                </span>
+            </button>`).join('');
+
+        featuredContainer.innerHTML = `
+            <div class="newsroom-lead-grid">
+                <article class="newsroom-lead">
+                    <div class="newsroom-lead__image-wrap">
+                        <img class="newsroom-lead__image news-image" src="${escapeAttribute(lead.urlToImage)}" alt="${escapeAttribute(lead.title)}">
+                        ${buildMediaIndicator(lead)}
+                    </div>
+                    <div class="newsroom-lead__body">
+                        <div class="news-list-item__topline">
+                            <span class="news-kicker">${escapeHtml(localizeNewsCategory(lead.category))}</span>
+                            ${buildOriginTag(lead)}
+                        </div>
+                        <h2>${escapeHtml(lead.title)}</h2>
+                        <p class="news-description">${escapeHtml(summarizeText(lead.stickerText || lead.description, 260) || 'Ringkasan belum tersedia.')}</p>
+                        ${buildMeta(lead)}
+                        <div class="news-actions">
+                            ${buildPrimaryAction(lead)}
+                            <button class="news-action news-action--secondary" type="button" data-news-action="share" data-news-id="${escapeAttribute(lead.id)}">
+                                <i class="fa-solid fa-share-nodes" aria-hidden="true"></i> Bagikan
+                            </button>
+                        </div>
+                    </div>
+                </article>
+                <aside class="newsroom-rail" aria-label="Berita terbaru lainnya">
+                    <h2 class="newsroom-rail__heading">Terbaru lainnya</h2>
+                    ${railItems || '<p class="news-description py-3">Belum ada berita tambahan.</p>'}
+                </aside>
+            </div>`;
     }
 
-    function summarizeText(text, maxLength = 160) {
-        const cleaned = safeText(text).replace(/\s+/g, ' ');
-        if (!cleaned) return '';
-        if (cleaned.length <= maxLength) return cleaned;
-        return `${cleaned.slice(0, maxLength - 1).trimEnd()}...`;
+    function applyFilters() {
+        const normalizedTerm = searchTerm.toLocaleLowerCase('id-ID');
+        activeNews = allNews.filter((article) => {
+            const matchesCategory = categoryMatches(article, currentCategory);
+            if (!matchesCategory) return false;
+            if (!normalizedTerm) return true;
+
+            const searchableText = [
+                article.title,
+                article.stickerText,
+                article.description,
+                article.fullContent,
+                article.source.name,
+                article.category
+            ].join(' ').toLocaleLowerCase('id-ID');
+            return searchableText.includes(normalizedTerm);
+        });
+
+        currentPage = 0;
+        renderActiveNews();
+        updateSearchSummary();
     }
 
-    function extractFeaturedNews(news) {
-        return news.slice(0, 3);
+    function renderActiveNews() {
+        if (!activeNews.length) {
+            displayEmptyState();
+            return;
+        }
+
+        const visibleCount = Math.min((currentPage + 1) * articlesPerPage, activeNews.length);
+        newsContainer.innerHTML = activeNews
+            .slice(0, visibleCount)
+            .map(renderNewsCard)
+            .join('');
+
+        if (newsCount) {
+            newsCount.textContent = `${activeNews.length} berita ditemukan`;
+        }
+        if (loadMoreBtn) {
+            loadMoreBtn.hidden = visibleCount >= activeNews.length;
+        }
+    }
+
+    function renderNewsCard(article) {
+        const description = summarizeText(article.stickerText || article.description, 190) || 'Ringkasan belum tersedia.';
+        return `
+            <article class="news-list-item">
+                <div class="news-list-item__image-wrap">
+                    <img class="news-list-item__image news-image" src="${escapeAttribute(article.urlToImage)}" alt="${escapeAttribute(article.title)}" loading="lazy">
+                    ${buildMediaIndicator(article)}
+                </div>
+                <div class="news-list-item__body">
+                    <div class="news-list-item__topline">
+                        <span class="news-kicker">${escapeHtml(localizeNewsCategory(article.category))}</span>
+                        ${buildOriginTag(article)}
+                    </div>
+                    <h3>${escapeHtml(summarizeText(article.title, 115))}</h3>
+                    <p class="news-description">${escapeHtml(description)}</p>
+                    ${buildMeta(article)}
+                    <div class="news-actions">
+                        ${buildPrimaryAction(article)}
+                        <button class="news-action news-action--secondary" type="button" data-news-action="share" data-news-id="${escapeAttribute(article.id)}">
+                            <i class="fa-solid fa-share-nodes" aria-hidden="true"></i> Bagikan
+                        </button>
+                    </div>
+                </div>
+            </article>`;
+    }
+
+    function buildOriginTag(article) {
+        const isExternal = article.origin === 'external';
+        const icon = isExternal ? 'fa-arrow-up-right-from-square' : 'fa-building';
+        const label = isExternal ? 'Portal eksternal' : 'BCL internal';
+        return `<span class="news-origin ${isExternal ? 'news-origin--external' : ''}"><i class="fa-solid ${icon}" aria-hidden="true"></i>${label}</span>`;
+    }
+
+    function buildMediaIndicator(article) {
+        const media = Array.isArray(article.media) ? article.media : [];
+        if (media.length <= 1 && !media.some((item) => item.type === 'video')) return '';
+        const photoCount = media.filter((item) => item.type === 'image').length;
+        const hasVideo = media.some((item) => item.type === 'video');
+        const label = [photoCount ? `${photoCount} foto` : '', hasVideo ? 'video' : ''].filter(Boolean).join(' + ');
+        return `<span class="news-media-indicator"><i class="fa-solid fa-photo-film" aria-hidden="true"></i>${escapeHtml(label)}</span>`;
+    }
+
+    function buildMeta(article) {
+        return `
+            <div class="news-meta">
+                <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>${escapeHtml(article.displayDate)}</span>
+                <span><i class="fa-regular fa-building" aria-hidden="true"></i>${escapeHtml(article.source.name)}</span>
+            </div>`;
+    }
+
+    function buildPrimaryAction(article) {
+        if (article.fullContent || article.description) {
+            return `
+                <button class="news-action news-action--primary" type="button" data-news-action="open" data-news-id="${escapeAttribute(article.id)}">
+                    <i class="fa-regular fa-newspaper" aria-hidden="true"></i> Baca lengkap
+                </button>`;
+        }
+
+        if (article.url) {
+            return `
+                <a class="news-action news-action--primary" href="${escapeAttribute(article.url)}" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Buka sumber
+                </a>`;
+        }
+
+        return '<span class="news-action news-action--secondary" aria-disabled="true">Detail belum tersedia</span>';
+    }
+
+    function attachEventListeners() {
+        searchInput?.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                searchTerm = searchInput.value.trim();
+                applyFilters();
+            }, 250);
+        });
+
+        resetBtn?.addEventListener('click', resetFilters);
+
+        filterButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                currentCategory = button.dataset.filter || 'all';
+                filterButtons.forEach((item) => {
+                    const isActive = item === button;
+                    item.classList.toggle('active', isActive);
+                    item.setAttribute('aria-pressed', String(isActive));
+                });
+                applyFilters();
+            });
+        });
+
+        loadMoreBtn?.addEventListener('click', () => {
+            currentPage += 1;
+            renderActiveNews();
+        });
+
+        [newsContainer, featuredContainer].forEach((container) => {
+            container.addEventListener('click', handleNewsAction);
+            container.addEventListener('error', handleImageError, true);
+        });
+    }
+
+    function handleNewsAction(event) {
+        const control = event.target.closest('[data-news-action]');
+        if (!control) return;
+
+        const action = control.dataset.newsAction;
+        if (action === 'reset') {
+            resetFilters();
+            return;
+        }
+        if (action === 'retry') {
+            showLoadingState();
+            loadNews();
+            return;
+        }
+
+        const article = findArticle(control.dataset.newsId);
+        if (!article) return;
+        if (action === 'open') openFullNews(article);
+        if (action === 'share') shareArticle(article);
+    }
+
+    function handleImageError(event) {
+        const image = event.target;
+        if (!(image instanceof HTMLImageElement) || !image.classList.contains('news-image')) return;
+        if (image.dataset.fallbackApplied === 'true') return;
+        image.dataset.fallbackApplied = 'true';
+        image.src = defaultImage;
+    }
+
+    function findArticle(id) {
+        return allNews.find((article) => String(article.id) === String(id || ''));
+    }
+
+    function openFullNews(article) {
+        document.getElementById('fullNewsModal')?.remove();
+
+        const sourceLink = article.url
+            ? `<a class="btn btn-outline-primary" href="${escapeAttribute(article.url)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square me-1" aria-hidden="true"></i>Buka sumber asli</a>`
+            : '';
+
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal fade" id="fullNewsModal" tabindex="-1" aria-labelledby="fullNewsModalTitle" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title fs-5" id="fullNewsModalTitle">${escapeHtml(article.title)}</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${buildArticleMedia(article)}
+                            ${buildMeta(article)}
+                            <div class="news-modal-summary p-3 mb-4">${escapeHtml(article.stickerText || article.description || 'Ringkasan belum tersedia.')}</div>
+                            <div class="news-modal-content lh-lg">${escapeHtml(article.fullContent || article.description || 'Isi lengkap belum tersedia.')}</div>
+                        </div>
+                        <div class="modal-footer">
+                            ${sourceLink}
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`);
+
+        const modalElement = document.getElementById('fullNewsModal');
+        modalElement.addEventListener('error', handleImageError, true);
+        modalElement.addEventListener('hidden.bs.modal', () => modalElement.remove(), { once: true });
+        bootstrap.Modal.getOrCreateInstance(modalElement, {
+            backdrop: true,
+            focus: true,
+            keyboard: true
+        }).show();
+    }
+
+    function buildArticleMedia(article) {
+        const media = Array.isArray(article.media) && article.media.length
+            ? article.media
+            : [{ type: 'image', url: article.urlToImage, caption: '' }];
+
+        return `<div class="news-modal-gallery ${media.length === 1 ? 'news-modal-gallery--single' : ''}">${media.map((item, index) => {
+            if (item.type === 'image') {
+                return `
+                    <figure class="news-modal-media ${index === 0 ? 'news-modal-media--lead' : ''}">
+                        <img class="news-image" src="${escapeAttribute(item.url)}" alt="${escapeAttribute(item.caption || `${article.title} — foto ${index + 1}`)}" loading="${index === 0 ? 'eager' : 'lazy'}">
+                        ${item.caption ? `<figcaption>${escapeHtml(item.caption)}</figcaption>` : ''}
+                    </figure>`;
+            }
+
+            const youtubeId = getYoutubeId(item.url);
+            if (youtubeId) {
+                return `
+                    <figure class="news-modal-media news-modal-media--video ${index === 0 ? 'news-modal-media--lead' : ''}">
+                        <div class="ratio ratio-16x9">
+                            <iframe src="https://www.youtube-nocookie.com/embed/${youtubeId}" title="${escapeAttribute(item.caption || `Video ${article.title}`)}" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                        ${item.caption ? `<figcaption>${escapeHtml(item.caption)}</figcaption>` : ''}
+                    </figure>`;
+            }
+
+            return `
+                <figure class="news-modal-media news-modal-media--video ${index === 0 ? 'news-modal-media--lead' : ''}">
+                    <video controls preload="metadata" playsinline>
+                        <source src="${escapeAttribute(item.url)}">
+                        Browser Anda tidak mendukung pemutar video.
+                    </video>
+                    ${item.caption ? `<figcaption>${escapeHtml(item.caption)}</figcaption>` : ''}
+                </figure>`;
+        }).join('')}</div>`;
+    }
+
+    async function shareArticle(article) {
+        const shareUrl = article.url || window.location.href;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: article.title, url: shareUrl });
+                return;
+            }
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareUrl);
+                window.alert('Tautan berita berhasil disalin.');
+                return;
+            }
+            window.prompt('Salin tautan berita:', shareUrl);
+        } catch (error) {
+            if (error?.name !== 'AbortError') {
+                console.warn('[NEWS] Share failed:', error);
+            }
+        }
+    }
+
+    function updateSearchSummary() {
+        if (!searchResults) return;
+        const parts = [];
+        if (searchTerm) parts.push(`kata kunci “${searchTerm}”`);
+        if (currentCategory !== 'all') parts.push(`kategori ${localizeNewsCategory(currentCategory)}`);
+
+        searchResults.textContent = parts.length
+            ? `${activeNews.length} dari ${allNews.length} berita cocok dengan ${parts.join(' dan ')}.`
+            : '';
+    }
+
+    function updateFeedStatus() {
+        if (!feedStatus) return;
+        const externalCount = allNews.filter((article) => article.origin === 'external').length;
+        const localCount = allNews.length - externalCount;
+
+        if (externalCount > 0) {
+            feedStatus.textContent = `${localCount} berita BCL + ${externalCount} berita portal eksternal sesuai topik.`;
+        } else if (localCount > 0) {
+            feedStatus.textContent = `${localCount} berita BCL aktif. Portal eksternal belum mengirim artikel sesuai topik.`;
+        } else {
+            feedStatus.textContent = 'Belum ada berita dari sumber yang terhubung.';
+        }
+    }
+
+    function displayEmptyState() {
+        const isFiltered = Boolean(searchTerm || currentCategory !== 'all');
+        newsContainer.innerHTML = `
+                <div class="news-empty-state">
+                    <span class="news-state-icon"><i class="fa-regular fa-newspaper" aria-hidden="true"></i></span>
+                    <h3>${isFiltered ? 'Berita tidak ditemukan' : 'Belum ada berita yang diterbitkan'}</h3>
+                    <p>${isFiltered ? 'Coba gunakan kata kunci atau kategori lain.' : 'Berita akan muncul di halaman ini setelah diterbitkan oleh admin atau tersedia dari sumber terhubung.'}</p>
+                    ${isFiltered ? '<button class="news-reset-btn mt-3" type="button" data-news-action="reset"><i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>Reset filter</button>' : ''}
+                </div>`;
+        if (newsCount) newsCount.textContent = '0 berita ditemukan';
+        if (loadMoreBtn) loadMoreBtn.hidden = true;
+    }
+
+    function showLoadingState() {
+        featuredContainer.replaceChildren();
+        newsContainer.innerHTML = `
+                <div class="news-loading-state" role="status">
+                    <span class="news-state-icon"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i></span>
+                    <h3>Memuat berita terkini</h3>
+                    <p>Menghubungkan halaman dengan sumber berita BCL.</p>
+                </div>`;
+        if (feedStatus) feedStatus.textContent = 'Menghubungkan sumber berita...';
+        if (newsCount) newsCount.textContent = '';
+        if (loadMoreBtn) loadMoreBtn.hidden = true;
+    }
+
+    function showErrorState() {
+        allNews = [];
+        activeNews = [];
+        featuredContainer.replaceChildren();
+        newsContainer.innerHTML = `
+                <div class="news-error-state" role="alert">
+                    <span class="news-state-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+                    <h3>Berita belum dapat dimuat</h3>
+                    <p>Koneksi ke sumber berita sedang bermasalah. Tidak ada konten contoh yang ditampilkan sebagai pengganti.</p>
+                    <button class="news-reset-btn mt-3" type="button" data-news-action="retry"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i>Coba lagi</button>
+                </div>`;
+        if (feedStatus) feedStatus.textContent = 'Sumber berita tidak dapat dihubungi.';
+        if (newsCount) newsCount.textContent = 'Sumber berita tidak tersedia';
+        if (loadMoreBtn) loadMoreBtn.hidden = true;
+    }
+
+    function resetFilters() {
+        currentCategory = 'all';
+        searchTerm = '';
+        if (searchInput) searchInput.value = '';
+        filterButtons.forEach((button) => {
+            const isActive = button.dataset.filter === 'all';
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+        applyFilters();
+        searchInput?.focus();
+    }
+
+    function categoryMatches(article, filter) {
+        if (!filter || filter === 'all') return true;
+        const value = [article.category, article.title, article.stickerText]
+            .map(safeText)
+            .join(' ')
+            .toLowerCase();
+        const aliases = {
+            bim: ['bim', 'general', 'umum'],
+            construction: ['construction', 'konstruksi'],
+            technology: ['technology', 'teknologi', 'automation'],
+            regulation: ['regulation', 'regulasi', 'standard', 'standar'],
+            infrastructure: ['infrastructure', 'infrastruktur'],
+            education: ['education', 'edukasi', 'training', 'pelatihan'],
+            international: ['international', 'internasional', 'global']
+        };
+        return (aliases[filter] || [filter]).some((alias) => value.includes(alias));
+    }
+
+    function detectNewsCategory(article) {
+        const text = safeText(`${article.title || ''} ${article.description || ''} ${article.content || ''}`).toLowerCase();
+        if (/regulasi|permen|undang-undang|standard|standar/.test(text)) return 'Regulation';
+        if (/teknologi|software|digital|otomasi|automation|\bai\b/.test(text)) return 'Technology';
+        if (/pendidikan|training|kursus|universitas|pelatihan/.test(text)) return 'Education';
+        if (/infrastruktur|jembatan|jalan/.test(text)) return 'Infrastructure';
+        if (/internasional|global/.test(text)) return 'International';
+        if (/konstruksi|proyek/.test(text)) return 'Construction';
+        return 'BIM';
     }
 
     function localizeNewsCategory(category) {
@@ -212,399 +608,113 @@
             technology: 'Teknologi',
             education: 'Edukasi',
             infrastructure: 'Infrastruktur',
-            architecture: 'Arsitektur',
-            standards: 'Standar',
             international: 'Internasional',
             construction: 'Konstruksi',
+            standards: 'Standar',
+            standard: 'Standar',
             general: 'Umum',
             bim: 'BIM'
         };
-
-        const key = safeText(category).toLowerCase();
-        return labels[key] || category || 'Umum';
+        const value = safeText(category);
+        return labels[value.toLowerCase()] || value || 'Umum';
     }
 
-    function buildPrimaryAction(article) {
-        const hasFullContent = !!safeText(article.fullContent);
-        const hasExternalLink = !!(article.url && article.url !== '#');
-        const encodedId = encodeURIComponent(article.id);
-
-        if (hasFullContent) {
-            return `
-                <button class="news-btn news-btn-primary border-0" onclick="openFullNews('${encodedId}')">
-                    <i class="fas fa-book-open"></i> ${fullReadLabel}
-                </button>
-            `;
-        }
-
-        if (hasExternalLink) {
-            return `
-                <a href="${article.url}" target="_blank" class="news-btn news-btn-primary">
-                    <i class="fas fa-external-link"></i> ${fullReadLabel}
-                </a>
-            `;
-        }
-
-        return `
-            <span class="news-btn news-btn-secondary">
-                <i class="fas fa-info-circle"></i> ${fullReadLabel}
-            </span>
-        `;
-    }
-
-    function renderNewsCard(article) {
-        const title = article.title;
-        const description = article.stickerText || article.description || 'Deskripsi tidak tersedia';
-        const imageUrl = resolveImageUrl(article.urlToImage);
-        const source = article.source?.name || 'Sumber Tidak Diketahui';
-        const category = localizeNewsCategory(article.category || 'General');
-        const shareUrl = article.url && article.url !== '#' ? article.url : `${window.location.origin}${window.location.pathname}`;
-
-        return `
-            <div class="col-lg-4 col-md-6">
-                <div class="news-card">
-                    <img src="${imageUrl}" alt="${title}" class="news-image" onerror="this.src='${defaultImage}'">
-                    <div class="news-badge">${category}</div>
-                    <h5 class="news-title">${title.length > 70 ? `${title.substring(0, 70)}...` : title}</h5>
-                    <p class="news-description">${description.length > 160 ? `${description.substring(0, 160)}...` : description}</p>
-                    <div class="news-meta">
-                        <i class="fas fa-calendar me-1"></i>${article.displayDate} |
-                        <i class="fas fa-user me-1"></i>${source}
-                    </div>
-                    <div class="news-actions">
-                        ${buildPrimaryAction(article)}
-                        <span class="news-btn news-btn-secondary" onclick="shareArticle('${encodeURIComponent(title)}', '${encodeURIComponent(shareUrl)}')">
-                            <i class="fas fa-share"></i> Bagikan
-                        </span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function displayFeaturedNews() {
-        if (!featuredContainer || featuredNews.length === 0) return;
-
-        const lead = featuredNews[0];
-        const leadDescription = lead.stickerText || lead.description || 'No description available';
-
-        featuredContainer.innerHTML = `
-            <div class="featured-article">
-                <div class="row">
-                    <div class="col-md-6">
-                        <img src="${resolveImageUrl(lead.urlToImage)}" alt="${lead.title}" class="w-100 h-100 object-cover" onerror="this.src='${defaultImage}'">
-                    </div>
-                    <div class="col-md-6 d-flex align-items-center">
-                        <div class="p-4">
-                            <div class="news-badge mb-3">${localizeNewsCategory(lead.category || 'BIM')}</div>
-                            <h3 class="news-title">${lead.title}</h3>
-                            <p class="news-description">${leadDescription.length > 220 ? `${leadDescription.substring(0, 220)}...` : leadDescription}</p>
-                            <div class="news-meta mb-3">
-                                <i class="fas fa-calendar me-2"></i>${lead.displayDate} |
-                                <i class="fas fa-user me-2"></i>${lead.source?.name || 'Sumber tidak diketahui'}
-                            </div>
-                            ${buildPrimaryAction(lead)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function displayNewsPaginated(page = 0, customNewsArray = null) {
-        if (!newsContainer) {
-            console.error('News container not found');
-            return;
-        }
-
-        const filteredNews = customNewsArray || applyCategoryFilter(allNews);
-        const paginatedNews = paginateNews(filteredNews, page);
-
-        if (paginatedNews.length === 0) {
-            displayEmptyState();
-            return;
-        }
-
-        newsContainer.innerHTML = paginatedNews.map((article) => renderNewsCard(article)).join('');
-
-        const totalPages = Math.ceil(filteredNews.length / articlesPerPage);
-        if (page + 1 < totalPages && loadMoreBtn) {
-            loadMoreBtn.style.display = 'block';
-            loadMoreBtn.onclick = () => loadMoreArticles(page + 1);
-        } else if (loadMoreBtn) {
-            loadMoreBtn.style.display = 'none';
-        }
-
-        currentPage = page;
-    }
-
-    function paginateNews(newsArray, page) {
-        const start = page * articlesPerPage;
-        const end = start + articlesPerPage;
-        return newsArray.slice(start, end);
-    }
-
-    function loadMoreArticles(page) {
-        const currentNews = newsContainer.querySelectorAll('.news-card');
-        if (!currentNews.length) return;
-
-        const newArticles = document.createElement('div');
-        newArticles.className = 'row g-4';
-        newArticles.innerHTML = displayNewsPaginatedContent(page);
-
-        currentNews[currentNews.length - 1].parentNode.insertAdjacentHTML('afterend', newArticles.innerHTML);
-        currentPage = page;
-
-        const filteredCount = applyCategoryFilter(allNews).length;
-        const totalPages = Math.ceil(filteredCount / articlesPerPage);
-        if (page + 1 >= totalPages && loadMoreBtn) {
-            loadMoreBtn.style.display = 'none';
-        }
-    }
-
-    function displayNewsPaginatedContent(page) {
-        const filteredNews = applyCategoryFilter(allNews);
-        const paginatedNews = paginateNews(filteredNews, page);
-        return paginatedNews.map((article) => renderNewsCard(article)).join('');
-    }
-
-    function attachEventListeners() {
-        if (searchInput) {
-            searchInput.addEventListener('input', debouncedSearch);
-        }
-
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function () {
-                resetFilters();
-            });
-        }
-
-        if (filterButtons) {
-            filterButtons.forEach((btn) => {
-                btn.addEventListener('click', function () {
-                    filterButtons.forEach((item) => item.classList.remove('active'));
-                    this.classList.add('active');
-                    currentFilters.category = this.dataset.filter;
-                    displayNewsPaginated(0);
-
-                    const resultsDiv = document.getElementById('searchResults');
-                    if (resultsDiv) resultsDiv.innerHTML = '';
-                });
-            });
-        }
-    }
-
-    function createSearchResultsDiv() {
-        const resultsDiv = document.createElement('div');
-        resultsDiv.id = 'searchResults';
-        resultsDiv.className = 'container mt-2';
-
-        const filterSection = document.querySelector('.filter-section');
-        if (filterSection) {
-            filterSection.insertAdjacentElement('afterend', resultsDiv);
-        }
-
-        return resultsDiv;
-    }
-
-    function performSearch() {
-        const searchTerm = (searchInput?.value || '').toLowerCase().trim();
-        const resultsDiv = document.getElementById('searchResults') || createSearchResultsDiv();
-
-        if (!searchTerm) {
-            displayNewsPaginated(0);
-            resultsDiv.innerHTML = '';
-            return;
-        }
-
-        const filteredNews = allNews.filter((article) => {
-            const fullText = [
-                article.title,
-                article.stickerText,
-                article.description,
-                article.fullContent,
-                article.source?.name,
-                article.category
-            ]
-                .join(' ')
-                .toLowerCase();
-
-            return fullText.includes(searchTerm);
-        });
-
-        displayNewsPaginated(0, filteredNews);
-        resultsDiv.innerHTML = `
-            <div class="alert alert-info">
-                <i class="fas fa-search me-2"></i>
-                Ditemukan <strong>${filteredNews.length}</strong> artikel dari total <strong>${allNews.length}</strong> artikel untuk kata kunci "<strong>${searchTerm}</strong>"
-            </div>
-        `;
-    }
-
-    function applyCategoryFilter(newsArray) {
-        if (currentFilters.category === 'all' || !currentFilters.category) {
-            return newsArray;
-        }
-
-        return newsArray.filter((article) => {
-            const category = (article.category || 'general').toLowerCase();
-            const filter = currentFilters.category.toLowerCase();
-
-            if (filter === 'bim') return category.includes('bim') || category === 'general';
-            if (filter === 'construction') return category.includes('construction') || category.includes('infrastructure');
-            if (filter === 'technology') return category.includes('technology') || category.includes('automation');
-            if (filter === 'regulation') return category.includes('regulation') || category.includes('standard');
-            if (filter === 'education') return category.includes('education') || category.includes('training');
-            if (filter === 'international') return category.includes('international');
-
-            return category === filter;
-        });
-    }
-
-    function detectNewsCategory(article) {
-        const text = `${article.title || ''} ${article.description || ''} ${article.content || ''} ${article.fullContent || ''}`.toLowerCase();
-
-        if (text.includes('regulasi') || text.includes('permen') || text.includes('menteri') || text.includes('undang-undang')) return 'Regulation';
-        if (text.includes('teknologi') || text.includes('ai') || text.includes('software') || text.includes('digital')) return 'Technology';
-        if (text.includes('pendidikan') || text.includes('training') || text.includes('kursus') || text.includes('universitas')) return 'Education';
-        if (text.includes('infrastruktur') || text.includes('jembatan') || text.includes('jalan') || text.includes('konstruksi')) return 'Infrastructure';
-        if (text.includes('arsitektur') || text.includes('desain') || text.includes('bangunan')) return 'Architecture';
-        if (text.includes('standar') || text.includes('iso') || text.includes('sn')) return 'Standards';
-        if (text.includes('internasional') || text.includes('global')) return 'International';
-        if (text.includes('konstruksi') || text.includes('proyek')) return 'Construction';
-
-        return 'BIM';
-    }
-
-    function formatDisplayDate(dateString) {
-        if (!dateString) return 'Tanpa tanggal';
-
+    function normalizeExternalUrl(value) {
+        const raw = safeText(value);
+        if (!raw || raw === '#') return '';
         try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('id-ID', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
+            const url = new URL(raw, window.location.origin);
+            return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+        } catch {
+            return '';
+        }
+    }
+
+    function normalizeMediaItems(items, legacyImage = '') {
+        const result = [];
+        const seen = new Set();
+        const source = Array.isArray(items) ? items : [];
+
+        source.forEach((item) => {
+            if (!item || typeof item !== 'object') return;
+            const type = safeText(item.type).toLowerCase() === 'video' ? 'video' : 'image';
+            const url = normalizeMediaUrl(item.url || item.src, type);
+            if (!url || seen.has(`${type}:${url}`)) return;
+            seen.add(`${type}:${url}`);
+            result.push({
+                type,
+                url,
+                caption: safeText(item.caption).slice(0, 240)
             });
-        } catch (error) {
-            return dateString;
-        }
-    }
-
-    function getStaticFallbackNews() {
-        const nowIso = new Date().toISOString();
-        return [
-            {
-                id: 'fallback-1',
-                title: 'Peraturan BIM Terbaru dari Kementerian PUPR',
-                stickerText: 'Kementerian PUPR merilis pembaruan regulasi implementasi BIM nasional.',
-                description: 'Kementerian PUPR merilis pembaruan regulasi implementasi BIM nasional.',
-                fullContent: 'Kementerian PUPR merilis regulasi baru yang memperkuat adopsi BIM pada proyek infrastruktur prioritas, termasuk pedoman interoperabilitas data dan kolaborasi lintas disiplin.',
-                url: '#',
-                urlToImage: defaultFallbackImage,
-                source: { name: 'Kementerian PUPR' },
-                publishedAt: nowIso,
-                category: 'Regulation'
-            },
-            {
-                id: 'fallback-2',
-                title: 'Teknologi BIM 2025: Inovasi Terbaru',
-                stickerText: 'AI, VR/AR, dan automasi menjadi fokus inovasi BIM tahun 2025.',
-                description: 'AI, VR/AR, dan automasi menjadi fokus inovasi BIM tahun 2025.',
-                fullContent: 'Industri konstruksi mengadopsi AI, VR/AR, dan automasi workflow BIM untuk meningkatkan akurasi desain, mempercepat koordinasi, serta mengurangi rework di lapangan.',
-                url: '#',
-                urlToImage: defaultFallbackImage,
-                source: { name: 'Teknologi Indonesia' },
-                publishedAt: nowIso,
-                category: 'Technology'
-            },
-            {
-                id: 'fallback-3',
-                title: 'Program BIM untuk Universitas Indonesia',
-                stickerText: 'Universitas Indonesia meluncurkan program magister BIM terintegrasi.',
-                description: 'Universitas Indonesia meluncurkan program magister BIM terintegrasi.',
-                fullContent: 'Program magister BIM terintegrasi diluncurkan untuk memperkuat kompetensi generasi profesional konstruksi digital, mencakup manajemen data, koordinasi model, dan standar global.',
-                url: 'https://ui.ac.id',
-                urlToImage: defaultFallbackImage,
-                source: { name: 'Universitas Indonesia' },
-                publishedAt: nowIso,
-                category: 'Education'
-            }
-        ];
-    }
-
-    function showFallbackContent() {
-        const fallbackDiv = document.getElementById('fallback-content');
-        if (fallbackDiv) {
-            fallbackDiv.style.display = 'block';
-        }
-    }
-
-    function checkApiStatus() {
-        const statusDiv = document.getElementById('api-status');
-        if (!statusDiv) return;
-
-        if (isApiAvailable) {
-            statusDiv.className = 'alert alert-success';
-            statusDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>API terhubung dengan baik - ${allNews.length} artikel dimuat`;
-        } else {
-            statusDiv.className = 'alert alert-warning';
-            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Menggunakan konten cadangan - API tidak tersedia';
-        }
-    }
-
-    function displayEmptyState() {
-        if (!newsContainer) return;
-
-        newsContainer.innerHTML = `
-            <div class="col-12">
-                <div class="empty-state">
-                    <i class="fas fa-search"></i>
-                    <h4>Artikel Tidak Ditemukan</h4>
-                    <p>Tidak ada artikel yang cocok dengan filter saat ini. Coba ubah kata kunci atau kategori pencarian Anda.</p>
-                    <button class="btn btn-outline-primary" onclick="resetFilters()">
-                        <i class="fas fa-redo me-1"></i>Reset Filter
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    function resetFilters() {
-        currentFilters = { topic: '', source: '', category: 'all' };
-        if (searchInput) searchInput.value = '';
-
-        document.querySelectorAll('.filter-btn[data-filter]').forEach((btn) => {
-            btn.classList.remove('active');
-            if (btn.dataset.filter === 'all') btn.classList.add('active');
         });
 
-        const resultsDiv = document.getElementById('searchResults');
-        if (resultsDiv) resultsDiv.innerHTML = '';
-
-        displayNewsPaginated(0);
+        const legacyUrl = normalizeMediaUrl(legacyImage, 'image');
+        if (legacyUrl && !result.some((item) => item.type === 'image' && item.url === legacyUrl)) {
+            result.unshift({ type: 'image', url: legacyUrl, caption: '' });
+        }
+        if (!result.length) {
+            result.push({ type: 'image', url: defaultImage, caption: '' });
+        }
+        return result.slice(0, 12);
     }
 
-    function showLoadingState() {
-        if (!newsContainer) return;
-
-        newsContainer.innerHTML = `
-            <div class="col-12">
-                <div class="loading-spinner text-center py-5">
-                    <i class="fas fa-spinner fa-spin fa-3x text-primary mb-3"></i>
-                    <h4>Memuat Berita Terkini...</h4>
-                    <p class="text-muted">Mengambil berita BIM dari sumber terpercaya</p>
-                </div>
-            </div>
-        `;
+    function normalizeMediaUrl(value, type = 'image') {
+        const raw = safeText(value).replace(/\\/g, '/');
+        if (!raw) return '';
+        if (type === 'image' && /^data:image\/(?:png|jpe?g|gif|webp);base64,/i.test(raw)) return raw;
+        try {
+            const url = new URL(raw, window.location.origin);
+            return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+        } catch {
+            return '';
+        }
     }
 
-    function hideLoadingState() {
-        // no-op
+    function getYoutubeId(value) {
+        try {
+            const url = new URL(String(value || ''), window.location.origin);
+            const host = url.hostname.replace(/^www\./, '').toLowerCase();
+            if (host === 'youtu.be') {
+                const candidate = url.pathname.slice(1);
+                return /^[\w-]{6,15}$/.test(candidate) ? candidate : '';
+            }
+            if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+                const candidate = url.searchParams.get('v') || url.pathname.match(/\/(?:embed|shorts)\/([\w-]{6,15})/)?.[1] || '';
+                return /^[\w-]{6,15}$/.test(candidate) ? candidate : '';
+            }
+        } catch {
+            return '';
+        }
+        return '';
     }
 
-    function escapeHtml(text) {
-        return String(text || '')
+    function formatDisplayDate(value) {
+        const timestamp = dateValue(value);
+        if (!timestamp) return 'Tanpa tanggal';
+        return new Intl.DateTimeFormat('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        }).format(new Date(timestamp));
+    }
+
+    function dateValue(value) {
+        const timestamp = Date.parse(value || '');
+        return Number.isNaN(timestamp) ? 0 : timestamp;
+    }
+
+    function summarizeText(value, maxLength) {
+        const cleaned = safeText(value).replace(/\s+/g, ' ');
+        if (cleaned.length <= maxLength) return cleaned;
+        return `${cleaned.slice(0, maxLength - 1).trimEnd()}…`;
+    }
+
+    function safeText(value) {
+        return typeof value === 'string' ? value.trim() : '';
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
@@ -612,98 +722,7 @@
             .replace(/'/g, '&#39;');
     }
 
-    window.openFullNews = function (encodedId) {
-        const id = decodeURIComponent(encodedId);
-        const article = allNews.find((item) => String(item.id) === id);
-        if (!article) return;
-
-        const existing = document.getElementById('fullNewsModal');
-        if (existing) {
-            const existingInstance = bootstrap.Modal.getInstance(existing);
-            if (existingInstance) {
-                existingInstance.hide();
-                existingInstance.dispose();
-            }
-            existing.remove();
-        }
-
-        document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.remove());
-        document.body.classList.remove('modal-open');
-        document.body.style.removeProperty('padding-right');
-        document.body.style.removeProperty('overflow');
-
-        const modalHtml = `
-            <div class="modal fade" id="fullNewsModal" tabindex="-1">
-                <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title"><i class="fas fa-newspaper me-2"></i>${escapeHtml(article.title)}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <img src="${resolveImageUrl(article.urlToImage)}" alt="${escapeHtml(article.title)}" class="img-fluid rounded mb-3" onerror="this.src='${defaultImage}'">
-                            <div class="mb-3 text-muted">
-                                <i class="fas fa-calendar me-1"></i>${article.displayDate}
-                                <span class="mx-2">|</span>
-                                <i class="fas fa-user me-1"></i>${escapeHtml(article.source?.name || 'Tidak diketahui')}
-                            </div>
-                            <div class="p-3 border rounded bg-light mb-3">
-                                <strong>Kalimat Utama:</strong><br>
-                                ${escapeHtml(article.stickerText || article.description || '-')}
-                            </div>
-                            <div style="white-space: pre-wrap; line-height: 1.7;">
-                                ${escapeHtml(article.fullContent || article.description || '-')}
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            ${article.url && article.url !== '#'
-                                ? `<a href="${article.url}" target="_blank" class="btn btn-outline-primary"><i class="fas fa-external-link me-1"></i>Buka Sumber</a>`
-                                : ''
-                            }
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        const modalEl = document.getElementById('fullNewsModal');
-        const modal = new bootstrap.Modal(modalEl, {
-            backdrop: false,
-            focus: true,
-            keyboard: true
-        });
-
-        modalEl.addEventListener('hidden.bs.modal', () => {
-            modal.dispose();
-            modalEl.remove();
-            document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.removeProperty('padding-right');
-            document.body.style.removeProperty('overflow');
-        }, { once: true });
-
-        modal.show();
-    };
-
-    window.shareArticle = function (title, url) {
-        const decodedTitle = decodeURIComponent(title);
-        const decodedUrl = decodeURIComponent(url);
-
-        if (navigator.share) {
-            navigator.share({ title: decodedTitle, url: decodedUrl });
-            return;
-        }
-
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(decodedUrl);
-            alert('Tautan berhasil disalin.');
-            return;
-        }
-
-        prompt('Salin tautan ini:', decodedUrl);
-    };
-
-    window.resetFilters = resetFilters;
+    function escapeAttribute(value) {
+        return escapeHtml(value).replace(/`/g, '&#96;');
+    }
 });

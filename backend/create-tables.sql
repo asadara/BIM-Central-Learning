@@ -133,6 +133,9 @@ CREATE TABLE IF NOT EXISTS learning_attempts (
     passed BOOLEAN DEFAULT false,
     answers JSONB DEFAULT '[]'::jsonb,
     metadata JSONB DEFAULT '{}'::jsonb,
+    is_verified BOOLEAN DEFAULT false,
+    verification_method TEXT,
+    rubric_version TEXT,
     time_taken INTEGER DEFAULT 0,
     submitted_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -141,6 +144,7 @@ CREATE INDEX IF NOT EXISTS idx_learning_attempts_user_id ON learning_attempts(us
 CREATE INDEX IF NOT EXISTS idx_learning_attempts_user_identifier ON learning_attempts(user_identifier);
 CREATE INDEX IF NOT EXISTS idx_learning_attempts_source_type ON learning_attempts(source_type);
 CREATE INDEX IF NOT EXISTS idx_learning_attempts_submitted_at ON learning_attempts(submitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_learning_attempts_verified_user ON learning_attempts(user_id, is_verified, submitted_at DESC);
 
 -- =====================================================
 -- USER CERTIFICATES
@@ -159,6 +163,8 @@ CREATE TABLE IF NOT EXISTS user_certificates (
     score INTEGER DEFAULT 0,
     certificate_url TEXT,
     metadata JSONB DEFAULT '{}'::jsonb,
+    is_verified BOOLEAN DEFAULT false,
+    verification_method TEXT,
     issued_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_identifier, quiz_id)
 );
@@ -166,6 +172,7 @@ CREATE TABLE IF NOT EXISTS user_certificates (
 CREATE INDEX IF NOT EXISTS idx_user_certificates_user_id ON user_certificates(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_certificates_user_identifier ON user_certificates(user_identifier);
 CREATE INDEX IF NOT EXISTS idx_user_certificates_issued_at ON user_certificates(issued_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_certificates_verified_user ON user_certificates(user_id, is_verified, issued_at DESC);
 
 -- =====================================================
 -- USER SESSIONS

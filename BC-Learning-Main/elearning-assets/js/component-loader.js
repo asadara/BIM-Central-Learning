@@ -255,7 +255,7 @@ class ComponentLoader {
 
             // Only proceed if we've confirmed no sidebar exists anywhere
 
-            const response = await fetch('/elearning-assets/components/sidebar.html');
+            const response = await fetch('/elearning-assets/components/sidebar.html?v=20260717b');
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -303,7 +303,7 @@ class ComponentLoader {
     // Load footer component
     async loadFooter() {
         try {
-            const response = await fetch('/elearning-assets/components/footer.html');
+            const response = await fetch('/elearning-assets/components/footer.html?v=20260717b');
             const footerHTML = await response.text();
 
             // Insert footer HTML
@@ -710,7 +710,7 @@ class ComponentLoader {
     }
 
     ensureFavicon() {
-        const faviconHref = '/logos/fav_logo_BCL.ico?v=20260424b';
+        const faviconHref = '/img/icons/trimmed/main_ico_bcl.ico';
         const iconRels = ['icon', 'shortcut icon', 'apple-touch-icon'];
 
         document

@@ -1,10 +1,19 @@
 <div class="side-bar">
-    <button id="close-btn" type="button" aria-label="Close sidebar">
-        <i class="fas fa-times"></i>
-    </button>
-    <button class="sidebar-toggle-handle" type="button" aria-label="Collapse sidebar">
-        <i class="fas fa-chevron-left"></i>
-    </button>
+    <div class="elearn-sidebar-head">
+        <span class="elearn-sidebar-mark" aria-hidden="true">
+            <i class="fas fa-graduation-cap"></i>
+        </span>
+        <div class="elearn-sidebar-title">
+            <p>BCL</p>
+            <h2>Learning Workspace</h2>
+        </div>
+        <button class="sidebar-toggle-handle" type="button" aria-label="Collapse sidebar">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button id="close-btn" type="button" aria-label="Close sidebar">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
 
     <div class="profile" id="sidebar-user-profile-box">
         <div class="profile-image-container">
@@ -110,7 +119,7 @@
         </nav>
     </div>
 
-    <div class="nav-section admin-content-section" style="display: none;">
+    <div class="nav-section admin-content-section">
         <h4 class="nav-section-title">Content Management</h4>
         <nav class="navbar">
             <a href="javascript:void(0)"

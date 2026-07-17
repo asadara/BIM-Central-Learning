@@ -78,10 +78,29 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
         try {
             const file = getRestartStatePath();
             if (!fs.existsSync(file)) return null;
-            return JSON.parse(fs.readFileSync(file, "utf8"));
+            const rawState = fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "").trim();
+            return rawState ? JSON.parse(rawState) : null;
         } catch (error) {
             return { state: "unknown", error: error.message };
         }
+    }
+
+    function reconcileRestartState(state) {
+        const activeStates = new Set(["scheduled", "stopping", "starting", "waiting", "requesting"]);
+        if (!state || !activeStates.has(String(state.state || "").toLowerCase())) return state;
+
+        const stateUpdatedAt = new Date(state.updatedAt || 0);
+        if (Number.isNaN(stateUpdatedAt.getTime()) || serverStartedAt <= stateUpdatedAt) return state;
+
+        appendServerRestartLog(`restart ${state.requestId || "unknown"} reconciled healthy by new backend pid=${process.pid}`);
+        const { updatedAt: _previousUpdatedAt, ...stateWithoutTimestamp } = state;
+        return writeRestartState({
+            ...stateWithoutTimestamp,
+            state: "healthy",
+            message: "BCL restart completed; the new backend process is responding",
+            backendPid: process.pid,
+            recoveredBy: "restart-status"
+        }) || state;
     }
 
     function readRestartLogTail(maxLines = 80) {
@@ -145,6 +164,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
         const restartFlagEscaped = escapeForPs(getAdminRestartFlagPath());
         const restartStateEscaped = escapeForPs(getRestartStatePath());
         const logDir = getLogDir();
+        const restartLogEscaped = escapeForPs(path.join(logDir, "restart-api.log"));
         const useHiddenStarter = path.basename(startScript).toLowerCase() === "start-bcl-http-hidden.bat";
 
         const startCommand = useHiddenStarter
@@ -157,7 +177,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
         const requestId = `restart-${timestamp}`;
         const wrapperScriptContent = [
             `$ErrorActionPreference = 'Continue'`,
-            `function Write-RestartState([string]$State, [string]$Message) { $payload = [ordered]@{ requestId = '${requestId}'; state = $State; message = $Message; updatedAt = (Get-Date).ToUniversalTime().ToString('o'); backendPort = '${backendPort}' }; $payload | ConvertTo-Json -Compress | Set-Content -Path '${restartStateEscaped}' -Encoding UTF8 }`,
+            `function Write-RestartState([string]$State, [string]$Message) { $now = (Get-Date).ToUniversalTime().ToString('o'); $payload = [ordered]@{ requestId = '${requestId}'; state = $State; message = $Message; updatedAt = $now; backendPort = '${backendPort}' }; $payload | ConvertTo-Json -Compress | Set-Content -Path '${restartStateEscaped}' -Encoding UTF8; Add-Content -Path '${restartLogEscaped}' -Value ('[' + $now + '] restart ${requestId} state=' + $State + ' message=' + $Message) -Encoding UTF8 }`,
             `New-Item -ItemType File -Path '${restartFlagEscaped}' -Force | Out-Null`,
             `Write-RestartState 'stopping' 'Stopping BCL services'`,
             "Start-Sleep -Milliseconds 800",
@@ -351,6 +371,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
             return res.status(401).json({ error: "Unauthorized access" });
         }
 
+        const restartState = reconcileRestartState(readRestartState());
         res.json({
             success: true,
             server: {
@@ -359,7 +380,7 @@ function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, video
                 startedAt: serverStartedAt.toISOString(),
                 uptime: process.uptime()
             },
-            restart: readRestartState(),
+            restart: restartState,
             adminRestartInProgress: fs.existsSync(getAdminRestartFlagPath()),
             logTail: readRestartLogTail(),
             timestamp: new Date().toISOString()

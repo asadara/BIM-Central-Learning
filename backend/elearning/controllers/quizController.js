@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 const { getRequestUser } = require('../../utils/auth');
 const { createPgConfig } = require('../../config/runtimeConfig');
 const { getExamCertificateRequirements } = require('../services/learningPathService');
+const { RUBRIC } = require('../../services/competencyScoringService');
 
 const quizzesPath = path.join(__dirname, '../data/quizzes.json');
 
@@ -41,9 +42,19 @@ function ensureTables() {
                     passed BOOLEAN DEFAULT false,
                     answers JSONB DEFAULT '[]'::jsonb,
                     metadata JSONB DEFAULT '{}'::jsonb,
+                    is_verified BOOLEAN DEFAULT false,
+                    verification_method TEXT,
+                    rubric_version TEXT,
                     time_taken INTEGER DEFAULT 0,
                     submitted_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
+            `);
+
+            await pool.query(`
+                ALTER TABLE learning_attempts
+                ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false,
+                ADD COLUMN IF NOT EXISTS verification_method TEXT,
+                ADD COLUMN IF NOT EXISTS rubric_version TEXT;
             `);
 
             await pool.query(`
@@ -62,6 +73,10 @@ function ensureTables() {
                 CREATE INDEX IF NOT EXISTS idx_learning_attempts_submitted_at
                 ON learning_attempts(submitted_at DESC);
             `);
+            await pool.query(`
+                CREATE INDEX IF NOT EXISTS idx_learning_attempts_verified_user
+                ON learning_attempts(user_id, is_verified, submitted_at DESC);
+            `);
 
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS user_certificates (
@@ -77,9 +92,17 @@ function ensureTables() {
                     score INTEGER DEFAULT 0,
                     certificate_url TEXT,
                     metadata JSONB DEFAULT '{}'::jsonb,
+                    is_verified BOOLEAN DEFAULT false,
+                    verification_method TEXT,
                     issued_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(user_identifier, quiz_id)
                 );
+            `);
+
+            await pool.query(`
+                ALTER TABLE user_certificates
+                ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false,
+                ADD COLUMN IF NOT EXISTS verification_method TEXT;
             `);
 
             await pool.query(`
@@ -93,6 +116,10 @@ function ensureTables() {
             await pool.query(`
                 CREATE INDEX IF NOT EXISTS idx_user_certificates_issued_at
                 ON user_certificates(issued_at DESC);
+            `);
+            await pool.query(`
+                CREATE INDEX IF NOT EXISTS idx_user_certificates_verified_user
+                ON user_certificates(user_id, is_verified, issued_at DESC);
             `);
         })().catch((error) => {
             ensureTablesPromise = null;
@@ -171,11 +198,101 @@ function parseQuizDefinition(quizId) {
     }
 }
 
+function readQuizQuestionBank(quizDefinition) {
+    if (!quizDefinition) return [];
+
+    const configuredPath = trimText(quizDefinition.questionBank, 500);
+    if (!configuredPath) {
+        return Array.isArray(quizDefinition.questions) ? quizDefinition.questions : [];
+    }
+
+    try {
+        const workspaceRoot = path.resolve(__dirname, '..', '..', '..');
+        const relativePath = configuredPath.replace(/^[/\\]+/, '');
+        const questionBankPath = path.resolve(workspaceRoot, 'BC-Learning-Main', relativePath);
+        const allowedRoot = path.resolve(workspaceRoot, 'BC-Learning-Main');
+        if (!questionBankPath.startsWith(allowedRoot + path.sep)) return [];
+
+        const parsed = JSON.parse(fs.readFileSync(questionBankPath, 'utf8'));
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.warn('WARN: Unable to load server quiz question bank:', error.message);
+        return [];
+    }
+}
+
+function verifyQuizSubmission(quizDefinition, payload) {
+    if (!quizDefinition) {
+        return { verified: false, method: 'unregistered-assessment' };
+    }
+
+    const questionBank = readQuizQuestionBank(quizDefinition);
+    const questionIds = Array.isArray(payload?.metadata?.questionIds)
+        ? payload.metadata.questionIds.map((value) => trimText(value, 120))
+        : [];
+    const answers = Array.isArray(payload.answers) ? payload.answers : [];
+
+    if (!questionBank.length || !questionIds.length || questionIds.length !== answers.length) {
+        return { verified: false, method: 'incomplete-answer-evidence' };
+    }
+
+    const requiredQuestionCount = toNonNegativeInt(quizDefinition.questionCount, 0);
+    if (!requiredQuestionCount || questionIds.length !== requiredQuestionCount) {
+        return { verified: false, method: 'invalid-question-count' };
+    }
+
+    const questionById = new Map(questionBank.map((question) => [
+        String(question.id || '').trim(),
+        question
+    ]));
+    const uniqueQuestionIds = new Set(questionIds);
+    if (uniqueQuestionIds.size !== questionIds.length || questionIds.some((id) => !questionById.has(id))) {
+        return { verified: false, method: 'unknown-question-evidence' };
+    }
+
+    const requiredSelection = quizDefinition.selection && typeof quizDefinition.selection === 'object'
+        ? quizDefinition.selection
+        : {};
+    const submittedSelection = questionIds.reduce((counts, id) => {
+        const level = trimText(questionById.get(id)?.level, 32).toLowerCase();
+        counts[level] = (counts[level] || 0) + 1;
+        return counts;
+    }, {});
+    const selectionIsValid = Object.entries(requiredSelection).every(([level, count]) => (
+        Number(submittedSelection[String(level).toLowerCase()] || 0) === toNonNegativeInt(count, 0)
+    ));
+    if (!selectionIsValid) {
+        return { verified: false, method: 'invalid-question-selection' };
+    }
+
+    const score = questionIds.reduce((total, questionId, index) => {
+        const submittedAnswer = toNullableInt(answers[index]);
+        const correctAnswer = toNullableInt(questionById.get(questionId)?.answer_index ?? questionById.get(questionId)?.answer);
+        return total + (submittedAnswer === correctAnswer ? 1 : 0);
+    }, 0);
+    const totalQuestions = questionIds.length;
+    const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
+    const passingScore = toNonNegativeInt(quizDefinition.passingScore, 70);
+
+    return {
+        verified: true,
+        method: 'server-question-bank-v1',
+        score,
+        totalQuestions,
+        percentage,
+        passed: percentage >= passingScore,
+        passingScore,
+        quizName: trimText(quizDefinition.title, 255),
+        quizCategory: trimText(quizDefinition.category, 64).toLowerCase(),
+        sourceType: normalizeSourceType(quizDefinition.sourceType)
+    };
+}
+
 async function resolveUserContext(req, payload = {}) {
     const authUser = getRequestUser(req) || {};
-    const rawUserId = trimText(payload.userId || authUser.id, 120);
-    const rawEmail = trimText(payload.userEmail || payload.email || authUser.email, 255).toLowerCase();
-    const rawUsername = trimText(payload.userName || payload.username || authUser.username, 120);
+    const rawUserId = trimText(authUser.id, 120);
+    const rawEmail = trimText(authUser.email, 255).toLowerCase();
+    const rawUsername = trimText(authUser.username, 120);
 
     let userRecord = null;
     if (rawUserId || rawEmail || rawUsername) {
@@ -193,11 +310,11 @@ async function resolveUserContext(req, payload = {}) {
 
     const userId = userRecord ? toNullableInt(userRecord.id) : toNullableInt(rawUserId);
     const userName = trimText(
-        payload.userName || payload.username || (userRecord && userRecord.username) || rawUsername || '',
+        (userRecord && userRecord.username) || rawUsername || '',
         120
     );
     const userEmail = trimText(
-        payload.userEmail || payload.email || (userRecord && userRecord.email) || rawEmail || '',
+        (userRecord && userRecord.email) || rawEmail || '',
         255
     ).toLowerCase();
 
@@ -215,7 +332,7 @@ async function resolveUserContext(req, payload = {}) {
         userIdentifier,
         userName: userName || null,
         userEmail: userEmail || null,
-        currentLevel: trimText((userRecord && userRecord.bim_level) || payload.currentLevel, 64) || 'BIM Modeller'
+        currentLevel: trimText(userRecord && userRecord.bim_level, 64) || 'BIM Modeller'
     };
 }
 
@@ -233,14 +350,16 @@ async function refreshUserProgress(userContext) {
             COUNT(*) FILTER (WHERE source_type = 'practice')::int AS practice_attempts,
             COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed
          FROM learning_attempts
-         WHERE user_id = $1`,
+         WHERE user_id = $1
+           AND is_verified = true`,
         [userContext.userId]
     );
 
     const certs = await pool.query(
         `SELECT COUNT(*)::int AS certificates_earned
          FROM user_certificates
-         WHERE user_id = $1`,
+         WHERE user_id = $1
+           AND is_verified = true`,
         [userContext.userId]
     );
 
@@ -260,10 +379,11 @@ async function refreshUserProgress(userContext) {
             updated_at
          ) VALUES ($1, $2, $3, $4, $5, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
          ON CONFLICT (user_id) DO UPDATE SET
-            practice_attempts = GREATEST(user_progress.practice_attempts, EXCLUDED.practice_attempts),
-            exams_passed = GREATEST(user_progress.exams_passed, EXCLUDED.exams_passed),
-            certificates_earned = GREATEST(user_progress.certificates_earned, EXCLUDED.certificates_earned),
-            current_level = COALESCE(EXCLUDED.current_level, user_progress.current_level),
+            practice_attempts = EXCLUDED.practice_attempts,
+            exams_passed = EXCLUDED.exams_passed,
+            certificates_earned = EXCLUDED.certificates_earned,
+            current_level = EXCLUDED.current_level,
+            to_next_level = 0,
             updated_at = CURRENT_TIMESTAMP`,
         [
             userContext.userId,
@@ -312,6 +432,7 @@ async function validateExamCertificateReadiness(userContext, quizId) {
             COALESCE(ROUND(AVG(percentage)), 0)::int AS average_score
          FROM learning_attempts
          WHERE source_type = 'practice'
+           AND is_verified = true
            AND quiz_category = ANY($1::text[])
            AND (
                 ($2::int IS NOT NULL AND user_id = $2)
@@ -351,9 +472,9 @@ async function validateExamCertificateReadiness(userContext, quizId) {
 }
 
 async function issueCertificateIfEligible({ userContext, payload, attemptData }) {
-    if (!attemptData.passed) return null;
+    if (!attemptData.verified || !attemptData.passed) return null;
 
-    const shouldIssue = payload.issueCertificate === true || attemptData.sourceType === 'exam';
+    const shouldIssue = attemptData.sourceType === 'exam';
     if (!shouldIssue) return null;
     if (!userContext || !userContext.userIdentifier || userContext.userIdentifier === 'anonymous') return null;
 
@@ -361,15 +482,15 @@ async function issueCertificateIfEligible({ userContext, payload, attemptData })
     if (!quizId) return null;
 
     const certificateTitle = trimText(
-        payload.certificateTitle || payload.certificationTitle || `${attemptData.quizName} Certificate`,
+        `${attemptData.quizName} Certificate`,
         255
     );
     const certificateId = `cert_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const certificateUrl = trimText(
-        payload.certificateUrl || `/certificates/${certificateId}.pdf`,
+        `/certificates/${certificateId}.pdf`,
         500
     ) || null;
-    const issuer = trimText(payload.issuer, 120) || 'BC Learning Academy';
+    const issuer = 'BC Learning Academy';
 
     if (attemptData.sourceType === 'exam') {
         const readiness = await validateExamCertificateReadiness(userContext, quizId);
@@ -392,11 +513,13 @@ async function issueCertificateIfEligible({ userContext, payload, attemptData })
             score,
             certificate_url,
             metadata,
+            is_verified,
+            verification_method,
             issued_at
          ) VALUES (
             $1, $2, $3, $4, $5,
             $6, $7, $8, $9, $10,
-            $11, $12::jsonb, CURRENT_TIMESTAMP
+            $11, $12::jsonb, true, $13, CURRENT_TIMESTAMP
          )
          ON CONFLICT (user_identifier, quiz_id) DO NOTHING
          RETURNING id, title, issuer, score, certificate_url, issued_at`,
@@ -415,7 +538,8 @@ async function issueCertificateIfEligible({ userContext, payload, attemptData })
             JSON.stringify({
                 quizName: attemptData.quizName,
                 sourceType: attemptData.sourceType
-            })
+            }),
+            attemptData.verificationMethod || 'verified-assessment'
         ]
     );
 
@@ -451,6 +575,18 @@ async function buildUserLookupContext(userIdentity) {
     };
 }
 
+function canReadUserEvidence(req, requestedIdentity) {
+    const authUser = getRequestUser(req);
+    if (!authUser) return false;
+    if (authUser.isAdmin) return true;
+
+    const requested = String(requestedIdentity || '').trim().toLowerCase();
+    return [authUser.id, authUser.email, authUser.username]
+        .map((value) => String(value || '').trim().toLowerCase())
+        .filter(Boolean)
+        .includes(requested);
+}
+
 exports.getQuizById = async (req, res) => {
     try {
         await ensureTables();
@@ -478,55 +614,51 @@ exports.submitQuiz = async (req, res) => {
         }
 
         const quizDefinition = parseQuizDefinition(quizId);
-        const sourceType = normalizeSourceType(payload.sourceType || detectCategory(quizId));
-
-        let score = toNullableInt(payload.score);
-        let totalQuestions = toNullableInt(payload.totalQuestions);
-        const passingScore = toNonNegativeInt(payload.passingScore, 70);
-
-        if (!totalQuestions) {
-            if (quizDefinition && Array.isArray(quizDefinition.questions)) {
-                totalQuestions = quizDefinition.questions.length;
-            } else {
-                totalQuestions = answers.length;
-            }
-        }
-
-        if (score === null) {
-            if (quizDefinition && Array.isArray(quizDefinition.questions) && answers.length > 0) {
-                let computed = 0;
-                quizDefinition.questions.forEach((question, index) => {
-                    if (answers[index] === question.answer) {
-                        computed += 1;
-                    }
-                });
-                score = computed;
-            } else {
-                score = 0;
-            }
-        }
-
-        let percentage = toNullableInt(payload.percentage);
-        if (percentage === null) {
-            percentage = totalQuestions > 0
+        const verification = verifyQuizSubmission(quizDefinition, payload);
+        const sourceType = verification.verified
+            ? verification.sourceType
+            : normalizeSourceType(payload.sourceType || detectCategory(quizId));
+        const totalQuestions = verification.verified
+            ? verification.totalQuestions
+            : Math.min(500, toNonNegativeInt(payload.totalQuestions, answers.length));
+        const score = verification.verified
+            ? verification.score
+            : Math.min(totalQuestions, toNonNegativeInt(payload.score, 0));
+        const percentage = verification.verified
+            ? verification.percentage
+            : Math.min(100, toNonNegativeInt(payload.percentage, totalQuestions > 0
                 ? Math.round((score / totalQuestions) * 100)
-                : 0;
-        }
+                : 0));
+        const passingScore = verification.verified
+            ? verification.passingScore
+            : 100;
+        const passed = verification.verified
+            ? verification.passed
+            : false;
 
-        const passed = typeof payload.passed === 'boolean'
-            ? payload.passed
-            : percentage >= passingScore;
-
-        const quizName = trimText(payload.quizName || payload.quizTitle, 255) ||
-            trimText((quizDefinition && quizDefinition.title) || '', 255) ||
+        const quizName = verification.quizName ||
+            trimText(payload.quizName || payload.quizTitle, 255) ||
             buildQuizTitle(quizId);
-        const quizCategory = trimText(payload.quizCategory, 64).toLowerCase() || detectCategory(quizId);
+        const quizCategory = verification.quizCategory ||
+            trimText(payload.quizCategory, 64).toLowerCase() ||
+            detectCategory(quizId);
 
         const userContext = await resolveUserContext(req, payload);
         const timeTaken = toNonNegativeInt(payload.timeTaken ?? payload.timeSpent, 0);
-        const metadata = payload && typeof payload.metadata === 'object' && payload.metadata !== null
+        const submittedMetadata = payload && typeof payload.metadata === 'object' && payload.metadata !== null
             ? payload.metadata
             : {};
+        const metadata = {
+            ...submittedMetadata,
+            integrity: {
+                verified: verification.verified,
+                method: verification.method,
+                claimedScore: toNonNegativeInt(payload.score, 0),
+                claimedPercentage: Math.min(100, toNonNegativeInt(payload.percentage, 0)),
+                claimedPassed: payload.passed === true,
+                passingScore
+            }
+        };
 
         const insertAttempt = await pool.query(
             `INSERT INTO learning_attempts (
@@ -544,12 +676,15 @@ exports.submitQuiz = async (req, res) => {
                 passed,
                 answers,
                 metadata,
+                is_verified,
+                verification_method,
+                rubric_version,
                 time_taken,
                 submitted_at
              ) VALUES (
                 $1, $2, $3, $4, $5,
                 $6, $7, $8, $9, $10,
-                $11, $12, $13::jsonb, $14::jsonb, $15, CURRENT_TIMESTAMP
+                $11, $12, $13::jsonb, $14::jsonb, $15, $16, $17, $18, CURRENT_TIMESTAMP
              )
              RETURNING id, submitted_at`,
             [
@@ -567,6 +702,9 @@ exports.submitQuiz = async (req, res) => {
                 passed,
                 JSON.stringify(answers),
                 JSON.stringify(metadata),
+                verification.verified,
+                verification.method,
+                RUBRIC.id,
                 timeTaken
             ]
         );
@@ -579,7 +717,9 @@ exports.submitQuiz = async (req, res) => {
                 quizName,
                 sourceType,
                 passed,
-                percentage
+                percentage,
+                verified: verification.verified,
+                verificationMethod: verification.method
             }
         });
 
@@ -593,6 +733,8 @@ exports.submitQuiz = async (req, res) => {
             resultId: String(insertAttempt.rows[0].id),
             submittedAt: insertAttempt.rows[0].submitted_at,
             sourceType,
+            verified: verification.verified,
+            verificationMethod: verification.method,
             progress,
             certificate
         });
@@ -605,6 +747,9 @@ exports.submitQuiz = async (req, res) => {
 exports.getUserQuizStats = async (req, res) => {
     try {
         await ensureTables();
+        if (!canReadUserEvidence(req, req.params.userId)) {
+            return res.status(403).json({ error: 'Insufficient privileges' });
+        }
         const userLookup = await buildUserLookupContext(req.params.userId);
 
         const stats = await pool.query(
@@ -618,17 +763,21 @@ exports.getUserQuizStats = async (req, res) => {
                 COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed,
                 MAX(submitted_at) AS last_quiz_date
              FROM learning_attempts
-             WHERE ($1::int IS NOT NULL AND user_id = $1)
-                OR (lower(COALESCE(user_identifier, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_email, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_name, '')) = ANY($2::text[]))`,
+             WHERE is_verified = true
+               AND (
+                    ($1::int IS NOT NULL AND user_id = $1)
+                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+               )`,
             [userLookup.userId, userLookup.matchValues]
         );
 
         const categories = await pool.query(
             `SELECT DISTINCT quiz_category
              FROM learning_attempts
-             WHERE (
+             WHERE is_verified = true
+               AND (
                     ($1::int IS NOT NULL AND user_id = $1)
                     OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
                     OR lower(COALESCE(user_email, '')) = ANY($2::text[])
@@ -651,10 +800,13 @@ exports.getUserQuizStats = async (req, res) => {
                 passed,
                 submitted_at AS "submittedAt"
              FROM learning_attempts
-             WHERE ($1::int IS NOT NULL AND user_id = $1)
-                OR (lower(COALESCE(user_identifier, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_email, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_name, '')) = ANY($2::text[]))
+             WHERE is_verified = true
+               AND (
+                    ($1::int IS NOT NULL AND user_id = $1)
+                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+               )
              ORDER BY submitted_at DESC
              LIMIT 5`,
             [userLookup.userId, userLookup.matchValues]
@@ -663,10 +815,13 @@ exports.getUserQuizStats = async (req, res) => {
         const certs = await pool.query(
             `SELECT COUNT(*)::int AS certificates_earned
              FROM user_certificates
-             WHERE ($1::int IS NOT NULL AND user_id = $1)
-                OR (lower(COALESCE(user_identifier, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_email, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_name, '')) = ANY($2::text[]))`,
+             WHERE is_verified = true
+               AND (
+                    ($1::int IS NOT NULL AND user_id = $1)
+                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+               )`,
             [userLookup.userId, userLookup.matchValues]
         );
 
@@ -694,6 +849,9 @@ exports.getUserQuizStats = async (req, res) => {
 exports.getUserQuizHistory = async (req, res) => {
     try {
         await ensureTables();
+        if (!canReadUserEvidence(req, req.params.userId)) {
+            return res.status(403).json({ error: 'Insufficient privileges' });
+        }
 
         const page = Math.max(1, toNonNegativeInt(req.query.page, 1));
         const limit = Math.min(100, Math.max(1, toNonNegativeInt(req.query.limit, 10)));
@@ -703,10 +861,13 @@ exports.getUserQuizHistory = async (req, res) => {
         const totalQuery = await pool.query(
             `SELECT COUNT(*)::int AS total_results
              FROM learning_attempts
-             WHERE ($1::int IS NOT NULL AND user_id = $1)
-                OR (lower(COALESCE(user_identifier, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_email, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_name, '')) = ANY($2::text[]))`,
+             WHERE is_verified = true
+               AND (
+                    ($1::int IS NOT NULL AND user_id = $1)
+                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+               )`,
             [userLookup.userId, userLookup.matchValues]
         );
 
@@ -723,10 +884,13 @@ exports.getUserQuizHistory = async (req, res) => {
                 passed,
                 submitted_at AS "submittedAt"
              FROM learning_attempts
-             WHERE ($1::int IS NOT NULL AND user_id = $1)
-                OR (lower(COALESCE(user_identifier, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_email, '')) = ANY($2::text[]))
-                OR (lower(COALESCE(user_name, '')) = ANY($2::text[]))
+             WHERE is_verified = true
+               AND (
+                    ($1::int IS NOT NULL AND user_id = $1)
+                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
+                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+               )
              ORDER BY submitted_at DESC
              LIMIT $3 OFFSET $4`,
             [userLookup.userId, userLookup.matchValues, limit, offset]

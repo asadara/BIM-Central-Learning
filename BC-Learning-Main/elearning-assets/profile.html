@@ -1,24 +1,159 @@
-﻿<!DOCTYPE html><html lang="id"><head>   <meta charset="UTF-8">   <meta http-equiv="X-UA-Compatible" content="IE=edge">   <meta name="viewport" content="width=device-width, initial-scale=1.0">   <title>Profil</title>   <!-- font awesome cdn link  -->
-   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | BCL</title>
+    <link rel="icon" href="/img/icons/trimmed/main_ico_bcl.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/workspace-theme.css?v=20260717b">
+    <link rel="stylesheet" href="css/profile-evidence.css?v=20260717a">
+</head>
+<body class="elearn-workspace-theme profile-evidence-page">
+    <div class="header-container"></div>
+    <div class="side-bar" id="sidebar-container"></div>
 
-   <!-- Bootstrap CSS -->
-   <link rel="stylesheet" href="css/bootstrap.min.css">
+    <section class="user-profile" aria-labelledby="profile-name">
+        <div class="profile-hero">
+            <div class="hero-background"><div class="hero-pattern"></div></div>
+            <div class="hero-content">
+                <div class="profile-avatar-section">
+                    <div class="avatar-container">
+                        <div class="avatar-wrapper">
+                            <img src="/img/user-default.svg" alt="Foto profil" id="profile-image" class="profile-avatar">
+                            <button class="avatar-overlay" type="button" aria-label="Ganti foto profil">
+                                <span class="avatar-upload"><i class="fas fa-camera"></i><span>Ganti Foto</span></span>
+                            </button>
+                            <div class="avatar-status" aria-label="Akun aktif"><i class="fas fa-circle"></i></div>
+                        </div>
+                        <input type="file" id="photo-upload" accept="image/png,image/jpeg,image/webp" hidden>
+                    </div>
 
-   <!-- custom css file link  -->
-   <link rel="stylesheet" href="css/style.css">
-   <link rel="stylesheet" href="css/profile.css">
-</head><body>   <!-- Header akan dimuat otomatis oleh component-loader.js -->   <div class="header-container"></div>   <!-- Sidebar -->
-   <div class="side-bar" id="sidebar-container"></div>
-   <section class="user-profile">      <!-- Profile Hero Section -->      <div class="profile-hero">         <div class="hero-background">            <div class="hero-pattern"></div>         </div>         <div class="hero-content">            <div class="profile-avatar-section">               <div class="avatar-container">                  <div class="avatar-wrapper">                     <img src="/elearning-assets/images/pic-1.jpg" alt="Foto Profil" id="profile-image"                        class="profile-avatar">                     <div class="avatar-overlay">                        <div class="avatar-upload">                           <i class="fas fa-camera"></i>                           <span>Ganti Foto</span>                        </div>                     </div>                     <div class="avatar-status">                        <i class="fas fa-circle"></i>                     </div>                  </div>                  <input type="file" id="photo-upload" accept="image/*" style="display: none;">               </div>               <div class="profile-info">                  <div class="name-section">                     <h1 id="profile-name">Memuat...</h1>                     <div class="level-badge">                        <i class="fas fa-crown"></i>                        <span id="user-level">BIM Modeller</span>                     </div>                  </div>                  <p class="profile-bio" id="profile-bio">Pembelajar BIM yang sedang membangun kompetensi secara bertahap dan terarah</p>                  <div class="profile-stats">                     <div class="stat-item">                        <span class="stat-number" id="join-date">Jan 2024</span>                        <span class="stat-label">Bergabung</span>                     </div>                     <div class="stat-item">                        <span class="stat-number" id="total-xp">2,450</span>                        <span class="stat-label">XP Diperoleh</span>                     </div>                     <div class="stat-item">                        <span class="stat-number" id="current-streak">7</span>                        <span class="stat-label">Hari Beruntun</span>                     </div>                  </div>               </div>            </div>            <div class="hero-actions">               <button class="btn-primary" id="edit-profile-btn">                  <i class="fas fa-edit"></i>                  Edit Profil               </button>               <button class="btn-secondary" id="share-profile-btn">                  <i class="fas fa-share"></i>                  Bagikan Profil               </button>               <button class="btn-ghost" id="settings-btn">                  <i class="fas fa-cog"></i>                  Pengaturan               </button>            </div>         </div>      </div>      <!-- Profile Navigation Tabs -->      <div class="profile-tabs">         <div class="tabs-container">            <button class="tab-btn active" data-tab="overview">               <i class="fas fa-chart-line"></i>               Ringkasan            </button>            <button class="tab-btn" data-tab="achievements">               <i class="fas fa-trophy"></i>               Pencapaian            </button>            <button class="tab-btn" data-tab="activity">               <i class="fas fa-history"></i>               Aktivitas            </button>            <button class="tab-btn" data-tab="courses">               <i class="fas fa-graduation-cap"></i>               Materi Saya            </button>            <button class="tab-btn" data-tab="social">               <i class="fas fa-users"></i>               Sosial            </button>         </div>      </div>      <!-- Tab Content -->      <div class="profile-content">         <!-- Ringkasan Tab -->         <div class="tab-content active" id="overview-tab">            <div class="overview-grid">               <!-- Progres Belajar -->               <div class="overview-card">                  <div class="card-header">                     <h3><i class="fas fa-chart-pie"></i> Progres Belajar</h3>                     <div class="card-actions">                        <button class="card-action-btn">                           <i class="fas fa-external-link-alt"></i>                        </button>                     </div>                  </div>                  <div class="progress-overview">                     <div class="progress-item">                        <div class="progress-label">                           <span>Materi Selesai</span>                           <span class="progress-percent">75%</span>                        </div>                        <div class="progress-bar">                           <div class="progress-fill" style="width: 75%"></div>                        </div>                     </div>                     <div class="progress-item">                        <div class="progress-label">                           <span>Sertifikasi Diperoleh</span>                           <span class="progress-percent">60%</span>                        </div>                        <div class="progress-bar">                           <div class="progress-fill" style="width: 60%"></div>                        </div>                     </div>                     <div class="progress-item">                        <div class="progress-label">                           <span>Keahlian Dikuasai</span>                           <span class="progress-percent">85%</span>                        </div>                        <div class="progress-bar">                           <div class="progress-fill" style="width: 85%"></div>                        </div>                     </div>                  </div>               </div>               <!-- Pencapaian Terbaru -->               <div class="overview-card">                  <div class="card-header">                     <h3><i class="fas fa-medal"></i> Pencapaian Terbaru</h3>                     <div class="card-actions">                        <button class="card-action-btn">                           <i class="fas fa-external-link-alt"></i>                        </button>                     </div>                  </div>                  <div class="recent-achievements">                     <div class="achievement-item">                        <div class="achievement-icon">                           <i class="fas fa-trophy"></i>                        </div>                        <div class="achievement-info">                           <h4>Master Materi</h4>                           <p>Menyelesaikan 5 materi BIM</p>                           <small>2 hari lalu</small>                        </div>                     </div>                     <div class="achievement-item">                        <div class="achievement-icon">                           <i class="fas fa-star"></i>                        </div>                        <div class="achievement-info">                           <h4>Pencapai Tinggi</h4>                           <p>Mendapat nilai 95% pada ujian BIM</p>                           <small>1 minggu lalu</small>                        </div>                     </div>                     <div class="achievement-item">                        <div class="achievement-icon">                           <i class="fas fa-fire"></i>                        </div>                        <div class="achievement-info">                           <h4>Master Konsistensi</h4>                           <p>Belajar 7 hari berturut-turut</p>                           <small>3 hari lalu</small>                        </div>                     </div>                  </div>               </div>               <!-- Learning Stats -->               <div class="overview-card">                  <div class="card-header">                     <h3><i class="fas fa-chart-bar"></i> Statistik Belajar</h3>                  </div>                  <div class="stats-grid">                     <div class="stat-card">                        <div class="stat-icon">                           <i class="fas fa-book-open"></i>                        </div>                        <div class="stat-info">                           <div class="stat-number" id="total-courses">12</div>                           <div class="stat-label">Materi Diikuti</div>                        </div>                     </div>                     <div class="stat-card">                        <div class="stat-icon">                           <i class="fas fa-clock"></i>                        </div>                        <div class="stat-info">                           <div class="stat-number" id="study-hours">156</div>                           <div class="stat-label">Jam Belajar</div>                        </div>                     </div>                     <div class="stat-card">                        <div class="stat-icon">                           <i class="fas fa-certificate"></i>                        </div>                        <div class="stat-info">                           <div class="stat-number" id="certificates">3</div>                           <div class="stat-label">Sertifikat</div>                        </div>                     </div>                     <div class="stat-card">                        <div class="stat-icon">                           <i class="fas fa-users"></i>                        </div>                        <div class="stat-info">                           <div class="stat-number" id="connections">24</div>                           <div class="stat-label">Koneksi</div>                        </div>                     </div>                  </div>               </div>               <!-- Target Saat Ini -->               <div class="overview-card">                  <div class="card-header">                     <h3><i class="fas fa-target"></i> Target Saat Ini</h3>                     <div class="card-actions">                        <button class="card-action-btn">                           <i class="fas fa-plus"></i>                        </button>                     </div>                  </div>                  <div class="goals-list">                     <div class="goal-item">                        <div class="goal-checkbox">                           <input type="checkbox" id="goal-1">                           <label for="goal-1"></label>                        </div>                        <div class="goal-content">                           <h4>Selesaikan Materi BIM Modeling Lanjutan</h4>                           <p>Kuasai teknik pemodelan 3D yang lebih kompleks</p>                           <div class="goal-progress">                              <div class="progress-bar">                                 <div class="progress-fill" style="width: 60%"></div>                              </div>                              <span>60% Selesai</span>                           </div>                        </div>                     </div>                     <div class="goal-item">                        <div class="goal-checkbox">                           <input type="checkbox" id="goal-2">                           <label for="goal-2"></label>                        </div>                        <div class="goal-content">                           <h4>Raih Sertifikasi BIM Coordinator</h4>                           <p>Naik ke level profesional berikutnya</p>                           <div class="goal-progress">                              <div class="progress-bar">                                 <div class="progress-fill" style="width: 30%"></div>                              </div>                              <span>30% Selesai</span>                           </div>                        </div>                     </div>                     <div class="goal-item">                        <div class="goal-checkbox">                           <input type="checkbox" id="goal-3">                           <label for="goal-3"></label>                        </div>                        <div class="goal-content">                           <h4>Bangun Portofolio 10 Proyek</h4>                           <p>Susun portofolio proyek BIM yang kuat</p>                           <div class="goal-progress">                              <div class="progress-bar">                                 <div class="progress-fill" style="width: 40%"></div>                              </div>                              <span>40% Selesai</span>                           </div>                        </div>                     </div>                  </div>               </div>            </div>         </div>         <!-- Pencapaian Tab -->         <div class="tab-content" id="achievements-tab">            <div class="achievements-showcase">               <div class="achievements-header">                  <h2>Galeri Pencapaian</h2>                  <p>Tampilkan pencapaian belajar BIM Anda</p>               </div>               <div class="badges-grid" id="user-badges">                  <!-- Badges will be loaded dynamically -->                  <div class="badge-placeholder">                     <i class="fas fa-medal"></i>                     <p>Memuat badge...</p>                  </div>               </div>            </div>         </div>         <!-- Aktivitas Tab -->         <div class="tab-content" id="activity-tab">            <div class="activity-timeline">               <h2>Aktivitas Terbaru</h2>               <div class="timeline" id="activity-timeline">                  <!-- Aktivitas items will be loaded dynamically -->                  <div class="timeline-placeholder">                     <i class="fas fa-history"></i>                     <p>Memuat aktivitas...</p>                  </div>               </div>            </div>         </div>         <!-- Courses Tab -->         <div class="tab-content" id="courses-tab">            <div class="courses-overview">               <h2>Perjalanan Belajar Saya</h2>               <div class="courses-grid" id="enrolled-courses">                  <!-- Courses will be loaded dynamically -->                  <div class="course-placeholder">                     <i class="fas fa-book"></i>                     <p>Memuat materi...</p>                  </div>               </div>            </div>         </div>         <!-- Sosial Tab -->         <div class="tab-content" id="social-tab">            <div class="social-profile">               <h2>Pembelajaran Sosial</h2>               <div class="social-stats">                  <div class="social-stat">                     <i class="fas fa-users"></i>                     <span id="followers-count">0</span>                     <label>Pengikut</label>                  </div>                  <div class="social-stat">                     <i class="fas fa-user-friends"></i>                     <span id="following-count">0</span>                     <label>Mengikuti</label>                  </div>                  <div class="social-stat">                     <i class="fas fa-comments"></i>                     <span id="discussions-count">0</span>                     <label>Diskusi</label>                  </div>               </div>            </div>         </div>      </div>      <!-- Edit Profil Modal -->      <div class="modal" id="edit-profile-modal">         <div class="modal-content large">            <div class="modal-header">               <h3>Edit Profil</h3>               <button class="modal-close">                  <i class="fas fa-times"></i>               </button>            </div>            <div class="modal-body">               <form class="profile-edit-form" id="profile-edit-form">                  <div class="form-section">                     <h4><i class="fas fa-user"></i> Informasi Dasar</h4>                     <div class="form-row">                        <div class="form-group">                           <label for="edit-name">Nama Lengkap</label>                           <input type="text" id="edit-name" name="name" required>                        </div>                        <div class="form-group">                           <label for="edit-email">Email</label>                           <input type="email" id="edit-email" name="email" required>                        </div>                     </div>                     <div class="form-group">                        <label for="edit-bio">Bio</label>                        <textarea id="edit-bio" name="bio" rows="3" placeholder="Ceritakan singkat tentang Anda..."></textarea>                     </div>                  </div>                  <div class="form-section">                     <h4><i class="fas fa-map-marker-alt"></i> Lokasi & Kontak</h4>                     <div class="form-row">                        <div class="form-group">                           <label for="edit-location">Lokasi</label>                           <input type="text" id="edit-location" name="location" placeholder="Kota, Negara">                        </div>                        <div class="form-group">                           <label for="edit-company">Perusahaan</label>                           <input type="text" id="edit-company" name="company" placeholder="Perusahaan saat ini">                        </div>                     </div>                  </div>                  <div class="form-section">                     <h4><i class="fas fa-cog"></i> Preferensi</h4>                     <div class="preferences-grid">                        <div class="preference-item">                           <input type="checkbox" id="email-notifications" checked>                           <label for="email-notifications">Notifikasi Email</label>                        </div>                        <div class="preference-item">                           <input type="checkbox" id="progress-updates" checked>                           <label for="progress-updates">Pembaruan Progres</label>                        </div>                        <div class="preference-item">                           <input type="checkbox" id="achievement-alerts" checked>                           <label for="achievement-alerts">Pemberitahuan Pencapaian</label>                        </div>                        <div class="preference-item">                           <input type="checkbox" id="public-profile">                           <label for="public-profile">Profil Publik</label>                        </div>                     </div>                  </div>               </form>            </div>            <div class="modal-footer">               <button class="btn-secondary" id="cancel-edit">Batal</button>               <button class="btn-primary" id="save-profile">Simpan Perubahan</button>            </div>         </div>      </div>   </section>   <!-- Footer akan dimuat otomatis oleh component-loader.js -->
-   <div class="footer-container"></div>
+                    <div class="profile-info">
+                        <div class="name-section">
+                            <h1 id="profile-name">Memuat profil...</h1>
+                            <div class="level-badge"><i class="fas fa-layer-group"></i><span id="user-level">—</span></div>
+                        </div>
+                        <p class="profile-bio" id="profile-bio">Memeriksa data akun dari server.</p>
+                        <div class="profile-stats">
+                            <div class="stat-item"><span class="stat-number" id="join-date">—</span><span class="stat-label">Bergabung</span></div>
+                            <div class="stat-item"><span class="stat-number" id="verified-attempts">—</span><span class="stat-label">Assessment Terverifikasi</span></div>
+                            <div class="stat-item"><span class="stat-number" id="verified-certificates">—</span><span class="stat-label">Sertifikat Terverifikasi</span></div>
+                        </div>
+                    </div>
+                </div>
 
-   <!-- Bootstrap JS -->
-   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+                <div class="hero-actions">
+                    <button class="btn-primary" id="edit-profile-btn" type="button"><i class="fas fa-edit"></i>Edit Profil</button>
+                    <button class="btn-secondary" id="share-profile-btn" type="button"><i class="fas fa-share"></i>Bagikan Profil</button>
+                </div>
+            </div>
+        </div>
 
-   <!-- custom js file link  -->
-   <script src="js/component-loader.js"></script>
-   <script src="js/script.js"></script>
-   <script src="js/sidebar-loader.js?v=20260515a"></script>
-   <script src="js/user.js"></script>
-   <script src="js/profile.js"></script>
-   <!-- Page tracker untuk last page functionality -->   <script src="js/page-tracker.js"></script></body></html>
+        <div class="profile-data-status" id="profile-data-status" role="status">
+            <i class="fas fa-shield-check"></i>
+            <span>Data identitas dan aktivitas diambil dari sesi serta evidence server.</span>
+        </div>
+
+        <div class="profile-tabs" aria-label="Navigasi profil">
+            <div class="tabs-container">
+                <button class="tab-btn active" type="button" data-tab="overview"><i class="fas fa-chart-line"></i>Ringkasan</button>
+                <button class="tab-btn" type="button" data-tab="achievements"><i class="fas fa-trophy"></i>Pencapaian</button>
+                <button class="tab-btn" type="button" data-tab="activity"><i class="fas fa-history"></i>Aktivitas</button>
+                <button class="tab-btn" type="button" data-tab="courses"><i class="fas fa-graduation-cap"></i>Materi Saya</button>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <div class="tab-content active" id="overview-tab">
+                <div class="overview-grid">
+                    <div class="overview-card profile-evidence-summary">
+                        <div class="card-header"><h3><i class="fas fa-database"></i>Evidence Belajar</h3></div>
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-icon"><i class="fas fa-check-double"></i></div><div class="stat-info"><div class="stat-number" id="completed-modules">—</div><div class="stat-label">Modul Selesai</div></div></div>
+                            <div class="stat-card"><div class="stat-icon"><i class="fas fa-clipboard-check"></i></div><div class="stat-info"><div class="stat-number" id="total-assessments">—</div><div class="stat-label">Assessment Terverifikasi</div></div></div>
+                            <div class="stat-card"><div class="stat-icon"><i class="fas fa-certificate"></i></div><div class="stat-info"><div class="stat-number" id="certificates">—</div><div class="stat-label">Sertifikat Terverifikasi</div></div></div>
+                            <div class="stat-card"><div class="stat-icon"><i class="fas fa-clock-rotate-left"></i></div><div class="stat-info"><div class="stat-number profile-date-value" id="last-learning-activity">—</div><div class="stat-label">Aktivitas Belajar Terakhir</div></div></div>
+                        </div>
+                    </div>
+
+                    <div class="overview-card">
+                        <div class="card-header"><h3><i class="fas fa-medal"></i>Pencapaian Berbasis Evidence</h3></div>
+                        <div class="recent-achievements" id="recent-achievements">
+                            <div class="profile-empty-state"><i class="fas fa-spinner fa-spin"></i><p>Memuat pencapaian...</p></div>
+                        </div>
+                    </div>
+
+                    <div class="overview-card">
+                        <div class="card-header"><h3><i class="fas fa-bullseye"></i>Target Belajar</h3></div>
+                        <div class="profile-empty-state">
+                            <i class="fas fa-list-check"></i>
+                            <h4>Belum ada target tersimpan</h4>
+                            <p>Target tidak ditampilkan sampai fitur penyimpanan target tersedia di server.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="achievements-tab">
+                <div class="achievements-showcase">
+                    <div class="achievements-header"><h2>Galeri Pencapaian</h2><p>Hanya pencapaian yang dapat diturunkan dari evidence server.</p></div>
+                    <div class="badges-grid" id="user-badges"><div class="badge-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Memuat pencapaian...</p></div></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="activity-tab">
+                <div class="activity-timeline">
+                    <h2>Aktivitas Terbaru</h2>
+                    <div class="timeline" id="activity-timeline"><div class="timeline-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Memuat aktivitas...</p></div></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="courses-tab">
+                <div class="courses-overview">
+                    <h2>Perjalanan Belajar Saya</h2>
+                    <div class="courses-grid" id="enrolled-courses"><div class="course-placeholder"><i class="fas fa-spinner fa-spin"></i><p>Memuat materi...</p></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="edit-profile-modal" aria-hidden="true">
+            <div class="modal-content large" role="dialog" aria-modal="true" aria-labelledby="edit-profile-title">
+                <div class="modal-header">
+                    <h3 id="edit-profile-title">Edit Identitas Profil</h3>
+                    <button class="modal-close" type="button" aria-label="Tutup"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form class="profile-edit-form" id="profile-edit-form">
+                        <div class="form-section">
+                            <h4><i class="fas fa-user"></i>Data Akun</h4>
+                            <p class="profile-form-note">Perubahan nama dan email disimpan ke akun server. Level BIM, jabatan, dan organisasi dikelola oleh administrator.</p>
+                            <div class="form-row">
+                                <div class="form-group"><label for="edit-name">Nama pengguna</label><input type="text" id="edit-name" name="name" maxlength="80" required></div>
+                                <div class="form-group"><label for="edit-email">Email</label><input type="email" id="edit-email" name="email" maxlength="120" required></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancel-edit" type="button">Batal</button>
+                    <button class="btn-primary" id="save-profile" type="button"><i class="fas fa-save"></i>Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/component-loader.js?v=20260717b"></script>
+    <script src="js/script.js"></script>
+    <script src="js/sidebar-loader.js?v=20260717b"></script>
+    <script src="js/user.js"></script>
+    <script src="js/profile.js?v=20260717a"></script>
+    <script src="js/page-tracker.js"></script>
+</body>
+</html>

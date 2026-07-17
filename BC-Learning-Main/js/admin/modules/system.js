@@ -8,6 +8,7 @@ class SystemModule {
         this.monitoringData = [];
         this.refreshInterval = null;
         this.isMonitoring = false;
+        this.loadPromise = null;
     }
 
     /**
@@ -28,6 +29,16 @@ class SystemModule {
     /**
      * Load system management
      */
+    async load() {
+        if (this.loadPromise) return this.loadPromise;
+        this.loadPromise = this.loadSystem();
+        try {
+            return await this.loadPromise;
+        } finally {
+            this.loadPromise = null;
+        }
+    }
+
     async loadSystem() {
         console.log('⚙️ Loading system management...');
 

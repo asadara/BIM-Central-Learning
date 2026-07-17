@@ -97,62 +97,77 @@ function createUserAuthRoutes({
             return null;
         }
 
-        return parsed.toLocaleString("en-US", {
+        return parsed.toLocaleString("id-ID", {
             month: "short",
             year: "numeric"
         });
     }
 
     async function buildProfileStats(user) {
-        const fallbackProgress = user?.progress && typeof user.progress === "object" ? user.progress : {};
-        let coursesCompleted = Number(fallbackProgress.coursesCompleted || 0);
-        let practiceAttempts = Number(fallbackProgress.practiceAttempts || 0);
-        let certificatesEarned = Number(fallbackProgress.certificatesEarned || 0);
-        let examsPassed = Number(fallbackProgress.examsPassed || 0);
+        const emptyStats = {
+            coursesCompleted: 0,
+            verifiedAttempts: 0,
+            practiceAttempts: 0,
+            examsPassed: 0,
+            certifications: 0,
+            studyHours: null,
+            connections: null,
+            lastCourseAt: null,
+            lastAttemptAt: null,
+            lastCertificateAt: null,
+            source: "server-evidence"
+        };
 
-        if (pgPool && user?.id) {
-            try {
-                const progressResult = await pgPool.query(
-                    `SELECT
-                        COALESCE(courses_completed, 0) AS courses_completed,
-                        COALESCE(practice_attempts, 0) AS practice_attempts,
-                        COALESCE(exams_passed, 0) AS exams_passed,
-                        COALESCE(certificates_earned, 0) AS certificates_earned
-                     FROM user_progress
-                     WHERE user_id = $1
-                     LIMIT 1`,
-                    [user.id]
-                );
-
-                if (progressResult.rows[0]) {
-                    coursesCompleted = Number(progressResult.rows[0].courses_completed || 0);
-                    practiceAttempts = Number(progressResult.rows[0].practice_attempts || 0);
-                    examsPassed = Number(progressResult.rows[0].exams_passed || 0);
-                    certificatesEarned = Number(progressResult.rows[0].certificates_earned || 0);
-                }
-
-                const certificateCountResult = await pgPool.query(
-                    `SELECT COUNT(*)::int AS total
-                     FROM user_certificates
-                     WHERE ($1::text IS NOT NULL AND user_id::text = $1::text)
-                        OR ($2::text IS NOT NULL AND user_identifier = $2)`,
-                    [user.id ? String(user.id) : null, user.email || null]
-                );
-
-                const issuedCertificates = Number(certificateCountResult.rows[0]?.total || 0);
-                certificatesEarned = Math.max(certificatesEarned, issuedCertificates);
-            } catch (error) {
-                console.warn("Profile stats fallback to local user data:", error.message);
-            }
+        if (!pgPool || !user?.id) {
+            return emptyStats;
         }
 
+        const attemptsResult = await pgPool.query(
+            `SELECT
+                COUNT(*)::int AS verified_attempts,
+                COUNT(*) FILTER (WHERE source_type = 'practice')::int AS practice_attempts,
+                COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed,
+                MAX(submitted_at) AS last_attempt_at
+             FROM learning_attempts
+             WHERE user_id = $1 AND is_verified = true`,
+            [user.id]
+        );
+        const certificatesResult = await pgPool.query(
+            `SELECT COUNT(*)::int AS certifications, MAX(issued_at) AS last_certificate_at
+             FROM user_certificates
+             WHERE user_id = $1 AND is_verified = true`,
+            [user.id]
+        );
+
+        let coursesCompleted = 0;
+        let lastCourseAt = null;
+        try {
+            const activityResult = await pgPool.query(
+                `SELECT
+                    COUNT(DISTINCT (module_type, module_id)) FILTER (WHERE event_type = 'completed')::int AS courses_completed,
+                    MAX(created_at) FILTER (WHERE event_type = 'completed') AS last_course_at
+                 FROM learning_activity_events
+                 WHERE user_id = $1::text`,
+                [user.id]
+            );
+            coursesCompleted = Number(activityResult.rows[0]?.courses_completed || 0);
+            lastCourseAt = activityResult.rows[0]?.last_course_at || null;
+        } catch (error) {
+            if (error.code !== "42P01") throw error;
+        }
+
+        const attempts = attemptsResult.rows[0] || {};
+        const certificates = certificatesResult.rows[0] || {};
         return {
-            coursesCompleted: Math.max(0, Math.floor(coursesCompleted)),
-            practiceAttempts: Math.max(0, Math.floor(practiceAttempts)),
-            examsPassed: Math.max(0, Math.floor(examsPassed)),
-            certifications: Math.max(0, Math.floor(certificatesEarned)),
-            studyHours: Math.max(0, Math.round((coursesCompleted * 6) + (practiceAttempts * 0.5))),
-            connections: 0
+            ...emptyStats,
+            coursesCompleted,
+            verifiedAttempts: Number(attempts.verified_attempts || 0),
+            practiceAttempts: Number(attempts.practice_attempts || 0),
+            examsPassed: Number(attempts.exams_passed || 0),
+            certifications: Number(certificates.certifications || 0),
+            lastCourseAt,
+            lastAttemptAt: attempts.last_attempt_at || null,
+            lastCertificateAt: certificates.last_certificate_at || null
         };
     }
 
@@ -178,58 +193,53 @@ function createUserAuthRoutes({
         return res.sendFile(imagePath);
     });
 
-    router.get("/api/profile", async (req, res) => {
+    router.get("/api/profile", requireAuth, async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
-            return res.json({
-                success: true,
-                name: "Guest User",
-                role: "Visitor",
-                photo: "/img/user-default.svg",
-                joinDate: null,
-                streak: 0,
-                xp: 0
-            });
+            return res.status(404).json({ success: false, error: "Profile not found" });
         }
 
         return res.json({
             success: true,
             id: user.id,
-            name: user.username || user.name || "User",
-            username: user.username || user.name || "User",
+            name: user.username || user.name || "",
+            username: user.username || user.name || "",
             email: user.email || "",
-            role: user.jobRole || user.job_role || "BIM Specialist",
-            bimLevel: user.bimLevel || user.bim_level || "BIM Modeller",
+            role: user.jobRole || user.job_role || "",
+            bimLevel: user.bimLevel || user.bim_level || "",
             organization: user.organization || "",
             photo: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.svg"),
             profileImage: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.svg"),
             joinDate: formatJoinDate(user),
-            streak: 0,
-            xp: 0
+            registrationDate: user.registrationDate || user.registration_date || user.created_at || user.createdAt || null,
+            lastLogin: user.lastLogin || user.last_login || null,
+            updatedAt: user.updatedAt || user.updated_at || null
         });
     });
 
-    router.get("/api/profile/stats", async (req, res) => {
+    router.get("/api/profile/stats", requireAuth, async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
-            return res.json({
-                coursesCompleted: 0,
-                certifications: 0,
-                studyHours: 0,
-                connections: 0
-            });
+            return res.status(404).json({ error: "Profile not found" });
         }
 
         const stats = await buildProfileStats(user);
         return res.json({
             coursesCompleted: stats.coursesCompleted,
             certifications: stats.certifications,
+            verifiedAttempts: stats.verifiedAttempts,
+            practiceAttempts: stats.practiceAttempts,
+            examsPassed: stats.examsPassed,
             studyHours: stats.studyHours,
-            connections: stats.connections
+            connections: stats.connections,
+            lastActivityAt: [stats.lastCourseAt, stats.lastAttemptAt, stats.lastCertificateAt]
+                .filter(Boolean)
+                .sort((a, b) => new Date(b) - new Date(a))[0] || null,
+            source: stats.source
         });
     });
 
-    router.get("/api/profile/achievements", async (req, res) => {
+    router.get("/api/profile/achievements", requireAuth, async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
             return res.json([]);
@@ -244,7 +254,8 @@ function createUserAuthRoutes({
                 description: `Completed ${stats.coursesCompleted} learning module${stats.coursesCompleted > 1 ? "s" : ""}.`,
                 icon: "fas fa-book-open",
                 rarity: "common",
-                dateEarned: new Date().toISOString()
+                dateEarned: stats.lastCourseAt,
+                evidenceType: "completed-learning-module"
             });
         }
 
@@ -254,7 +265,8 @@ function createUserAuthRoutes({
                 description: `Earned ${stats.certifications} certificate${stats.certifications > 1 ? "s" : ""}.`,
                 icon: "fas fa-certificate",
                 rarity: "rare",
-                dateEarned: new Date().toISOString()
+                dateEarned: stats.lastCertificateAt,
+                evidenceType: "verified-certificate"
             });
         }
 
@@ -264,20 +276,55 @@ function createUserAuthRoutes({
                 description: `Completed ${stats.practiceAttempts} practice attempt${stats.practiceAttempts > 1 ? "s" : ""}.`,
                 icon: "fas fa-dumbbell",
                 rarity: "common",
-                dateEarned: new Date().toISOString()
+                dateEarned: stats.lastAttemptAt,
+                evidenceType: "verified-practice-attempt"
             });
         }
 
         return res.json(achievements);
     });
 
-    router.get("/api/profile/activity", async (req, res) => {
+    router.get("/api/profile/activity", requireAuth, async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
             return res.json([]);
         }
 
         const activities = [];
+        if (pgPool && user.id) {
+            try {
+                const learningActivityResult = await pgPool.query(
+                    `SELECT module_id, module_type, event_type, title, category, source,
+                            progress_percent, created_at
+                     FROM learning_activity_events
+                     WHERE user_id = $1::text
+                     ORDER BY created_at DESC
+                     LIMIT 20`,
+                    [user.id]
+                );
+
+                learningActivityResult.rows.forEach((event) => {
+                    const completed = event.event_type === "completed";
+                    activities.push({
+                        type: completed ? "learning-completed" : "learning-opened",
+                        icon: completed ? "fas fa-check-circle" : "fas fa-book-open",
+                        title: event.title || event.module_id || "Materi pembelajaran",
+                        description: completed
+                            ? "Materi diselesaikan dan tercatat pada server."
+                            : "Materi dibuka dan tercatat pada server.",
+                        timestamp: event.created_at,
+                        moduleId: event.module_id,
+                        moduleType: event.module_type,
+                        category: event.category || null,
+                        source: event.source || null,
+                        progress: Number(event.progress_percent || 0)
+                    });
+                });
+            } catch (error) {
+                if (error.code !== "42P01") throw error;
+            }
+        }
+
         const lastLogin = user.lastLogin || user.last_login || null;
         const updatedAt = user.updatedAt || user.updated_at || null;
 
@@ -301,18 +348,53 @@ function createUserAuthRoutes({
             });
         }
 
-        return res.json(activities);
+        activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        return res.json(activities.slice(0, 20));
     });
 
-    router.get("/api/profile/courses", async (req, res) => {
-        return res.json([]);
+    router.get("/api/profile/courses", requireAuth, async (req, res) => {
+        const user = await resolveProfileUser(req);
+        if (!user || !pgPool) {
+            return res.json([]);
+        }
+
+        try {
+            const result = await pgPool.query(
+                `SELECT DISTINCT ON (module_type, module_id)
+                        module_id, module_type, title, category, source,
+                        event_type, progress_percent, created_at
+                 FROM learning_activity_events
+                 WHERE user_id = $1::text
+                 ORDER BY module_type, module_id, created_at DESC`,
+                [user.id]
+            );
+
+            return res.json(result.rows.map((course) => ({
+                id: course.module_id,
+                moduleType: course.module_type,
+                title: course.title || course.module_id || "Materi pembelajaran",
+                description: course.category || "Aktivitas materi tercatat pada server.",
+                progress: course.event_type === "completed"
+                    ? 100
+                    : Math.min(100, Math.max(0, Number(course.progress_percent || 0))),
+                status: course.event_type,
+                source: course.source || null,
+                lastActivityAt: course.created_at
+            })));
+        } catch (error) {
+            if (error.code === "42P01") {
+                return res.json([]);
+            }
+            throw error;
+        }
     });
 
-    router.get("/api/profile/social", async (req, res) => {
+    router.get("/api/profile/social", requireAuth, async (req, res) => {
         return res.json({
-            followers: 0,
-            following: 0,
-            discussions: 0
+            available: false,
+            followers: null,
+            following: null,
+            discussions: null
         });
     });
 
@@ -877,7 +959,7 @@ function createUserAuthRoutes({
         });
     });
 
-    router.post("/api/update-profile", (req, res) => {
+    router.post("/api/update-profile", requireAuth, (req, res) => {
         profileUpdateUpload(req, res, async (err) => {
             if (err) {
                 return res.status(400).json({ success: false, error: err.message || "Upload failed" });

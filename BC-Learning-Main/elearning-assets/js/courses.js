@@ -646,7 +646,10 @@ async function fetchCourseCertificates() {
     if (!identity) return [];
 
     try {
-        const response = await fetch(`/api/elearning/certificate/${encodeURIComponent(identity)}`);
+        const token = localStorage.getItem('token') || '';
+        const response = await fetch(`/api/elearning/certificate/${encodeURIComponent(identity)}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         if (!response.ok) return [];
         const data = await response.json();
         return Array.isArray(data) ? data : [];

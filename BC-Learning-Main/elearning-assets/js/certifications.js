@@ -37,7 +37,10 @@ async function fetchQuizStats(userIdentity) {
     if (!userIdentity) return null;
 
     try {
-        const response = await fetch(`/api/elearning/quiz/user/${encodeURIComponent(userIdentity)}/stats`);
+        const token = localStorage.getItem('token') || '';
+        const response = await fetch(`/api/elearning/quiz/user/${encodeURIComponent(userIdentity)}/stats`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         if (!response.ok) return null;
         return await response.json();
     } catch (error) {
@@ -50,7 +53,10 @@ async function fetchCertificates(userIdentity) {
     if (!userIdentity) return [];
 
     try {
-        const response = await fetch(`/api/elearning/certificate/${encodeURIComponent(userIdentity)}`);
+        const token = localStorage.getItem('token') || '';
+        const response = await fetch(`/api/elearning/certificate/${encodeURIComponent(userIdentity)}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
         if (!response.ok) return [];
         const data = await response.json();
         return Array.isArray(data) ? data : [];

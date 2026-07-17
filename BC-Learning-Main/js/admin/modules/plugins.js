@@ -7,6 +7,7 @@ class PluginsModule {
         this.pluginsData = [];
         this.currentPage = 1;
         this.itemsPerPage = 12;
+        this.loadPromise = null;
     }
 
     /**
@@ -27,6 +28,16 @@ class PluginsModule {
     /**
      * Load plugins management
      */
+    async load() {
+        if (this.loadPromise) return this.loadPromise;
+        this.loadPromise = this.loadPlugins();
+        try {
+            return await this.loadPromise;
+        } finally {
+            this.loadPromise = null;
+        }
+    }
+
     async loadPlugins() {
         console.log('🔌 Loading plugins management...');
 

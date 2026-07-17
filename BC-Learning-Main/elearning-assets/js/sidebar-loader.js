@@ -153,13 +153,17 @@ function setupSidebarEventHandlers() {
 
 function updateSidebarActiveState() {
     const currentPath = window.location.pathname.replace(/\/+$/, '');
+    const currentHash = window.location.hash;
     const sidebarLinks = document.querySelectorAll('.side-bar .navbar a[data-sidebar-match]');
 
     sidebarLinks.forEach((link) => {
         try {
             const matchPath = (link.getAttribute('data-sidebar-match') || '').replace(/\/+$/, '');
-            const hrefPath = new URL(link.href, window.location.origin).pathname.replace(/\/+$/, '');
-            const isActive = matchPath === currentPath || hrefPath === currentPath;
+            const href = new URL(link.href, window.location.origin);
+            const hrefPath = href.pathname.replace(/\/+$/, '');
+            const matchesPath = matchPath === currentPath || hrefPath === currentPath;
+            const matchesHash = href.hash ? href.hash === currentHash : !currentHash;
+            const isActive = matchesPath && matchesHash;
 
             link.classList.toggle('is-active', isActive);
 
@@ -246,7 +250,7 @@ async function loadSidebar() {
             return;
         }
 
-        const response = await fetch('/elearning-assets/components/sidebar.html');
+        const response = await fetch('/elearning-assets/components/sidebar.html?v=20260717b');
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }

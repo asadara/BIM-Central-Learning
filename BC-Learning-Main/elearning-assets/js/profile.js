@@ -1,1038 +1,421 @@
-// profile.js - Enhanced User Profile Management System
+// Authenticated profile page backed by server evidence only.
 
-// Initialize profile page
-document.addEventListener('DOMContentLoaded', function () {
-    loadUserProfile();
+const profileState = {
+    profile: null,
+    stats: null,
+    achievements: [],
+    loadedTabs: new Set()
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
     initializeTabs();
-    setupModals();
-    setupFormValidation();
+    setupModal();
     setupPhotoUpload();
-    setupGoalsTracking();
-    loadProfileData();
-});
+    setupShareAction();
 
-function normalizeProfileImageUrl(value) {
-    const image = String(value || '').trim();
-    if (!image) return '';
-    if (/^https?:\/\//i.test(image) || image.startsWith('data:')) return image;
-
-    const legacyPrefix = '/uploads/profile-images/';
-    if (image.startsWith(legacyPrefix)) {
-        const filename = image.substring(legacyPrefix.length).split('/').pop();
-        return filename ? `/api/profile-images/${encodeURIComponent(filename)}` : image;
+    if (!getProfileAuthToken()) {
+        redirectToLogin();
+        return;
     }
 
-    return image;
-}
+    await loadProfilePage();
+});
 
 function getProfileAuthToken() {
     try {
-        const storedUser = localStorage.getItem('user');
-        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-        return localStorage.getItem('token') || (parsedUser && parsedUser.token) || '';
+        const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+        return localStorage.getItem('token') || storedUser?.token || '';
     } catch (error) {
         return localStorage.getItem('token') || '';
     }
 }
 
-function buildProfileRequestOptions() {
-    const token = getProfileAuthToken();
-    const headers = {};
-
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
-
-    return {
-        credentials: 'include',
-        headers
-    };
+function redirectToLogin() {
+    const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.replace(`/pages/login.html?redirect=${redirect}`);
 }
 
-// Tab Navigation System
-function initializeTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+async function profileFetch(url, options = {}) {
+    const token = getProfileAuthToken();
+    const headers = { ...(options.headers || {}) };
+    if (token) headers.Authorization = `Bearer ${token}`;
 
-    tabButtons.forEach(button => {
+    const response = await fetch(url, {
+        ...options,
+        credentials: 'include',
+        headers
+    });
+
+    if (response.status === 401 || response.status === 403) {
+        redirectToLogin();
+        throw new Error('AUTH_REQUIRED');
+    }
+    return response;
+}
+
+async function fetchJson(url, options) {
+    const response = await profileFetch(url, options);
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || `HTTP_${response.status}`);
+    return body;
+}
+
+async function loadProfilePage() {
+    setProfileStatus('Memuat identitas dan evidence belajar dari server...', false, true);
+    try {
+        const [profile, stats, achievements] = await Promise.all([
+            fetchJson('/api/profile'),
+            fetchJson('/api/profile/stats'),
+            fetchJson('/api/profile/achievements')
+        ]);
+
+        profileState.profile = profile;
+        profileState.stats = stats;
+        profileState.achievements = Array.isArray(achievements) ? achievements : [];
+
+        renderProfile(profile, stats);
+        renderAchievements(profileState.achievements, document.getElementById('recent-achievements'), true);
+        cacheAuthenticatedProfile(profile);
+        setProfileStatus('Data identitas dan aktivitas berasal dari sesi serta evidence server.', false);
+    } catch (error) {
+        if (error.message === 'AUTH_REQUIRED') return;
+        console.error('Failed to load profile:', error);
+        renderUnavailableProfile();
+        setProfileStatus('Data profil tidak dapat dimuat. Tidak ada data contoh yang digunakan.', true);
+    }
+}
+
+function renderProfile(profile, stats) {
+    setText('profile-name', profile.name || profile.username || 'Nama belum tersedia');
+    setText('user-level', profile.bimLevel || 'Belum ditetapkan');
+
+    const context = [profile.role, profile.organization].filter(Boolean);
+    setText('profile-bio', context.length ? context.join(' · ') : 'Jabatan dan organisasi belum ditetapkan.');
+    setText('join-date', profile.joinDate || '—');
+    setText('verified-attempts', formatCount(stats.verifiedAttempts));
+    setText('verified-certificates', formatCount(stats.certifications));
+    setText('completed-modules', formatCount(stats.coursesCompleted));
+    setText('total-assessments', formatCount(stats.verifiedAttempts));
+    setText('certificates', formatCount(stats.certifications));
+    setText('last-learning-activity', formatDate(stats.lastActivityAt, true));
+
+    const image = normalizeProfileImageUrl(profile.profileImage || profile.photo);
+    const imageElement = document.getElementById('profile-image');
+    if (imageElement) imageElement.src = image || '/img/user-default.svg';
+}
+
+function renderUnavailableProfile() {
+    setText('profile-name', 'Profil tidak tersedia');
+    setText('user-level', '—');
+    setText('profile-bio', 'Server belum mengembalikan data profil.');
+    ['join-date', 'verified-attempts', 'verified-certificates', 'completed-modules', 'total-assessments', 'certificates', 'last-learning-activity']
+        .forEach((id) => setText(id, '—'));
+    renderEmptyState(document.getElementById('recent-achievements'), 'fa-triangle-exclamation', 'Pencapaian tidak dapat dimuat.');
+}
+
+function normalizeProfileImageUrl(value) {
+    const image = String(value || '').trim();
+    if (!image) return '';
+    if (/^https?:\/\//i.test(image) || image.startsWith('data:') || image.startsWith('/api/profile-images/')) return image;
+    if (image.startsWith('/uploads/profile-images/')) {
+        const filename = image.split('/').pop();
+        return filename ? `/api/profile-images/${encodeURIComponent(filename)}` : '';
+    }
+    return image;
+}
+
+function cacheAuthenticatedProfile(profile) {
+    try {
+        const existing = JSON.parse(localStorage.getItem('user') || '{}');
+        const merged = {
+            ...existing,
+            id: profile.id ?? existing.id,
+            username: profile.username || profile.name || existing.username,
+            name: profile.name || profile.username || existing.name,
+            email: profile.email || existing.email,
+            role: profile.role || existing.role,
+            bimLevel: profile.bimLevel || existing.bimLevel,
+            organization: profile.organization || existing.organization,
+            photo: profile.photo || existing.photo,
+            profileImage: profile.profileImage || existing.profileImage
+        };
+        localStorage.setItem('user', JSON.stringify(merged));
+    } catch (error) {
+        console.warn('Unable to refresh local session profile:', error.message);
+    }
+}
+
+function setProfileStatus(message, isError = false, isLoading = false) {
+    const element = document.getElementById('profile-data-status');
+    if (!element) return;
+    element.classList.toggle('is-error', isError);
+    const icon = element.querySelector('i');
+    const text = element.querySelector('span');
+    if (icon) icon.className = isLoading ? 'fas fa-spinner fa-spin' : isError ? 'fas fa-triangle-exclamation' : 'fas fa-shield-halved';
+    if (text) text.textContent = message;
+}
+
+function initializeTabs() {
+    const buttons = [...document.querySelectorAll('.tab-btn')];
+    const contents = [...document.querySelectorAll('.tab-content')];
+    buttons.forEach((button) => {
         button.addEventListener('click', () => {
             const tabId = button.dataset.tab;
-
-            // Remove active class from all tabs
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-
-            // Add active class to clicked tab
-            button.classList.add('active');
-            document.getElementById(tabId + '-tab').classList.add('active');
-
-            // Load tab-specific data
+            buttons.forEach((item) => item.classList.toggle('active', item === button));
+            contents.forEach((content) => content.classList.toggle('active', content.id === `${tabId}-tab`));
             loadTabData(tabId);
         });
     });
 }
 
-// Load tab-specific data
-function loadTabData(tabId) {
-    switch (tabId) {
-        case 'achievements':
-            loadUserAchievements();
-            break;
-        case 'activity':
-            loadActivityTimeline();
-            break;
-        case 'courses':
-            loadEnrolledCourses();
-            break;
-        case 'social':
-            loadSocialStats();
-            break;
-    }
-}
-
-// Modal Management
-function setupModals() {
-    const editProfileBtn = document.getElementById('edit-profile-btn');
-    const shareProfileBtn = document.getElementById('share-profile-btn');
-    const settingsBtn = document.getElementById('settings-btn');
-    const modal = document.getElementById('edit-profile-modal');
-
-    if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', () => {
-            openEditProfileModal();
-        });
-    }
-
-    if (shareProfileBtn) {
-        shareProfileBtn.addEventListener('click', () => {
-            shareProfile();
-        });
-    }
-
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', () => {
-            openSettingsModal();
-        });
-    }
-
-    // Close modal events
-    if (modal) {
-        const closeBtn = modal.querySelector('.modal-close');
-        const cancelBtn = modal.querySelector('#cancel-edit');
-
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                modal.classList.remove('show');
-            });
-        }
-
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                modal.classList.remove('show');
-            });
-        }
-
-        // Click outside modal to close
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('show');
-            }
-        });
-    }
-}
-
-// Photo Upload Functionality
-function setupPhotoUpload() {
-    const avatarWrapper = document.querySelector('.avatar-wrapper');
-    const avatarOverlay = document.querySelector('.avatar-overlay');
-    const photoUpload = document.getElementById('photo-upload');
-
-    if (avatarWrapper && avatarOverlay && photoUpload) {
-        // Show upload overlay on hover
-        avatarWrapper.addEventListener('mouseenter', () => {
-            avatarOverlay.style.opacity = '1';
-        });
-
-        avatarWrapper.addEventListener('mouseleave', () => {
-            avatarOverlay.style.opacity = '0';
-        });
-
-        // Handle click to upload
-        avatarOverlay.addEventListener('click', () => {
-            photoUpload.click();
-        });
-
-        // Handle file selection
-        photoUpload.addEventListener('change', handlePhotoUpload);
-    }
-}
-
-async function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        // Validate file
-        if (!file.type.startsWith('image/')) {
-            showNotification('Silakan pilih file gambar yang valid', 'error');
-            event.target.value = '';
-            return;
-        }
-
-        if (file.size > 5 * 1024 * 1024) { // 5MB limit
-            showNotification('Ukuran file harus di bawah 5MB', 'error');
-            event.target.value = '';
-            return;
-        }
-
-        const profileImage = document.getElementById('profile-image');
-        const previousImageSrc = profileImage ? profileImage.src : '';
-
-        try {
-            const dataUrl = await processProfileImage(file);
-            if (profileImage) {
-                profileImage.src = dataUrl;
-            }
-
-            const uploadedImageUrl = await uploadProfileImage(file);
-            const finalImageSrc = normalizeProfileImageUrl(uploadedImageUrl || dataUrl);
-
-            if (profileImage) {
-                profileImage.src = finalImageSrc;
-            }
-
-            persistProfileImage(finalImageSrc);
-            showNotification('Foto profil berhasil diperbarui!', 'success');
-        } catch (error) {
-            console.error('Error updating profile image:', error);
-            if (profileImage && previousImageSrc) {
-                profileImage.src = previousImageSrc;
-            }
-            showNotification(error.message || 'Gagal mengunggah foto profil. Silakan coba lagi.', 'error');
-        } finally {
-            event.target.value = '';
-        }
-    }
-}
-
-function processProfileImage(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onerror = () => reject(new Error('Gagal membaca file'));
-        reader.onload = function (e) {
-            const img = new Image();
-            img.onerror = () => resolve(e.target.result);
-            img.onload = () => {
-                const maxSize = 512;
-                let width = img.width;
-                let height = img.height;
-                const scale = Math.min(1, maxSize / Math.max(width, height));
-                if (scale < 1) {
-                    width = Math.round(width * scale);
-                    height = Math.round(height * scale);
-                }
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                let quality = 0.85;
-                let dataUrl = canvas.toDataURL('image/jpeg', quality);
-
-                while (dataUrl.length > 1900000 && quality > 0.5) {
-                    quality -= 0.1;
-                    dataUrl = canvas.toDataURL('image/jpeg', quality);
-                }
-
-                resolve(dataUrl);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
-function persistProfileImage(imageSrc) {
-    if (!imageSrc) return;
-
-    const normalizedImageSrc = normalizeProfileImageUrl(imageSrc);
-
+async function loadTabData(tabId) {
+    if (profileState.loadedTabs.has(tabId)) return;
     try {
-        const storedUser = localStorage.getItem('user');
-        let userData = storedUser ? JSON.parse(storedUser) : {};
-        userData = userData && typeof userData === 'object' ? userData : {};
-
-        userData.photo = normalizedImageSrc;
-        userData.profileImage = normalizedImageSrc;
-
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('userimg', normalizedImageSrc);
-
-        const cachedProfile = localStorage.getItem('userProfile');
-        if (cachedProfile) {
-            const profileData = JSON.parse(cachedProfile);
-            if (profileData && typeof profileData === 'object') {
-                profileData.photo = normalizedImageSrc;
-                profileData.profileImage = normalizedImageSrc;
-                localStorage.setItem('userProfile', JSON.stringify(profileData));
-            }
+        if (tabId === 'achievements') {
+            const achievements = profileState.achievements.length
+                ? profileState.achievements
+                : await fetchJson('/api/profile/achievements');
+            renderAchievements(achievements, document.getElementById('user-badges'));
+        } else if (tabId === 'activity') {
+            renderActivity(await fetchJson('/api/profile/activity'));
+        } else if (tabId === 'courses') {
+            renderCourses(await fetchJson('/api/profile/courses'));
         }
-
-        const cachedUserData = localStorage.getItem('userData');
-        if (cachedUserData) {
-            const legacyUserData = JSON.parse(cachedUserData);
-            if (legacyUserData && typeof legacyUserData === 'object') {
-                legacyUserData.image = normalizedImageSrc;
-                localStorage.setItem('userData', JSON.stringify(legacyUserData));
-            }
-        }
-
-        if (window.currentUser && typeof window.currentUser === 'object') {
-            window.currentUser.photo = normalizedImageSrc;
-        }
-
-        if (typeof updateUserUI === 'function') {
-            updateUserUI();
-        }
-
-        if (window.componentLoader) {
-            if (typeof window.componentLoader.syncHeaderUserInfo === 'function') {
-                window.componentLoader.syncHeaderUserInfo();
-            }
-            if (typeof window.componentLoader.syncSidebarUserInfo === 'function') {
-                window.componentLoader.syncSidebarUserInfo();
-            }
-        }
+        profileState.loadedTabs.add(tabId);
     } catch (error) {
-        console.error('Error persisting profile image:', error);
-    }
-}
-
-async function uploadProfileImage(file) {
-    const formData = new FormData();
-    formData.append('profile-image', file);
-
-    const storedUser = localStorage.getItem('user');
-    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-    const token = localStorage.getItem('token') || (parsedUser && parsedUser.token);
-
-    if (!token) {
-        throw new Error('Sesi berakhir. Silakan masuk kembali sebelum mengganti foto profil.');
-    }
-
-    const response = await fetch('/api/upload-profile-image', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-            Authorization: `Bearer ${token}`
-        },
-        body: formData
-    });
-
-    const result = await response.json().catch(() => null);
-
-    if (!response.ok) {
-        const message =
-            (result && (result.error || result.message)) ||
-            'Gagal mengunggah foto profil.';
-        throw new Error(message);
-    }
-
-    console.log('Profile image uploaded:', result);
-
-    return normalizeProfileImageUrl(
-        result?.imageUrl ||
-        result?.profileImage ||
-        result?.profileImageUrl ||
-        result?.url ||
-        result?.path ||
-        ''
-    );
-}
-
-// Form Validation and Handling
-function setupFormValidation() {
-    const profileForm = document.getElementById('profile-edit-form');
-    const saveBtn = document.getElementById('save-profile');
-
-    if (profileForm && saveBtn) {
-        // Real-time validation
-        const inputs = profileForm.querySelectorAll('input, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('blur', () => validateField(input));
-            input.addEventListener('input', () => clearFieldError(input));
-        });
-
-        // Save profile
-        saveBtn.addEventListener('click', handleProfileSave);
-    }
-}
-
-function validateField(field) {
-    const value = field.value.trim();
-    let isValid = true;
-    let errorMessage = '';
-
-    switch (field.name) {
-        case 'name':
-            if (!value) {
-                isValid = false;
-                errorMessage = 'Name is required';
-            } else if (value.length < 2) {
-                isValid = false;
-                errorMessage = 'Name must be at least 2 characters';
-            }
-            break;
-
-        case 'email':
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!value) {
-                isValid = false;
-                errorMessage = 'Email is required';
-            } else if (!emailRegex.test(value)) {
-                isValid = false;
-                errorMessage = 'Please enter a valid email address';
-            }
-            break;
-
-        case 'bio':
-            if (value.length > 500) {
-                isValid = false;
-                errorMessage = 'Bio must be less than 500 characters';
-            }
-            break;
-    }
-
-    if (!isValid) {
-        showFieldError(field, errorMessage);
-        return false;
-    }
-
-    return true;
-}
-
-function showFieldError(field, message) {
-    clearFieldError(field);
-
-    const errorElement = document.createElement('div');
-    errorElement.className = 'field-error';
-    errorElement.textContent = message;
-
-    field.parentNode.appendChild(errorElement);
-    field.classList.add('error');
-}
-
-function clearFieldError(field) {
-    const existingError = field.parentNode.querySelector('.field-error');
-    if (existingError) {
-        existingError.remove();
-    }
-    field.classList.remove('error');
-}
-
-async function handleProfileSave() {
-    const form = document.getElementById('profile-edit-form');
-    const saveBtn = document.getElementById('save-profile');
-
-    // Validate all fields
-    const inputs = form.querySelectorAll('input, textarea');
-    let isFormValid = true;
-
-    inputs.forEach(input => {
-        if (!validateField(input)) {
-            isFormValid = false;
+        if (error.message !== 'AUTH_REQUIRED') {
+            const container = document.querySelector(`#${tabId}-tab .badges-grid, #${tabId}-tab .timeline, #${tabId}-tab .courses-grid`);
+            renderEmptyState(container, 'fa-triangle-exclamation', 'Data tidak dapat dimuat dari server.');
         }
-    });
-
-    if (!isFormValid) {
-        showNotification('Please correct the errors in the form', 'error');
-        return;
-    }
-
-    // Show loading state
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    try {
-        // Collect form data
-        const formData = new FormData(form);
-        const profileData = Object.fromEntries(formData.entries());
-
-        const storedUser = localStorage.getItem('user');
-        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-        const token = localStorage.getItem('token') || (parsedUser && parsedUser.token);
-        const headers = {
-            'Content-Type': 'application/json',
-        };
-
-        if (token) {
-            headers.authorization = `Bearer ${token}`;
-        }
-
-        // Send to server
-        const response = await fetch('/api/update-profile', {
-            method: 'POST',
-            headers,
-            credentials: 'include',
-            body: JSON.stringify(profileData)
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-
-            if (result && result.token) {
-                localStorage.setItem('token', result.token);
-
-                if (parsedUser && typeof parsedUser === 'object') {
-                    parsedUser.token = result.token;
-                    localStorage.setItem('user', JSON.stringify(parsedUser));
-                }
-            }
-
-            // Update UI with new data
-            updateProfileDisplay(profileData);
-
-            // Close modal
-            document.getElementById('edit-profile-modal').classList.remove('show');
-
-            showNotification('Profil berhasil diperbarui!', 'success');
-        } else {
-            throw new Error('Gagal memperbarui profil');
-        }
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        showNotification('Gagal memperbarui profil. Silakan coba lagi.', 'error');
-    } finally {
-        // Reset button state
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
     }
 }
 
-function updateProfileDisplay(data) {
-    if (data.name) {
-        document.getElementById('profile-name').textContent = data.name;
-    }
-
-    if (data.bio) {
-        document.getElementById('profile-bio').textContent = data.bio;
-    }
-
-    // Update other profile elements as needed
-}
-
-// Goals Tracking System
-function setupGoalsTracking() {
-    const goalCheckboxes = document.querySelectorAll('.goal-checkbox input[type="checkbox"]');
-
-    goalCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-            const goalItem = e.target.closest('.goal-item');
-            updateGoalProgress(e.target.id, e.target.checked);
-
-            // Add completion animation
-            if (e.target.checked) {
-                goalItem.classList.add('completed');
-                showGoalCompletionAnimation(goalItem);
-            } else {
-                goalItem.classList.remove('completed');
-            }
-        });
-    });
-}
-
-function updateGoalProgress(goalId, completed) {
-    // Send goal progress to server
-    fetch('/api/update-goal-progress', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-            goalId: goalId,
-            completed: completed
-        })
-    }).catch(error => {
-        console.error('Error updating goal progress:', error);
-    });
-}
-
-function showGoalCompletionAnimation(goalItem) {
-    // Add celebration effect
-    const celebration = document.createElement('div');
-    celebration.className = 'goal-celebration';
-    celebration.innerHTML = '🎉';
-
-    goalItem.appendChild(celebration);
-
-    setTimeout(() => {
-        if (goalItem.contains(celebration)) {
-            goalItem.removeChild(celebration);
-        }
-    }, 2000);
-}
-
-// Load User Profile Data
-function loadUserProfile() {
-    // First check if user is logged in using the existing user system
-    const currentUser = window.currentUser || getUserData();
-
-    if (!currentUser || !currentUser.name) {
-        // User not logged in, redirect to login
-        console.warn('User not logged in, redirecting to login page');
-        setTimeout(() => {
-            if (confirm('You need to login first. Redirect to login page?')) {
-                window.location.href = '/pages/login.html';
-            }
-        }, 1000);
-        return;
-    }
-
-    // Load from localStorage or API
-    const userData = getUserData();
-
-    if (userData) {
-        updateProfileUI(userData);
-    } else {
-        // Load from server
-        fetchProfileFromServer();
-    }
-}
-
-function updateProfileUI(userData) {
-    // Update profile information
-    if (userData.name) {
-        document.getElementById('profile-name').textContent = userData.name;
-    }
-
-    if (userData.role) {
-        document.getElementById('user-level').textContent = userData.role;
-    }
-
-    if (userData.photo || userData.profileImage) {
-        document.getElementById('profile-image').src = normalizeProfileImageUrl(userData.photo || userData.profileImage);
-    }
-
-    // Update stats
-    updateProfileStats(userData);
-}
-
-function updateProfileStats(userData) {
-    // Update XP, join date, streak, etc.
-    const totalXp = userData.xp || 2450;
-    const joinDate = userData.joinDate || 'Jan 2024';
-    const currentStreak = userData.streak || 7;
-
-    document.getElementById('total-xp').textContent = totalXp.toLocaleString();
-    document.getElementById('join-date').textContent = joinDate;
-    document.getElementById('current-streak').textContent = currentStreak;
-}
-
-async function fetchProfileFromServer() {
-    try {
-        const response = await fetch('/api/profile', {
-            ...buildProfileRequestOptions()
-        });
-
-        if (response.ok) {
-            const profileData = await response.json();
-            updateProfileUI(profileData);
-
-            // Cache in localStorage
-            localStorage.setItem('userProfile', JSON.stringify(profileData));
-        }
-    } catch (error) {
-        console.error('Error loading profile:', error);
-    }
-}
-
-// Load Profile Data for Tabs
-function loadProfileData() {
-    // Load overview stats
-    loadOverviewStats();
-
-    // Load initial tab data
-    loadTabData('overview');
-}
-
-async function loadOverviewStats() {
-    try {
-        const response = await fetch('/api/profile/stats', {
-            ...buildProfileRequestOptions()
-        });
-
-        if (response.ok) {
-            const stats = await response.json();
-            updateOverviewStats(stats);
-        }
-    } catch (error) {
-        console.error('Error loading overview stats:', error);
-        // Use mock data for demo
-        updateOverviewStats({
-            coursesCompleted: 12,
-            certifications: 3,
-            studyHours: 156,
-            connections: 24
-        });
-    }
-}
-
-function updateOverviewStats(stats) {
-    document.getElementById('total-courses').textContent = stats.coursesCompleted || 12;
-    document.getElementById('certificates').textContent = stats.certifications || 3;
-    document.getElementById('study-hours').textContent = stats.studyHours || 156;
-    document.getElementById('connections').textContent = stats.connections || 24;
-}
-
-// Tab-specific data loading functions
-async function loadUserAchievements() {
-    const container = document.getElementById('user-badges');
-
+function renderAchievements(items, container, compact = false) {
     if (!container) return;
-
-    try {
-        const response = await fetch('/api/profile/achievements', {
-            ...buildProfileRequestOptions()
-        });
-
-        if (response.ok) {
-            const achievements = await response.json();
-            renderAchievements(achievements);
-        } else {
-            // Show placeholder
-            container.innerHTML = `
-                <div class="badge-placeholder">
-                    <i class="fas fa-medal"></i>
-                    <p>Pencapaian akan dimuat di sini</p>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error loading achievements:', error);
-        container.innerHTML = `
-            <div class="badge-placeholder">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat pencapaian</p>
-            </div>
-        `;
-    }
-}
-
-function renderAchievements(achievements) {
-    const container = document.getElementById('user-badges');
-
-    if (achievements.length === 0) {
-        container.innerHTML = `
-            <div class="badge-placeholder">
-                <i class="fas fa-medal"></i>
-                <p>No achievements yet. Keep learning!</p>
-            </div>
-        `;
+    const achievements = Array.isArray(items) ? items : [];
+    if (!achievements.length) {
+        renderEmptyState(container, 'fa-medal', 'Belum ada pencapaian berbasis evidence.');
         return;
     }
 
-    container.innerHTML = achievements.map(achievement => `
+    const visibleItems = compact ? achievements.slice(0, 3) : achievements;
+    container.innerHTML = visibleItems.map((achievement) => compact ? `
+        <div class="achievement-item">
+            <div class="achievement-icon"><i class="${escapeHtml(achievement.icon || 'fas fa-medal')}"></i></div>
+            <div class="achievement-info">
+                <h4>${escapeHtml(achievement.title || 'Pencapaian')}</h4>
+                <p>${escapeHtml(achievement.description || '')}</p>
+                <small>${escapeHtml(formatDate(achievement.dateEarned))}</small>
+            </div>
+        </div>` : `
         <div class="badge-card">
-            <div class="badge-icon">
-                <i class="${achievement.icon}"></i>
-            </div>
+            <div class="badge-icon"><i class="${escapeHtml(achievement.icon || 'fas fa-medal')}"></i></div>
             <div class="badge-content">
-                <h4>${achievement.title}</h4>
-                <p>${achievement.description}</p>
-                <div class="badge-meta">
-                    <span class="badge-date">${new Date(achievement.dateEarned).toLocaleDateString()}</span>
-                    <span class="badge-rarity ${achievement.rarity}">${achievement.rarity}</span>
-                </div>
+                <h4>${escapeHtml(achievement.title || 'Pencapaian')}</h4>
+                <p>${escapeHtml(achievement.description || '')}</p>
+                <div class="badge-meta"><span class="badge-date">${escapeHtml(formatDate(achievement.dateEarned))}</span></div>
             </div>
-        </div>
-    `).join('');
+        </div>`).join('');
 }
 
-async function loadActivityTimeline() {
+function renderActivity(items) {
     const container = document.getElementById('activity-timeline');
-
-    if (!container) return;
-
-    try {
-        const response = await fetch('/api/profile/activity', {
-            ...buildProfileRequestOptions()
-        });
-
-        if (response.ok) {
-            const activities = await response.json();
-            renderActivityTimeline(activities);
-        } else {
-            container.innerHTML = `
-                <div class="timeline-placeholder">
-                    <i class="fas fa-history"></i>
-                    <p>Linimasa aktivitas akan dimuat di sini</p>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error loading activity:', error);
-        container.innerHTML = `
-            <div class="timeline-placeholder">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat linimasa aktivitas</p>
-            </div>
-        `;
-    }
-}
-
-function renderActivityTimeline(activities) {
-    const container = document.getElementById('activity-timeline');
-
-    if (activities.length === 0) {
-        container.innerHTML = `
-            <div class="timeline-placeholder">
-                <i class="fas fa-history"></i>
-                <p>No recent activity</p>
-            </div>
-        `;
+    const activities = Array.isArray(items) ? items : [];
+    if (!activities.length) {
+        renderEmptyState(container, 'fa-clock-rotate-left', 'Belum ada aktivitas server yang tercatat.');
         return;
     }
-
-    container.innerHTML = activities.map(activity => `
+    container.innerHTML = activities.map((activity) => `
         <div class="timeline-item">
-            <div class="timeline-icon ${activity.type}">
-                <i class="${activity.icon}"></i>
-            </div>
+            <div class="timeline-icon"><i class="${escapeHtml(activity.icon || 'fas fa-circle')}"></i></div>
             <div class="timeline-content">
-                <h4>${activity.title}</h4>
-                <p>${activity.description}</p>
-                <div class="timeline-time">${new Date(activity.timestamp).toLocaleDateString()}</div>
+                <h4>${escapeHtml(activity.title || 'Aktivitas')}</h4>
+                <p>${escapeHtml(activity.description || '')}</p>
+                <div class="timeline-time">${escapeHtml(formatDate(activity.timestamp, true))}</div>
             </div>
-        </div>
-    `).join('');
+        </div>`).join('');
 }
 
-async function loadEnrolledCourses() {
+function renderCourses(items) {
     const container = document.getElementById('enrolled-courses');
-
-    if (!container) return;
-
-    try {
-        const response = await fetch('/api/profile/courses', {
-            ...buildProfileRequestOptions()
-        });
-
-        if (response.ok) {
-            const courses = await response.json();
-            renderEnrolledCourses(courses);
-        } else {
-            container.innerHTML = `
-                <div class="course-placeholder">
-                    <i class="fas fa-book"></i>
-                    <p>Enrolled courses will be loaded here</p>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error loading courses:', error);
-        container.innerHTML = `
-            <div class="course-placeholder">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Gagal memuat materi yang diikuti</p>
-            </div>
-        `;
+    const courses = Array.isArray(items) ? items : [];
+    if (!courses.length) {
+        renderEmptyState(container, 'fa-book-open', 'Belum ada materi terdaftar yang dikembalikan server.');
+        return;
     }
+    container.innerHTML = courses.map((course) => {
+        const progress = Math.min(100, Math.max(0, Number(course.progress) || 0));
+        return `<div class="course-card">
+            <div class="course-info">
+                <h4>${escapeHtml(course.title || 'Materi')}</h4>
+                <p>${escapeHtml(course.description || '')}</p>
+                <div class="course-progress"><div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div><span>${progress}% selesai</span></div>
+            </div>
+        </div>`;
+    }).join('');
 }
 
-function renderEnrolledCourses(courses) {
-    const container = document.getElementById('enrolled-courses');
+function renderEmptyState(container, icon, message) {
+    if (!container) return;
+    container.innerHTML = `<div class="profile-empty-state"><i class="fas ${escapeHtml(icon)}"></i><p>${escapeHtml(message)}</p></div>`;
+}
 
-    if (courses.length === 0) {
-        container.innerHTML = `
-            <div class="course-placeholder">
-                <i class="fas fa-book"></i>
-                <p>No courses enrolled yet</p>
-            </div>
-        `;
+function setupModal() {
+    const modal = document.getElementById('edit-profile-modal');
+    document.getElementById('edit-profile-btn')?.addEventListener('click', openEditProfileModal);
+    document.getElementById('save-profile')?.addEventListener('click', saveProfile);
+    modal?.querySelector('.modal-close')?.addEventListener('click', closeEditProfileModal);
+    document.getElementById('cancel-edit')?.addEventListener('click', closeEditProfileModal);
+    modal?.addEventListener('click', (event) => {
+        if (event.target === modal) closeEditProfileModal();
+    });
+}
+
+function openEditProfileModal() {
+    const profile = profileState.profile;
+    if (!profile) {
+        showNotification('Profil belum tersedia dari server.', 'warning');
+        return;
+    }
+    document.getElementById('edit-name').value = profile.name || profile.username || '';
+    document.getElementById('edit-email').value = profile.email || '';
+    const modal = document.getElementById('edit-profile-modal');
+    modal?.classList.add('show');
+    modal?.setAttribute('aria-hidden', 'false');
+}
+
+function closeEditProfileModal() {
+    const modal = document.getElementById('edit-profile-modal');
+    modal?.classList.remove('show');
+    modal?.setAttribute('aria-hidden', 'true');
+}
+
+async function saveProfile() {
+    const nameInput = document.getElementById('edit-name');
+    const emailInput = document.getElementById('edit-email');
+    const button = document.getElementById('save-profile');
+    const name = String(nameInput?.value || '').trim();
+    const email = String(emailInput?.value || '').trim().toLowerCase();
+
+    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showNotification('Nama dan email valid wajib diisi.', 'error');
         return;
     }
 
-    container.innerHTML = courses.map(course => `
-        <div class="course-card">
-            <div class="course-thumbnail">
-                <img src="${course.thumbnail || '/img/media-thumbnail.svg'}" alt="${course.title}" onerror="this.onerror=null;this.src='/img/media-thumbnail.svg'">
-            </div>
-            <div class="course-info">
-                <h4>${course.title}</h4>
-                <p>${course.description}</p>
-                <div class="course-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${course.progress}%"></div>
-                    </div>
-                    <span>${course.progress}% Complete</span>
-                </div>
-                <div class="course-meta">
-                    <span><i class="fas fa-clock"></i> ${course.duration}</span>
-                    <span><i class="fas fa-star"></i> ${course.rating}</span>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function loadSocialStats() {
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Menyimpan...';
     try {
-        const response = await fetch('/api/profile/social', {
-            ...buildProfileRequestOptions()
+        const result = await fetchJson('/api/update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, current_email: profileState.profile?.email || email })
         });
 
-        if (response.ok) {
-            const socialData = await response.json();
-            updateSocialStats(socialData);
-        }
+        if (result.token) localStorage.setItem('token', result.token);
+        profileState.profile = { ...profileState.profile, ...(result.user || {}), name, username: name, email };
+        cacheAuthenticatedProfile(profileState.profile);
+        renderProfile(profileState.profile, profileState.stats || {});
+        closeEditProfileModal();
+        showNotification('Profil berhasil diperbarui.', 'success');
     } catch (error) {
-        console.error('Error loading social stats:', error);
-        // Use mock data
-        updateSocialStats({
-            followers: 0,
-            following: 0,
-            discussions: 0
-        });
+        if (error.message !== 'AUTH_REQUIRED') showNotification(error.message || 'Profil gagal diperbarui.', 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-save"></i>Simpan Perubahan';
     }
 }
 
-function updateSocialStats(data) {
-    document.getElementById('followers-count').textContent = data.followers || 0;
-    document.getElementById('following-count').textContent = data.following || 0;
-    document.getElementById('discussions-count').textContent = data.discussions || 0;
+function setupPhotoUpload() {
+    const overlay = document.querySelector('.avatar-overlay');
+    const input = document.getElementById('photo-upload');
+    overlay?.addEventListener('click', () => input?.click());
+    input?.addEventListener('change', uploadProfilePhoto);
 }
 
-// Edit Profile Modal Functions
-function openEditProfileModal() {
-    const modal = document.getElementById('edit-profile-modal');
-    const userData = getUserData();
-
-    if (userData) {
-        // Populate form with current data
-        document.getElementById('edit-name').value = userData.name || '';
-        document.getElementById('edit-email').value = userData.email || '';
-        document.getElementById('edit-bio').value = userData.bio || '';
-        document.getElementById('edit-location').value = userData.location || '';
-        document.getElementById('edit-company').value = userData.company || '';
+async function uploadProfilePhoto(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+        showNotification('Gunakan JPG, PNG, atau WebP maksimal 5 MB.', 'error');
+        event.target.value = '';
+        return;
     }
 
-    modal.classList.add('show');
-}
-
-function shareProfile() {
-    const profileUrl = window.location.href;
-
-    if (navigator.share) {
-        navigator.share({
-            title: 'Profil Belajar BIM Saya',
-            text: 'Check out my BIM learning progress and achievements!',
-            url: profileUrl
-        });
-    } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(profileUrl).then(() => {
-            showNotification('Tautan profil berhasil disalin!', 'success');
-        }).catch(() => {
-            showNotification('Unable to copy link. URL: ' + profileUrl, 'info');
-        });
-    }
-}
-
-function openSettingsModal() {
-    // For now, just show a notification
-    showNotification('Panel pengaturan akan segera hadir!', 'info');
-}
-
-// Utility Functions - Synchronized with existing user system
-function getUserData() {
-    // Use the same data sources as user.js system
+    const formData = new FormData();
+    formData.append('profileImage', file);
     try {
-        // First try the main user object from user.js
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            const parsed = JSON.parse(userData);
-            if (parsed && typeof parsed === 'object' && !parsed.photo) {
-                const storedImage = localStorage.getItem('userimg');
-                if (storedImage) {
-                    parsed.photo = normalizeProfileImageUrl(storedImage);
-                }
-            }
-            if (parsed.profileImage) {
-                parsed.profileImage = normalizeProfileImageUrl(parsed.profileImage);
-            }
-            if (parsed.photo) {
-                parsed.photo = normalizeProfileImageUrl(parsed.photo);
-            }
-            return parsed;
+        const result = await fetchJson('/api/upload-profile-image', { method: 'POST', body: formData });
+        const imageUrl = normalizeProfileImageUrl(result.imageUrl);
+        if (imageUrl) {
+            document.getElementById('profile-image').src = imageUrl;
+            profileState.profile = { ...profileState.profile, photo: imageUrl, profileImage: imageUrl };
+            cacheAuthenticatedProfile(profileState.profile);
         }
-
-        // Fallback to individual localStorage keys used by the system
-        const username = localStorage.getItem('username');
-        const role = localStorage.getItem('role');
-        const userimg = localStorage.getItem('userimg');
-        const email = localStorage.getItem('email');
-        const token = localStorage.getItem('token');
-
-        if (username) {
-            return {
-                name: username,
-                role: role || 'Student',
-                photo: normalizeProfileImageUrl(userimg || '/img/user-default.svg'),
-                email: email || '',
-                token: token || ''
-            };
-        }
-
-        // Last fallback to currentUser if set by user.js
-        return window.currentUser || {};
+        showNotification('Foto profil berhasil diperbarui.', 'success');
     } catch (error) {
-        console.error('Error getting user data:', error);
-        return {};
+        if (error.message !== 'AUTH_REQUIRED') showNotification(error.message || 'Foto gagal diunggah.', 'error');
+    } finally {
+        event.target.value = '';
     }
+}
+
+function setupShareAction() {
+    document.getElementById('share-profile-btn')?.addEventListener('click', async () => {
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: 'Profil BCL', url: window.location.href });
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                showNotification('Tautan profil disalin.', 'success');
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') showNotification('Tautan tidak dapat dibagikan.', 'warning');
+        }
+    });
+}
+
+function formatCount(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 0 ? number.toLocaleString('id-ID') : '—';
+}
+
+function formatDate(value, includeTime = false) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat('id-ID', includeTime
+        ? { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+        : { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
+}
+
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
 function showNotification(message, type = 'info') {
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas ${getNotificationIcon(type)}"></i>
-            <span>${message}</span>
-        </div>
-    `;
-
-    // Add to page
+    notification.innerHTML = `<div class="notification-content"><i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i><span></span></div>`;
+    notification.querySelector('span').textContent = message;
     document.body.appendChild(notification);
-
-    // Show notification
-    setTimeout(() => notification.classList.add('show'), 100);
-
-    // Hide after 3 seconds
+    requestAnimationFrame(() => notification.classList.add('show'));
     setTimeout(() => {
         notification.classList.remove('show');
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
+        setTimeout(() => notification.remove(), 300);
+    }, 3200);
 }
 
-function getNotificationIcon(type) {
-    switch (type) {
-        case 'success': return 'fa-check-circle';
-        case 'error': return 'fa-exclamation-circle';
-        case 'warning': return 'fa-exclamation-triangle';
-        default: return 'fa-info-circle';
-    }
-}
-
-// Export functions for use by other modules
 window.profileSystem = {
-    updateProfile: updateProfileUI,
-    loadAchievements: loadUserAchievements,
-    loadActivity: loadActivityTimeline,
-    showNotification: showNotification
+    reload: loadProfilePage,
+    showNotification
 };

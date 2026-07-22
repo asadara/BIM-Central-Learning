@@ -239,6 +239,12 @@ function applyNavbarAccessProfile(rootElement, accessProfile) {
 async function refreshNavbarAccessControls(rootElement = document) {
     applyNavbarAccessProfile(rootElement, null);
 
+    // Protected links are already hidden for guests. Skip the expected 401 on
+    // public pages while keeping enforceProtectedPageAccess() unchanged.
+    if (!getStoredAccessToken() && !readStoredNavbarAuthState().isLoggedIn) {
+        return;
+    }
+
     try {
         const result = await fetchCurrentUserAccessProfile();
         if (!result.ok) {

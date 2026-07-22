@@ -107,6 +107,7 @@ public/*.png
 BC-Learning-Main/img/waste old/
 !BC-Learning-Main/img/
 BC-Learning-Main/img/*
+!BC-Learning-Main/img/bcl-hero-2026.jpg
 !BC-Learning-Main/img/media-thumbnail.svg
 !BC-Learning-Main/img/user-default.svg
 !BC-Learning-Main/img/news/

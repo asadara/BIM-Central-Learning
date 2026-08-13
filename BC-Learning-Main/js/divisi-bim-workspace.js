@@ -10,6 +10,8 @@
         taskViewMode: 'task',
         taskMineOnly: false,
         taskLoad: null,
+        taskPerformanceHistory: [],
+        taskTrendMode: 'monthly',
         access: null,
         users: [],
         projectContexts: [],
@@ -22,6 +24,7 @@
         worklogSourcesPeriod: '',
         meetings: [],
         legacyMeetings: [],
+        meetingProjectContexts: [],
         issues: [],
         kpiTab: 'overview',
         kpi: null,
@@ -99,9 +102,9 @@
         },
         tasks: {
             title: 'Task Scheduler',
-            subtitle: 'Mencatat task bulanan, task pendek, task rutin, dan delegasi staff.',
-            steps: ['Klik Task Baru, isi nama task, project/context, PIC, start date, due date, prioritas, kategori beban, dan deskripsi.', 'Gunakan Regular untuk task normal, Rutin untuk pekerjaan berulang, Fleksibel untuk pekerjaan yang dapat dikerjakan saat kapasitas tersedia, dan Urgent untuk task sisipan prioritas tinggi.', 'Centang Critical hanya jika task berdampak besar: blocking deliverable, deadline management/project, berpengaruh ke tender/KPI, atau berisiko tinggi bila terlambat.', 'Jika staff membuat task, task masuk sebagai usulan register dan perlu review Kadiv.', 'Kadiv dapat membuat atau mendelegasikan task langsung ke staff, lalu memantau progress dari table dan Gantt.'],
-            note: 'Urgent berarti perlu segera dikerjakan; Critical berarti dampaknya besar bila gagal atau terlambat. Task bisa urgent saja, critical saja, atau keduanya. Gunakan project/context yang sama untuk pekerjaan dalam project yang sama agar grouping dan report tetap rapi.'
+            subtitle: 'Mengelola Master Task, subtask staff, baseline jadwal, dan performa pelaksanaan.',
+            steps: ['Kadiv membuat Master Task dengan jadwal induk tanpa menentukan PIC.', 'Staff membuka Master Task lalu menambahkan subtask miliknya sesuai pembagian meeting internal.', 'Start dan Due subtask wajib berada di dalam jadwal induk; baseline awal tetap tersimpan bila jadwal efektif berubah.', 'Untuk task rutin, pilih hari mingguan. Timeline hanya menampilkan marker pada hari tersebut dan pola dapat digeser melalui Edit Task.', 'Hold yang disetujui Kadiv menambah deadline efektif. Tanpa Hold/perpanjangan resmi, hari lewat deadline dihitung sebagai keterlambatan PIC.', 'Task Performance Score terdiri dari Schedule 45%, Completion 25%, Quality 20%, dan Worklog 10%; grafik tren membandingkan score mingguan atau bulanan per PIC.'],
+            note: 'Waktu selesai PIC memakai saat task diajukan untuk completion review, bukan saat Kadiv menekan approve. Master Task tidak memiliki PIC dan tidak diberi score.'
         },
         worklogs: {
             title: 'Worklog',
@@ -112,8 +115,8 @@
         meetings: {
             title: 'Risalah Rapat',
             subtitle: 'Membuat dokumen resmi rapat dan menghubungkannya ke task/worklog.',
-            steps: ['Klik Risalah Baru, isi header rapat: perihal, kategori, project/context, tanggal, tempat, pelapor, dan mengetahui.', 'Lengkapi peserta dan isi risalah seperti pembahasan, permasalahan, action plan, dan keputusan.', 'Tambahkan action item; action dapat dibuat menjadi task dan dipantau sebagai sumber worklog.'],
-            note: 'Dokumen lama tampil sebagai legacy PDF archive sesuai periode. Dokumen baru ke depan dibuat digital dari Workspace.'
+            steps: ['Klik Risalah Baru dan isi langsung pada lembar FRM.NKE.01.06: identitas rapat, peserta, pelapor, pihak yang mengetahui, dan referensi.', 'Gunakan Tambah Baris pada Laporan Progress atau Kesepakatan Rapat; setiap baris dapat menyimpan PIC, target selesai, reviewer, hasil, dan tanggal paraf.', 'Pilih konteks Kantor Pusat, satu Proyek, atau Koordinasi Gabungan semua proyek.', 'Bagian terakhir memuat action risalah sebelumnya yang belum closed.', 'Buka detail lalu pilih Print / PDF; output menggunakan data form yang sama tanpa input ulang.'],
+            note: 'Nama proyek diambil dari riwayat risalah dan tetap dapat ditambah manual. Form, detail, dan PDF memakai satu sumber data terstruktur.'
         },
         issues: {
             title: 'Issues',
@@ -124,8 +127,8 @@
         kpi: {
             title: 'KPI',
             subtitle: 'Menghubungkan KPI Divisi ke program dan kontribusi individu.',
-            steps: ['Buka tab Overview, Departemen, Divisi BIM, Individu, atau Program & Aktivitas sesuai kebutuhan.', 'Staff dapat take program, sementara Kadiv dapat delegasikan program ke staff.', 'Pastikan program dan task personal inline dengan KPI agar kontribusi bisa dinilai transparan.'],
-            note: 'KPI staff dibuat sederhana: kontribusi harus jelas, terukur, dan bisa diverifikasi outputnya.'
+            steps: ['Buka Langkah Berikutnya untuk melihat task selesai yang direkomendasikan ke salah satu dari 10 KPI Divisi.', 'Staff dapat mengajukan kontribusi atau claim actual beserta evidence; task yang sama tidak dapat diklaim ganda.', 'Kepala Divisi mereview mapping dan memverifikasi actual. Score individu dan Divisi BIM baru bertambah setelah approval tersebut.'],
+            note: 'Rekomendasi hanya membantu pengajuan. Nilai actual, evidence, bobot, dan score tetap dikendalikan melalui approval Kepala Divisi.'
         },
         reports: {
             title: 'Reports',
@@ -173,6 +176,11 @@
         return String(value == null ? '' : value).replace(/[&<>'"]/g, (char) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
         })[char]);
+    }
+
+    function multilineHtml(value,fallback='-'){
+        const text=String(value==null?'':value).trim();
+        return text?escapeHtml(text).replace(/\r?\n/g,'<br>'):escapeHtml(fallback);
     }
 
     function formatDate(value, fallback = '-') {
@@ -308,7 +316,9 @@
         const form = document.getElementById('bimws-dialog-form');
         document.getElementById('bimws-dialog-eyebrow').textContent = eyebrow;
         document.getElementById('bimws-dialog-title').textContent = title;
-        document.getElementById('bimws-dialog-body').innerHTML = body;
+        const dialogBody = document.getElementById('bimws-dialog-body');
+        dialogBody.innerHTML = body;
+        dialogBody.scrollTop = 0;
         document.getElementById('bimws-dialog-footer').innerHTML = [
             ...secondary.map((button) => `<button type="button" class="bimws-btn ${button.className || 'bimws-btn-secondary'}" data-dialog-action="${escapeHtml(button.action)}">${escapeHtml(button.label)}</button>`),
             `<button type="button" class="bimws-btn bimws-btn-secondary" data-dialog-close>Batal</button>`,
@@ -464,7 +474,7 @@
             state.access = access;
             state.users = users;
             document.getElementById('bimws-user-name').textContent = access.user.name;
-            document.getElementById('bimws-user-role').textContent = roleLabel(access.role);
+            document.getElementById('bimws-user-role').textContent = roleLabel(access.role, access.staffRole);
             document.querySelector('.bimws-settings-nav').hidden = !access.permissions.canConfigure;
             document.getElementById('bimws-access-state').hidden = true;
             document.getElementById('bimws-content').hidden = false;
@@ -479,8 +489,13 @@
         }
     }
 
-    function roleLabel(role) {
-        return ({ staff_bim: 'Staff BIM', division_head: 'Kepala Divisi BIM', department_head: 'Kepala Departemen', viewer: 'Viewer', system_admin: 'System Administrator' })[role] || role;
+    function staffRoleLabel(role) {
+        return ({ bim_modeller: 'BIM Modeller', bim_specialist: 'BIM Specialist', bim_coordinator: 'BIM Coordinator' })[role] || 'BIM Specialist';
+    }
+
+    function roleLabel(role, staffRole = '') {
+        if (role === 'staff_bim') return `Staff BIM / ${staffRoleLabel(staffRole)}`;
+        return ({ division_head: 'KaDiv BIM', system_admin: 'System Administrator' })[role] || role;
     }
 
     function renderAccessError(error) {
@@ -517,6 +532,7 @@
             if (element) element.hidden = !canWrite();
         });
         document.getElementById('task-carry-btn').hidden = !canWrite();
+        document.getElementById('task-master-new-btn').hidden = !isKpiManager();
         const demoMenu = document.getElementById('task-demo-menu');
         if (demoMenu) demoMenu.hidden = !isKpiManager();
         ['task-demo-classify-btn', 'task-demo-clear-btn'].forEach((id) => {
@@ -616,6 +632,7 @@
         };
         document.getElementById('bimws-mobile-menu').onclick = () => document.getElementById('bimws-sidebar').classList.toggle('is-open');
         document.getElementById('task-new-btn').onclick = () => openTaskForm();
+        document.getElementById('task-master-new-btn').onclick = () => openTaskForm(null, { taskKind: 'master' });
         document.getElementById('worklog-new-btn').onclick = () => openWorklogForm();
         document.getElementById('meeting-new-btn').onclick = () => openMeetingForm();
         document.getElementById('issue-new-btn').onclick = () => openIssueForm();
@@ -645,6 +662,10 @@
             state.ganttMode = button.dataset.ganttMode || '2w';
             resetGanttWindow();
             renderTasks();
+        }));
+        document.querySelectorAll('[data-task-trend-mode]').forEach((button) => button.addEventListener('click', () => {
+            state.taskTrendMode = button.dataset.taskTrendMode || 'monthly';
+            renderTaskPerformanceTrend();
         }));
         document.getElementById('task-gantt-prev').onclick = () => shiftGanttWindow(state.ganttMode === 'month' ? -1 : -14);
         document.getElementById('task-gantt-next').onclick = () => shiftGanttWindow(state.ganttMode === 'month' ? 1 : 14);
@@ -688,7 +709,7 @@
         renderDashboard();
     }
 
-    function activeTaskCharts(tasks) {
+    function taskOverviewCharts(monthlyTasks, activeTasks, indicators) {
         const statusConfig = [
             ['in_progress', 'In Progress', '#087f8c'],
             ['planned', 'Planned', '#3b82f6'],
@@ -698,7 +719,7 @@
             ['rejected_revision', 'Revision', '#a15c00']
         ];
         const configuredStatuses = new Set(statusConfig.map(([value]) => value));
-        const statusCounts = tasks.reduce((counts, task) => {
+        const statusCounts = activeTasks.reduce((counts, task) => {
             const status = configuredStatuses.has(task.status) ? task.status : 'other';
             counts[status] = (counts[status] || 0) + 1;
             return counts;
@@ -711,14 +732,51 @@
         let cursor = 0;
         const gradient = entries.map((entry) => {
             const start = cursor;
-            cursor += (entry.count / tasks.length) * 100;
+            cursor += (entry.count / activeTasks.length) * 100;
             return `${entry.color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
-        }).join(', ');
-        const averageProgress = Math.round(tasks.reduce((sum, task) => {
+        }).join(', ') || '#e7ebef 0% 100%';
+        const averageProgress = activeTasks.length ? Math.round(activeTasks.reduce((sum, task) => {
             return sum + Math.min(100, Math.max(0, Number(task.progressPercent) || 0));
-        }, 0) / tasks.length);
+        }, 0) / activeTasks.length) : 0;
 
-        const projects = [...tasks.reduce((groups, task) => {
+        const monthlyConfig = [
+            ['completed_on_time', 'Selesai tepat waktu', '#16835f'],
+            ['completed_late', 'Selesai terlambat', '#e8752c'],
+            ['overdue', 'Aktif terlambat', '#b42318'],
+            ['review', 'Menunggu review', '#a15c00'],
+            ['blocked', 'Blocked', '#c11574'],
+            ['on_hold', 'On Hold', '#b54708'],
+            ['active', 'Aktif sesuai jadwal', '#3b82f6'],
+            ['cancelled', 'Dibatalkan', '#98a2b3']
+        ];
+        const monthlyCounts = monthlyTasks.reduce((counts, task) => {
+            if (task.status === 'approved_done') return counts;
+            let key = 'active';
+            if (task.status === 'cancelled') key = 'cancelled';
+            else if (task.status === 'submitted_for_review') key = 'review';
+            else if (task.status === 'blocked') key = 'blocked';
+            else if (task.status === 'on_hold') key = 'on_hold';
+            else if (Number(task.performance?.lateDays || 0) > 0) key = 'overdue';
+            counts[key] = (counts[key] || 0) + 1;
+            return counts;
+        }, {});
+        const completedCount = Math.max(0,Number(indicators?.completed||0));
+        const onTimeCount = indicators?.onTimeCompleted == null
+            ? Math.round((Number(indicators?.onTimePercent||0)/100)*completedCount)
+            : Math.max(0,Number(indicators.onTimeCompleted));
+        monthlyCounts.completed_on_time = Math.min(completedCount,onTimeCount);
+        monthlyCounts.completed_late = Math.max(0,completedCount-monthlyCounts.completed_on_time);
+        const monthlyEntries = monthlyConfig.map(([status,label,color]) => ({status,label,color,count:monthlyCounts[status]||0})).filter((entry)=>entry.count);
+        cursor = 0;
+        const monthlyGradient = monthlyEntries.map((entry) => {
+            const start = cursor;
+            cursor += (entry.count / monthlyTasks.length) * 100;
+            return `${entry.color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+        }).join(', ') || '#e7ebef 0% 100%';
+
+        const donutLegend = (chartEntries,total) => `<ul class="bimws-chart-legend">${chartEntries.map((entry) => `<li><span class="bimws-legend-dot" style="--legend-color:${entry.color}"></span><span>${escapeHtml(entry.label)}</span><strong>${entry.count}</strong><small>${total?Math.round((entry.count/total)*100):0}%</small></li>`).join('')}</ul>`;
+
+        const projects = [...activeTasks.reduce((groups, task) => {
             const projectName = String(task.projectName || 'Internal').trim() || 'Internal';
             const current = groups.get(projectName) || { name: projectName, count: 0, totalProgress: 0 };
             current.count += 1;
@@ -731,16 +789,28 @@
             .slice(0, 6);
 
         return `<div class="bimws-bi-overview">
+            <section class="bimws-donut-section bimws-monthly-donut-section" aria-labelledby="task-monthly-chart-title">
+                <div class="bimws-chart-heading">
+                    <div><h4 id="task-monthly-chart-title">Seluruh Task Bulanan</h4><p>Task selesai dan pekerjaan berjalan</p></div>
+                    <div class="bimws-chart-kpi"><span>Completion</span><strong>${Number(indicators?.completionPercent||0)}%</strong></div>
+                </div>
+                <div class="bimws-donut-layout">
+                    <div class="bimws-donut" style="--chart-gradient:conic-gradient(${monthlyGradient})" role="img" aria-label="Distribusi seluruh ${monthlyTasks.length} task pada ${escapeHtml(formatMonth(state.period))}">
+                        <div class="bimws-donut-center"><strong>${monthlyTasks.length}</strong><span>Total task</span></div>
+                    </div>
+                    ${donutLegend(monthlyEntries,monthlyTasks.length)}
+                </div>
+            </section>
             <section class="bimws-donut-section" aria-labelledby="task-status-chart-title">
                 <div class="bimws-chart-heading">
-                    <div><h4 id="task-status-chart-title">Status Task Aktif</h4><p>${tasks.length} task pada ${escapeHtml(formatMonth(state.period))}</p></div>
+                    <div><h4 id="task-status-chart-title">Status Task Aktif</h4><p>${activeTasks.length} task pada ${escapeHtml(formatMonth(state.period))}</p></div>
                     <div class="bimws-chart-kpi"><span>Avg. progress</span><strong>${averageProgress}%</strong></div>
                 </div>
                 <div class="bimws-donut-layout">
-                    <div class="bimws-donut" style="--chart-gradient:conic-gradient(${gradient})" role="img" aria-label="Distribusi ${tasks.length} task aktif berdasarkan status">
-                        <div class="bimws-donut-center"><strong>${tasks.length}</strong><span>Task aktif</span></div>
+                    <div class="bimws-donut" style="--chart-gradient:conic-gradient(${gradient})" role="img" aria-label="Distribusi ${activeTasks.length} task aktif berdasarkan status">
+                        <div class="bimws-donut-center"><strong>${activeTasks.length}</strong><span>Task aktif</span></div>
                     </div>
-                    <ul class="bimws-chart-legend">${entries.map((entry) => `<li><span class="bimws-legend-dot" style="--legend-color:${entry.color}"></span><span>${escapeHtml(entry.label)}</span><strong>${entry.count}</strong><small>${Math.round((entry.count / tasks.length) * 100)}%</small></li>`).join('')}</ul>
+                    ${activeTasks.length?donutLegend(entries,activeTasks.length):`<div class="bimws-chart-empty"><i class="fas fa-circle-check"></i><span>Tidak ada task aktif</span></div>`}
                 </div>
             </section>
             <section class="bimws-project-chart" aria-labelledby="project-progress-chart-title">
@@ -771,8 +841,9 @@
             `<button class="bimws-btn bimws-btn-primary" data-dashboard-action="task"><i class="fas fa-plus"></i>Task</button>`
         ].join('') : '';
 
-        const active = state.tasks.filter((task) => task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status));
-        document.getElementById('dashboard-active-tasks').innerHTML = active.length ? activeTaskCharts(active) : emptyState('Belum ada task aktif pada periode ini.', 'fa-chart-pie');
+        const monthlyTasks = state.tasks.filter((task) => task.taskKind !== 'master' && task.intakeStatus === 'approved');
+        const active = monthlyTasks.filter((task) => !['approved_done','cancelled'].includes(task.status));
+        document.getElementById('dashboard-active-tasks').innerHTML = monthlyTasks.length ? taskOverviewCharts(monthlyTasks,active,i) : emptyState('Belum ada task pada periode ini.', 'fa-chart-pie');
 
         const attention = [];
         if (i.pendingApproval) attention.push(['fa-user-check','Pending register',`${i.pendingApproval} task menunggu review register`]);
@@ -791,7 +862,12 @@
     }
 
     async function loadTasks() {
-        state.tasks = await api(`/tasks?period=${state.period}`);
+        const [tasks, history] = await Promise.all([
+            api(`/tasks?period=${state.period}`),
+            api(`/task-performance-trend?period=${state.period}`).catch(() => ({ points: [] }))
+        ]);
+        state.tasks = tasks;
+        state.taskPerformanceHistory = Array.isArray(history?.points) ? history.points : [];
         renderTasks();
     }
 
@@ -812,6 +888,9 @@
     function taskRangeDays(task, maxDays = 120) {
         const range = taskDateRange(task);
         if (!range) return [];
+        if (task.isRoutine || task.taskCategory === 'routine') {
+            return routineOccurrenceDates(range.start, range.end, task.routineWeekday).slice(0, maxDays);
+        }
         const total = Math.min(dayDifference(range.start, range.end), maxDays - 1);
         return Array.from({ length: total + 1 }, (_, index) => addDays(range.start, index));
     }
@@ -821,10 +900,11 @@
     }
 
     function isLoadActiveTask(task) {
-        return !['approved_done', 'cancelled', 'on_hold'].includes(task.status) && !['rejected', 'replaced'].includes(task.intakeStatus);
+        return task.taskKind !== 'master' && !!task.picUserId && !['approved_done', 'cancelled', 'on_hold'].includes(task.status) && !['rejected', 'replaced'].includes(task.intakeStatus);
     }
 
     function isTaskCritical(task) {
+        if (task.taskKind === 'master') return false;
         const today = parseDateOnly(dateKey(new Date()));
         const due = parseDateOnly(task.dueDate);
         const daysToDue = due ? dayDifference(today, due) : null;
@@ -935,11 +1015,44 @@
         `).join('');
     }
 
+    function hierarchicalTasks(tasks) {
+        const visibleIds = new Set(tasks.map((task) => task.id));
+        const children = new Map();
+        tasks.forEach((task) => {
+            if (!task.parentTaskId || !visibleIds.has(task.parentTaskId)) return;
+            if (!children.has(task.parentTaskId)) children.set(task.parentTaskId, []);
+            children.get(task.parentTaskId).push(task);
+        });
+        const byDate = (left, right) => String(left.startDate || left.dueDate || '9999-12-31').localeCompare(String(right.startDate || right.dueDate || '9999-12-31')) || left.title.localeCompare(right.title, 'id-ID');
+        const roots = tasks.filter((task) => !task.parentTaskId || !visibleIds.has(task.parentTaskId)).sort((left, right) => {
+            const kindWeight = { master: 0, standalone: 1, subtask: 2 };
+            return (kindWeight[left.taskKind] ?? 1) - (kindWeight[right.taskKind] ?? 1) || byDate(left, right);
+        });
+        return roots.flatMap((root) => [root, ...(children.get(root.id) || []).sort(byDate)]);
+    }
+
+    function taskPerformanceBadge(task) {
+        if (task.taskKind === 'master') return `<span class="bimws-table-sub">${task.completedChildCount || 0}/${task.childCount || 0} subtask</span>`;
+        if (!task.performance) return '-';
+        const score = Number(task.performance.totalScore || 0);
+        const level = score >= 90 ? 'strong' : score >= 75 ? 'watch' : 'risk';
+        const scheduleText = task.performance.lateDays
+            ? `${task.performance.lateDays} hari terlambat`
+            : task.performance.earlyDays ? `${task.performance.earlyDays} hari lebih cepat` : 'Sesuai jadwal';
+        return `<span class="bimws-score-pill" data-score-level="${level}">${score}</span><span class="bimws-table-sub">${scheduleText}</span>`;
+    }
+
     function taskTable(tasks, actions = true) {
-        return `<table class="bimws-table"><thead><tr><th>Task</th><th>PIC</th><th>Periode</th><th>Progress</th><th>Risk / Load</th><th>Register</th><th>Status</th>${actions ? '<th>Aksi</th>' : ''}</tr></thead><tbody>${tasks.map((task) => {
-            const overdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().toISOString().slice(0,10)) && !['approved_done','cancelled'].includes(task.status);
+        const ordered = hierarchicalTasks(tasks);
+        return `<table class="bimws-table"><thead><tr><th>Task</th><th>PIC</th><th>Periode</th><th>Progress</th><th>Score</th><th>Risk / Load</th><th>Register</th><th>Status</th>${actions ? '<th>Aksi</th>' : ''}</tr></thead><tbody>${ordered.map((task) => {
+            const overdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().toISOString().slice(0,10)) && !['approved_done','cancelled','on_hold'].includes(task.status);
             const demoPill = task.isDemo ? '<span class="bimws-demo-pill">Demo</span>' : '';
-            return `<tr data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-demo="${task.isDemo ? 'true' : 'false'}"><td><span class="bimws-table-title">${escapeHtml(task.title)}${demoPill}</span><span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}</span></td><td>${escapeHtml(task.picName || '-')}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span></td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${taskRiskBadges(task)}</td><td>${registerBadge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
+            const kindLabel = task.taskKind === 'master' ? '<span class="bimws-task-kind">Master</span>' : task.taskKind === 'subtask' ? '<span class="bimws-task-kind is-subtask">Subtask</span>' : '';
+            const masterCanAdd = task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status);
+            const title = masterCanAdd
+                ? `<button type="button" class="bimws-table-title bimws-master-task-link" data-action="task-add-subtask" data-id="${escapeHtml(task.id)}" title="Klik untuk menambah subtask">${kindLabel}${escapeHtml(task.title)}${demoPill}</button>`
+                : `<span class="bimws-table-title">${kindLabel}${escapeHtml(task.title)}${demoPill}</span>`;
+            return `<tr class="bimws-task-row is-${escapeHtml(task.taskKind || 'standalone')}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-demo="${task.isDemo ? 'true' : 'false'}"><td>${title}<span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}${masterCanAdd ? ' / Klik nama untuk tambah subtask' : ''}</span></td><td>${escapeHtml(task.taskKind === 'master' ? 'Belum dibagi' : (task.picName || '-'))}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span>${task.baselineDueDate && String(task.baselineDueDate).slice(0,10) !== String(task.dueDate || '').slice(0,10) ? `<span class="bimws-table-sub">Baseline ${formatDate(task.baselineDueDate)}</span>` : ''}</td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${taskPerformanceBadge(task)}</td><td>${taskRiskBadges(task)}</td><td>${registerBadge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
         }).join('')}</tbody></table>`;
     }
 
@@ -1002,12 +1115,13 @@
         const creator = isOwn(task.createdByUserId);
         const pic = isOwn(task.picUserId);
         const manager = isKpiManager();
+        if (task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status)) buttons.push(actionButton('fa-plus','Tambah subtask','task-add-subtask',task.id,'is-success'));
         if ((creator || pic || manager) && task.intakeStatus !== 'pending_approval' && !['submitted_for_review','approved_done'].includes(task.status) && (manager || task.status !== 'on_hold')) buttons.push(actionButton('fa-pen','Edit task','task-edit',task.id));
         if (creator && ['draft','revision_required'].includes(task.intakeStatus)) buttons.push(actionButton('fa-paper-plane','Ajukan register','task-submit',task.id));
         if (manager && task.intakeStatus === 'pending_approval') buttons.push(actionButton('fa-user-check','Review register task','task-intake-review',task.id));
-        if (manager && task.intakeStatus === 'approved' && !['submitted_for_review','approved_done','cancelled','on_hold'].includes(task.status)) buttons.push(actionButton('fa-pause','Hold task','task-hold',task.id,'is-warning'));
+        if (manager && task.taskKind !== 'master' && task.intakeStatus === 'approved' && !['submitted_for_review','approved_done','cancelled','on_hold'].includes(task.status)) buttons.push(actionButton('fa-pause','Hold task','task-hold',task.id,'is-warning'));
         if (manager && task.status === 'on_hold') buttons.push(actionButton('fa-play','Start again','task-resume',task.id,'is-success'));
-        if ((creator || pic) && task.intakeStatus === 'approved' && !['submitted_for_review','approved_done','cancelled','on_hold'].includes(task.status)) buttons.push(actionButton('fa-flag-checkered','Ajukan selesai','task-complete-submit',task.id));
+        if (task.taskKind !== 'master' && (creator || pic) && task.intakeStatus === 'approved' && !['submitted_for_review','approved_done','cancelled','on_hold'].includes(task.status)) buttons.push(actionButton('fa-flag-checkered','Ajukan selesai','task-complete-submit',task.id));
         if (manager && task.status === 'submitted_for_review') buttons.push(actionButton('fa-check','Review penyelesaian','task-completion-review',task.id));
         if (manager && !task.isDemo) buttons.push(actionButton('fa-tag','Tandai sebagai demo','task-demo-mark',task.id));
         if (manager && task.isDemo) buttons.push(actionButton('fa-trash','Hapus demo task','task-demo-delete',task.id,'is-danger'));
@@ -1030,7 +1144,121 @@
         renderTaskGantt(filtered);
         document.getElementById('tasks-table').innerHTML = filtered.length
             ? (state.taskViewMode === 'task' ? taskTable(filtered) : groupedTaskView(filtered, state.taskViewMode))
-            : emptyState('Tidak ada task yang sesuai filter.', 'fa-calendar-check');
+             : emptyState('Tidak ada task yang sesuai filter.', 'fa-calendar-check');
+        renderTaskPerformance(filtered);
+        renderTaskPerformanceTrend();
+    }
+
+    function renderTaskPerformance(tasks) {
+        const element = document.getElementById('task-performance-score');
+        if (!element) return;
+        const scored = tasks.filter((task) => task.taskKind !== 'master' && task.picUserId && task.performance);
+        const groups = new Map();
+        scored.forEach((task) => {
+            const key = task.picUserId || task.picName;
+            const current = groups.get(key) || { name: task.picName || 'PIC', tasks: [], late: 0 };
+            current.tasks.push(task);
+            current.late += task.performance.lateDays > 0 ? 1 : 0;
+            groups.set(key, current);
+        });
+        const rows = [...groups.values()].map((group) => {
+            const average = (field) => Math.round(group.tasks.reduce((sum, task) => sum + Number(task.performance[field] ?? 100), 0) / group.tasks.length);
+            return { ...group, total: average('totalScore'), schedule: average('scheduleScore'), completion: average('completionScore'), quality: average('qualityScore'), worklog: average('worklogScore') };
+        }).sort((left, right) => right.total - left.total || left.name.localeCompare(right.name, 'id-ID'));
+        element.innerHTML = rows.length ? `<table class="bimws-table bimws-performance-table"><thead><tr><th>PIC</th><th>Task</th><th>Schedule 45%</th><th>Completion 25%</th><th>Quality 20%</th><th>Worklog 10%</th><th>Total</th></tr></thead><tbody>${rows.map((row) => `<tr><td><strong>${escapeHtml(row.name)}</strong><span class="bimws-table-sub">${row.late} task terlambat</span></td><td>${row.tasks.length}</td><td>${row.schedule}</td><td>${row.completion}</td><td>${row.quality}</td><td>${row.worklog}</td><td>${taskPerformanceBadge({performance:{totalScore:row.total,lateDays:row.late}})}</td></tr>`).join('')}</tbody></table>` : emptyState('Belum ada task PIC yang dapat dihitung.', 'fa-chart-line');
+    }
+
+    function taskTrendBuckets(mode) {
+        const [year, month] = state.period.split('-').map(Number);
+        if (mode === 'weekly') {
+            const periodEnd = new Date(year, month, 0);
+            const today = new Date();
+            const anchor = state.period === dateKey(today).slice(0, 7) && today < periodEnd ? today : periodEnd;
+            const lastWeek = startOfWeek(anchor);
+            return Array.from({ length: 8 }, (_, index) => {
+                const start = addDays(lastWeek, (index - 7) * 7);
+                const end = addDays(start, 6);
+                return {
+                    key: dateKey(start),
+                    start,
+                    end,
+                    label: ganttDateLabel(start, { day: 'numeric', month: 'short' })
+                };
+            });
+        }
+        return Array.from({ length: 6 }, (_, index) => {
+            const date = new Date(year, month - 1 + index - 5, 1);
+            return {
+                key: dateKey(date).slice(0, 7),
+                start: date,
+                end: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+                label: ganttDateLabel(date, { month: 'short', year: '2-digit' })
+            };
+        });
+    }
+
+    function renderTaskPerformanceTrend() {
+        const element = document.getElementById('task-performance-trend');
+        if (!element) return;
+        const mode = state.taskTrendMode === 'weekly' ? 'weekly' : 'monthly';
+        document.querySelectorAll('[data-task-trend-mode]').forEach((button) => {
+            const active = button.dataset.taskTrendMode === mode;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        const buckets = taskTrendBuckets(mode);
+        const points = Array.isArray(state.taskPerformanceHistory) ? state.taskPerformanceHistory : [];
+        const groups = new Map();
+        points.forEach((point) => {
+            const scoreDate = parseDateOnly(point.scoreDate);
+            if (!scoreDate) return;
+            const bucketIndex = buckets.findIndex((bucket) => scoreDate >= bucket.start && scoreDate <= bucket.end);
+            if (bucketIndex < 0) return;
+            const key = point.picUserId || point.picName;
+            const group = groups.get(key) || { key, name: point.picName || 'PIC', values: buckets.map(() => []) };
+            group.values[bucketIndex].push(Number(point.totalScore || 0));
+            groups.set(key, group);
+        });
+        const series = [...groups.values()].map((group) => ({
+            ...group,
+            scores: group.values.map((values) => values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null),
+            color: picColorPalette[Math.abs(hashPicKey(group.key)) % picColorPalette.length].border
+        })).filter((group) => group.scores.some((value) => value != null)).sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
+        if (!series.length) {
+            element.innerHTML = emptyState(`Belum ada histori score ${mode === 'weekly' ? 'mingguan' : 'bulanan'} untuk ditampilkan.`, 'fa-chart-line');
+            return;
+        }
+
+        const width = 940;
+        const height = 320;
+        const plot = { left: 54, right: 20, top: 22, bottom: 52 };
+        const plotWidth = width - plot.left - plot.right;
+        const plotHeight = height - plot.top - plot.bottom;
+        const xAt = (index) => plot.left + (buckets.length === 1 ? plotWidth / 2 : (index / (buckets.length - 1)) * plotWidth);
+        const yAt = (score) => plot.top + ((100 - Math.max(0, Math.min(100, score))) / 100) * plotHeight;
+        const grid = [0, 25, 50, 75, 100].map((score) => `<g><line x1="${plot.left}" y1="${yAt(score)}" x2="${width - plot.right}" y2="${yAt(score)}"></line><text x="${plot.left - 10}" y="${yAt(score) + 4}" text-anchor="end">${score}</text></g>`).join('');
+        const xLabels = buckets.map((bucket, index) => `<text x="${xAt(index)}" y="${height - 20}" text-anchor="middle">${escapeHtml(bucket.label)}</text>`).join('');
+        const paths = series.map((group) => {
+            let path = '';
+            let connected = false;
+            group.scores.forEach((score, index) => {
+                if (score == null) { connected = false; return; }
+                path += `${connected ? ' L' : ' M'} ${xAt(index).toFixed(1)} ${yAt(score).toFixed(1)}`;
+                connected = true;
+            });
+            const dots = group.scores.map((score, index) => score == null ? '' : `<circle cx="${xAt(index)}" cy="${yAt(score)}" r="5" tabindex="0"><title>${escapeHtml(`${group.name} / ${buckets[index].label}: ${score}`)}</title></circle>`).join('');
+            return `<g class="bimws-trend-series" style="--series-color:${group.color}"><path d="${path.trim()}"></path>${dots}</g>`;
+        }).join('');
+        const legend = series.map((group) => {
+            const measured = group.scores.filter((value) => value != null);
+            const latest = measured.at(-1);
+            const previous = measured.at(-2);
+            const delta = previous == null ? null : latest - previous;
+            const trend = delta == null || delta === 0 ? 'steady' : delta > 0 ? 'up' : 'down';
+            const trendLabel = delta == null ? 'Data awal' : delta === 0 ? 'Konsisten' : `${delta > 0 ? '+' : ''}${delta} poin`;
+            return `<div class="bimws-trend-legend-item" data-trend="${trend}"><i style="--series-color:${group.color}"></i><span><strong>${escapeHtml(group.name)}</strong><small>${escapeHtml(trendLabel)}</small></span><b>${latest}</b></div>`;
+        }).join('');
+        element.innerHTML = `<div class="bimws-trend-chart-wrap"><svg class="bimws-trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Grafik tren Task Performance Score ${mode === 'weekly' ? 'mingguan' : 'bulanan'} per PIC"><g class="bimws-trend-grid">${grid}${xLabels}</g>${paths}</svg></div><div class="bimws-trend-legend">${legend}</div>`;
     }
 
     function ganttDateLabel(date, options) {
@@ -1056,6 +1284,40 @@
         ].join(';');
     }
 
+    const routineWeekdayLabels = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+    function taskScheduleVisual(task, taskStart, targetEnd) {
+        const performance = task.performance || {};
+        const lateDays = Math.max(0, Number(performance.lateDays || 0));
+        const earlyDays = Math.max(0, Number(performance.earlyDays || 0));
+        let stateName = 'normal';
+        let label = 'Sesuai jadwal';
+        if (lateDays > 2) { stateName = 'late-critical'; label = `${lateDays} hari terlambat`; }
+        else if (lateDays === 2) { stateName = 'late-two'; label = '2 hari terlambat'; }
+        else if (lateDays === 1) { stateName = 'late-one'; label = '1 hari terlambat'; }
+        else if (earlyDays > 0) { stateName = 'early'; label = `${earlyDays} hari lebih cepat`; }
+        const completionDate = parseDateOnly(performance.completionDate);
+        const comparisonDate = parseDateOnly(performance.comparisonDate);
+        const scheduleDuration = Math.max(1, dayDifference(taskStart, targetEnd) + 1);
+        const elapsedToCompletion = completionDate ? Math.max(1, dayDifference(taskStart, completionDate) + 1) : scheduleDuration;
+        return {
+            state: stateName,
+            label,
+            earlyCutoff: Math.max(4, Math.min(100, (elapsedToCompletion / scheduleDuration) * 100)),
+            displayEnd: lateDays && comparisonDate && comparisonDate > targetEnd ? comparisonDate : targetEnd
+        };
+    }
+
+    function routineOccurrenceDates(start, end, weekday) {
+        const normalizedWeekday = Number.isInteger(Number(weekday)) && Number(weekday) >= 0 && Number(weekday) <= 6
+            ? Number(weekday)
+            : start.getDay();
+        const first = addDays(start, (normalizedWeekday - start.getDay() + 7) % 7);
+        const dates = [];
+        for (let date = first; date <= end && dates.length < 60; date = addDays(date, 7)) dates.push(date);
+        return dates;
+    }
+
     function renderTaskGantt(tasks) {
         if (!state.ganttStart || state.ganttPeriod !== state.period) resetGanttWindow();
         const windowStart = parseDateOnly(state.ganttStart);
@@ -1063,11 +1325,7 @@
         const windowEnd = addDays(windowStart, dayCount - 1);
         const todayKey = dateKey(new Date());
         const days = Array.from({ length: dayCount }, (_, index) => addDays(windowStart, index));
-        const sortedTasks = [...tasks].sort((left, right) => {
-            const leftDate = String(left.startDate || left.dueDate || '9999-12-31');
-            const rightDate = String(right.startDate || right.dueDate || '9999-12-31');
-            return leftDate.localeCompare(rightDate) || left.title.localeCompare(right.title);
-        });
+        const sortedTasks = hierarchicalTasks(tasks);
 
         document.getElementById('task-gantt-title').textContent = state.ganttMode === 'month' ? 'Timeline 1 Bulan' : 'Timeline 2 Minggu';
         document.getElementById('task-gantt-range').textContent = `${ganttDateLabel(windowStart, { day: 'numeric', month: 'short' })} - ${ganttDateLabel(windowEnd, { day: 'numeric', month: 'short', year: 'numeric' })}`;
@@ -1096,24 +1354,43 @@
                 return `<div class="bimws-gantt-day-cell${weekend}${today}" style="grid-column:${dayIndex + 2};grid-row:${gridRow}"></div>`;
             }).join('');
 
-            let taskStart = parseDateOnly(task.startDate || task.dueDate);
-            let taskEnd = parseDateOnly(task.dueDate || task.startDate);
-            if (taskStart && taskEnd && taskEnd < taskStart) taskEnd = new Date(taskStart);
+            const taskStart = parseDateOnly(task.startDate || task.dueDate);
+            let targetEnd = parseDateOnly(task.adjustedDueDate || task.dueDate || task.startDate);
+            if (taskStart && targetEnd && targetEnd < taskStart) targetEnd = new Date(taskStart);
             let bar = '';
-            if (taskStart && taskEnd && taskEnd >= windowStart && taskStart <= windowEnd) {
-                const visibleStart = taskStart < windowStart ? windowStart : taskStart;
-                const visibleEnd = taskEnd > windowEnd ? windowEnd : taskEnd;
-                const column = dayDifference(windowStart, visibleStart) + 2;
-                const span = dayDifference(visibleStart, visibleEnd) + 1;
+            if (taskStart && targetEnd) {
                 const progress = Math.min(100, Math.max(0, Number(task.progressPercent || 0)));
-                const duration = dayDifference(taskStart, taskEnd) + 1;
                 const picColor = getPicTimelineColor(task);
                 const risk = state.taskLoad?.byId?.get(task.id) || {};
-                bar = `<button type="button" class="bimws-gantt-bar" data-action="task-view" data-id="${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-intake="${escapeHtml(task.intakeStatus)}" data-critical="${risk.critical ? 'true' : 'false'}" data-clash="${risk.clash ? 'true' : 'false'}" data-overload="${risk.overload ? 'true' : 'false'}" data-can-hold="${risk.canHold ? 'true' : 'false'}" style="grid-column:${column}/span ${span};grid-row:${gridRow};--task-progress:${progress}%;${picTimelineStyle(picColor)}" title="${escapeHtml(`${task.title} / ${task.picName || 'Belum ada PIC'} / ${duration} hari / ${progress}%`)}"><span class="bimws-gantt-progress-fill"></span><span class="bimws-gantt-progress-label">${progress}%</span></button>`;
+                const barAction = task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status) ? 'task-add-subtask' : 'task-view';
+                const barHelp = barAction === 'task-add-subtask' ? 'klik untuk tambah subtask' : (task.picName || 'Belum ada PIC');
+                const schedule = taskScheduleVisual(task, taskStart, targetEnd);
+                const isRoutine = !!task.isRoutine || task.taskCategory === 'routine';
+                const commonAttributes = `data-task-kind="${escapeHtml(task.taskKind || 'standalone')}" data-action="${barAction}" data-id="${escapeHtml(task.id)}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-intake="${escapeHtml(task.intakeStatus)}" data-schedule-state="${schedule.state}" data-critical="${risk.critical ? 'true' : 'false'}" data-clash="${risk.clash ? 'true' : 'false'}" data-overload="${risk.overload ? 'true' : 'false'}" data-can-hold="${risk.canHold ? 'true' : 'false'}"`;
+                const visualStyle = `--task-progress:${progress}%;--schedule-cutoff:${schedule.earlyCutoff.toFixed(1)}%;${picTimelineStyle(picColor)}`;
+                if (isRoutine) {
+                    const routineDay = task.routineWeekday == null ? taskStart.getDay() : Number(task.routineWeekday);
+                    const occurrences = routineOccurrenceDates(taskStart, targetEnd, routineDay).filter((date) => date >= windowStart && date <= windowEnd);
+                    bar = occurrences.map((date) => {
+                        const column = dayDifference(windowStart, date) + 2;
+                        const title = `${task.title} / rutin setiap ${routineWeekdayLabels[routineDay]} / ${ganttDateLabel(date, { day: 'numeric', month: 'short' })} / ${schedule.label}`;
+                        return `<button type="button" class="bimws-gantt-bar is-routine" ${commonAttributes} style="grid-column:${column}/span 1;grid-row:${gridRow};${visualStyle}" title="${escapeHtml(title)}"><span class="bimws-gantt-progress-fill"></span><span class="bimws-gantt-progress-label" aria-hidden="true">R</span></button>`;
+                    }).join('');
+                } else if (schedule.displayEnd >= windowStart && taskStart <= windowEnd) {
+                    const visibleStart = taskStart < windowStart ? windowStart : taskStart;
+                    const visibleEnd = schedule.displayEnd > windowEnd ? windowEnd : schedule.displayEnd;
+                    const column = dayDifference(windowStart, visibleStart) + 2;
+                    const span = dayDifference(visibleStart, visibleEnd) + 1;
+                    const duration = dayDifference(taskStart, targetEnd) + 1;
+                    bar = `<button type="button" class="bimws-gantt-bar" ${commonAttributes} style="grid-column:${column}/span ${span};grid-row:${gridRow};${visualStyle}" title="${escapeHtml(`${task.title} / ${barHelp} / target ${duration} hari / ${schedule.label} / ${progress}%`)}"><span class="bimws-gantt-progress-fill"></span><span class="bimws-gantt-progress-label">${progress}%</span></button>`;
+                }
             }
 
             const picColor = getPicTimelineColor(task);
-            return `<div class="bimws-gantt-task-meta" style="grid-column:1;grid-row:${gridRow};--pic-color:${picColor.border}"><span class="bimws-gantt-index">${index + 1}</span><span class="bimws-gantt-pic-dot" title="${escapeHtml(`PIC: ${task.picName || 'Belum ada PIC'}`)}"></span><span><strong title="${escapeHtml(task.title)}">${escapeHtml(task.title)}${taskGanttRiskIcons(task)}</strong><small>${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.picName || 'Belum ada PIC')} / ${escapeHtml(statusLabels[task.status] || task.status)}</small></span></div>${cells}${bar}`;
+            const routineMeta = task.isRoutine || task.taskCategory === 'routine'
+                ? ` / Rutin ${routineWeekdayLabels[task.routineWeekday == null ? (taskStart?.getDay() ?? 1) : Number(task.routineWeekday)]}`
+                : '';
+            return `<div class="bimws-gantt-task-meta is-${escapeHtml(task.taskKind || 'standalone')}" style="grid-column:1;grid-row:${gridRow};--pic-color:${picColor.border}"><span class="bimws-gantt-index">${index + 1}</span><span class="bimws-gantt-pic-dot" title="${escapeHtml(`PIC: ${task.picName || 'Belum ada PIC'}`)}"></span><span><strong title="${escapeHtml(task.title)}">${task.taskKind === 'subtask' ? '↳ ' : ''}${escapeHtml(task.title)}${taskGanttRiskIcons(task)}</strong><small>${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskKind === 'master' ? 'Belum dibagi' : (task.picName || 'Belum ada PIC'))} / ${escapeHtml(statusLabels[task.status] || task.status)}${escapeHtml(routineMeta)}</small></span></div>${cells}${bar}`;
         }).join('');
 
         document.getElementById('tasks-gantt').innerHTML = sortedTasks.length
@@ -1122,14 +1399,14 @@
     }
 
     function userOptions(selected = '') {
-        return [{ value: '', label: 'Belum ditentukan' }, ...state.users.map((user) => ({ value: user.id, label: `${user.username}${user.jobRole ? ` / ${user.jobRole}` : ''}` }))]
+        return [{ value: '', label: 'Belum ditentukan' }, ...state.users.map((user) => ({ value: user.id, label: `${user.username}${user.workspaceRole === 'staff_bim' ? ` / ${staffRoleLabel(user.workspaceStaffRole)}` : ` / ${roleLabel(user.workspaceRole)}`}` }))]
             .map((item) => `<option value="${escapeHtml(item.value)}" ${String(item.value) === String(selected) ? 'selected' : ''}>${escapeHtml(item.label)}</option>`).join('');
     }
 
     function staffUserOptions(selected = '') {
         const staff = state.users.filter((user) => user.workspaceRole === 'staff_bim');
         if (!staff.length) return '<option value="" disabled selected>Belum ada user Staff BIM aktif</option>';
-        return staff.map((user) => `<option value="${escapeHtml(user.id)}" ${String(user.id) === String(selected) ? 'selected' : ''}>${escapeHtml(`${user.username}${user.jobRole ? ` / ${user.jobRole}` : ''}`)}</option>`).join('');
+        return staff.map((user) => `<option value="${escapeHtml(user.id)}" ${String(user.id) === String(selected) ? 'selected' : ''}>${escapeHtml(`${user.username} / ${staffRoleLabel(user.workspaceStaffRole)}`)}</option>`).join('');
     }
 
     function taskTypeItems() {
@@ -1153,7 +1430,6 @@
     }
 
     async function loadKpiTaskOptions(picUserId) {
-        if (!picUserId) return [];
         try {
             return await api(`/kpi/task-options?year=${state.period.slice(0,4)}&picUserId=${encodeURIComponent(picUserId)}`);
         } catch (_) {
@@ -1161,154 +1437,242 @@
         }
     }
 
-    function kpiTaskOptions(items, selected = '') {
-        return [{ id: '', programCode: '', programName: 'Non-KPI / operasional', title: '' }, ...items]
-            .map((item) => `<option value="${escapeHtml(item.id)}" ${String(item.id) === String(selected) ? 'selected' : ''}>${escapeHtml(item.id ? `${item.programCode} / ${item.title}` : item.programName)}</option>`).join('');
+    function kpiDivisionOptions(items, selected = '') {
+        return [`<option value="">Pilih salah satu dari 10 KPI Divisi</option>`, ...items
+            .map((item) => `<option value="${escapeHtml(item.id)}" ${String(item.id) === String(selected) ? 'selected' : ''}>${escapeHtml(`${item.code} · ${item.name}`)}</option>`)].join('');
     }
 
-    async function openTaskForm(task = null) {
+    function kpiIndividualOptions(assignments, selected = '') {
+        return [`<option value="">Tanpa mapping individu / mapping menyusul</option>`, ...assignments
+            .map((item) => `<option value="${escapeHtml(item.id)}" ${String(item.id) === String(selected) ? 'selected' : ''}>${escapeHtml(item.title)}</option>`)].join('');
+    }
+
+    function kpiTaskLinkField(items, selectedIndicator = '', selectedAssignment = '', disabled = false) {
+        const kpiSelected = !!selectedIndicator || !!selectedAssignment;
+        return `<section class="bimws-task-kpi-link bimws-field-full" data-task-kpi-link>
+            <header>
+                <div><strong>Kontribusi KPI</strong><small>Setiap task KPI wajib dipetakan ke KPI Divisi yang resmi.</small></div>
+                <span>10 KPI Divisi</span>
+            </header>
+            <div class="bimws-task-kpi-modes" role="radiogroup" aria-label="Jenis kontribusi task">
+                <label><input type="radio" name="kpiContributionMode" value="operational" ${kpiSelected ? '' : 'checked'} ${disabled ? 'disabled' : ''}><span><b>Non-KPI / Operasional</b><small>Task tetap masuk Task Performance Score, tetapi tidak mengubah KPI.</small></span></label>
+                <label><input type="radio" name="kpiContributionMode" value="kpi" ${kpiSelected ? 'checked' : ''} ${disabled ? 'disabled' : ''}><span><b>Kontribusi KPI</b><small>Pilih KPI Divisi, lalu tautkan KPI/program individu PIC bila tersedia.</small></span></label>
+            </div>
+            <div class="bimws-task-kpi-picker" data-task-kpi-picker ${kpiSelected ? '' : 'hidden'}>
+                <label for="task-kpi-indicator">KPI Divisi yang dituju</label>
+                <select name="kpiDivisionIndicatorId" id="task-kpi-indicator" ${disabled ? 'disabled' : ''}>${kpiDivisionOptions(items, selectedIndicator)}</select>
+                <div class="bimws-task-kpi-individual" data-task-kpi-individual-field hidden>
+                    <label for="task-kpi-assignment">KPI / program kerja individu PIC</label>
+                    <select name="kpiAssignmentId" id="task-kpi-assignment" ${disabled ? 'disabled' : ''}></select>
+                    <small>Opsional. Jika hanya ada satu mapping approved, sistem akan memilihnya otomatis.</small>
+                </div>
+                <div class="bimws-task-kpi-preview" data-task-kpi-preview hidden></div>
+                <div class="bimws-task-kpi-empty" data-task-kpi-empty hidden>
+                    <div><strong>Belum ada mapping individu pada KPI Divisi ini.</strong><small>Task tetap tersimpan sebagai kontribusi KPI Divisi. Tambahkan program individu agar task ikut menghitung faktor KPI individu PIC.</small></div>
+                    <button type="button" class="bimws-text-btn" data-open-kpi-setup>Buka Program KPI</button>
+                </div>
+                <small>Daftar utama selalu mengikuti 10 KPI Divisi aktif. Mapping individu tidak menambah KPI baru ke daftar ini.</small>
+            </div>
+        </section>`;
+    }
+
+    async function openTaskForm(task = null, options = {}) {
         await refreshProjectContexts();
-        const definitionLocked = !!task && task.intakeStatus === 'approved' && !isDivisionHead();
         const currentUserId = String(state.access?.user?.id || '');
         const currentUserName = state.access?.user?.name || 'User BCL';
-        const delegatedTask = isDivisionHead() && !!task?.picUserId && String(task.picUserId) !== currentUserId;
-        const initialPicUserId = delegatedTask ? task.picUserId : currentUserId;
-        const initialKpiOptions = await loadKpiTaskOptions(initialPicUserId);
-        const assignmentFields = isDivisionHead() ? `
+        const parentTaskId = task?.parentTaskId || options.parentTaskId || '';
+        const taskKind = task?.taskKind || options.taskKind || (parentTaskId ? 'subtask' : 'standalone');
+        const isMaster = taskKind === 'master';
+        const parent = state.tasks.find((item) => item.id === parentTaskId);
+        const definitionLocked = !!task && task.intakeStatus === 'approved' && !isKpiManager();
+        const delegatedTask = isKpiManager() && !isMaster && !!task?.picUserId && String(task.picUserId) !== currentUserId;
+        const unassignedSubtask = isKpiManager() && taskKind === 'subtask' && !task?.picUserId;
+        const initialPicUserId = isMaster || unassignedSubtask ? '' : delegatedTask ? task.picUserId : currentUserId;
+        const initialKpiOptions = isMaster ? [] : await loadKpiTaskOptions(initialPicUserId);
+        const initialKpiIndicatorId = task?.kpiDivisionIndicatorId
+            || initialKpiOptions.find((item) => item.assignments?.some((assignment) => String(assignment.id) === String(task?.kpiAssignmentId)))?.id
+            || '';
+        const masters = state.tasks.filter((item) => item.taskKind === 'master' && item.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(item.status));
+        const parentItems = [{ value: '', label: 'Standalone / tidak memakai induk' }, ...masters.map((item) => ({ value: item.id, label: `${item.title} / ${formatDate(item.startDate)}-${formatDate(item.dueDate)}` }))];
+        const parentField = !isMaster && (!task || parentTaskId)
+            ? field('parentTaskId','Master Task',parentTaskId,{type:'select',items:parentItems,disabled:!!task,help:'Pilih induk hasil meeting internal. Jadwal subtask wajib berada dalam rentang induk.'})
+            : '';
+        const assignmentFields = isMaster
+            ? '<div class="bimws-field bimws-field-full bimws-master-note"><strong>Master Task tanpa PIC</strong><small>Staff akan mengisi subtask masing-masing setelah pembagian pekerjaan dibahas di meeting internal.</small></div>'
+            : isKpiManager() ? `
                 <div class="bimws-field"><label>Penugasan</label><select name="assignmentMode" id="task-assignment-mode" ${definitionLocked ? 'disabled' : ''}>
-                    <option value="self" ${delegatedTask ? '' : 'selected'}>Task saya</option>
+                    <option value="unassigned" ${unassignedSubtask ? 'selected' : ''}>Belum ditentukan</option>
+                    <option value="self" ${delegatedTask || unassignedSubtask ? '' : 'selected'}>Task saya</option>
                     <option value="delegate" ${delegatedTask ? 'selected' : ''}>Delegasikan ke Staff BIM</option>
-                </select><small>Delegasi mencatat pemberi tugas, PIC, dan waktu penugasan.</small></div>
-                <div class="bimws-field" id="task-delegate-field" ${delegatedTask ? '' : 'hidden'}><label>Staff BIM</label><select name="delegateUserId" id="task-delegate-user" ${definitionLocked ? 'disabled' : ''}>${staffUserOptions(delegatedTask ? task.picUserId : '')}</select><small>Hanya user aktif dengan role Staff BIM.</small></div>`
-            : `<div class="bimws-field"><label>PIC</label><input type="text" value="${escapeHtml(currentUserName)}" disabled><input type="hidden" name="picUserId" value="${escapeHtml(currentUserId)}"><small>Task dari staff menjadi usulan register dan memerlukan review Kepala Divisi.</small></div>`;
+                </select></div>
+                <div class="bimws-field" id="task-delegate-field" ${delegatedTask ? '' : 'hidden'}><label>Staff BIM</label><select name="delegateUserId" id="task-delegate-user">${staffUserOptions(delegatedTask ? task.picUserId : '')}</select></div>`
+            : `<div class="bimws-field"><label>PIC</label><input type="text" value="${escapeHtml(currentUserName)}" disabled><small>Subtask menjadi tanggung jawab Anda dan memerlukan review register Kadiv.</small></div>`;
+        const initialStart = task?.startDate ? String(task.startDate).slice(0,10) : parent?.startDate ? String(parent.startDate).slice(0,10) : '';
+        const initialDue = task?.dueDate ? String(task.dueDate).slice(0,10) : parent?.dueDate ? String(parent.dueDate).slice(0,10) : '';
+        const initialRoutine = !!task?.isRoutine || task?.taskCategory === 'routine';
+        const initialRoutineWeekday = task?.routineWeekday == null
+            ? (parseDateOnly(initialStart)?.getDay() ?? 1)
+            : Number(task.routineWeekday);
         const dialog = showDialog({
-            eyebrow: task ? 'Task Scheduler' : formatMonth(state.period),
-            title: task ? 'Edit Task' : 'Task Baru',
+            eyebrow: isMaster ? 'Master Task Kadiv' : taskKind === 'subtask' ? 'Subtask Staff' : 'Task Scheduler',
+            title: task ? `Edit ${isMaster ? 'Master Task' : taskKind === 'subtask' ? 'Subtask' : 'Task'}` : isMaster ? 'Master Task Baru' : taskKind === 'subtask' ? 'Subtask Baru' : 'Task Baru',
             body: `<div class="bimws-form-grid">
-                ${field('title','Task Item',task?.title||'',{required:true,full:true,disabled:definitionLocked})}
-                ${field('projectName','Project / Context',task?.projectName||'',{placeholder:'Ketik atau pilih project yang sudah ada',disabled:definitionLocked,suggestions:state.projectContexts,help:'Pilih nama yang sudah ada agar task lintas staf memakai konteks project yang sama.'})}
-                ${field('taskType','Task Type',task?.taskType||'project_task',{type:'select',items:taskTypeItems(),disabled:definitionLocked})}
-                ${field('taskCategory','Kategori Beban',task?.taskCategory||'regular',{type:'select',items:taskCategoryItems(),disabled:definitionLocked,help:'Regular = task normal. Rutin = berulang. Fleksibel = dikerjakan saat tidak ada urgent/kapasitas tersedia. Urgent = sisipan prioritas tinggi yang perlu segera dikerjakan.'})}
+                ${parentField}
+                ${field('title',isMaster?'Nama Master Task':'Task Item',task?.title||'',{required:true,full:true,disabled:definitionLocked})}
+                ${field('projectName','Project / Context',task?.projectName||parent?.projectName||'',{disabled:definitionLocked,suggestions:state.projectContexts})}
+                ${field('taskType','Task Type',task?.taskType||(isMaster?'tender_support':'project_task'),{type:'select',items:taskTypeItems(),disabled:definitionLocked})}
+                ${field('taskCategory','Kategori Beban',task?.taskCategory||'regular',{type:'select',items:taskCategoryItems(),disabled:definitionLocked})}
                 ${assignmentFields}
-                <div class="bimws-field bimws-field-full"><label>Kontribusi KPI</label><select name="kpiAssignmentId" id="task-kpi-assignment" ${definitionLocked ? 'disabled' : ''}>${kpiTaskOptions(initialKpiOptions,task?.kpiAssignmentId||'')}</select><small>Hanya kontribusi milik PIC yang sudah approved.</small></div>
+                ${!isMaster?kpiTaskLinkField(initialKpiOptions,initialKpiIndicatorId,task?.kpiAssignmentId||'',definitionLocked):''}
                 ${field('priority','Priority',task?.priority||'normal',{type:'select',items:['low','normal','high','urgent'].map((value)=>({value,label:value[0].toUpperCase()+value.slice(1)})),disabled:definitionLocked})}
-                ${field('startDate','Start Date',task?.startDate?String(task.startDate).slice(0,10):'',{type:'date',disabled:definitionLocked})}
-                ${field('dueDate','Due Date',task?.dueDate?String(task.dueDate).slice(0,10):'',{type:'date',disabled:definitionLocked})}
+                ${field('startDate','Start Date',initialStart,{type:'date',required:isMaster||taskKind==='subtask',disabled:definitionLocked})}
+                ${field('dueDate','Due Date',initialDue,{type:'date',required:isMaster||taskKind==='subtask',disabled:definitionLocked})}
+                ${task && isKpiManager() && task.intakeStatus === 'approved' ? field('scheduleChangeReason','Alasan Perubahan Jadwal','',{type:'textarea',full:true,help:'Wajib bila Start/Due diubah. Baseline awal tidak akan ditimpa.'}) : ''}
                 <div class="bimws-task-load-preview bimws-field-full" data-task-load-preview hidden></div>
-                ${task ? field('status','Task Status',task.status,{type:'select',items:taskStatusItems(isKpiManager()).filter((item)=>isKpiManager() || !['cancelled','on_hold'].includes(item.value))}) : ''}
-                ${task ? field('progressPercent','Progress (%)',task.progressPercent,{type:'number',min:0,max:99,step:'1'}) : ''}
+                ${task ? field('status','Task Status',task.status,{type:'select',items:taskStatusItems(isKpiManager()).filter((item)=>isKpiManager() || !['cancelled','on_hold'].includes(item.value)),disabled:isMaster}) : ''}
+                ${task ? field('progressPercent','Progress (%)',task.progressPercent,{type:'number',min:0,max:99,step:'1',disabled:isMaster}) : ''}
                 ${field('description','Description',task?.description||'',{type:'textarea',full:true,disabled:definitionLocked})}
-                ${field('evidenceLink','Evidence Link',task?.evidenceLink||'',{type:'url',full:true,placeholder:'https:// atau path referensi'})}
-                ${field('isCritical','Critical task',task?.isCritical||false,{type:'checkbox',full:true,checkboxLabel:'Tandai sebagai critical task',disabled:definitionLocked,help:'Critical berarti dampaknya besar bila gagal atau terlambat. Gunakan untuk task blocking deliverable, deadline management/project, tender/KPI penting, atau risiko tinggi. Tidak semua task urgent harus critical.'})}
-                ${field('criticalReason','Alasan Critical',task?.criticalReason||'',{type:'textarea',full:true,disabled:definitionLocked,placeholder:'Contoh: blocking deliverable koordinasi, deadline tender besok, output diminta manajemen, berdampak ke KPI divisi.'})}
-                ${field('isRoutine','Task rutin',task?.isRoutine||false,{type:'checkbox',full:true,checkboxLabel:'Bisa digenerate ke periode berikutnya',disabled:definitionLocked})}
+                ${field('evidenceLink','Evidence Link',task?.evidenceLink||'',{type:'url',full:true})}
+                ${field('isCritical','Critical task',task?.isCritical||false,{type:'checkbox',full:true,checkboxLabel:'Tandai sebagai critical task',disabled:definitionLocked})}
+                ${field('criticalReason','Alasan Critical',task?.criticalReason||'',{type:'textarea',full:true,disabled:definitionLocked})}
+                ${!isMaster?field('isRoutine','Task rutin',initialRoutine,{type:'checkbox',full:true,checkboxLabel:'Jadwalkan berulang setiap minggu dan bisa digenerate ke periode berikutnya',disabled:definitionLocked}):''}
+                ${!isMaster?`<div class="bimws-field bimws-field-full" id="task-routine-schedule-field" ${initialRoutine ? '' : 'hidden'}><label>Hari rutin mingguan</label><select name="routineWeekday" id="task-routine-weekday" ${definitionLocked ? 'disabled' : ''}>${routineWeekdayLabels.map((label,index)=>`<option value="${index}" ${index===initialRoutineWeekday?'selected':''}>${label}</option>`).join('')}</select><small>Gantt menampilkan satu marker pada hari ini setiap minggu, bukan bar menerus.</small></div>`:''}
             </div>`,
-            submitLabel: task ? 'Simpan Perubahan' : (isDivisionHead() ? 'Buat Task' : 'Buat Draft Task'),
+            submitLabel: task ? 'Simpan Perubahan' : isMaster ? 'Buat Master Task' : (isKpiManager() ? 'Buat Task' : 'Buat Draft Subtask'),
             onSubmit: async (formData) => {
                 const payload = formJson(formData,['isRoutine','isCritical']);
                 payload.periodMonth = state.period;
-                if (isDivisionHead()) {
-                    payload.picUserId = payload.assignmentMode === 'delegate' ? payload.delegateUserId : currentUserId;
-                } else {
-                    payload.picUserId = currentUserId;
+                payload.taskKind = isMaster ? 'master' : (payload.parentTaskId || parentTaskId ? 'subtask' : 'standalone');
+                payload.parentTaskId = payload.taskKind === 'subtask' ? (payload.parentTaskId || parentTaskId) : '';
+                if (isMaster) payload.picUserId = '';
+                else if (isKpiManager()) payload.picUserId = payload.assignmentMode === 'unassigned' ? '' : payload.assignmentMode === 'delegate' ? payload.delegateUserId : currentUserId;
+                else payload.picUserId = currentUserId;
+                if (payload.kpiContributionMode !== 'kpi') {
+                    payload.kpiDivisionIndicatorId = '';
+                    payload.kpiAssignmentId = '';
                 }
-                const selected = state.users.find((user) => String(user.id) === String(payload.picUserId));
-                payload.picName = String(payload.picUserId) === currentUserId ? currentUserName : (selected?.username || '');
-                const delegatedName = payload.assignmentMode === 'delegate' ? payload.picName : '';
+                delete payload.kpiContributionMode;
                 delete payload.assignmentMode;
                 delete payload.delegateUserId;
                 if (task) await api(`/tasks/${task.id}`,{method:'PUT',body:JSON.stringify(payload)});
                 else await api('/tasks',{method:'POST',body:JSON.stringify(payload)});
-                toast(task ? 'Task diperbarui.' : delegatedName ? `Task didelegasikan kepada ${delegatedName}.` : isDivisionHead() ? 'Task dibuat.' : 'Draft task dibuat.');
+                toast(task ? 'Task diperbarui.' : isMaster ? 'Master Task dibuat tanpa PIC.' : payload.taskKind === 'subtask' ? 'Draft subtask dibuat.' : 'Task dibuat.');
                 await loadTasks(true);
             }
         });
         const assignmentMode = dialog.querySelector('#task-assignment-mode');
         const delegateField = dialog.querySelector('#task-delegate-field');
         const delegateUser = dialog.querySelector('#task-delegate-user');
+        const kpiModeInputs = [...dialog.querySelectorAll('[name="kpiContributionMode"]')];
+        const kpiPicker = dialog.querySelector('[data-task-kpi-picker]');
+        const kpiIndicator = dialog.querySelector('#task-kpi-indicator');
         const kpiAssignment = dialog.querySelector('#task-kpi-assignment');
+        const kpiIndividualField = dialog.querySelector('[data-task-kpi-individual-field]');
+        const kpiPreview = dialog.querySelector('[data-task-kpi-preview]');
+        const kpiEmpty = dialog.querySelector('[data-task-kpi-empty]');
+        const parentSelect = dialog.querySelector('[name="parentTaskId"]');
         const preview = dialog.querySelector('[data-task-load-preview]');
-        const priorityInput = dialog.querySelector('[name="priority"]');
-        const categoryInput = dialog.querySelector('[name="taskCategory"]');
-        const routineInput = dialog.querySelector('[name="isRoutine"]');
-        const criticalInput = dialog.querySelector('[name="isCritical"]');
-        const currentPic = () => assignmentMode?.value === 'delegate' ? delegateUser?.value : currentUserId;
-        const currentPicName = () => {
-            const id = currentPic();
-            return String(id) === currentUserId ? currentUserName : (state.users.find((user) => String(user.id) === String(id))?.username || '');
+        const routineCheckbox = dialog.querySelector('[name="isRoutine"]');
+        const routineScheduleField = dialog.querySelector('#task-routine-schedule-field');
+        const routineWeekday = dialog.querySelector('#task-routine-weekday');
+        const startDateInput = dialog.querySelector('[name="startDate"]');
+        const categorySelect = dialog.querySelector('[name="taskCategory"]');
+        let currentKpiOptions = initialKpiOptions;
+        const currentPic = () => isMaster || assignmentMode?.value === 'unassigned' ? '' : assignmentMode?.value === 'delegate' ? delegateUser?.value : currentUserId;
+        const currentKpiIndicator = () => currentKpiOptions.find((option) => String(option.id) === String(kpiIndicator?.value));
+        const renderKpiPreview = () => {
+            if (!kpiPreview || !kpiIndicator || !kpiAssignment) return;
+            const item = currentKpiIndicator();
+            const assignment = item?.assignments?.find((option) => String(option.id) === String(kpiAssignment.value));
+            kpiPreview.hidden = !item;
+            kpiPreview.innerHTML = item ? `<span><b>${escapeHtml(item.code)}</b>${escapeHtml(item.name)}</span><span><b>${escapeHtml(item.programCode || 'Program Divisi')}</b>${escapeHtml(item.programName || '-')}</span><span><b>Mapping individu</b>${assignment ? `${escapeHtml(assignment.title)}${assignment.approvedWeight == null ? '' : ` · Bobot ${Math.round(Number(assignment.approvedWeight) * 10000) / 100}%`}` : 'Belum dipetakan / mapping menyusul'}</span>` : '';
+        };
+        const syncKpiIndividualOptions = (preferredAssignment = kpiAssignment?.value || '') => {
+            if (!kpiAssignment) return;
+            const item = currentKpiIndicator();
+            const assignments = item?.assignments || [];
+            const selected = assignments.some((option) => String(option.id) === String(preferredAssignment))
+                ? preferredAssignment
+                : assignments.length === 1 ? assignments[0].id : '';
+            kpiAssignment.innerHTML = kpiIndividualOptions(assignments, selected);
+            if (kpiIndividualField) kpiIndividualField.hidden = !item || assignments.length === 0;
+            const kpiMode = dialog.querySelector('[name="kpiContributionMode"]:checked')?.value === 'kpi';
+            kpiAssignment.disabled = definitionLocked || !kpiMode || assignments.length === 0;
+            if (kpiEmpty) kpiEmpty.hidden = !kpiMode || !item || assignments.length > 0;
+            renderKpiPreview();
+        };
+        const syncKpiLink = () => {
+            if (!kpiPicker || !kpiIndicator || !kpiAssignment) return;
+            const kpiMode = dialog.querySelector('[name="kpiContributionMode"]:checked')?.value === 'kpi';
+            kpiPicker.hidden = !kpiMode;
+            kpiIndicator.disabled = definitionLocked || !kpiMode;
+            kpiIndicator.required = kpiMode && !definitionLocked;
+            kpiAssignment.disabled = definitionLocked || !kpiMode || !currentKpiIndicator()?.assignments?.length;
+            kpiAssignment.required = false;
+            syncKpiIndividualOptions();
         };
         const refreshKpiAssignment = async () => {
-            if (!kpiAssignment) return;
-            const picUserId = currentPic();
-            const selected = kpiAssignment.value;
-            kpiAssignment.innerHTML = kpiTaskOptions(await loadKpiTaskOptions(picUserId), selected);
+            if (!kpiIndicator || !kpiAssignment) return;
+            const selectedIndicator = kpiIndicator.value;
+            const selectedAssignment = kpiAssignment.value;
+            currentKpiOptions = await loadKpiTaskOptions(currentPic());
+            const nextIndicator = currentKpiOptions.some((option) => String(option.id) === String(selectedIndicator)) ? selectedIndicator : '';
+            kpiIndicator.innerHTML = kpiDivisionOptions(currentKpiOptions, nextIndicator);
+            syncKpiIndividualOptions(selectedAssignment);
+            syncKpiLink();
         };
         const renderLoadPreview = () => {
-            if (!preview) return;
-            const draft = {
-                ...(task || {}),
-                id: task?.id || '__draft_task__',
-                title: dialog.querySelector('[name="title"]')?.value || 'Task baru',
-                picUserId: currentPic(),
-                picName: currentPicName(),
-                startDate: dialog.querySelector('[name="startDate"]')?.value || '',
-                dueDate: dialog.querySelector('[name="dueDate"]')?.value || '',
-                priority: priorityInput?.value || 'normal',
-                taskCategory: categoryInput?.value || 'regular',
-                isCritical: criticalInput?.checked || false,
-                status: dialog.querySelector('[name="status"]')?.value || task?.status || 'planned',
-                intakeStatus: task?.intakeStatus || 'approved',
-                progressPercent: task?.progressPercent || 0
-            };
-            if (!draft.picUserId || (!draft.startDate && !draft.dueDate)) {
-                preview.hidden = true;
-                preview.innerHTML = '';
-                return;
-            }
-            const pool = [...state.tasks.filter((item) => item.id !== draft.id), draft];
-            const risk = analyzeTaskLoad(pool).byId.get(draft.id) || {};
-            const messages = [];
-            if (risk.critical) messages.push(['critical', 'Critical', 'Task ini masuk kategori critical/urgent/due dekat atau blocked.']);
-            if (risk.clash) messages.push(['clash', 'Clash', `PIC memiliki overlap dengan ${risk.clashCount} task lain pada tanggal yang sama.`]);
-            if (risk.overload) messages.push(['overload', 'Overload', `Beban PIC mencapai ${risk.maxDayLoad} task/hari atau ${risk.maxWeekLoad} task/minggu.`]);
-            if (risk.canHold) messages.push(['hold', 'Can Hold', 'Task fleksibel ini aman menjadi kandidat hold jika ada urgent task.']);
-            preview.hidden = false;
-            preview.innerHTML = messages.length
-                ? `<strong>Load warning</strong>${messages.map(([riskName,label,text]) => `<span data-risk="${riskName}"><b>${label}</b>${escapeHtml(text)}</span>`).join('')}`
-                : '<strong>Load check</strong><span data-risk="clear"><b>Aman</b>Belum terdeteksi clash atau overload untuk PIC dan tanggal ini.</span>';
+            if (!preview || isMaster) return;
+            const draft = { ...(task||{}), id:task?.id||'__draft_task__', taskKind:parentSelect?.value||parentTaskId?'subtask':'standalone', picUserId:currentPic(), startDate:dialog.querySelector('[name="startDate"]')?.value||'', dueDate:dialog.querySelector('[name="dueDate"]')?.value||'', priority:dialog.querySelector('[name="priority"]')?.value||'normal', taskCategory:dialog.querySelector('[name="taskCategory"]')?.value||'regular', status:task?.status||'planned', intakeStatus:task?.intakeStatus||'approved' };
+            if (!draft.picUserId || !draft.startDate || !draft.dueDate) { preview.hidden=true; return; }
+            const risk=analyzeTaskLoad([...state.tasks.filter((item)=>item.id!==draft.id),draft]).byId.get(draft.id)||{};
+            const messages=[];
+            if(risk.clash)messages.push(['clash','Clash',`Overlap dengan ${risk.clashCount} task PIC lain.`]);
+            if(risk.overload)messages.push(['overload','Overload',`Beban mencapai ${risk.maxDayLoad} task/hari atau ${risk.maxWeekLoad} task/minggu.`]);
+            preview.hidden=false;
+            preview.innerHTML=messages.length?`<strong>Load warning</strong>${messages.map(([name,label,text])=>`<span data-risk="${name}"><b>${label}</b>${escapeHtml(text)}</span>`).join('')}`:'<strong>Load check</strong><span data-risk="clear"><b>Aman</b>Belum terdeteksi clash atau overload.</span>';
         };
-        const syncDelegation = () => {
-            if (!assignmentMode || !delegateField || !delegateUser) return;
-            const delegated = assignmentMode.value === 'delegate';
-            delegateField.hidden = !delegated;
-            delegateUser.required = delegated;
-            refreshKpiAssignment();
-            renderLoadPreview();
+        const syncDelegation=()=>{if(!assignmentMode)return;const delegated=assignmentMode.value==='delegate';delegateField.hidden=!delegated;delegateUser.required=delegated;refreshKpiAssignment();renderLoadPreview();};
+        const syncRoutineSchedule=()=>{
+            if(!routineScheduleField||!routineWeekday)return;
+            if(categorySelect?.value==='routine'&&routineCheckbox&&!routineCheckbox.disabled)routineCheckbox.checked=true;
+            const active=!!routineCheckbox?.checked||categorySelect?.value==='routine';
+            routineScheduleField.hidden=!active;
+            routineWeekday.required=active;
         };
-        priorityInput?.addEventListener('change', () => {
-            if (priorityInput.value === 'urgent') {
-                if (categoryInput) categoryInput.value = 'urgent';
-                if (criticalInput) criticalInput.checked = true;
+        assignmentMode?.addEventListener('change',syncDelegation);
+        delegateUser?.addEventListener('change',()=>{refreshKpiAssignment();renderLoadPreview();});
+        kpiModeInputs.forEach((input)=>input.addEventListener('change',syncKpiLink));
+        kpiIndicator?.addEventListener('change',()=>syncKpiIndividualOptions(''));
+        kpiAssignment?.addEventListener('change',renderKpiPreview);
+        dialog.querySelector('[data-open-kpi-setup]')?.addEventListener('click',()=>{
+            dialog.close();
+            state.kpiTab='programs';
+            loadView('kpi',true);
+            toast('Pilih program KPI lalu ajukan atau delegasikan kontribusi untuk PIC.');
+        });
+        routineCheckbox?.addEventListener('change',syncRoutineSchedule);
+        categorySelect?.addEventListener('change',syncRoutineSchedule);
+        routineWeekday?.addEventListener('change',()=>{routineWeekday.dataset.userSelected='true';});
+        startDateInput?.addEventListener('change',()=>{
+            if(!task&&!routineWeekday?.dataset.userSelected&&startDateInput.value){
+                const anchor=parseDateOnly(startDateInput.value);
+                if(anchor)routineWeekday.value=String(anchor.getDay());
             }
+        });
+        parentSelect?.addEventListener('change',()=>{
+            const selected=state.tasks.find((item)=>item.id===parentSelect.value);
+            const start=dialog.querySelector('[name="startDate"]');const due=dialog.querySelector('[name="dueDate"]');
+            if(selected){start.min=String(selected.startDate).slice(0,10);start.max=String(selected.dueDate).slice(0,10);due.min=start.min;due.max=start.max;start.required=true;due.required=true;if(isKpiManager()&&assignmentMode)assignmentMode.value='unassigned';syncDelegation();}
+            else{start.removeAttribute('min');start.removeAttribute('max');due.removeAttribute('min');due.removeAttribute('max');start.required=isMaster;due.required=isMaster;}
             renderLoadPreview();
         });
-        categoryInput?.addEventListener('change', () => {
-            if (categoryInput.value === 'routine' && routineInput) routineInput.checked = true;
-            if (categoryInput.value === 'urgent') {
-                if (priorityInput) priorityInput.value = 'urgent';
-                if (criticalInput) criticalInput.checked = true;
-            }
-            renderLoadPreview();
-        });
-        ['title','startDate','dueDate','status','isCritical'].forEach((name) => {
-            dialog.querySelector(`[name="${name}"]`)?.addEventListener('input', renderLoadPreview);
-            dialog.querySelector(`[name="${name}"]`)?.addEventListener('change', renderLoadPreview);
-        });
-        if (assignmentMode) {
-            assignmentMode.addEventListener('change', syncDelegation);
-            delegateUser?.addEventListener('change', () => { refreshKpiAssignment(); renderLoadPreview(); });
-            syncDelegation();
-        }
+        dialog.querySelectorAll('[name="startDate"],[name="dueDate"],[name="priority"],[name="taskCategory"]').forEach((input)=>input.addEventListener('change',renderLoadPreview));
+        syncKpiIndividualOptions(task?.kpiAssignmentId || '');
+        syncDelegation();
+        syncKpiLink();
+        syncRoutineSchedule();
+        parentSelect?.dispatchEvent(new Event('change'));
         renderLoadPreview();
     }
 
@@ -1414,7 +1778,7 @@
             title: `Start Again: ${task.title}`,
             body: `<div class="bimws-form-grid">
                 <div class="bimws-field bimws-field-full"><label>Catatan Hold</label><div class="bimws-source-summary"><strong>${escapeHtml(task.holdReason || 'Task sedang On Hold')}</strong>${task.holdResumeTargetDate ? `<br>Target resume: ${formatDate(task.holdResumeTargetDate)}` : ''}${holdUrgentTaskLabel(task) ? `<br>Task urgent: ${escapeHtml(holdUrgentTaskLabel(task))}` : ''}</div></div>
-                ${field('dueDate','Due Date Baru',task.dueDate ? String(task.dueDate).slice(0,10) : '',{type:'date',help:'Kosongkan atau biarkan sama jika target penyelesaian tidak berubah.'})}
+                ${field('dueDate','Due Date Baru (opsional)','',{type:'date',help:'Kosongkan agar sistem otomatis menambah deadline efektif sesuai jumlah hari Hold yang disetujui.'})}
                 ${field('note','Catatan Start Again','',{type:'textarea',full:true,placeholder:'Contoh: Task urgent selesai, PIC kembali melanjutkan pekerjaan ini.'})}
             </div>`,
             submitLabel: 'Start Again',
@@ -1427,15 +1791,19 @@
     }
 
     function openTaskDetail(task) {
+        const parent = state.tasks.find((item) => item.id === task.parentTaskId);
+        const performance = task.performance;
         showDialog({
             eyebrow: 'Task Scheduler', title: task.title,
             body: `<dl class="bimws-detail-grid">
-                <div><dt>Project</dt><dd>${escapeHtml(task.projectName||'-')}</dd></div><div><dt>PIC</dt><dd>${escapeHtml(task.picName||'-')}</dd></div><div><dt>Owner</dt><dd>${escapeHtml(task.officialOwnerName)}</dd></div>
-                <div><dt>Start</dt><dd>${formatDate(task.startDate)}</dd></div><div><dt>Due</dt><dd>${formatDate(task.dueDate)}</dd></div><div><dt>Priority</dt><dd>${escapeHtml(task.priority)}</dd></div>
+                <div><dt>Jenis</dt><dd>${escapeHtml(task.taskKind === 'master' ? 'Master Task' : task.taskKind === 'subtask' ? 'Subtask' : 'Standalone')}</dd></div><div><dt>Master Task</dt><dd>${escapeHtml(parent?.title||'-')}</dd></div><div><dt>Project</dt><dd>${escapeHtml(task.projectName||'-')}</dd></div>
+                <div><dt>PIC</dt><dd>${escapeHtml(task.taskKind==='master'?'Belum dibagi':(task.picName||'-'))}</dd></div><div><dt>Start</dt><dd>${formatDate(task.startDate)}</dd></div><div><dt>Due Efektif</dt><dd>${formatDate(task.adjustedDueDate||task.dueDate)}</dd></div>
+                <div><dt>Baseline Due</dt><dd>${formatDate(task.baselineDueDate)}</dd></div><div><dt>Hold Disetujui</dt><dd>${task.approvedHoldDays||0} hari</dd></div><div><dt>Priority</dt><dd>${escapeHtml(task.priority)}</dd></div>
+                ${task.isRoutine?`<div><dt>Jadwal Rutin</dt><dd>Setiap ${escapeHtml(routineWeekdayLabels[task.routineWeekday==null?(parseDateOnly(task.startDate)?.getDay()??1):Number(task.routineWeekday)])}</dd></div>`:''}
                 <div><dt>Register</dt><dd>${registerBadge(task.intakeStatus)}</dd></div><div><dt>Status</dt><dd>${badge(task.status)}</dd></div><div><dt>Progress</dt><dd>${task.progressPercent}%</dd></div>
                 <div><dt>Penugasan</dt><dd>${task.delegatedByName ? `Delegasi oleh ${escapeHtml(task.delegatedByName)}${task.delegatedAt ? ` / ${formatDateTime(task.delegatedAt)}` : ''}` : 'Task langsung / usulan staff'}</dd></div>
                 ${task.holdReason ? `<div><dt>Hold</dt><dd>${escapeHtml(task.holdByName || '-')} ${task.holdAt ? `/ ${formatDateTime(task.holdAt)}` : ''}</dd></div><div><dt>Target Resume</dt><dd>${formatDate(task.holdResumeTargetDate)}</dd></div><div><dt>Start Again</dt><dd>${task.resumedAt ? `${escapeHtml(task.resumedByName || '-')} / ${formatDateTime(task.resumedAt)}` : '-'}</dd></div>` : ''}
-            </dl><div class="mt-3"><h3>Deskripsi</h3><p>${escapeHtml(task.description||'-')}</p></div>${task.holdReason?`<div class="mt-3"><h3>Catatan hold</h3><p>${escapeHtml(task.holdReason)}</p>${task.holdImpactNote?`<p><strong>Dampak:</strong> ${escapeHtml(task.holdImpactNote)}</p>`:''}${holdUrgentTaskLabel(task)?`<p><strong>Task urgent:</strong> ${escapeHtml(holdUrgentTaskLabel(task))}</p>`:''}${task.resumeNote?`<p><strong>Start again:</strong> ${escapeHtml(task.resumeNote)}</p>`:''}</div>`:''}${task.intakeReviewNote?`<div class="mt-3"><h3>Catatan register</h3><p>${escapeHtml(task.intakeReviewNote)}</p></div>`:''}${task.reviewNote?`<div class="mt-3"><h3>Catatan review</h3><p>${escapeHtml(task.reviewNote)}</p></div>`:''}`,
+            </dl>${performance?`<div class="bimws-performance-detail"><h3>Task Performance Score: ${performance.totalScore}</h3><div><span>Schedule <b>${performance.scheduleScore??'-'}</b></span><span>Completion <b>${performance.completionScore}</b></span><span>Quality <b>${performance.qualityScore}</b></span><span>Worklog <b>${performance.worklogScore}</b></span></div><p>${performance.lateDays?`${performance.lateDays} hari melewati deadline efektif.`:performance.earlyDays?`Selesai ${performance.earlyDays} hari lebih cepat dari target.`:'Sesuai jadwal efektif.'}</p></div>`:''}<div class="mt-3"><h3>Deskripsi</h3><p>${escapeHtml(task.description||'-')}</p></div>${task.holdReason?`<div class="mt-3"><h3>Catatan hold</h3><p>${escapeHtml(task.holdReason)}</p>${task.holdImpactNote?`<p><strong>Dampak:</strong> ${escapeHtml(task.holdImpactNote)}</p>`:''}${holdUrgentTaskLabel(task)?`<p><strong>Task urgent:</strong> ${escapeHtml(holdUrgentTaskLabel(task))}</p>`:''}${task.resumeNote?`<p><strong>Start again:</strong> ${escapeHtml(task.resumeNote)}</p>`:''}</div>`:''}${task.intakeReviewNote?`<div class="mt-3"><h3>Catatan register</h3><p>${escapeHtml(task.intakeReviewNote)}</p></div>`:''}${task.reviewNote?`<div class="mt-3"><h3>Catatan review</h3><p>${escapeHtml(task.reviewNote)}</p></div>`:''}`,
             onSubmit: null
         });
     }
@@ -1677,6 +2045,7 @@
 
     function meetingScopeLabel(scope){
         if(scope==='proyek')return 'Project';
+        if(scope==='gabungan')return 'Koordinasi Gabungan';
         if(scope==='other')return 'External';
         return 'Divisi BIM HO';
     }
@@ -1685,6 +2054,7 @@
         const scope=meetingField(row,'scope_type','scopeType','kantor');
         const project=String(meetingField(row,'project_name','projectName','')).trim();
         if(scope==='proyek')return project||'Project - Tanpa Nama Project';
+        if(scope==='gabungan')return 'Semua Proyek';
         if(scope==='other')return project||'External';
         return 'Divisi BIM HO';
     }
@@ -1700,7 +2070,7 @@
         const target=document.getElementById('meetings-table');
         const allMeetings=[...state.meetings,...state.legacyMeetings];
         if(!allMeetings.length){target.innerHTML=emptyState('Belum ada Risalah Rapat pada periode ini.','fa-people-group');return;}
-        const groupOrder=['Divisi BIM HO','Project','External'];
+        const groupOrder=['Divisi BIM HO','Project','Koordinasi Gabungan','External'];
         const groups=new Map();
         allMeetings.forEach((row)=>{
             const scope=meetingScopeLabel(meetingField(row,'scope_type','scopeType','kantor'));
@@ -1761,57 +2131,240 @@
         `).join('')}</div>`;
     }
 
-    function openMeetingForm(meeting=null){
-        showDialog({
+    async function refreshMeetingProjectContexts(){
+        try{
+            state.meetingProjectContexts=await api('/meeting-project-contexts');
+        }catch(error){
+            if(!state.meetingProjectContexts.length)toast('Riwayat nama project belum dapat dimuat. Nama project tetap bisa ditulis manual.',true);
+        }
+    }
+
+    function meetingProjectPicker(projects,selected=[]){
+        const selectedKeys=new Set(selected.map((name)=>String(name).toLocaleLowerCase('id-ID')));
+        return `<div class="bimws-field bimws-field-full bimws-project-picker" data-meeting-combined hidden>
+            <div class="bimws-project-picker-head"><label>Project dalam koordinasi gabungan</label><span>${projects.length} dari riwayat risalah</span></div>
+            ${projects.length?`<div class="bimws-project-options">${projects.map((name,index)=>`<label class="bimws-project-option" for="meeting-project-${index}"><input id="meeting-project-${index}" type="checkbox" name="projectNames" value="${escapeHtml(name)}" ${!selected.length||selectedKeys.has(name.toLocaleLowerCase('id-ID'))?'checked':''}><span>${escapeHtml(name)}</span></label>`).join('')}</div>`:'<div class="bimws-project-empty">Belum ada nama project pada riwayat risalah. Tambahkan melalui kolom di bawah.</div>'}
+            <label for="meeting-additional-projects">Project tambahan (opsional)</label>
+            <textarea id="meeting-additional-projects" name="additionalProjectsText" placeholder="Satu nama project per baris"></textarea>
+            <small>Rapat gabungan menyimpan seluruh project terpilih sebagai satu konteks koordinasi pada waktu yang sama.</small>
+        </div>`;
+    }
+
+    function newMeetingRow(section='progress',rowType='item',value={}){
+        const random=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        return {key:value.key||`minute-${random}`,section,rowType,...value};
+    }
+
+    function meetingRowsFromRecord(meeting={}){
+        const stored=Array.isArray(meeting.meeting_rows)?meeting.meeting_rows:[];
+        if(stored.length)return stored.map((row,index)=>newMeetingRow(row.section||'progress',row.rowType||row.row_type||'item',{
+            key:row.key||`stored-${index}`,
+            description:row.description||'',
+            actionOwnerName:row.actionOwnerName||row.action_owner_name||'',
+            plannedDueDate:String(row.plannedDueDate||row.planned_due_date||'').slice(0,10),
+            reviewerName:row.reviewerName||row.reviewer_name||'',
+            reviewResult:row.reviewResult||row.review_result||'',
+            signatureDate:String(row.signatureDate||row.signature_date||'').slice(0,10)
+        }));
+        const rows=[];
+        const legacy=[
+            ['progress','item',meeting.weekly_progress||meeting.meeting_summary||''],
+            ['progress','item',meeting.constraints_problems?`Kendala / Permasalahan: ${meeting.constraints_problems}`:''],
+            ['progress','item',meeting.meeting_issues?`Issue: ${meeting.meeting_issues}`:''],
+            ['progress','item',meeting.action_plan?`Action Plan: ${meeting.action_plan}`:''],
+            ['agreement','item',meeting.agreements||meeting.decisions||'']
+        ];
+        legacy.forEach(([section,rowType,description])=>{if(description)rows.push(newMeetingRow(section,rowType,{description}));});
+        return rows;
+    }
+
+    function meetingRowControl(row){
+        const resultItems=[['','Belum ditetapkan'],['open','Open'],['in_progress','Proses'],['closed','Closed'],['cancelled','Dibatalkan']];
+        return `<article class="bimws-minute-entry ${row.rowType==='heading'?'is-heading':''}" data-meeting-row data-section="${escapeHtml(row.section)}" data-row-key="${escapeHtml(row.key)}">
+            <div class="bimws-minute-entry-main"><div class="bimws-minute-entry-tools"><select data-minute-field="rowType" aria-label="Jenis baris"><option value="item" ${row.rowType==='item'?'selected':''}>Item tindak lanjut</option><option value="heading" ${row.rowType==='heading'?'selected':''}>Subjudul / kelompok</option></select><button type="button" class="bimws-icon-btn is-danger" data-remove-meeting-row title="Hapus baris" aria-label="Hapus baris"><i class="fas fa-trash"></i></button></div><textarea data-minute-field="description" rows="2" placeholder="Pembahasan, progress, atau kesepakatan...">${escapeHtml(row.description||'')}</textarea></div>
+            <input data-minute-field="actionOwnerName" value="${escapeHtml(row.actionOwnerName||'')}" placeholder="Nama / initial" aria-label="Oleh">
+            <input type="date" data-minute-field="plannedDueDate" value="${escapeHtml(row.plannedDueDate||'')}" aria-label="Rencana selesai">
+            <input data-minute-field="reviewerName" value="${escapeHtml(row.reviewerName||'')}" placeholder="Nama / initial" aria-label="Reviewer">
+            <select data-minute-field="reviewResult" aria-label="Hasil review">${resultItems.map(([value,label])=>`<option value="${value}" ${value===(row.reviewResult||'')?'selected':''}>${label}</option>`).join('')}</select>
+            <input type="date" data-minute-field="signatureDate" value="${escapeHtml(row.signatureDate||'')}" aria-label="Paraf tanggal">
+        </article>`;
+    }
+
+    function meetingRowsSection(section,label,rows){
+        const sectionRows=rows.filter((row)=>row.section===section);
+        const initial=sectionRows.length?sectionRows:[newMeetingRow(section,'item')];
+        return `<section class="bimws-minute-editor-section" data-meeting-section="${section}"><div class="bimws-minute-section-label"><strong>${escapeHtml(label)}</strong><button type="button" class="bimws-btn bimws-btn-secondary" data-add-meeting-row="${section}"><i class="fas fa-plus"></i>Tambah Baris</button></div><div class="bimws-minute-entry-list" data-meeting-row-list="${section}">${initial.map(meetingRowControl).join('')}</div></section>`;
+    }
+
+    function attendeeText(meeting,status){
+        return (meeting?.attendees||[]).filter((item)=>item.attendance_status===status).map((item)=>[item.name,item.initial].filter(Boolean).join(' | ')).join('\n');
+    }
+
+    function parseAttendees(value,status){
+        return String(value||'').split(/\r?\n/).map((line)=>{const [name,initial]=line.split('|').map((part)=>part.trim());return{name,initial,attendanceStatus:status};}).filter((item)=>item.name);
+    }
+
+    function collectMeetingRows(dialog){
+        return [...dialog.querySelectorAll('[data-meeting-row]')].map((element,index)=>{
+            const value=(name)=>element.querySelector(`[data-minute-field="${name}"]`)?.value?.trim()||'';
+            const rowType=value('rowType')||'item';
+            return{key:element.dataset.rowKey,section:element.dataset.section,rowType,description:value('description'),actionOwnerName:rowType==='heading'?'':value('actionOwnerName'),plannedDueDate:rowType==='heading'?'':value('plannedDueDate'),reviewerName:rowType==='heading'?'':value('reviewerName'),reviewResult:rowType==='heading'?'':value('reviewResult'),signatureDate:rowType==='heading'?'':value('signatureDate'),order:index};
+        }).filter((row)=>row.description);
+    }
+
+    function meetingDocumentHtml(meeting,actions=[]){
+        const rows=meetingRowsFromRecord(meeting);
+        const documentRow=(row)=>`<tr class="${row.rowType==='heading'?'is-heading':''}"><td>${multilineHtml(row.description,'')}</td><td>${escapeHtml(row.actionOwnerName||'')}</td><td>${formatDate(row.plannedDueDate,'')}</td><td>${escapeHtml(row.reviewerName||'')}</td><td>${escapeHtml(statusLabels[row.reviewResult]||row.reviewResult||'')}</td><td>${formatDate(row.signatureDate,'')}</td></tr>`;
+        const section=(key,label)=>`<tr class="is-section"><td colspan="6">${escapeHtml(label)}</td></tr>${rows.filter((row)=>row.section===key).map(documentRow).join('')||'<tr><td colspan="6" class="is-empty">Belum diisi</td></tr>'}`;
+        const carried=actions.filter((action)=>action.section_type==='carried_forward');
+        const outstanding=carried.map((action)=>documentRow({description:action.description,actionOwnerName:action.action_owner_name,plannedDueDate:action.planned_due_date,reviewerName:action.reviewer_name,reviewResult:action.status,signatureDate:action.review_date})).join('')||'<tr><td colspan="6" class="is-empty">Tidak ada outstanding.</td></tr>';
+        return `<div class="bimws-minute-detail-table"><table><thead><tr><th>Tindak-lanjut hasil rapat</th><th>Oleh</th><th>Renc. selesai</th><th>Reviewer</th><th>Hasil</th><th>Paraf, Tgl</th></tr></thead><tbody><tr class="is-band"><td colspan="6">RISALAH SAAT INI</td></tr>${section('progress','A. LAPORAN PROGRESS PEKERJAAN STAFF BIM')}${section('agreement','B. KESEPAKATAN RAPAT')}<tr class="is-band"><td colspan="6">RISALAH SEBELUMNYA YANG MASIH DALAM PROSES</td></tr>${outstanding}</tbody></table></div>`;
+    }
+
+    function meetingOutstandingFormSection(meeting){
+        const carried=(meeting?.actions||[]).filter((action)=>action.section_type==='carried_forward');
+        return `<div class="bimws-minute-outstanding">
+            <div class="bimws-minute-band">RISALAH SEBELUMNYA YANG MASIH DALAM PROSES</div>
+            <p>Harus ditetapkan tindak-lanjut hasil pembahasan rapat hingga risalah ini dalam status "Closed".</p>
+            ${meeting
+                ?(carried.length?`<div class="bimws-outstanding-list">${carried.map((action)=>`<div><span>${escapeHtml(action.description)}</span><small>${escapeHtml(action.source_meeting_no||'Risalah sebelumnya')} · ${formatDate(action.source_meeting_date)} · ${escapeHtml(statusLabels[action.status]||action.status)}</small></div>`).join('')}</div>`:'<div class="bimws-outstanding-empty"><i class="fas fa-circle-check"></i>Tidak ada outstanding yang dibawa ke draft ini.</div>')
+                :`${field('carryForward','Outstanding action Risalah',true,{type:'checkbox',full:true,checkboxLabel:'Bawa action dari risalah sebelumnya yang masih Open / In Progress'})}<div class="bimws-outstanding-preview" data-meeting-outstanding-preview></div>`}
+        </div>`;
+    }
+
+    async function renderMeetingOutstandingPreview(dialog){
+        const checkbox=dialog.querySelector('[name="carryForward"]');
+        const preview=dialog.querySelector('[data-meeting-outstanding-preview]');
+        if(!checkbox||!preview)return;
+        preview.hidden=!checkbox.checked;
+        if(!checkbox.checked)return;
+        const scopeType=dialog.querySelector('[name="scopeType"]')?.value||'kantor';
+        const projectName=dialog.querySelector('[name="projectName"]')?.value.trim()||'';
+        if(scopeType==='proyek'&&!projectName){
+            preview.innerHTML='<p>Pilih nama project untuk melihat action dari risalah sebelumnya.</p>';
+            return;
+        }
+        const params=new URLSearchParams({
+            before:dialog.querySelector('[name="meetingDate"]')?.value||new Date().toISOString().slice(0,10),
+            scopeType,
+            projectName
+        });
+        const requestKey=params.toString();
+        preview.dataset.requestKey=requestKey;
+        preview.innerHTML='<p><i class="fas fa-spinner fa-spin"></i> Memuat action dari riwayat risalah...</p>';
+        try{
+            const actions=await api(`/meeting-actions/outstanding?${params}`);
+            if(preview.dataset.requestKey!==requestKey)return;
+            preview.innerHTML=actions.length?`<div class="bimws-outstanding-source"><i class="fas fa-file-lines"></i><div><strong>${actions.length} action dari Risalah Rapat</strong><small>Bukan aktivitas Task Scheduler. Action berikut akan disalin ke draft baru.</small></div></div><div class="bimws-outstanding-list">${actions.map((action)=>`<div><span>${escapeHtml(action.description)}</span><small>${escapeHtml(action.source_meeting_no||'Risalah')} · ${formatDate(action.source_meeting_date)} · ${escapeHtml(action.source_project_name||meetingScopeLabel(action.source_scope_type))}${action.created_task_id?' · sudah terhubung ke task':''}</small></div>`).join('')}</div>`:'<div class="bimws-outstanding-empty"><i class="fas fa-circle-check"></i>Tidak ada action Risalah sebelumnya yang masih Open / In Progress untuk konteks ini.</div>';
+        }catch(error){
+            if(preview.dataset.requestKey===requestKey)preview.innerHTML=`<p class="text-danger">${escapeHtml(error.message)}</p>`;
+        }
+    }
+
+    async function openMeetingForm(meeting=null){
+        await refreshMeetingProjectContexts();
+        const storedProjects=Array.isArray(meeting?.project_names)?meeting.project_names:[];
+        const knownProjects=[...new Set([...state.meetingProjectContexts,...storedProjects,meeting?.scope_type==='proyek'?meeting.project_name:''].filter(Boolean))].sort((left,right)=>left.localeCompare(right,'id-ID'));
+        const rows=meetingRowsFromRecord(meeting||{});
+        const scopeItems=[{value:'kantor',label:'Kantor Pusat / Internal BIM'},{value:'proyek',label:'Satu Proyek'},{value:'gabungan',label:'Koordinasi Gabungan / Semua Proyek'},{value:'other',label:'Lainnya / Eksternal'}];
+        const scopeOptions=scopeItems.map((item)=>`<option value="${item.value}" ${item.value===(meeting?.scope_type||'kantor')?'selected':''}>${item.label}</option>`).join('');
+        const dialog=showDialog({
             eyebrow:'FRM.NKE.01.06',title:meeting?'Edit Draft Risalah':'Risalah Rapat Baru',
-            body:`<div class="bimws-form-grid">
-                ${field('subject','Perihal',meeting?.subject||'',{required:true,full:true})}
-                ${field('scopeType','Kantor / Proyek',meeting?.scope_type||'kantor',{type:'select',items:[{value:'kantor',label:'Kantor Pusat'},{value:'proyek',label:'Proyek'},{value:'other',label:'Lainnya'}]})}
-                ${field('projectName','Nama Project / Context',meeting?.project_name||'')}
-                ${field('meetingDate','Tanggal',meeting?.meeting_date?String(meeting.meeting_date).slice(0,10):new Date().toISOString().slice(0,10),{type:'date',required:true})}
-                ${field('place','Tempat',meeting?.place||'',{required:true})}
-                ${field('startTime','Waktu Mulai',meeting?.start_time||'',{type:'time'})}
-                ${field('endTime','Waktu Selesai',meeting?.end_time||'',{type:'time'})}
-                ${field('reportedByName','Dilaporkan Oleh',meeting?.reported_by_name||state.access.user.name)}
-                ${field('reportedByPosition','Jabatan Pelapor',meeting?.reported_by_position||'')}
-                ${field('acknowledgedByName','Mengetahui',meeting?.acknowledged_by_name||'')}
-                ${field('acknowledgedByPosition','Jabatan',meeting?.acknowledged_by_position||'')}
-                ${field('referenceMemoNo','Referensi Memo/Surat',meeting?.reference_memo_no||'')}
-                ${field('referenceAgendaNo','Agenda No.',meeting?.reference_agenda_no||'')}
-                ${field('referenceArchiveNo','Arsip No.',meeting?.reference_archive_no||'')}
-                ${!meeting?field('attendeesText','Peserta Rapat','',{type:'textarea',full:true,placeholder:'Satu peserta per baris. Contoh: Aji Sadara | AS | present'}) : ''}
-                ${!meeting?field('carryForward','Outstanding action',true,{type:'checkbox',full:true,checkboxLabel:'Munculkan action risalah sebelumnya yang belum closed'}) : ''}
+            body:`<div class="bimws-meeting-form">
+                <section class="bimws-minute-sheet" aria-label="Form Risalah Rapat FRM.NKE.01.06">
+                    <div class="bimws-minute-letterhead">
+                        <div class="bimws-minute-logo"><img src="../img/icons/trimmed/logo_nke_trim.png" alt="Nusa Konstruksi Enjiniring"></div>
+                        <div class="bimws-minute-title">R I S A L A H</div>
+                        <div class="bimws-minute-docmeta"><b>DOK.NO.</b><span>: FRM.NKE.01.06</span><b>REVISI</b><span>: A (27/01/23)</span><b>AMAND.</b><span>: -</span></div>
+                        <div class="bimws-minute-note"><b>NOTE:</b> ITEM RISALAH SEBELUMNYA YANG MASIH DALAM PROSES / BELUM CLOSED, HARUS DIMUNCULKAN KEMBALI DALAM ITEM TINDAK-LANJUT RISALAH BERIKUTNYA / SAAT INI</div>
+                    </div>
+                    <div class="bimws-minute-meta-row is-rapat"><b>RAPAT</b><select name="scopeType">${scopeOptions}</select><b>No</b><div class="bimws-minute-number"><strong>${escapeHtml(meeting?.meeting_no||'Otomatis')}</strong><small>(No urut/Kode Bag./Bl-Th)</small></div><b>HALAMAN: otomatis</b></div>
+                    <div class="bimws-minute-meta-row is-subject"><b>PERIHAL</b><input name="subject" value="${escapeHtml(meeting?.subject||'')}" required placeholder="Perihal rapat"><b>Ktr/Proyek</b><div data-meeting-single-project><input name="projectName" value="${escapeHtml(meeting?.scope_type==='gabungan'?'':meeting?.project_name||'')}" list="meeting-project-suggestions" autocomplete="off" placeholder="Nama project / context"><datalist id="meeting-project-suggestions">${knownProjects.map((name)=>`<option value="${escapeHtml(name)}"></option>`).join('')}</datalist></div></div>
+                    ${meetingProjectPicker(knownProjects,storedProjects)}
+                    <div class="bimws-minute-identity">
+                        <div class="bimws-minute-schedule"><label><b>H A R I / TANGGAL</b><input type="date" name="meetingDate" value="${meeting?.meeting_date?String(meeting.meeting_date).slice(0,10):new Date().toISOString().slice(0,10)}" required></label><label><b>WAKTU</b><span><input type="time" name="startTime" value="${escapeHtml(meeting?.start_time||'')}"><i>s.d.</i><input type="time" name="endTime" value="${escapeHtml(meeting?.end_time||'')}"></span></label><label><b>TEMPAT</b><input name="place" value="${escapeHtml(meeting?.place||'')}" required placeholder="Tempat / media rapat"></label></div>
+                        <label class="bimws-minute-approval"><b>DILAPORKAN</b><input name="reportedByName" value="${escapeHtml(meeting?.reported_by_name||state.access.user.name)}" placeholder="Nama"><input name="reportedByPosition" value="${escapeHtml(meeting?.reported_by_position||'')}" placeholder="Jabatan"></label>
+                        <label class="bimws-minute-approval"><b>MENGETAHUI</b><input name="acknowledgedByName" value="${escapeHtml(meeting?.acknowledged_by_name||'')}" placeholder="Nama"><input name="acknowledgedByPosition" value="${escapeHtml(meeting?.acknowledged_by_position||'')}" placeholder="Jabatan"></label>
+                        <div class="bimws-minute-references"><label><b>Dept./Div.</b><input name="departmentDivision" value="${escapeHtml(meeting?.department_division||'Engineering / BIM')}"></label><strong>Referensi:</strong><label><b>MEMO/FAX/SURAT NO.</b><input name="referenceMemoNo" value="${escapeHtml(meeting?.reference_memo_no||'')}"></label><label><b>AGENDA NO.</b><input name="referenceAgendaNo" value="${escapeHtml(meeting?.reference_agenda_no||'')}"></label><label><b>ARSIP NO.</b><input name="referenceArchiveNo" value="${escapeHtml(meeting?.reference_archive_no||'')}"></label></div>
+                    </div>
+                    <div class="bimws-minute-attendees"><label><b>PESERTA RAPAT :</b><textarea name="presentAttendeesText" rows="3" placeholder="Satu peserta per baris: Nama | Initial">${escapeHtml(attendeeText(meeting,'present'))}</textarea><span>CC:</span><input name="ccText" value="${escapeHtml(meeting?.cc_text||'')}" placeholder="Nama penerima CC"></label><label><b>TIDAK HADIR :</b><textarea name="absentAttendeesText" rows="4" placeholder="Satu peserta per baris: Nama | Initial">${escapeHtml(attendeeText(meeting,'absent'))}</textarea></label></div>
+                    <div class="bimws-minute-columns"><b>TINDAK-LANJUT HASIL RAPAT</b><b>Oleh<br><small>(Nama / Initial)</small></b><b>Renc. Waktu<br><small>(selesai)</small></b><b>Oleh<br><small>(Nama / Initial)</small></b><b>Hasil<br><small>(Proses / Closed)</small></b><b>Paraf, Tgl</b></div>
+                    <div class="bimws-minute-band">RISALAH SAAT INI</div>
+                    ${meetingRowsSection('progress','A. LAPORAN PROGRESS PEKERJAAN STAFF BIM :',rows)}
+                    ${meetingRowsSection('agreement','B. KESEPAKATAN RAPAT',rows)}
+                    ${meetingOutstandingFormSection(meeting)}
+                </section>
             </div>`,
             submitLabel:meeting?'Simpan Draft':'Buat Draft Risalah',
             onSubmit:async(formData)=>{
                 const payload=formJson(formData,['carryForward']);
-                if(payload.attendeesText){
-                    payload.attendees=payload.attendeesText.split(/\r?\n/).map((line)=>{
-                        const [name,initial,status]=line.split('|').map((part)=>part.trim());
-                        return{name,initial,attendanceStatus:status||'present'};
-                    }).filter((item)=>item.name);
+                payload.meetingRows=collectMeetingRows(dialog);
+                if(!payload.meetingRows.length)throw new Error('Isi minimal satu baris risalah sebelum menyimpan draft.');
+                payload.weeklyProgress=payload.meetingRows.filter((row)=>row.section==='progress').map((row)=>row.description).join('\n');
+                payload.agreements=payload.meetingRows.filter((row)=>row.section==='agreement').map((row)=>row.description).join('\n');
+                payload.constraintsProblems='';payload.meetingIssues='';payload.actionPlan='';
+                const additional=String(payload.additionalProjectsText||'').split(/\r?\n/).map((name)=>name.trim()).filter(Boolean);
+                payload.projectNames=payload.scopeType==='gabungan'
+                    ?[...new Set([...formData.getAll('projectNames'),...additional])]
+                    :[];
+                delete payload.additionalProjectsText;
+                if(payload.scopeType==='kantor')payload.projectName='';
+                if(payload.scopeType==='gabungan'){
+                    payload.projectName='';
+                    if(!payload.projectNames.length)throw new Error('Pilih minimal satu project untuk rapat koordinasi gabungan.');
                 }
+                payload.attendees=[...parseAttendees(payload.presentAttendeesText,'present'),...parseAttendees(payload.absentAttendeesText,'absent')];
+                delete payload.presentAttendeesText;delete payload.absentAttendeesText;
                 const saved=meeting
-                    ? await api(`/meetings/${meeting.id}`,{method:'PUT',body:JSON.stringify(payload)})
-                    : await api('/meetings',{method:'POST',body:JSON.stringify(payload)});
+                    ?await api(`/meetings/${meeting.id}`,{method:'PUT',body:JSON.stringify(payload)})
+                    :await api('/meetings',{method:'POST',body:JSON.stringify(payload)});
                 toast('Risalah disimpan.');
                 await loadMeetings(true);
                 if(!meeting&&saved?.id)setTimeout(()=>openMeetingDetail(saved.id),0);
             }
         });
+        const scopeSelect=dialog.querySelector('[name="scopeType"]');
+        const projectInput=dialog.querySelector('[name="projectName"]');
+        const combined=dialog.querySelector('[data-meeting-combined]');
+        const single=dialog.querySelector('[data-meeting-single-project]');
+        const syncScope=()=>{
+            const scope=scopeSelect.value;
+            combined.hidden=scope!=='gabungan';
+            single.hidden=!['proyek','other'].includes(scope);
+            projectInput.required=scope==='proyek';
+            renderMeetingOutstandingPreview(dialog);
+        };
+        scopeSelect.onchange=syncScope;
+        projectInput.onchange=()=>renderMeetingOutstandingPreview(dialog);
+        projectInput.onblur=()=>renderMeetingOutstandingPreview(dialog);
+        dialog.querySelector('[name="meetingDate"]').onchange=()=>renderMeetingOutstandingPreview(dialog);
+        const carryForward=dialog.querySelector('[name="carryForward"]');
+        if(carryForward)carryForward.onchange=()=>renderMeetingOutstandingPreview(dialog);
+        dialog.addEventListener('click',(event)=>{
+            const add=event.target.closest('[data-add-meeting-row]');
+            if(add){const section=add.dataset.addMeetingRow;dialog.querySelector(`[data-meeting-row-list="${section}"]`).insertAdjacentHTML('beforeend',meetingRowControl(newMeetingRow(section,'item')));return;}
+            const remove=event.target.closest('[data-remove-meeting-row]');
+            if(remove)remove.closest('[data-meeting-row]').remove();
+        });
+        dialog.addEventListener('change',(event)=>{
+            if(event.target.matches('[data-minute-field="rowType"]'))event.target.closest('[data-meeting-row]').classList.toggle('is-heading',event.target.value==='heading');
+        });
+        syncScope();
     }
 
     async function openMeetingDetail(id){
         const meeting=await api(`/meetings/${id}`);
         const actions=meeting.actions||[];
         const attendees=meeting.attendees||[];
-        const actionRows=actions.length?`<table class="bimws-table"><thead><tr><th>Action</th><th>Owner</th><th>Due</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${actions.map((action)=>`<tr><td>${escapeHtml(action.description)}${action.section_type==='carried_forward'?'<span class="bimws-table-sub">Carry-forward</span>':''}</td><td>${escapeHtml(action.action_owner_name||'-')}</td><td>${formatDate(action.planned_due_date)}</td><td>${badge(action.status)}</td><td><div class="bimws-row-actions">${(isOwn(action.action_owner_user_id)||isDivisionHead())?actionButton('fa-pen','Update action','meeting-action-update',action.id):''}${!action.created_task_id&&canWrite()?actionButton('fa-list-check','Buat task','meeting-action-task',action.id):''}</div></td></tr>`).join('')}</tbody></table>`:emptyState('Belum ada action item.');
+        const projectNames=Array.isArray(meeting.project_names)?meeting.project_names:[];
+        const contextLabel=meeting.scope_type==='gabungan'?(projectNames.join(', ')||'Semua Proyek'):(meeting.project_name||meetingScopeLabel(meeting.scope_type));
+        const actionRows=actions.length?`<table class="bimws-table"><thead><tr><th>Action</th><th>Owner</th><th>Due</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${actions.map((action)=>`<tr><td>${escapeHtml(action.description)}${action.section_type==='carried_forward'?`<span class="bimws-table-sub">Dibawa dari ${escapeHtml(action.source_meeting_no||'risalah sebelumnya')}${action.source_meeting_date?` · ${formatDate(action.source_meeting_date)}`:''}</span>`:''}</td><td>${escapeHtml(action.action_owner_name||'-')}</td><td>${formatDate(action.planned_due_date)}</td><td>${badge(action.status)}</td><td><div class="bimws-row-actions">${(isOwn(action.action_owner_user_id)||isDivisionHead())?actionButton('fa-pen','Update action','meeting-action-update',action.id):''}${!action.created_task_id&&canWrite()?actionButton('fa-list-check','Buat task','meeting-action-task',action.id):''}</div></td></tr>`).join('')}</tbody></table>`:emptyState('Belum ada action item.');
         showDialog({
             eyebrow:meeting.meeting_no,title:meeting.subject,
-            body:`<dl class="bimws-detail-grid"><div><dt>Tanggal</dt><dd>${formatDate(meeting.meeting_date)}</dd></div><div><dt>Tempat</dt><dd>${escapeHtml(meeting.place||'-')}</dd></div><div><dt>Status</dt><dd>${badge(meeting.status)}</dd></div></dl><div class="mt-3"><h3>Peserta</h3><p>${attendees.length?attendees.map((item)=>`${escapeHtml(item.name)} (${escapeHtml(item.attendance_status)})`).join(', '):'-'}</p></div><div class="mt-3"><div class="bimws-panel-head"><div><h3>Tindak Lanjut</h3></div>${canWrite()&&meeting.status!=='closed'?`<button type="button" class="bimws-btn bimws-btn-secondary" data-meeting-add-action="${meeting.id}"><i class="fas fa-plus"></i>Action</button>`:''}</div><div class="bimws-table-wrap">${actionRows}</div></div>`,
+            body:`<dl class="bimws-detail-grid"><div><dt>Tanggal</dt><dd>${formatDate(meeting.meeting_date)}</dd></div><div><dt>Tempat</dt><dd>${escapeHtml(meeting.place||'-')}</dd></div><div><dt>Konteks</dt><dd>${escapeHtml(meetingScopeLabel(meeting.scope_type))}</dd></div><div><dt>Project</dt><dd>${escapeHtml(contextLabel)}</dd></div><div><dt>Status</dt><dd>${badge(meeting.status)}</dd></div><div><dt>Waktu</dt><dd>${escapeHtml([meeting.start_time,meeting.end_time].filter(Boolean).join(' – ')||'-')}</dd></div></dl>${meetingDocumentHtml(meeting,actions)}<div class="mt-3"><h3>Peserta</h3><p>${attendees.length?attendees.map((item)=>`${escapeHtml(item.name)} (${escapeHtml(item.attendance_status)})`).join(', '):'-'}</p></div><div class="mt-3"><div class="bimws-panel-head"><div><h3>Action Item Terstruktur</h3><p>Owner, due date, review, dan closure untuk Action Plan serta outstanding.</p></div>${canWrite()&&meeting.status!=='closed'?`<button type="button" class="bimws-btn bimws-btn-secondary" data-meeting-add-action="${meeting.id}"><i class="fas fa-plus"></i>Action</button>`:''}</div><div class="bimws-table-wrap">${actionRows}</div></div>`,
             onSubmit:null,
             secondary:[
-                {action:'print',label:'Print',handler:()=>printMeeting(meeting)},
+                {action:'print',label:'Print / PDF',handler:()=>printMeeting(meeting)},
                 ...(isDivisionHead()&&meeting.status==='draft'?[{action:'issue',label:'Issue Risalah',className:'bimws-btn-primary',handler:async(dialog)=>{await api(`/meetings/${meeting.id}/status`,{method:'POST',body:JSON.stringify({status:'issued'})});dialog.close();toast('Risalah diterbitkan.');await loadMeetings(true);}}]:[]),
                 ...(isDivisionHead()&&meeting.status==='issued'?[{action:'close',label:'Close Risalah',className:'bimws-btn-primary',handler:async(dialog)=>{await api(`/meetings/${meeting.id}/status`,{method:'POST',body:JSON.stringify({status:'closed'})});dialog.close();toast('Risalah ditutup.');await loadMeetings(true);}}]:[])
             ]
@@ -1824,12 +2377,124 @@
         showDialog({eyebrow:'Risalah Rapat',title:'Action Item Baru',body:`<div class="bimws-form-grid">${field('description','Tindak Lanjut','',{type:'textarea',full:true,required:true})}<div class="bimws-field"><label>Owner</label><select name="ownerUserId">${userOptions()}</select></div>${field('dueDate','Rencana Selesai','',{type:'date'})}${field('evidenceLink','Evidence Link','',{type:'url',full:true})}</div>`,submitLabel:'Tambah Action',onSubmit:async(formData)=>{const payload=formJson(formData);const user=state.users.find((item)=>String(item.id)===String(payload.ownerUserId));payload.ownerName=user?.username||'';await api(`/meetings/${meetingId}/actions`,{method:'POST',body:JSON.stringify(payload)});toast('Action item ditambahkan.');await loadMeetings(true);}});
     }
 
+    function meetingDayLabel(value){if(!value)return'';return new Intl.DateTimeFormat('id-ID',{weekday:'long',timeZone:'Asia/Jakarta'}).format(new Date(`${String(value).slice(0,10)}T00:00:00+07:00`)).toUpperCase();}
+    function meetingLongDate(value){if(!value)return'';return new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'long',year:'numeric',timeZone:'Asia/Jakarta'}).format(new Date(`${String(value).slice(0,10)}T00:00:00+07:00`));}
+    function meetingPrintTime(value){return value?String(value).slice(0,5).replace(':','.'):' ';}
+
+    function meetingPrintItems(meeting){
+        const rows=meetingRowsFromRecord(meeting);
+        const manual=(meeting.actions||[]).filter((action)=>action.section_type!=='carried_forward');
+        const carried=(meeting.actions||[]).filter((action)=>action.section_type==='carried_forward');
+        const known=new Set(rows.map((row)=>row.description.trim().toLocaleLowerCase('id-ID')));
+        const actionRows=manual.filter((action)=>!known.has(String(action.description||'').trim().toLocaleLowerCase('id-ID'))).map((action)=>({section:'progress',rowType:'item',description:action.description,actionOwnerName:action.action_owner_name,plannedDueDate:action.planned_due_date,reviewerName:action.reviewer_name,reviewResult:action.status,signatureDate:action.review_date}));
+        const item=(row)=>({kind:row.rowType==='heading'?'heading':'item',description:row.description||'',owner:row.actionOwnerName||'',due:row.plannedDueDate||'',reviewer:row.reviewerName||'',result:row.reviewResult||'',signed:row.signatureDate||''});
+        return [
+            {kind:'band',description:'RISALAH SAAT INI'},
+            {kind:'section',description:'A.    LAPORAN PROGRESS PEKERJAAN STAFF BIM :'},
+            ...rows.filter((row)=>row.section==='progress').map(item),...actionRows.map(item),
+            {kind:'section',description:'B.    KESEPAKATAN RAPAT'},
+            ...rows.filter((row)=>row.section==='agreement').map(item),
+            {kind:'previousBand',description:'RISALAH SEBELUMNYA YANG MASIH DALAM PROSES'},
+            {kind:'instruction',description:'Harus ditetapkan tindak-lanjut hasil pembahasan rapat hingga risalah ini dalam status "Closed"'},
+            ...carried.map((action)=>item({description:action.description,actionOwnerName:action.action_owner_name,plannedDueDate:action.planned_due_date,reviewerName:action.reviewer_name,reviewResult:action.status,signatureDate:action.review_date}))
+        ];
+    }
+
+    function meetingPrintItemHeight(item){if(item.kind==='band'||item.kind==='previousBand')return 7;if(item.kind==='section')return 6;if(item.kind==='instruction')return 6;const lines=Math.max(1,Math.ceil(String(item.description||'').length/82));return Math.max(6.5,3.8*lines+2.2);}
+
+    function paginateMeetingPrint(items){
+        const capacities=[169,210];const pages=[[]];let used=0;
+        items.forEach((item)=>{
+            let pageIndex=pages.length-1;let capacity=capacities[Math.min(pageIndex,1)];const height=meetingPrintItemHeight(item);
+            if((item.kind==='previousBand'&&pageIndex===0)||(used+height>capacity&&pages[pageIndex].length)){pages.push([]);used=0;pageIndex++;capacity=capacities[1];}
+            pages[pageIndex].push({...item,height});used+=height;
+        });
+        while(pages.length<2)pages.push([]);
+        return pages.map((page,index)=>{
+            const capacity=capacities[Math.min(index,1)];let total=page.reduce((sum,item)=>sum+item.height,0);
+            while(total+6.4<=capacity){page.push({kind:'blank',description:'',height:6.4});total+=6.4;}
+            if(capacity-total>2)page.push({kind:'blank',description:'',height:capacity-total});
+            return page;
+        });
+    }
+
+    function printMeetingRow(item){
+        const classes=`print-minute-row is-${item.kind}`;
+        const result=statusLabels[item.result]||item.result||'';
+        return `<div class="${classes}" style="min-height:${item.height}mm"><div>${multilineHtml(item.description,'')}</div><div>${escapeHtml(item.owner||'')}</div><div>${formatDate(item.due,'')}</div><div>${escapeHtml(item.reviewer||'')}</div><div>${escapeHtml(result)}</div><div>${formatDate(item.signed,'')}</div></div>`;
+    }
+
+    function printMeetingHeader(meeting,pageNumber,pageCount){
+        const projectNames=Array.isArray(meeting.project_names)?meeting.project_names:[];
+        const projectContext=meeting.scope_type==='kantor'?'KANTOR PUSAT':meeting.scope_type==='gabungan'?(projectNames.join(', ')||'SEMUA PROYEK'):(meeting.project_name||'').toUpperCase();
+        const meetingContext=meeting.scope_type==='kantor'?'Internal BIM HO':meeting.scope_type==='gabungan'?'Koordinasi Gabungan':meeting.project_name||meetingScopeLabel(meeting.scope_type);
+        const time=[meetingPrintTime(meeting.start_time),meetingPrintTime(meeting.end_time)].filter((value)=>value.trim()).join(' - ');
+        const logoUrl=new URL('../img/icons/trimmed/logo_nke_trim.png',location.href).href;
+        return `<header class="print-minute-header"><div class="print-letterhead"><div class="print-logo"><img src="${logoUrl}" alt="NKE"></div><div class="print-title">R I S A L A H</div><div class="print-docmeta"><span>DOK.NO.</span><b>: FRM.NKE.01.06</b><span>REVISI</span><b>: A (27/01/23)</b><span>AMAND.</span><b>: -</b></div><div class="print-note"><b>NOTE:</b> ITEM RISALAH SEBELUMNYA YANG MASIH DALAM PROSES / BELUM CLOSED, HARUS DIMUNCULKAN<br>KEMBALI DALAM ITEM TINDAK-LANJUT RISALAH BERIKUTNYA/SAAT INI</div></div><div class="print-meta-row is-rapat"><b>RAPAT</b><strong>${escapeHtml(meetingContext)}</strong><b>No</b><span>${escapeHtml(meeting.meeting_no||'')}<i>(No urut/Kode Bag./Bl-Th)</i></span><b>HALAMAN: ${pageNumber} dr ${pageCount}</b></div><div class="print-meta-row is-subject"><b>PERIHAL</b><strong>${escapeHtml(meeting.subject||'')}</strong><b>Ktr/Proyek<small>(Coret/hilangkan<br>yang tidak perlu)</small></b><strong>${escapeHtml(projectContext)}</strong></div><div class="print-identity"><div class="print-schedule"><p><b>H A R I</b><strong>${meetingDayLabel(meeting.meeting_date)}</strong></p><p><b>TANGGAL</b><strong>${escapeHtml(meetingLongDate(meeting.meeting_date))}</strong></p><p><b>WAKTU</b><strong>${escapeHtml(time)}${time?' WIB':''}</strong></p><p><b>TEMPAT</b><strong>${escapeHtml(meeting.place||'')}</strong></p></div><div class="print-approval"><b>DILAPORKAN</b><span>${escapeHtml(meeting.reported_by_name||'')}</span><i>Jab.: ${escapeHtml(meeting.reported_by_position||'')}</i></div><div class="print-approval"><b>MENGETAHUI</b><span>${escapeHtml(meeting.acknowledged_by_name||'')}</span><i>Jab.: ${escapeHtml(meeting.acknowledged_by_position||'')}</i></div><div class="print-references"><p><b>Dept./Div.</b><strong>${escapeHtml(meeting.department_division||'')}</strong></p><h4>Referensi:</h4><p><b>- MEMO/FAX/SURAT NO.</b><strong>${escapeHtml(meeting.reference_memo_no||'')}</strong></p><p><b>- AGENDA NO.</b><strong>${escapeHtml(meeting.reference_agenda_no||'')}</strong></p><p><b>- ARSIP NO.</b><strong>${escapeHtml(meeting.reference_archive_no||'')}</strong></p></div></div></header>`;
+    }
+
+    function printMeetingParticipants(meeting){
+        const present=(meeting.attendees||[]).filter((item)=>item.attendance_status==='present');
+        const absent=(meeting.attendees||[]).filter((item)=>item.attendance_status==='absent');
+        const presentText=present.map((item,index)=>`${index+1}. ${escapeHtml(item.name)}${item.initial?` (${escapeHtml(item.initial)})`:''}`).join(', ');
+        const absentText=absent.length?absent.map((item,index)=>`<span>${index+1}. ${escapeHtml(item.name)}${item.initial?` (${escapeHtml(item.initial)})`:''}</span>`).join(''):'<span>1.</span><span>3.</span><span>2.</span><span>4.</span>';
+        return `<section class="print-participants"><div><b>PESERTA RAPAT :</b><p>${presentText}</p><strong>CC: ${escapeHtml(meeting.cc_text||'')}</strong></div><div><b>TIDAK HADIR :</b><p>${absentText}</p></div></section>`;
+    }
+
+    function printMeetingColumnHeader(){return `<div class="print-column-header"><b class="main">TINDAK-LANJUT HASIL RAPAT</b><b class="action">TINDAKAN/ <i>Action</i></b><b class="review">TINJAUAN/ <i>Review</i></b><b class="c2">Oleh<small>(Nama / Initial)</small></b><b class="c3">Renc. Waktu<small>(selesai)</small></b><b class="c4">Oleh<small>(Nama / Initial)</small></b><b class="c5">Hasil<small>(Proses / Closed)</small></b><b class="c6">Paraf, Tgl</b></div>`;}
+
     function printMeeting(meeting){
-        const popup=window.open('','_blank','noopener,noreferrer');
-        if(!popup)return toast('Popup diblokir browser.',true);
-        const attendees=(meeting.attendees||[]).map((item)=>`${escapeHtml(item.name)} (${escapeHtml(item.initial||'-')})`).join(', ');
-        const actions=(meeting.actions||[]).map((action,index)=>`<tr><td>${index+1}</td><td>${escapeHtml(action.description)}</td><td>${escapeHtml(action.action_owner_name||'')}</td><td>${formatDate(action.planned_due_date,'')}</td><td>${escapeHtml(statusLabels[action.status]||action.status)}</td></tr>`).join('');
-        popup.document.write(`<!doctype html><html><head><title>${escapeHtml(meeting.meeting_no)}</title><style>body{font-family:Arial,sans-serif;color:#111;margin:24px}h1{font-size:20px;margin:0}.header{border:2px solid #111;padding:14px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:14px}.meta div{border:1px solid #777;padding:7px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #444;padding:7px;text-align:left;font-size:12px}th{background:#eee}.foot{margin-top:16px;font-size:11px}</style></head><body><div class="header"><h1>RISALAH RAPAT</h1><strong>DOK.NO.: FRM.NKE.01.06 / REVISI A</strong><div class="meta"><div>No: ${escapeHtml(meeting.meeting_no)}</div><div>Perihal: ${escapeHtml(meeting.subject)}</div><div>Tanggal: ${formatDate(meeting.meeting_date)}</div><div>Tempat: ${escapeHtml(meeting.place||'')}</div><div>Dilaporkan: ${escapeHtml(meeting.reported_by_name||'')}</div><div>Mengetahui: ${escapeHtml(meeting.acknowledged_by_name||'')}</div></div></div><h2>Peserta Rapat</h2><p>${attendees||'-'}</p><h2>Tindak Lanjut Hasil Rapat</h2><table><thead><tr><th>No</th><th>Tindakan / Action</th><th>Oleh</th><th>Rencana Selesai</th><th>Review</th></tr></thead><tbody>${actions||'<tr><td colspan="5">Belum ada action item.</td></tr>'}</tbody></table><p class="foot">(c) PT NUSA KONSTRUKSI ENJINIRING Tbk / FRM.NKE.01.06</p><script>window.onload=()=>window.print()<\/script></body></html>`);popup.document.close();
+        const popup=window.open('','_blank');if(!popup)return toast('Popup diblokir browser.',true);popup.opener=null;
+        const pages=paginateMeetingPrint(meetingPrintItems(meeting));
+        const pageHtml=pages.map((items,index)=>`<article class="print-page">${printMeetingHeader(meeting,index+1,pages.length)}<main class="print-page-body ${index===0?'is-first':''}">${index===0?`${printMeetingParticipants(meeting)}${printMeetingColumnHeader()}`:''}<div class="print-minute-rows">${items.map(printMeetingRow).join('')}</div></main><footer><span>© PT NUSA KONSTRUKSI ENJINIRING Tbk</span><span>Rec. File: KTR.01N01_0123.doc/HFS:DD</span><span>Dok : FRM.NKE.01.06, Auth : DD</span></footer></article>`).join('');
+        popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(meeting.meeting_no||'Risalah Rapat')}</title><style>@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;background:#ddd;color:#000;font-family:Arial,sans-serif}body{counter-reset:page}.print-page{position:relative;width:210mm;height:297mm;margin:0 auto;background:#fff;break-after:page;overflow:hidden}.print-minute-header{position:absolute;top:10mm;left:15.5mm;width:187mm;height:61.5mm;font-size:2.6mm}.print-letterhead{display:grid;grid-template-columns:52mm 108mm 27mm;grid-template-rows:22mm 19.5mm;border:.55mm solid #111}.print-logo{display:grid;place-items:center}.print-logo img{width:43mm;max-height:17mm}.print-title{display:grid;place-items:center;font-size:8mm;font-weight:800;letter-spacing:2.6mm}.print-docmeta{display:grid;grid-template-columns:11mm 1fr;align-content:center;font-size:2.1mm}.print-note{grid-column:1/-1;padding:1.4mm 4.8mm;color:#c00000;font-size:3mm;font-weight:800;line-height:1.2;text-align:left}.print-meta-row{display:grid;border-inline:.55mm solid #111;border-bottom:.3mm solid #111}.print-meta-row>*{display:flex;align-items:center;padding:.8mm 1.5mm;border-right:.25mm solid #777}.print-meta-row>*:last-child{border-right:0}.print-meta-row.is-rapat{grid-template-columns:18.5mm 104mm 7mm 40mm 17.5mm;height:6.5mm}.print-meta-row.is-rapat strong{font-size:4.2mm}.print-meta-row.is-rapat span{font-weight:700}.print-meta-row.is-rapat i{display:block;margin-left:2mm;color:#0070c0;font-size:1.8mm}.print-meta-row.is-subject{grid-template-columns:18.5mm 104mm 22mm 42.5mm;height:25.5mm}.print-meta-row.is-subject>strong{font-size:3.3mm}.print-meta-row.is-subject b small{display:block;color:#0070c0;font-size:1.8mm;font-style:italic}.print-identity{display:grid;grid-template-columns:57mm 32.5mm 32.5mm 65mm;height:42.5mm;border-inline:.55mm solid #111;border-bottom:.55mm solid #111}.print-identity>*{border-right:.25mm solid #777}.print-schedule p,.print-references p{display:grid;grid-template-columns:18.5mm 1fr;align-items:center;height:8mm;margin:0;border-bottom:.2mm dotted #777}.print-schedule b,.print-schedule strong,.print-references b,.print-references strong{padding:0 1.5mm}.print-approval{display:flex;flex-direction:column;padding:1.4mm}.print-approval span{margin-top:auto;font-weight:700}.print-approval i{font-weight:700}.print-references h4{height:7mm;margin:0;padding:1mm 1.5mm;font-size:3.2mm}.print-references p{grid-template-columns:32mm 1fr;height:7.2mm}.print-page-body{position:absolute;top:72.5mm;left:15.5mm;width:187mm}.print-page-body.is-first{top:76mm}.print-participants{display:grid;grid-template-columns:65.5% 34.5%;height:17mm;margin-bottom:2mm;border:.55mm solid #111}.print-participants>div{padding:1.4mm;border-right:.3mm solid #777}.print-participants>div:last-child{padding:.8mm;border-right:0}.print-participants b{display:block;font-size:3.4mm}.print-participants>div:last-child>b{margin:-.2mm 0 1mm;padding:.6mm;background:#111;color:#fff}.print-participants p{margin:1mm 0;font-size:2.6mm}.print-participants>div:last-child p{display:grid;grid-template-columns:1fr 1fr;gap:.7mm}.print-participants strong{display:block;margin-top:auto}.print-column-header{display:grid;grid-template-columns:65.5fr 9.4fr 6.7fr 5.4fr 8fr 5fr;grid-template-rows:6mm 14mm;height:20mm;border:.55mm solid #111}.print-column-header>*{display:grid;place-items:center;border-right:.3mm solid #111;border-bottom:.3mm solid #111;text-align:center;font-size:2.7mm}.print-column-header small{display:block;font-weight:400;font-style:italic}.print-column-header i{font-weight:400}.print-column-header .main{grid-column:1;grid-row:1/3;font-size:4mm}.print-column-header .action{grid-column:2/4}.print-column-header .review{grid-column:4/7}.print-column-header .c2{grid-column:2}.print-column-header .c3{grid-column:3}.print-column-header .c4{grid-column:4}.print-column-header .c5{grid-column:5}.print-column-header .c6{grid-column:6}.print-minute-row{display:grid;grid-template-columns:65.5fr 9.4fr 6.7fr 5.4fr 8fr 5fr;border-inline:.55mm solid #111}.print-minute-row>div{padding:1mm;border-right:.25mm solid #555;border-bottom:.2mm dotted #555;font-size:2.6mm;line-height:1.22}.print-minute-row>div:not(:first-child){display:grid;place-items:center;text-align:center}.print-minute-row.is-band,.print-minute-row.is-previousBand{background:#bfbfbf;font-size:3.5mm;font-weight:800}.print-minute-row.is-section{font-weight:800}.print-minute-row.is-heading{font-weight:800}.print-minute-row.is-instruction>div:first-child{color:#0070c0;font-style:italic;font-weight:700}.print-minute-row.is-blank>div{padding:0}.print-page footer{position:absolute;left:13.3mm;right:8.5mm;bottom:4.8mm;display:flex;justify-content:space-between;font-size:2.1mm;font-style:italic}@media print{html,body{background:#fff}.print-page{margin:0;box-shadow:none}}<\/style></head><body>${pageHtml}<script>window.onload=()=>Promise.all([...document.images].map((img)=>img.complete?Promise.resolve():new Promise((resolve)=>{img.onload=img.onerror=resolve}))).then(()=>setTimeout(()=>window.print(),180))<\/script></body></html>`);popup.document.close();
+        const printLayoutFix=popup.document.createElement('style');
+        printLayoutFix.textContent=`
+            .print-page{break-after:auto;page-break-after:auto}
+            .print-minute-header{top:10.5mm;left:15.3mm;width:187.6mm;height:61.7mm;font-size:2.45mm}
+            .print-letterhead{grid-template-columns:52mm 108mm 27.6mm;grid-template-rows:11mm 9mm}
+            .print-logo img{width:42mm;max-height:10mm}
+            .print-title{font-size:7.05mm;letter-spacing:.2mm;white-space:nowrap;transform:translateX(-5.3mm)}
+            .print-docmeta{grid-template-columns:11.5mm minmax(0,1fr);font-size:2.1mm;line-height:1.05;white-space:nowrap;overflow:visible}
+            .print-docmeta span,.print-docmeta b{min-width:0;padding:0;font-size:2.1mm}
+            .print-docmeta b{display:inline-block;width:118%;transform:scaleX(.85);transform-origin:left center}
+            .print-note{padding:.7mm 4.8mm;font-size:2.85mm;line-height:1.17}
+            .print-meta-row>*{min-width:0;overflow:hidden}
+            .print-meta-row>b{font-size:3.17mm;line-height:1}
+            .print-meta-row.is-rapat{grid-template-columns:18.5mm 104mm 7mm 40mm 18.1mm;height:6.5mm}
+            .print-meta-row.is-rapat strong{font-size:4.23mm;white-space:nowrap}
+            .print-meta-row.is-rapat>span{display:grid;grid-template-columns:22mm 16mm;align-items:center;padding:.35mm 1mm;font-size:2.6mm;line-height:1.02;white-space:nowrap}
+            .print-meta-row.is-rapat>span i{display:block;margin:0;font-size:1.65mm;line-height:1.05;white-space:normal}
+            .print-meta-row.is-rapat>b:last-child{font-size:2.82mm;line-height:1.05;white-space:normal}
+            .print-meta-row.is-subject{grid-template-columns:18.5mm 104mm 22mm 43.1mm;height:12.7mm}
+            .print-meta-row.is-subject>strong{font-size:3.17mm;line-height:1.05;white-space:normal}
+            .print-meta-row.is-subject>b:nth-child(3){display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:.3mm;line-height:1}
+            .print-meta-row.is-subject>b:nth-child(3) small{margin:0;font-size:2.1mm;line-height:1.05;white-space:normal}
+            .print-identity{grid-template-columns:57mm 32.5mm 32.5mm 65.6mm;height:21.2mm}
+            .print-schedule p{grid-template-columns:18.5mm 1fr;height:5.3mm;font-size:2.45mm}
+            .print-schedule b{font-size:2.45mm;white-space:nowrap}
+            .print-schedule strong{font-size:2.82mm;white-space:nowrap}
+            .print-approval{padding:1mm;font-size:2.45mm;line-height:1.05;overflow:hidden}
+            .print-approval>b,.print-approval>span{font-size:2.45mm;line-height:1.05;white-space:normal}
+            .print-approval>i{font-size:2.1mm;line-height:1.05;white-space:normal}
+            .print-references{overflow:hidden}
+            .print-references p{grid-template-columns:35mm minmax(0,1fr);height:3.9mm;font-size:2.45mm;line-height:1.02}
+            .print-references p:first-child{grid-template-columns:21mm minmax(0,1fr);height:5.1mm;font-size:3.17mm}
+            .print-references p:first-child b,.print-references p:first-child strong{font-size:3.17mm;white-space:nowrap}
+            .print-references p:not(:first-child) b,.print-references p:not(:first-child) strong{padding:0 1.5mm;font-size:2.45mm;white-space:nowrap}
+            .print-references h4{height:4.4mm;padding:.35mm 1.5mm;font-size:3.17mm;line-height:1}
+            .print-page-body{left:15.6mm;width:187mm}
+            .print-participants{margin-bottom:1mm;font-size:2.45mm}
+            .print-participants>div:first-child{display:flex;flex-direction:column;padding:.5mm 1.4mm}
+            .print-participants b{font-size:2.84mm}
+            .print-participants strong{font-size:2.45mm;line-height:1.05}
+            .print-column-header{grid-template-rows:5.5mm 13.5mm;height:19mm}
+            .print-column-header .main{font-size:3.5mm}
+            .print-page footer{left:13.3mm;right:8.5mm}
+        `;
+        popup.document.head.appendChild(printLayoutFix);
+        const printLogoUrl=new URL('../img/icons/trimmed/logo_nke_trim.png',location.href).href;
+        fetch(printLogoUrl,{credentials:'same-origin'}).then((response)=>response.blob()).then((blob)=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);})).then((dataUrl)=>{popup.document.querySelectorAll('.print-logo img').forEach((image)=>{image.src=dataUrl;});}).catch(()=>{});
     }
 
     async function loadIssues(){state.issues=await api(`/issues?period=${state.period}`);renderIssues();}
@@ -1879,7 +2544,15 @@
         const division=data.scorecards?.division;
         if(!department&&!division)return emptyState(`Belum ada siklus KPI aktif untuk ${data.year}.`,'fa-bullseye');
         const contract=data.calculationContract;
-        return `<div class="bimws-kpi-overview"><div class="bimws-kpi-summary"><div><p>KPI Departemen</p><strong>${department?.indicators.length||0}</strong><small>Departemen Engineering</small></div><div><p>KPI Divisi</p><strong>${division?.indicators.length||0}</strong><small>Turunan Divisi BIM</small></div><div><p>Total Bobot</p><strong>${Math.round((division?.totalWeight||0)*100)}%</strong><small>Scorecard Divisi BIM</small></div><div><p>Achievement Maks.</p><strong>${contract.maxAchievementPercent}%</strong><small>Berlaku per indikator</small></div></div><div class="bimws-kpi-contract"><h4>Kontrak Perhitungan</h4><dl><div><dt>Achievement</dt><dd>${escapeHtml(contract.achievement)}</dd></div><div><dt>Weighted Score</dt><dd>${escapeHtml(contract.weightedScore)}</dd></div><div><dt>Pembagi nol</dt><dd>${escapeHtml(contract.zeroDenominator)}</dd></div><div><dt>KPI Individu</dt><dd>KPI Divisi -> Program -> Komitmen Staff -> Task -> Actual terverifikasi.</dd></div></dl></div></div>`;
+        const divisionResult=data.division||{};
+        return `<div class="bimws-kpi-overview"><div class="bimws-kpi-summary"><div><p>KPI Departemen</p><strong>Acuan</strong><small>${department?.indicators.length||0} indikator / score dihitung eksternal</small></div><div><p>Score Divisi BIM</p><strong>${divisionResult.measuredIndicatorCount?kpiPercent(divisionResult.score):'-'}</strong><small>${divisionResult.measuredIndicatorCount||0}/${divisionResult.indicatorCount||0} indikator terukur</small></div><div><p>Kelengkapan</p><strong>${divisionResult.completenessPercent||0}%</strong><small>Bobot KPI Divisi yang sudah terukur</small></div><div><p>Achievement Maks.</p><strong>${contract.maxAchievementPercent}%</strong><small>Berlaku per indikator</small></div></div><div class="bimws-kpi-contract"><h4>Batas Perhitungan</h4><dl><div><dt>KPI Departemen</dt><dd>${escapeHtml(contract.departmentScore)}</dd></div><div><dt>KPI Divisi</dt><dd>${escapeHtml(contract.divisionScore)}</dd></div><div><dt>KPI Individu</dt><dd>${escapeHtml(contract.individualScore)}</dd></div><div><dt>Pembagi nol</dt><dd>${escapeHtml(contract.zeroDenominator)}</dd></div></dl><div class="bimws-table-actions"><button type="button" class="bimws-btn bimws-btn-secondary" data-action="kpi-export-external-json"><i class="fas fa-file-code"></i> Paket External JSON</button><button type="button" class="bimws-btn bimws-btn-secondary" data-action="kpi-export-external-csv"><i class="fas fa-file-csv"></i> Paket External CSV</button></div></div></div>`;
+    }
+
+    function renderDivisionPerformance(data){
+        const result=data.division;
+        if(!result)return emptyState('Perhitungan KPI Divisi belum tersedia.','fa-chart-line');
+        const rows=result.indicators||[];
+        return `<div class="bimws-kpi-summary bimws-kpi-summary-compact"><div><p>Score Divisi BIM</p><strong>${result.measuredIndicatorCount?kpiPercent(result.score):'-'}</strong><small>Maksimum 120%</small></div><div><p>Indikator Terukur</p><strong>${result.measuredIndicatorCount}/${result.indicatorCount}</strong><small>${result.completenessPercent}% bobot terukur</small></div><div><p>Boundary</p><strong>Divisi</strong><small>Tidak menghitung score Departemen</small></div></div><div class="bimws-table-wrap"><table class="bimws-table"><thead><tr><th>KPI Divisi / Induk Departemen</th><th>Measurement</th><th>Achievement</th><th>Task Factor</th><th>Bobot</th><th>Weighted Score</th></tr></thead><tbody>${rows.map((item)=>`<tr><td><span class="bimws-kpi-code">${escapeHtml(item.indicatorCode)} → ${escapeHtml(item.parentIndicatorCode||'-')}</span><span class="bimws-table-title">${escapeHtml(item.indicatorName)}</span><span class="bimws-table-sub">${escapeHtml(item.relationType)} / ${escapeHtml(item.aggregationMethod)}</span></td><td>${item.result.measurement==null?'-':kpiValue(item.result.measurement,item.targetUnit==='percent'?'ratio':item.targetUnit)}<span class="bimws-table-sub">${item.result.numerator??'-'} / ${item.result.denominator??'-'}</span></td><td>${item.result.adjustedAchievement==null?'-':kpiPercent(item.result.adjustedAchievement)}${item.result.rawAchievement==null?'':`<span class="bimws-table-sub">Raw ${kpiPercent(item.result.rawAchievement)}</span>`}</td><td>${item.result.measured?kpiPercent(item.result.taskPerformanceFactor):'-'}</td><td>${kpiPercent(item.weight)}</td><td><strong>${item.result.weightedScore==null?'-':kpiPercent(item.result.weightedScore)}</strong></td></tr>`).join('')}</tbody></table></div>`;
     }
 
     function kpiValue(value,unit){return value==null?'-':`${Number(value).toLocaleString('id-ID',{maximumFractionDigits:2})} ${escapeHtml(unit||'')}`;}
@@ -1891,11 +2564,19 @@
         showDialog({eyebrow:'KPI Program',title:program.name,body:`<div class="bimws-form-grid">${field('targetValue','Target Operasional',program.targetValue??'',{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',program.targetUnit,{required:true})}${field('availabilityStatus','Staff Claim',program.availabilityStatus,{type:'select',items:[{value:'open',label:'Open'},{value:'closed',label:'Closed'}]})}</div>`,submitLabel:'Simpan Target',onSubmit:async(formData)=>{await api(`/kpi/programs/${program.id}`,{method:'PUT',body:JSON.stringify(formJson(formData))});toast('Konfigurasi program disimpan.');await loadKpi(true);}});
     }
 
-    function openKpiAssignmentForm(program){
+    function kpiClaimTaskPreview(recommendation){
+        const titles=recommendation?.taskTitles||[];
+        if(!titles.length)return '';
+        return `<div class="bimws-field bimws-field-full bimws-claim-task-preview"><label>Task selesai yang diajukan</label><ul>${titles.map((title)=>`<li>${escapeHtml(title)}</li>`).join('')}</ul>${(recommendation.taskIds?.length||0)>titles.length?`<small>+${recommendation.taskIds.length-titles.length} task lainnya</small>`:''}<p><i class="fas fa-lock"></i> Task baru tertaut dan score baru dihitung setelah approval Kepala Divisi.</p></div>`;
+    }
+
+    function openKpiAssignmentForm(program,recommendation=null){
         const manager=isKpiManager();
         const staffField=manager?`<div class="bimws-field"><label>Staff BIM</label><select name="staffUserId" required>${staffUserOptions()}</select></div>`:'';
         const programTargetField=manager?field('programTargetValue','Target Program Divisi',program.targetValue??'',{type:'number',min:0.0001,step:'0.01',required:true}):'';
-        showDialog({eyebrow:manager?'Delegasi KPI':'Take Program',title:program.name,body:`<div class="bimws-form-grid">${staffField}${programTargetField}${field('title','Komitmen / Program Personal','',{required:true,full:true})}${field('measurementType','Measurement',program.allocationMode==='milestone'?'milestone':'quantity',{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target Kontribusi Staff','',{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',program.targetUnit,{required:true})}${field('proposedWeight','Bobot (%)',Math.round(program.indicatorWeight*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date','',{type:'date'})}${field('expectedEvidence','Expected Evidence','',{type:'textarea',full:true})}</div>`,submitLabel:manager?'Delegasikan':'Ajukan Kontribusi',onSubmit:async(formData)=>{const payload=formJson(formData);if(manager){await api(`/kpi/programs/${program.id}`,{method:'PUT',body:JSON.stringify({targetValue:payload.programTargetValue,targetUnit:payload.targetUnit,availabilityStatus:program.availabilityStatus})});}delete payload.programTargetValue;payload.programId=program.id;payload.proposedWeight=Number(payload.proposedWeight)/100;await api('/kpi/assignments',{method:'POST',body:JSON.stringify(payload)});toast(manager?'Kontribusi KPI didelegasikan.':'Kontribusi KPI diajukan.');await loadKpi(true);}});
+        const suggestedTarget=recommendation?.suggestedActual||'';
+        const suggestedTitle=recommendation?`Kontribusi ${program.name}`:'';
+        showDialog({eyebrow:manager?'Delegasi KPI':recommendation?'Rekomendasi KPI':'Take Program',title:program.name,body:`<div class="bimws-form-grid">${staffField}${programTargetField}${field('title','Komitmen / Program Personal',suggestedTitle,{required:true,full:true})}${field('measurementType','Measurement',program.allocationMode==='milestone'?'milestone':'quantity',{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target Kontribusi Staff',suggestedTarget,{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',program.targetUnit,{required:true})}${field('proposedWeight','Bobot (%)',Math.round(program.indicatorWeight*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date','',{type:'date'})}${field('expectedEvidence','Expected Evidence',recommendation?'Lampirkan evidence task dan output yang mendukung klaim.':'',{type:'textarea',full:true})}${kpiClaimTaskPreview(recommendation)}</div>`,submitLabel:manager?'Delegasikan':'Ajukan untuk Approval',onSubmit:async(formData)=>{const payload=formJson(formData);if(manager){await api(`/kpi/programs/${program.id}`,{method:'PUT',body:JSON.stringify({targetValue:payload.programTargetValue,targetUnit:payload.targetUnit,availabilityStatus:program.availabilityStatus})});}delete payload.programTargetValue;payload.programId=program.id;payload.taskIds=recommendation?.taskIds||[];payload.proposedWeight=Number(payload.proposedWeight)/100;await api('/kpi/assignments',{method:'POST',body:JSON.stringify(payload)});toast(manager?'Kontribusi KPI didelegasikan.':'Kontribusi KPI diajukan dan menunggu approval Kepala Divisi.');await loadKpi(true);}});
     }
 
     function openKpiRevisionForm(assignment){showDialog({eyebrow:'Revisi KPI Individu',title:assignment.programName,body:`<div class="bimws-form-grid">${field('title','Komitmen / Program Personal',assignment.title,{required:true,full:true})}${field('measurementType','Measurement',assignment.measurementType,{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target Kontribusi',assignment.targetValue,{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',assignment.targetUnit,{required:true})}${field('proposedWeight','Bobot (%)',Math.round(assignment.proposedWeight*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date',assignment.dueDate?String(assignment.dueDate).slice(0,10):'',{type:'date'})}${field('expectedEvidence','Expected Evidence',assignment.expectedEvidence,{type:'textarea',full:true})}${assignment.reviewNote?`<div class="bimws-field bimws-field-full"><label>Catatan Review</label><p>${escapeHtml(assignment.reviewNote)}</p></div>`:''}</div>`,submitLabel:'Ajukan Ulang',onSubmit:async(formData)=>{const payload=formJson(formData);payload.proposedWeight=Number(payload.proposedWeight)/100;await api(`/kpi/assignments/${assignment.id}`,{method:'PUT',body:JSON.stringify(payload)});toast('Revisi kontribusi diajukan ulang.');await loadKpi(true);}});}
@@ -1910,11 +2591,17 @@
         showDialog({eyebrow:'Approval KPI Individu',title:assignment.staffName,body:`<div class="bimws-form-grid">${programTargetField}${field('title','Komitmen',assignment.title,{required:true,full:true})}${field('measurementType','Measurement',assignment.measurementType,{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target',assignment.targetValue,{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',assignment.targetUnit,{required:true})}${field('approvedWeight','Bobot Approved (%)',Math.round((assignment.approvedWeight??assignment.proposedWeight)*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date',assignment.dueDate?String(assignment.dueDate).slice(0,10):'',{type:'date'})}${field('expectedEvidence','Expected Evidence',assignment.expectedEvidence,{type:'textarea',full:true})}${field('note','Catatan Review','',{type:'textarea',full:true})}</div>`,submitLabel:'Approve',onSubmit:async(data)=>{const payload=formJson(data);payload.approvedWeight=Number(payload.approvedWeight)/100;payload.action='approve';await api(`/kpi/assignments/${assignment.id}/review`,{method:'POST',body:JSON.stringify(payload)});toast('Kontribusi KPI approved.');await loadKpi(true);},secondary:[{action:'revision',label:'Kembalikan Revisi',handler:async(dialog,form)=>{try{await submit('revision',form);dialog.close();}catch(error){toast(error.message,true);} }},{action:'reject',label:'Reject',className:'bimws-btn-danger',handler:async(dialog,form)=>{try{await submit('reject',form);dialog.close();}catch(error){toast(error.message,true);} }}]});
     }
 
-    function openKpiActualForm(assignment){showDialog({eyebrow:'Realisasi KPI',title:assignment.title,body:`<div class="bimws-form-grid">${field('actualValue',`Actual (${assignment.targetUnit})`,assignment.verifiedActual??'',{type:'number',min:0,step:'0.01',required:true})}${field('evidenceLink','Evidence Link',assignment.actualEvidenceLink,{type:'url',required:true})}${field('note','Catatan Actual',assignment.actualNote,{type:'textarea',full:true})}</div>`,submitLabel:'Ajukan Verifikasi',onSubmit:async(formData)=>{await api(`/kpi/assignments/${assignment.id}/submit-actual`,{method:'POST',body:JSON.stringify(formJson(formData))});toast('Actual diajukan untuk verifikasi.');await loadKpi(true);}});}
+    function openKpiActualForm(assignment,recommendation=null){showDialog({eyebrow:recommendation?'Claim Score KPI':'Realisasi KPI',title:assignment.title,body:`<div class="bimws-form-grid">${field('actualValue',`Actual (${assignment.targetUnit})`,recommendation?.suggestedActual??assignment.verifiedActual??'',{type:'number',min:0,step:'0.01',required:true,help:recommendation?'Nilai ini adalah rekomendasi awal dari task selesai. Periksa sesuai unit KPI.':''})}${field('evidenceLink','Evidence Link',recommendation?.evidenceLink||assignment.actualEvidenceLink,{type:'url',required:true})}${field('note','Catatan Actual',assignment.actualNote,{type:'textarea',full:true})}${kpiClaimTaskPreview(recommendation)}</div>`,submitLabel:'Ajukan ke Kepala Divisi',onSubmit:async(formData)=>{const payload=formJson(formData);payload.taskIds=recommendation?.taskIds||[];await api(`/kpi/assignments/${assignment.id}/submit-actual`,{method:'POST',body:JSON.stringify(payload)});toast('Claim score diajukan; score belum bertambah sebelum approval Kepala Divisi.');await loadKpi(true);}});}
 
     function openKpiVerifyForm(assignment){showDialog({eyebrow:'Verifikasi Actual',title:assignment.title,body:`<div class="bimws-form-grid">${field('verifiedActual',`Actual Terverifikasi (${assignment.targetUnit})`,assignment.submittedActual,{type:'number',min:0,step:'0.01',required:true})}${field('note','Catatan Verifikasi','',{type:'textarea',full:true})}<div class="bimws-field bimws-field-full"><label>Evidence</label><a href="${escapeHtml(safeExternalLink(assignment.actualEvidenceLink))}" target="_blank" rel="noopener noreferrer">Buka evidence <i class="fas fa-arrow-up-right-from-square"></i></a></div></div>`,submitLabel:'Approve Actual',onSubmit:async(formData)=>{const payload=formJson(formData);payload.action='approve';await api(`/kpi/assignments/${assignment.id}/verify`,{method:'POST',body:JSON.stringify(payload)});toast('Actual KPI diverifikasi.');await loadKpi(true);},secondary:[{action:'revision',label:'Kembalikan Revisi',handler:async(dialog,form)=>{try{const payload=formJson(new FormData(form));payload.action='revision';await api(`/kpi/assignments/${assignment.id}/verify`,{method:'POST',body:JSON.stringify(payload)});dialog.close();toast('Actual dikembalikan.');await loadKpi(true);}catch(error){toast(error.message,true);}}}]});}
 
-    function kpiAssignmentActions(item){const actions=[];if(isKpiManager()&&['pending_approval','revision_required'].includes(item.status))actions.push(actionButton('fa-user-check','Review kontribusi','kpi-review',item.id));if(isOwn(item.staffUserId)&&item.status==='revision_required')actions.push(actionButton('fa-pen','Revisi kontribusi','kpi-revise',item.id));if(isOwn(item.staffUserId)&&['approved','achieved'].includes(item.status))actions.push(actionButton('fa-arrow-up-from-bracket','Ajukan actual','kpi-actual',item.id));if(isKpiManager()&&item.status==='verification_pending')actions.push(actionButton('fa-clipboard-check','Verifikasi actual','kpi-verify',item.id));return actions.join('')||'-';}
+    function kpiAssignmentActions(item){const actions=[];if(isDivisionHead()&&['pending_approval','revision_required'].includes(item.status))actions.push(actionButton('fa-user-check','Review kontribusi','kpi-review',item.id));if(isOwn(item.staffUserId)&&item.status==='revision_required')actions.push(actionButton('fa-pen','Revisi kontribusi','kpi-revise',item.id));if(isOwn(item.staffUserId)&&['approved','achieved'].includes(item.status))actions.push(actionButton('fa-arrow-up-from-bracket','Ajukan actual','kpi-actual',item.id));if(isDivisionHead()&&item.status==='verification_pending')actions.push(actionButton('fa-clipboard-check','Verifikasi actual','kpi-verify',item.id));return actions.join('')||'-';}
+
+    function renderKpiGuidance(data){
+        const items=data.guidance?.items||[];
+        if(!items.length)return `<div class="bimws-kpi-gate"><i class="fas fa-shield-check"></i><div><strong>Score terkunci approval</strong><span>Hanya actual yang disetujui Kepala Divisi yang menambah score KPI individu dan Divisi BIM.</span></div></div>`;
+        return `<section class="bimws-kpi-next"><header><div><span>NOTIFIKASI KPI</span><h4>Langkah Berikutnya</h4></div><small><i class="fas fa-shield-halved"></i> Approval Kepala Divisi wajib</small></header><div class="bimws-kpi-next-list">${items.map((item)=>`<article data-tone="${escapeHtml(item.tone||'neutral')}"><i class="fas ${escapeHtml(item.icon||'fa-circle-info')}"></i><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></div>${item.action?`<button type="button" class="bimws-btn bimws-btn-secondary" data-action="${escapeHtml(item.action)}" data-id="${escapeHtml(item.actionId||'')}">${escapeHtml(item.actionLabel||'Buka')}</button>`:''}</article>`).join('')}</div></section>`;
+    }
 
     function renderKpiPrograms(data){
         const programs=data.programs||[];
@@ -1922,14 +2609,14 @@
         const missing=programs.filter((item)=>['target_required','empty'].includes(item.coverageStatus)).length;
         const covered=programs.filter((item)=>item.coverageStatus==='covered').length;
         const pending=programs.reduce((sum,item)=>sum+item.assignments.filter((assignment)=>assignment.status==='pending_approval').length,0);
-        return `<div class="bimws-kpi-summary bimws-kpi-summary-compact"><div><p>Program</p><strong>${programs.length}</strong><small>Siklus ${data.year}</small></div><div><p>Covered</p><strong>${covered}</strong><small>Target telah teralokasi</small></div><div><p>Gap</p><strong>${missing}</strong><small>Target atau PIC belum lengkap</small></div><div><p>Pending Approval</p><strong>${pending}</strong><small>Usulan staff</small></div></div><div class="bimws-table-wrap"><table class="bimws-table bimws-kpi-program-table bimws-coverage-table"><thead><tr><th>Program / KPI</th><th>Target</th><th>Coverage</th><th>Realization</th><th>Execution</th><th>PIC</th><th>Aksi</th></tr></thead><tbody>${programs.map((program)=>{const canTake=!isKpiManager()&&program.claimPolicy==='staff_proposable'&&program.availabilityStatus==='open'&&!program.assignments.some((item)=>isOwn(item.staffUserId)&&item.status!=='rejected');const actions=[isKpiManager()?actionButton('fa-sliders','Konfigurasi target','kpi-program-config',program.id):'',isKpiManager()?actionButton('fa-user-plus','Delegasikan','kpi-program-assign',program.id):'',canTake?actionButton('fa-hand','Raise hand / Ajukan kontribusi','kpi-program-assign',program.id):''].join('');return `<tr><td><span class="bimws-kpi-code">${escapeHtml(program.code)} / ${escapeHtml(program.indicatorCode)}</span><span class="bimws-table-title">${escapeHtml(program.name)}</span><span class="bimws-table-sub">${escapeHtml(program.indicatorName)}</span></td><td><strong>${kpiValue(program.targetValue,program.targetUnit)}</strong><span class="bimws-table-sub">${escapeHtml(program.allocationMode.replaceAll('_',' '))}</span></td><td>${badge(program.coverageStatus)}<div class="bimws-coverage-meter"><span style="width:${Math.min(program.coveragePercent||0,100)}%"></span></div><small>${kpiValue(program.allocatedValue,program.targetUnit)} allocated</small></td><td><strong>${program.realizationPercent==null?'-':`${program.realizationPercent}%`}</strong><span class="bimws-table-sub">${kpiValue(program.verifiedValue,program.targetUnit)} verified</span></td><td>${badge(program.executionStatus)}</td><td>${program.assignments.length?program.assignments.map((item)=>`<span class="bimws-assignee">${escapeHtml(item.staffName)} ${badge(item.status)}</span>`).join(''):'-'}</td><td><div class="bimws-table-actions">${actions||'-'}</div></td></tr>`;}).join('')}</tbody></table></div>`;
+        return `<div class="bimws-kpi-summary bimws-kpi-summary-compact"><div><p>Program</p><strong>${programs.length}</strong><small>Siklus ${data.year}</small></div><div><p>Covered</p><strong>${covered}</strong><small>Target telah teralokasi</small></div><div><p>Gap</p><strong>${missing}</strong><small>Target atau PIC belum lengkap</small></div><div><p>Pending Approval</p><strong>${pending}</strong><small>Usulan staff</small></div></div><div class="bimws-table-wrap"><table class="bimws-table bimws-kpi-program-table bimws-coverage-table"><thead><tr><th>Program / KPI</th><th>Target</th><th>Coverage</th><th>Achievement Divisi</th><th>Execution</th><th>PIC</th><th>Aksi</th></tr></thead><tbody>${programs.map((program)=>{const canTake=!isKpiManager()&&program.claimPolicy==='staff_proposable'&&program.availabilityStatus==='open'&&!program.assignments.some((item)=>isOwn(item.staffUserId)&&item.status!=='rejected');const actions=[isKpiManager()?actionButton('fa-sliders','Konfigurasi target','kpi-program-config',program.id):'',isKpiManager()?actionButton('fa-user-plus','Delegasikan','kpi-program-assign',program.id):'',canTake?actionButton('fa-hand','Raise hand / Ajukan kontribusi','kpi-program-assign',program.id):''].join('');return `<tr><td><span class="bimws-kpi-code">${escapeHtml(program.code)} / ${escapeHtml(program.indicatorCode)}</span><span class="bimws-table-title">${escapeHtml(program.name)}</span><span class="bimws-table-sub">${escapeHtml(program.indicatorName)}</span></td><td><strong>${kpiValue(program.targetValue,program.targetUnit)}</strong><span class="bimws-table-sub">${escapeHtml(program.allocationMode.replaceAll('_',' '))}</span></td><td>${badge(program.coverageStatus)}<div class="bimws-coverage-meter"><span style="width:${Math.min(program.coveragePercent||0,100)}%"></span></div><small>${kpiValue(program.allocatedValue,program.targetUnit)} allocated</small></td><td><strong>${program.result?.adjustedAchievement==null?'-':kpiPercent(program.result.adjustedAchievement)}</strong><span class="bimws-table-sub">Raw ${program.result?.rawAchievement==null?'-':kpiPercent(program.result.rawAchievement)} / Task ${program.result?.measured?kpiPercent(program.result.taskPerformanceFactor):'-'}</span><span class="bimws-table-sub">${kpiValue(program.verifiedValue,program.targetUnit)} verified</span></td><td>${badge(program.executionStatus)}<span class="bimws-table-sub">${Number(program.mappedTaskCount||0)} task mapped</span></td><td>${program.assignments.length?program.assignments.map((item)=>`<span class="bimws-assignee">${escapeHtml(item.staffName)} ${badge(item.status)}</span>`).join(''):'-'}</td><td><div class="bimws-table-actions">${actions||'-'}</div></td></tr>`;}).join('')}</tbody></table></div>`;
     }
 
     function renderKpiIndividual(data){
         let cards=data.individual?.cards||[];
         if(!isKpiManager())cards=cards.filter((card)=>isOwn(card.staffUserId));
         if(!cards.length)return emptyState(state.access?.role==='staff_bim'?'KPI individu Anda belum ditetapkan.':'Belum ada scorecard KPI individu.','fa-user-check');
-        return `<div class="bimws-kpi-card-list">${cards.map((card)=>`<section class="bimws-individual-card"><header><div><h4>${escapeHtml(card.staffName)}</h4><p>${card.assignments.length} program / ${Math.round(card.approvedWeight*100)}% bobot approved</p></div><div class="bimws-kpi-score"><span>Verified score</span><strong>${kpiPercent(card.score)}</strong></div></header><div class="bimws-table-wrap"><table class="bimws-table bimws-individual-table"><thead><tr><th>Program / Komitmen</th><th>Target</th><th>Bobot</th><th>Task</th><th>Actual</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${card.assignments.map((item)=>`<tr><td><span class="bimws-kpi-code">${escapeHtml(item.programCode)}</span><span class="bimws-table-title">${escapeHtml(item.title)}</span><span class="bimws-table-sub">${escapeHtml(item.programName)}</span></td><td>${kpiValue(item.targetValue,item.targetUnit)}</td><td>${item.approvedWeight==null?kpiPercent(item.proposedWeight):kpiPercent(item.approvedWeight)}</td><td>${item.completedTaskCount}/${item.taskCount}</td><td>${item.verifiedActual==null?'-':kpiValue(item.verifiedActual,item.targetUnit)}${item.achievement!=null?`<span class="bimws-table-sub">Achievement ${kpiPercent(item.achievement)}</span>`:''}</td><td>${badge(item.status)}</td><td><div class="bimws-table-actions">${kpiAssignmentActions(item)}</div></td></tr>`).join('')}</tbody></table></div></section>`).join('')}</div>`;
+        return `<div class="bimws-kpi-card-list">${cards.map((card)=>`<section class="bimws-individual-card"><header><div><h4>${escapeHtml(card.staffName)}</h4><p>${card.assignments.length} program / ${Math.round(card.approvedWeight*100)}% bobot approved</p></div><div class="bimws-kpi-score"><span>Verified score</span><strong>${kpiPercent(card.score)}</strong></div></header><div class="bimws-table-wrap"><table class="bimws-table bimws-individual-table"><thead><tr><th>Program / Komitmen</th><th>Target</th><th>Bobot</th><th>Task</th><th>Actual & Score</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${card.assignments.map((item)=>`<tr><td><span class="bimws-kpi-code">${escapeHtml(item.programCode)}</span><span class="bimws-table-title">${escapeHtml(item.title)}</span><span class="bimws-table-sub">${escapeHtml(item.programName)}</span></td><td>${kpiValue(item.targetValue,item.targetUnit)}</td><td>${item.approvedWeight==null?kpiPercent(item.proposedWeight):kpiPercent(item.approvedWeight)}</td><td>${item.completedTaskCount}/${item.taskCount}${item.taskCount?`<span class="bimws-table-sub">Task factor ${kpiPercent(item.taskPerformanceFactor)}</span>`:''}</td><td>${item.verifiedActual==null?'-':kpiValue(item.verifiedActual,item.targetUnit)}${item.adjustedAchievement!=null?`<span class="bimws-table-sub">Adjusted ${kpiPercent(item.adjustedAchievement)} / Raw ${kpiPercent(item.rawAchievement)}</span>`:''}</td><td>${badge(item.status)}</td><td><div class="bimws-table-actions">${kpiAssignmentActions(item)}</div></td></tr>`).join('')}</tbody></table></div></section>`).join('')}</div>`;
     }
 
     function renderKpi(){
@@ -1938,7 +2625,7 @@
         const tabs={
             overview:{title:'Overview KPI',help:`Kontrak scorecard tahun ${year}.`,content:()=>renderKpiOverview(data)},
             department:{title:'KPI Departemen',help:'Acuan resmi Departemen Engineering dari workbook referensi.',content:()=>kpiTable(data.scorecards?.department)},
-            division:{title:'KPI Divisi BIM',help:'Turunan terukur dengan scope dan relasi yang eksplisit.',content:()=>kpiTable(data.scorecards?.division,true)},
+            division:{title:'KPI Divisi BIM',help:'Score aktif Divisi BIM; KPI Departemen hanya menjadi lineage dan tujuan pelaporan eksternal.',content:()=>renderDivisionPerformance(data)+kpiTable(data.scorecards?.division,true)},
             individual:{title:'KPI Individu',help:'Komitmen, task, actual, dan score terverifikasi per staff.',content:()=>renderKpiIndividual(data)},
             programs:{title:'Program & Aktivitas',help:'Coverage Matrix KPI Divisi BIM.',content:()=>renderKpiPrograms(data)}
         };
@@ -1950,7 +2637,7 @@
         });
         document.getElementById('kpi-panel-title').textContent=active.title;
         document.getElementById('kpi-panel-help').textContent=active.help;
-        document.getElementById('kpi-content').innerHTML=active.content();
+        document.getElementById('kpi-content').innerHTML=renderKpiGuidance(data)+active.content();
     }
 
     async function loadReports(){state.report=await api(`/reports/summary?period=${state.period}`);renderReports();}
@@ -1966,6 +2653,19 @@
     function csvCell(value){const text=String(value==null?'':value).replaceAll('"','""');return `"${text}"`;}
     function exportReportCsv(){if(!state.report)return;const rows=[['Type','Date','Title','Project/Context','PIC/Owner','Status','Progress/Output'],...state.report.tasks.map((row)=>['Task',row.due_date,row.title,row.project_name,row.pic_name_snapshot,row.status,row.progress_percent]),...state.report.issues.map((row)=>['Issue',row.issue_date,row.title,row.project_context,row.owner_name_snapshot,row.status,row.severity]),...state.report.meetingActions.map((row)=>['Meeting Action',row.planned_due_date,row.description,row.meeting_no,row.action_owner_name,row.status,'']),...state.report.worklogs.map((row)=>['Worklog',row.work_date,row.task_item_text,row.project_name,row.pic_name_snapshot,row.task_status,row.output_result])];const blob=new Blob(['\ufeff'+rows.map((row)=>row.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`divisi-bim-workspace-${state.period}.csv`;link.click();URL.revokeObjectURL(link.href);toast('Report CSV dibuat.');}
 
+    function downloadFile(content,type,filename){const blob=new Blob([content],{type});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=filename;link.click();URL.revokeObjectURL(link.href);}
+    async function exportKpiContribution(format){
+        const year=state.period.slice(0,4);
+        const packet=await api(`/kpi/division-contribution?year=${year}`);
+        if(format==='json'){
+            downloadFile(JSON.stringify(packet,null,2),'application/json;charset=utf-8',`kpi-divisi-bim-contribution-${year}.json`);
+        }else{
+            const rows=[['Period','Source Division','Department KPI','Division KPI','Relation','Aggregation','Measurement','Numerator','Denominator','Raw Achievement','Task Performance Factor','Division Achievement','Division Weight','Division Weighted Score','Measured','Evidence'],...packet.contributions.map((item)=>[packet.periodYear,packet.sourceOrgUnit,`${item.departmentIndicator.code} - ${item.departmentIndicator.name}`,`${item.divisionIndicator.code} - ${item.divisionIndicator.name}`,item.divisionIndicator.relationType,item.divisionIndicator.aggregationMethod,item.measurement,item.numerator,item.denominator,item.rawAchievement,item.taskPerformanceFactor,item.divisionAchievement,item.divisionIndicator.weight,item.divisionWeightedScore,item.measured,item.evidenceLinks.join(' | ')])];
+            downloadFile('\ufeff'+rows.map((row)=>row.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8',`kpi-divisi-bim-contribution-${year}.csv`);
+        }
+        toast(`Paket kontribusi KPI Divisi ${format.toUpperCase()} dibuat.`);
+    }
+
     async function handleActionClick(event){
         const quick=event.target.closest('[data-dashboard-action]');
         if(quick){const type=quick.dataset.dashboardAction;if(type==='task')openTaskForm();if(type==='worklog')await openWorklogForm();if(type==='issue')openIssueForm();return;}
@@ -1974,12 +2674,18 @@
         try{
             if(action==='kpi-program-config')openKpiProgramForm(state.kpi.programs.find((row)=>row.id===id));
             if(action==='kpi-program-assign')openKpiAssignmentForm(state.kpi.programs.find((row)=>row.id===id));
+            if(action==='kpi-program-claim'){const recommendation=state.kpi.guidance?.items?.find((item)=>item.action===action&&item.actionId===id);openKpiAssignmentForm(state.kpi.programs.find((row)=>row.id===id),recommendation);}
             if(action==='kpi-review')openKpiReviewForm(state.kpi.individual.assignments.find((row)=>row.id===id));
             if(action==='kpi-revise')openKpiRevisionForm(state.kpi.individual.assignments.find((row)=>row.id===id));
             if(action==='kpi-actual')openKpiActualForm(state.kpi.individual.assignments.find((row)=>row.id===id));
+            if(action==='kpi-claim-actual'){const recommendation=state.kpi.guidance?.items?.find((item)=>item.action===action&&item.actionId===id);openKpiActualForm(state.kpi.individual.assignments.find((row)=>row.id===id),recommendation);}
             if(action==='kpi-verify')openKpiVerifyForm(state.kpi.individual.assignments.find((row)=>row.id===id));
+            if(action==='kpi-open-programs'){state.kpiTab='programs';renderKpi();}
+            if(action==='kpi-export-external-json')await exportKpiContribution('json');
+            if(action==='kpi-export-external-csv')await exportKpiContribution('csv');
             if(action==='task-view')openTaskDetail(state.tasks.find((row)=>row.id===id));
             if(action==='task-edit')openTaskForm(state.tasks.find((row)=>row.id===id));
+            if(action==='task-add-subtask')openTaskForm(null,{taskKind:'subtask',parentTaskId:id});
             if(action==='task-hold')openHoldTaskForm(state.tasks.find((row)=>row.id===id));
             if(action==='task-resume')openResumeTaskForm(state.tasks.find((row)=>row.id===id));
             if(action==='task-demo-mark')markDemoTask(state.tasks.find((row)=>row.id===id));

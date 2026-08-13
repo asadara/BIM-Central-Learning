@@ -1822,7 +1822,8 @@ async function syncExamAttemptToServer(results) {
                 violations: Array.isArray(results.violations) ? results.violations.length : 0,
                 requiredLevel: currentExam.requiredLevel || null,
                 readinessStatus: readiness?.status || 'unknown',
-                readinessScore: readiness?.readinessScore ?? null
+                readinessScore: readiness?.readinessScore ?? null,
+                questionIds: currentExamQuestions.map((question, index) => question.id || question.runtimeId || `${currentExam.id}-question-${index + 1}`)
             }
         };
 

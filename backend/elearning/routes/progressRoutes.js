@@ -71,9 +71,9 @@ async function deriveAuthoritativeProgress(userId) {
     const attemptsResult = await pgPool.query(
         `SELECT
             COUNT(*) FILTER (WHERE source_type = 'practice')::int AS practice_attempts,
-            COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed
+            COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true AND is_verified = true)::int AS exams_passed
          FROM learning_attempts
-         WHERE user_id = $1 AND is_verified = true`,
+         WHERE user_id = $1`,
         [userId]
     );
     const certificatesResult = await pgPool.query(

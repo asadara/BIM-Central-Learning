@@ -6,6 +6,7 @@ const dashboardState = {
     history: [],
     activitySummary: null,
     learningEvents: [],
+    trainingBatches: [],
     weeklyChart: null,
     categoriesChart: null
 };
@@ -237,6 +238,21 @@ async function fetchLearningActivitySummary() {
     }
 }
 
+async function fetchTrainingBatches() {
+    const token = getAuthToken();
+    if (!token) return [];
+
+    try {
+        const response = await authFetch('/api/training/my-batches');
+        if (!response.ok) return [];
+        const result = await response.json();
+        return Array.isArray(result?.data) ? result.data : [];
+    } catch (error) {
+        console.warn('Training summary API unavailable:', error.message);
+        return [];
+    }
+}
+
 async function loadProgressStats() {
     const userData = getUserData();
     const userIdentity = getUserIdentity(userData);
@@ -244,17 +260,18 @@ async function loadProgressStats() {
     if (!userData || !userIdentity) {
         showDefaultStats();
         loadLearningActivityStats(null);
-        loadRecentActivity([], []);
+        loadRecentActivity([], [], []);
         loadBadges({ totalAttempts: 0, highestScore: 0, examsPassed: 0 }, 0);
         initializeCharts([]);
         return;
     }
 
-    const [progress, quizStats, certificates, learningActivity] = await Promise.all([
+    const [progress, quizStats, certificates, learningActivity, trainingBatches] = await Promise.all([
         fetchProgressFromApi(),
         fetchQuizStatsFromApi(userIdentity),
         fetchCertificatesFromApi(userIdentity),
-        fetchLearningActivitySummary()
+        fetchLearningActivitySummary(),
+        fetchTrainingBatches()
     ]);
 
     dashboardState.progress = progress;
@@ -262,6 +279,7 @@ async function loadProgressStats() {
     dashboardState.certificates = certificates;
     dashboardState.activitySummary = learningActivity && learningActivity.summary ? learningActivity.summary : null;
     dashboardState.learningEvents = Array.isArray(learningActivity?.recentEvents) ? learningActivity.recentEvents : [];
+    dashboardState.trainingBatches = trainingBatches;
 
     const localLearningSummary = getLocalLearningSummary();
     const completedModules = Math.max(
@@ -293,10 +311,20 @@ async function loadProgressStats() {
     setText('exams-passed', examsPassed);
     setText('certificates-earned', certificatesEarned);
 
-    setText('total-quiz-attempts', toInt(quizStats?.totalAttempts, 0));
+    setText('total-quiz-attempts', toInt(quizStats?.quizAttempts, toInt(quizStats?.totalAttempts, 0)));
     setText('highest-score', `${toInt(quizStats?.highestScore, 0)}%`);
     setText('average-score', `${toInt(quizStats?.averageScore, 0)}%`);
     setText('last-quiz-date', formatRelativeDate(quizStats?.lastQuizDate));
+    setText('verified-attempts', toInt(quizStats?.verifiedAttempts, 0));
+    setText('pending-verification-attempts', toInt(quizStats?.pendingVerificationAttempts, 0));
+
+    const completedTraining = trainingBatches.filter((batch) => batch.myEnrollmentStatus === 'completed' || batch.status === 'completed').length;
+    const activeTraining = trainingBatches.filter((batch) => batch.myEnrollmentStatus !== 'completed' && batch.status === 'active').length;
+    const archivedTraining = trainingBatches.filter((batch) => batch.status === 'archived').length;
+    setText('training-enrollments', trainingBatches.length);
+    setText('training-active', activeTraining);
+    setText('training-completed', completedTraining);
+    setText('training-archived', archivedTraining);
 
     updateLevelProgress(userData, progress);
 
@@ -308,7 +336,7 @@ async function loadProgressStats() {
         await loadQuizHistory(userIdentity);
     }
 
-    loadRecentActivity(dashboardState.history, dashboardState.learningEvents);
+    loadRecentActivity(dashboardState.history, dashboardState.learningEvents, trainingBatches);
     loadBadges(quizStats || {}, certificatesEarned);
     initializeCharts(dashboardState.history, quizStats?.categoriesAttempted || []);
 }
@@ -325,6 +353,12 @@ function showDefaultStats() {
     setText('highest-score', '0%');
     setText('average-score', '0%');
     setText('last-quiz-date', 'Belum ada');
+    setText('verified-attempts', '0');
+    setText('pending-verification-attempts', '0');
+    setText('training-enrollments', '0');
+    setText('training-active', '0');
+    setText('training-completed', '0');
+    setText('training-archived', '0');
 
     const tbody = document.getElementById('quiz-history-body');
     if (tbody) {
@@ -389,14 +423,14 @@ function renderQuizHistory(results) {
                 <td>${escapeHtml(result.quizName || 'Quiz')}</td>
                 <td><span class="badge bg-secondary">${escapeHtml(result.quizCategory || result.sourceType || 'General')}</span></td>
                 <td><strong>${percentage}%</strong></td>
-                <td><span class="badge bg-${statusClass}"><i class="fas fa-${statusIcon} me-1"></i>${statusText}</span></td>
+                <td><span class="badge bg-${statusClass}"><i class="fas fa-${statusIcon} me-1"></i>${statusText}</span>${result.verified ? '<span class="badge bg-primary ms-1">Verified</span>' : '<span class="badge bg-warning text-dark ms-1">Tercatat</span>'}</td>
                 <td>${formatDateTime(result.submittedAt)}</td>
             </tr>
         `;
     }).join('');
 }
 
-function loadRecentActivity(history, learningEvents = []) {
+function loadRecentActivity(history, learningEvents = [], trainingBatches = []) {
     const activityList = document.getElementById('activity-list');
     if (!activityList) return;
 
@@ -447,6 +481,18 @@ function loadRecentActivity(history, learningEvents = []) {
             icon,
             color,
             sortValue: event.createdAt || null
+        });
+    });
+
+    (Array.isArray(trainingBatches) ? trainingBatches : []).slice(0, 4).forEach((batch) => {
+        activities.push({
+            title: `Training: ${batch.title || batch.code || 'Batch training'}`,
+            time: batch.status === 'archived'
+                ? 'Diarsipkan'
+                : batch.myEnrollmentStatus === 'completed' || batch.status === 'completed' ? 'Selesai' : 'Sedang diikuti',
+            icon: 'fa-chalkboard-user',
+            color: 'blue',
+            sortValue: batch.updatedAt || batch.startDate || batch.createdAt || null
         });
     });
 

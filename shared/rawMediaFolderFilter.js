@@ -81,11 +81,39 @@ function mediaPathHasExcludedFolder(value, additionalRules = []) {
         .some((segment) => shouldExcludeMediaFolder(segment, additionalRules));
 }
 
+function shouldExcludeMediaFile(fileName) {
+    const normalizedName = safeDecodePathSegment(fileName)
+        .replace(/\\/g, '/')
+        .split(/[?#]/)[0]
+        .split('/')
+        .filter(Boolean)
+        .pop() || '';
+
+    return normalizedName.startsWith('._');
+}
+
+function mediaPathHasExcludedFile(value) {
+    return shouldExcludeMediaFile(value);
+}
+
+function mediaPathHasTraversalSegment(value) {
+    const normalizedPath = safeDecodePathSegment(value)
+        .replace(/\\/g, '/')
+        .split(/[?#]/)[0];
+
+    return normalizedPath
+        .split('/')
+        .some((segment) => segment === '..');
+}
+
 module.exports = {
     INCOMING_DATA_FOLDER_PATTERNS,
     matchesExcludedFolderRule,
+    mediaPathHasExcludedFile,
     mediaPathHasExcludedFolder,
+    mediaPathHasTraversalSegment,
     normalizeFolderLabel,
     sanitizeExcludedFolderRules,
+    shouldExcludeMediaFile,
     shouldExcludeMediaFolder
 };

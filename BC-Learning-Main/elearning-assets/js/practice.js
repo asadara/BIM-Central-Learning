@@ -1007,7 +1007,8 @@ async function submitPracticeResultToServer(setData, resultData) {
             metadata: {
                 difficulty: setData.difficulty || null,
                 level: setData.level || null,
-                randomQuiz: !!setData.isRandomQuiz
+                randomQuiz: !!setData.isRandomQuiz,
+                questionIds: (setData.questions_data || []).map((question, index) => question.id || `${setData.id}-question-${index + 1}`)
             }
         };
 

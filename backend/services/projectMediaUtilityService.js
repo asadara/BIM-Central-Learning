@@ -2,7 +2,9 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const {
-    mediaPathHasExcludedFolder
+    mediaPathHasExcludedFile,
+    mediaPathHasExcludedFolder,
+    mediaPathHasTraversalSegment
 } = require("../../shared/rawMediaFolderFilter");
 
 function createProjectMediaUtilityService({
@@ -223,6 +225,17 @@ function createProjectMediaUtilityService({
 
     function getMediaRouteMap() {
         const uniqueBases = (...bases) => [...new Set(bases.filter(Boolean))];
+        const getPcBim1YearBases = (mountId, fallbackPath, year) => {
+            const base = getStaticMountPath(mountId, fallbackPath);
+            if (!base) {
+                return [];
+            }
+
+            return uniqueBases(
+                path.join(base, `PROJECT ${year}`),
+                base
+            );
+        };
 
         return [
             {
@@ -241,12 +254,12 @@ function createProjectMediaUtilityService({
                     LOCAL_PCBIM02_PROJECT_2025_ROOT
                 )
             },
-            { prefix: '/media-bim1-2025', bases: uniqueBases(getStaticMountPath('pc-bim1', 'Y:')) },
-            { prefix: '/media-bim1-2024', bases: uniqueBases(getStaticMountPath('pc-bim1-2024', 'Z:')) },
-            { prefix: '/media-bim1-2023', bases: uniqueBases(getStaticMountPath('pc-bim1-2023', 'W:')) },
-            { prefix: '/media-bim1-2022', bases: uniqueBases(getStaticMountPath('pc-bim1-2022', 'U:')) },
-            { prefix: '/media-bim1-2021', bases: uniqueBases(getStaticMountPath('pc-bim1-2021', 'T:')) },
-            { prefix: '/media-bim1-2020', bases: uniqueBases(getStaticMountPath('pc-bim1-2020', 'S:')) },
+            { prefix: '/media-bim1-2025', bases: getPcBim1YearBases('pc-bim1', 'Y:', '2025') },
+            { prefix: '/media-bim1-2024', bases: getPcBim1YearBases('pc-bim1-2024', 'Z:', '2024') },
+            { prefix: '/media-bim1-2023', bases: getPcBim1YearBases('pc-bim1-2023', 'W:', '2023') },
+            { prefix: '/media-bim1-2022', bases: getPcBim1YearBases('pc-bim1-2022', 'U:', '2022') },
+            { prefix: '/media-bim1-2021', bases: getPcBim1YearBases('pc-bim1-2021', 'T:', '2021') },
+            { prefix: '/media-bim1-2020', bases: getPcBim1YearBases('pc-bim1-2020', 'S:', '2020') },
             { prefix: '/media', bases: uniqueBases(baseProjectDir) }
         ];
     }
@@ -358,11 +371,14 @@ function createProjectMediaUtilityService({
         if (!cleanUrl.startsWith('/')) {
             return { ok: false, reason: 'invalid-relative-url', filePath: null, attempts: [] };
         }
-        if (cleanUrl.includes('..')) {
+        if (mediaPathHasTraversalSegment(cleanUrl)) {
             return { ok: false, reason: 'unsafe-url', filePath: null, attempts: [] };
         }
         if (mediaPathHasExcludedFolder(cleanUrl)) {
             return { ok: false, reason: 'excluded-path', filePath: null, attempts: [] };
+        }
+        if (mediaPathHasExcludedFile(cleanUrl)) {
+            return { ok: false, reason: 'excluded-file', filePath: null, attempts: [] };
         }
 
         const routeMap = getMediaRouteMap();

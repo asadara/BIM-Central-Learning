@@ -342,7 +342,7 @@ async function uploadProfilePhoto(event) {
     }
 
     const formData = new FormData();
-    formData.append('profileImage', file);
+    formData.append('profile-image', file);
     try {
         const result = await fetchJson('/api/upload-profile-image', { method: 'POST', body: formData });
         const imageUrl = normalizeProfileImageUrl(result.imageUrl);

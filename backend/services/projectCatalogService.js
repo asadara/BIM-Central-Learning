@@ -1,8 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 const {
+    mediaPathHasExcludedFile,
     mediaPathHasExcludedFolder,
     sanitizeExcludedFolderRules,
+    shouldExcludeMediaFile,
     shouldExcludeMediaFolder
 } = require("../../shared/rawMediaFolderFilter");
 
@@ -91,7 +93,9 @@ function createProjectCatalogService({
         }
 
         payload.mediaDetails = payload.mediaDetails
-            .filter((detail) => detail && !mediaPathHasExcludedFolder(detail.url || detail.displayUrl || ''))
+            .filter((detail) => detail
+                && !mediaPathHasExcludedFolder(detail.url || detail.displayUrl || '')
+                && !mediaPathHasExcludedFile(detail.url || detail.displayUrl || ''))
             .map((detail) => {
             if (!detail || typeof detail !== 'object') {
                 return detail;
@@ -116,7 +120,9 @@ function createProjectCatalogService({
         if (Array.isArray(payload.media)) {
             const validUrls = new Set(payload.mediaDetails.map((detail) => detail && detail.url).filter(Boolean));
             payload.media = payload.media.filter((url) =>
-                !mediaPathHasExcludedFolder(url) && (validUrls.size === 0 || validUrls.has(url))
+                !mediaPathHasExcludedFolder(url)
+                && !mediaPathHasExcludedFile(url)
+                && (validUrls.size === 0 || validUrls.has(url))
             );
             payload.totalMedia = payload.media.length;
         }
@@ -232,6 +238,16 @@ function createProjectCatalogService({
                 } else {
                     const ext = path.extname(item.name).toLowerCase();
                     if (validImageExt.includes(ext) || validVideoExt.includes(ext) || validModelExt.includes(ext)) {
+                        if (shouldExcludeMediaFile(item.name)) {
+                            continue;
+                        }
+                        try {
+                            if (fs.statSync(fullPath).size <= 0) {
+                                continue;
+                            }
+                        } catch (error) {
+                            continue;
+                        }
                         const relativePath = path.relative(effectiveBaseDir, fullPath).split(path.sep).join('/');
                         mediaFiles.push(`${mediaRoute}/${encodeURI(relativePath)}`);
                     }

@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const router = express.Router();
+const { mediaPathHasTraversalSegment } = require('../../shared/rawMediaFolderFilter');
 
 // BIM Media Tags Storage
 const BIM_MEDIA_TAGS_FILE = path.join(__dirname, '..', 'bim-media-tags.json');
@@ -175,7 +176,7 @@ function isPathWithinBase(basePath, targetPath) {
 
 function resolvePublicMediaFilePath(filePath) {
     const normalizedPath = normalizeSeparators(filePath);
-    if (!normalizedPath || normalizedPath.includes('..')) {
+    if (!normalizedPath || mediaPathHasTraversalSegment(normalizedPath)) {
         return null;
     }
 

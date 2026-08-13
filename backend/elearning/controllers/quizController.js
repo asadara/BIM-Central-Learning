@@ -121,6 +121,8 @@ function ensureTables() {
                 CREATE INDEX IF NOT EXISTS idx_user_certificates_verified_user
                 ON user_certificates(user_id, is_verified, issued_at DESC);
             `);
+
+            await backfillVerifiableQuizAttempts();
         })().catch((error) => {
             ensureTablesPromise = null;
             throw error;
@@ -250,21 +252,6 @@ function verifyQuizSubmission(quizDefinition, payload) {
         return { verified: false, method: 'unknown-question-evidence' };
     }
 
-    const requiredSelection = quizDefinition.selection && typeof quizDefinition.selection === 'object'
-        ? quizDefinition.selection
-        : {};
-    const submittedSelection = questionIds.reduce((counts, id) => {
-        const level = trimText(questionById.get(id)?.level, 32).toLowerCase();
-        counts[level] = (counts[level] || 0) + 1;
-        return counts;
-    }, {});
-    const selectionIsValid = Object.entries(requiredSelection).every(([level, count]) => (
-        Number(submittedSelection[String(level).toLowerCase()] || 0) === toNonNegativeInt(count, 0)
-    ));
-    if (!selectionIsValid) {
-        return { verified: false, method: 'invalid-question-selection' };
-    }
-
     const score = questionIds.reduce((total, questionId, index) => {
         const submittedAnswer = toNullableInt(answers[index]);
         const correctAnswer = toNullableInt(questionById.get(questionId)?.answer_index ?? questionById.get(questionId)?.answer);
@@ -286,6 +273,46 @@ function verifyQuizSubmission(quizDefinition, payload) {
         quizCategory: trimText(quizDefinition.category, 64).toLowerCase(),
         sourceType: normalizeSourceType(quizDefinition.sourceType)
     };
+}
+
+async function backfillVerifiableQuizAttempts() {
+    const quizDefinitions = (() => {
+        try {
+            const parsed = JSON.parse(fs.readFileSync(quizzesPath, 'utf8'));
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            return [];
+        }
+    })();
+    const registeredIds = quizDefinitions.map((quiz) => trimText(quiz.id, 120)).filter(Boolean);
+    if (!registeredIds.length) return;
+
+    const candidates = await pool.query(
+        `SELECT id,quiz_id,answers,metadata
+         FROM learning_attempts
+         WHERE is_verified = false
+           AND quiz_id = ANY($1::text[])
+           AND jsonb_array_length(COALESCE(metadata->'questionIds','[]'::jsonb)) > 0`,
+        [registeredIds]
+    );
+
+    for (const attempt of candidates.rows) {
+        const definition = quizDefinitions.find((quiz) => String(quiz.id) === String(attempt.quiz_id));
+        const verification = verifyQuizSubmission(definition, {
+            answers: Array.isArray(attempt.answers) ? attempt.answers : [],
+            metadata: attempt.metadata && typeof attempt.metadata === 'object' ? attempt.metadata : {}
+        });
+        if (!verification.verified) continue;
+
+        await pool.query(
+            `UPDATE learning_attempts SET
+                quiz_name=$2,quiz_category=$3,source_type=$4,score=$5,total_questions=$6,
+                percentage=$7,passed=$8,is_verified=true,verification_method=$9,rubric_version=$10
+             WHERE id=$1`,
+            [attempt.id,verification.quizName,verification.quizCategory,verification.sourceType,verification.score,
+             verification.totalQuestions,verification.percentage,verification.passed,verification.method,RUBRIC.id]
+        );
+    }
 }
 
 async function resolveUserContext(req, payload = {}) {
@@ -755,16 +782,18 @@ exports.getUserQuizStats = async (req, res) => {
         const stats = await pool.query(
             `SELECT
                 COUNT(*)::int AS total_attempts,
+                COUNT(*) FILTER (WHERE source_type = 'quiz')::int AS quiz_attempts,
                 COALESCE(MAX(percentage), 0)::int AS highest_score,
                 COALESCE(ROUND(AVG(percentage)), 0)::int AS average_score,
                 COUNT(*) FILTER (WHERE passed = true)::int AS passed_attempts,
                 COUNT(*) FILTER (WHERE source_type = 'practice')::int AS practice_attempts,
                 COUNT(*) FILTER (WHERE source_type = 'exam')::int AS exam_attempts,
                 COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed,
+                COUNT(*) FILTER (WHERE is_verified = true)::int AS verified_attempts,
+                COUNT(*) FILTER (WHERE is_verified = false)::int AS pending_verification_attempts,
                 MAX(submitted_at) AS last_quiz_date
              FROM learning_attempts
-             WHERE is_verified = true
-               AND (
+             WHERE (
                     ($1::int IS NOT NULL AND user_id = $1)
                     OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
                     OR lower(COALESCE(user_email, '')) = ANY($2::text[])
@@ -776,8 +805,7 @@ exports.getUserQuizStats = async (req, res) => {
         const categories = await pool.query(
             `SELECT DISTINCT quiz_category
              FROM learning_attempts
-             WHERE is_verified = true
-               AND (
+             WHERE (
                     ($1::int IS NOT NULL AND user_id = $1)
                     OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
                     OR lower(COALESCE(user_email, '')) = ANY($2::text[])
@@ -798,10 +826,11 @@ exports.getUserQuizStats = async (req, res) => {
                 total_questions AS "totalQuestions",
                 percentage,
                 passed,
+                is_verified AS verified,
+                verification_method AS "verificationMethod",
                 submitted_at AS "submittedAt"
              FROM learning_attempts
-             WHERE is_verified = true
-               AND (
+             WHERE (
                     ($1::int IS NOT NULL AND user_id = $1)
                     OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
                     OR lower(COALESCE(user_email, '')) = ANY($2::text[])
@@ -829,12 +858,15 @@ exports.getUserQuizStats = async (req, res) => {
 
         return res.json({
             totalAttempts: toNonNegativeInt(row.total_attempts, 0),
+            quizAttempts: toNonNegativeInt(row.quiz_attempts, 0),
             highestScore: toNonNegativeInt(row.highest_score, 0),
             averageScore: toNonNegativeInt(row.average_score, 0),
             passedAttempts: toNonNegativeInt(row.passed_attempts, 0),
             practiceAttempts: toNonNegativeInt(row.practice_attempts, 0),
             examAttempts: toNonNegativeInt(row.exam_attempts, 0),
             examsPassed: toNonNegativeInt(row.exams_passed, 0),
+            verifiedAttempts: toNonNegativeInt(row.verified_attempts, 0),
+            pendingVerificationAttempts: toNonNegativeInt(row.pending_verification_attempts, 0),
             certificatesEarned: toNonNegativeInt(certs.rows[0]?.certificates_earned, 0),
             lastQuizDate: row.last_quiz_date || null,
             categoriesAttempted: categories.rows.map((item) => item.quiz_category).filter(Boolean),
@@ -861,8 +893,7 @@ exports.getUserQuizHistory = async (req, res) => {
         const totalQuery = await pool.query(
             `SELECT COUNT(*)::int AS total_results
              FROM learning_attempts
-             WHERE is_verified = true
-               AND (
+             WHERE (
                     ($1::int IS NOT NULL AND user_id = $1)
                     OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
                     OR lower(COALESCE(user_email, '')) = ANY($2::text[])
@@ -882,10 +913,11 @@ exports.getUserQuizHistory = async (req, res) => {
                 total_questions AS "totalQuestions",
                 percentage,
                 passed,
+                is_verified AS verified,
+                verification_method AS "verificationMethod",
                 submitted_at AS "submittedAt"
              FROM learning_attempts
-             WHERE is_verified = true
-               AND (
+             WHERE (
                     ($1::int IS NOT NULL AND user_id = $1)
                     OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
                     OR lower(COALESCE(user_email, '')) = ANY($2::text[])

@@ -213,7 +213,8 @@ class UsersModule {
             const dokumenAccess = !!(user.dokumenAccess || user.dokumen_access);
             const audit2026Access = !!(user.audit2026Access || user.audit_2026_access);
             const bimWorkspaceAccess = !!(user.bimWorkspaceAccess || user.bim_workspace_access);
-            const bimWorkspaceRole = user.bimWorkspaceRole || user.bim_workspace_role || 'viewer';
+            const bimWorkspaceRole = user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim';
+            const bimWorkspaceStaffRole = user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || 'bim_specialist';
             const libraryDownloadAccess = !!(user.libraryDownloadAccess || user.library_download_access);
             const watermarkFreeDownloadAccess = !!(user.watermarkFreeDownloadAccess || user.watermark_free_download_access);
             const statusBadge = isActive ?
@@ -301,13 +302,18 @@ class UsersModule {
                             <label class="form-check-label" for="bimWorkspaceAccess_${userId}"></label>
                         </div>
                     </td>
-                    <td class="access-check-cell" title="Divisi BIM Workspace Role">
-                        <select class="form-select form-select-sm" aria-label="Workspace role"
+                    <td class="access-check-cell" title="Kategori dan role internal Divisi BIM">
+                        <select class="form-select form-select-sm mb-1" aria-label="Kategori pengguna Workspace"
                                 onchange="window.adminPanel.modules.get('users').instance.updateBimWorkspaceRole('${userId}', this.value, this)">
-                            <option value="viewer" ${bimWorkspaceRole === 'viewer' ? 'selected' : ''}>Viewer</option>
                             <option value="staff_bim" ${bimWorkspaceRole === 'staff_bim' ? 'selected' : ''}>Staff BIM</option>
-                            <option value="division_head" ${bimWorkspaceRole === 'division_head' ? 'selected' : ''}>Kepala Divisi</option>
-                            <option value="department_head" ${bimWorkspaceRole === 'department_head' ? 'selected' : ''}>Kepala Departemen</option>
+                            <option value="division_head" ${bimWorkspaceRole === 'division_head' ? 'selected' : ''}>KaDiv BIM</option>
+                        </select>
+                        <select class="form-select form-select-sm workspace-staff-role-select" aria-label="Role kerja Staff BIM"
+                                ${bimWorkspaceRole === 'division_head' ? 'disabled hidden' : ''}
+                                onchange="window.adminPanel.modules.get('users').instance.updateBimWorkspaceStaffRole('${userId}', this.value, this)">
+                            <option value="bim_modeller" ${bimWorkspaceStaffRole === 'bim_modeller' ? 'selected' : ''}>BIM Modeller</option>
+                            <option value="bim_specialist" ${bimWorkspaceStaffRole === 'bim_specialist' ? 'selected' : ''}>BIM Specialist</option>
+                            <option value="bim_coordinator" ${bimWorkspaceStaffRole === 'bim_coordinator' ? 'selected' : ''}>BIM Coordinator</option>
                         </select>
                     </td>
                     <td class="text-center access-check-cell" title="Pustaka Download">
@@ -1048,10 +1054,11 @@ class UsersModule {
     }
 
     async updateBimWorkspaceRole(userId, role, selectElement) {
-        const allowed = ['viewer', 'staff_bim', 'division_head', 'department_head'];
+        const allowed = ['staff_bim', 'division_head'];
         if (!allowed.includes(role)) return;
         const previous = this.allUsers.find((user) => String(user.id || user.user_id) === String(userId));
-        const previousRole = previous?.bimWorkspaceRole || previous?.bim_workspace_role || 'viewer';
+        const previousRole = previous?.bimWorkspaceRole || previous?.bim_workspace_role || 'staff_bim';
+        const staffRoleSelect = selectElement.parentElement?.querySelector('.workspace-staff-role-select');
         selectElement.disabled = true;
         try {
             const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
@@ -1064,11 +1071,41 @@ class UsersModule {
                 previous.bimWorkspaceRole = role;
                 previous.bim_workspace_role = role;
             }
+            if (staffRoleSelect) {
+                staffRoleSelect.disabled = role === 'division_head';
+                staffRoleSelect.hidden = role === 'division_head';
+            }
         } catch (error) {
             selectElement.value = previousRole;
             alert('Gagal memperbarui Workspace role: ' + error.message);
         } finally {
             selectElement.disabled = false;
+        }
+    }
+
+    async updateBimWorkspaceStaffRole(userId, staffRole, selectElement) {
+        const allowed = ['bim_modeller', 'bim_specialist', 'bim_coordinator'];
+        if (!allowed.includes(staffRole)) return;
+        const previous = this.allUsers.find((user) => String(user.id || user.user_id) === String(userId));
+        const previousStaffRole = previous?.bimWorkspaceStaffRole || previous?.bim_workspace_staff_role || 'bim_specialist';
+        selectElement.disabled = true;
+        try {
+            const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bimWorkspaceStaffRole: staffRole, bim_workspace_staff_role: staffRole })
+            });
+            if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || 'Update failed');
+            if (previous) {
+                previous.bimWorkspaceStaffRole = staffRole;
+                previous.bim_workspace_staff_role = staffRole;
+            }
+        } catch (error) {
+            selectElement.value = previousStaffRole;
+            alert('Gagal memperbarui role Staff BIM: ' + error.message);
+        } finally {
+            const workspaceRole = previous?.bimWorkspaceRole || previous?.bim_workspace_role || 'staff_bim';
+            selectElement.disabled = workspaceRole === 'division_head';
         }
     }
 
@@ -1128,7 +1165,7 @@ class UsersModule {
         }
 
         // Create CSV content
-        const headers = ['ID', 'Username', 'Email', 'BIM Level', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Divisi BIM Workspace Access', 'Divisi BIM Workspace Role', 'Library Download Access', 'Watermark-Free Download Access'];
+        const headers = ['ID', 'Username', 'Email', 'BIM Level Training', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Divisi BIM Workspace Access', 'Kategori Workspace', 'Role Staff BIM', 'Library Download Access', 'Watermark-Free Download Access'];
         const csvContent = [
             headers.join(','),
             ...this.allUsers.map(user => [
@@ -1144,7 +1181,8 @@ class UsersModule {
                 (user.dokumenAccess || user.dokumen_access) ? 'Yes' : 'No',
                 (user.audit2026Access || user.audit_2026_access) ? 'Yes' : 'No',
                 (user.bimWorkspaceAccess || user.bim_workspace_access) ? 'Yes' : 'No',
-                user.bimWorkspaceRole || user.bim_workspace_role || 'viewer',
+                user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim',
+                user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || 'bim_specialist',
                 (user.libraryDownloadAccess || user.library_download_access) ? 'Yes' : 'No',
                 (user.watermarkFreeDownloadAccess || user.watermark_free_download_access) ? 'Yes' : 'No'
             ].map(field => `"${field || ''}"`).join(','))

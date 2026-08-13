@@ -21,11 +21,13 @@ pool.on('error', (error) => {
     console.warn('WARN: PostgreSQL pool error in bimWorkspaceRoutes:', error.message);
 });
 
-const WORKSPACE_ROLES = new Set(['staff_bim', 'division_head', 'department_head', 'viewer', 'system_admin']);
+const WORKSPACE_ROLES = new Set(['staff_bim', 'division_head', 'system_admin']);
+const WORKSPACE_STAFF_ROLES = new Set(['bim_modeller', 'bim_specialist', 'bim_coordinator']);
 const TASK_INTAKE = new Set(['draft', 'pending_approval', 'approved', 'revision_required', 'rejected', 'replaced']);
 const TASK_STATUSES = new Set(['planned', 'in_progress', 'on_hold', 'blocked', 'submitted_for_review', 'approved_done', 'rejected_revision', 'cancelled']);
 const TASK_TYPES = new Set(['project_task', 'tender_support', 'routine_monitoring', 'coordination', 'review', 'reporting', 'support', 'internal_admin', 'other']);
 const TASK_CATEGORIES = new Set(['regular', 'routine', 'flexible', 'urgent']);
+const TASK_KINDS = new Set(['standalone', 'master', 'subtask']);
 const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
 const DEMO_SOURCE_TYPE = 'demo_seed';
 const DEMO_TASK_TITLES = new Set([
@@ -43,6 +45,7 @@ const ISSUE_TYPES = new Set(['internal_issue', 'coordination_issue', 'model_issu
 const SEVERITIES = new Set(['low', 'medium', 'high', 'critical']);
 const MEETING_STATUSES = new Set(['draft', 'issued', 'closed', 'cancelled']);
 const ACTION_STATUSES = new Set(['open', 'in_progress', 'closed', 'cancelled']);
+const MEETING_SCOPE_TYPES = new Set(['kantor', 'proyek', 'gabungan', 'other']);
 const LEGACY_RISALAH_ROOT = path.resolve('G:/BIM CENTRAL LEARNING/data/RISALAH');
 
 let ensureTablesPromise;
@@ -57,6 +60,19 @@ function trimText(value, max = 4000) {
 
 function normalizeProjectName(value) {
     return trimText(value, 240).replace(/\s+/g, ' ');
+}
+
+function normalizeProjectNames(value) {
+    const seen = new Set();
+    return (Array.isArray(value) ? value : [])
+        .map(normalizeProjectName)
+        .filter((name) => {
+            const key = name.toLocaleLowerCase('id-ID');
+            if (!name || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        })
+        .slice(0, 200);
 }
 
 function normalizeEnum(value, allowed, fallback) {
@@ -83,6 +99,20 @@ function normalizePeriod(value) {
     return /^\d{4}-(0[1-9]|1[0-2])$/.test(period) ? period : new Date().toISOString().slice(0, 7);
 }
 
+function shiftPeriodKey(period, offset) {
+    const [year, month] = normalizePeriod(period).split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1 + Number(offset || 0), 1));
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function normalizeRoutineWeekday(value, startDate, isRoutine) {
+    if (!isRoutine) return null;
+    const weekday = Number(value);
+    if (Number.isInteger(weekday) && weekday >= 0 && weekday <= 6) return weekday;
+    const anchor = new Date(`${dateOnlyValue(startDate)}T00:00:00Z`);
+    return Number.isFinite(anchor.getTime()) ? anchor.getUTCDay() : 1;
+}
+
 function normalizeYear(value) {
     const year = Number(value);
     return Number.isInteger(year) && year >= 2020 && year <= 2100 ? year : new Date().getFullYear();
@@ -90,7 +120,87 @@ function normalizeYear(value) {
 
 function normalizeDate(value) {
     const candidate = trimText(value, 10);
-    return /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return null;
+    const year = Number(candidate.slice(0, 4));
+    if (year < 2020 || year > 2100) return null;
+    const parsed = new Date(`${candidate}T00:00:00Z`);
+    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === candidate ? candidate : null;
+}
+
+function dateOnlyValue(value) {
+    if (!value) return '';
+    if (value instanceof Date && Number.isFinite(value.getTime())) {
+        return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    }
+    const candidate = String(value);
+    const match = candidate.match(/^\d{4}-\d{2}-\d{2}/);
+    return match ? match[0] : '';
+}
+
+function calendarDayDifference(start, end) {
+    const left = new Date(`${dateOnlyValue(start)}T00:00:00Z`);
+    const right = new Date(`${dateOnlyValue(end)}T00:00:00Z`);
+    if (!Number.isFinite(left.getTime()) || !Number.isFinite(right.getTime())) return 0;
+    return Math.round((right - left) / 86400000);
+}
+
+function addCalendarDays(value, days) {
+    const date = new Date(`${dateOnlyValue(value)}T00:00:00Z`);
+    if (!Number.isFinite(date.getTime())) return '';
+    date.setUTCDate(date.getUTCDate() + Number(days || 0));
+    return date.toISOString().slice(0, 10);
+}
+
+function effectiveTaskDueDate(row) {
+    return dateOnlyValue(row.adjusted_due_date || row.baseline_due_date || row.due_date);
+}
+
+function computeTaskPerformance(row) {
+    if ((row.task_kind || 'standalone') === 'master' || !row.pic_user_id) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    const effectiveDueDate = effectiveTaskDueDate(row);
+    const completionDate = dateOnlyValue(row.completion_submitted_at || row.completed_at || row.approved_at);
+    const comparisonDate = completionDate || (row.status === 'on_hold' ? dateOnlyValue(row.hold_at) : today);
+    const lateDays = effectiveDueDate && comparisonDate && comparisonDate > effectiveDueDate
+        ? calendarDayDifference(effectiveDueDate, comparisonDate)
+        : 0;
+    const earlyDays = effectiveDueDate && completionDate && completionDate < effectiveDueDate
+        ? calendarDayDifference(completionDate, effectiveDueDate)
+        : 0;
+    const penaltyPerDay = ({ urgent: 10, high: 7, normal: 5, low: 3 })[row.priority] || 5;
+    const scheduleScore = effectiveDueDate == null || effectiveDueDate === ''
+        ? null
+        : Math.max(0, 100 - (lateDays * penaltyPerDay));
+    const finished = row.status === 'approved_done';
+    const submitted = row.status === 'submitted_for_review';
+    const cancelled = row.status === 'cancelled';
+    const completionScore = cancelled ? 0 : (finished || submitted || lateDays === 0)
+        ? 100
+        : Math.min(100, Math.max(0, Number(row.progress_percent || 0)));
+    const revisionCount = Math.max(0, Number(row.completion_revision_count || 0));
+    const qualityScore = Math.max(0, 100 - (revisionCount * 15));
+    const confirmedWorklogs = Math.max(0, Number(row.confirmed_worklog_count || 0));
+    const hasStarted = Number(row.progress_percent || 0) > 0 || !['planned', 'cancelled'].includes(row.status);
+    const worklogScore = !hasStarted || confirmedWorklogs > 0 ? 100 : 60;
+    const scheduleComponent = scheduleScore == null ? 100 : scheduleScore;
+    const totalScore = Math.round((scheduleComponent * 0.45) + (completionScore * 0.25) + (qualityScore * 0.20) + (worklogScore * 0.10));
+    return {
+        totalScore,
+        scheduleScore,
+        completionScore,
+        qualityScore,
+        worklogScore,
+        lateDays,
+        earlyDays,
+        scheduleDeltaDays: lateDays || (earlyDays ? -earlyDays : 0),
+        penaltyPerDay,
+        revisionCount,
+        confirmedWorklogs,
+        effectiveDueDate,
+        completionDate,
+        comparisonDate,
+        isFinal: finished || cancelled
+    };
 }
 
 function normalizePathSlash(value) {
@@ -187,6 +297,10 @@ function isDivisionHead(req) {
     return req.workspaceRole === 'division_head';
 }
 
+function normalizeWorkspaceStaffRole(value) {
+    return normalizeEnum(value, WORKSPACE_STAFF_ROLES, 'bim_specialist');
+}
+
 function canWrite(req) {
     return req.workspaceRole === 'staff_bim' || req.workspaceRole === 'division_head' || req.workspaceRole === 'system_admin';
 }
@@ -199,13 +313,17 @@ function isKpiManager(req) {
     return req.workspaceRole === 'division_head' || req.workspaceRole === 'system_admin';
 }
 
-async function resolveTaskAssignment(req, requestedPicId) {
+async function resolveTaskAssignment(req, requestedPicId, { allowUnassigned = false } = {}) {
     const requestedId = trimText(requestedPicId, 100);
     const self = {
         picId: actorId(req),
         picName: actorName(req),
         delegated: false
     };
+
+    if (allowUnassigned && !requestedId && isKpiManager(req)) {
+        return { picId: null, picName: null, delegated: false };
+    }
 
     if (!isKpiManager(req)) {
         if (requestedId && requestedId !== self.picId) {
@@ -230,6 +348,68 @@ async function resolveTaskAssignment(req, requestedPicId) {
         picName: user.rows[0].username,
         delegated: true
     };
+}
+
+function validateDateRange(startDate, dueDate, label = 'Task') {
+    if (!startDate || !dueDate) return `${label} wajib memiliki Start Date dan Due Date`;
+    if (dueDate < startDate) return `${label}: Due Date tidak boleh lebih awal dari Start Date`;
+    return '';
+}
+
+async function resolveParentMaster(req, parentTaskId, period, startDate, dueDate) {
+    const parentId = trimText(parentTaskId, 120);
+    if (!parentId) return { error: 'Subtask wajib memilih Master Task', status: 400 };
+    const result = await pool.query(`SELECT * FROM bim_ops_tasks WHERE id=$1`, [parentId]);
+    if (!result.rows.length) return { error: 'Master Task tidak ditemukan', status: 404 };
+    const parent = result.rows[0];
+    if ((parent.task_kind || 'standalone') !== 'master') return { error: 'Parent task yang dipilih bukan Master Task', status: 400 };
+    if (parent.intake_status !== 'approved') return { error: 'Master Task belum approved', status: 409 };
+    if (parent.period_month !== period) return { error: 'Subtask harus berada pada periode yang sama dengan Master Task', status: 400 };
+    const parentStart = dateOnlyValue(parent.start_date || parent.baseline_start_date);
+    const parentDue = effectiveTaskDueDate(parent);
+    if (startDate < parentStart || dueDate > parentDue) {
+        return { error: `Jadwal subtask harus berada di dalam jadwal Master Task (${parentStart} s.d. ${parentDue})`, status: 400 };
+    }
+    return { parent };
+}
+
+async function validateMasterScheduleAgainstChildren(masterId, startDate, dueDate) {
+    const outside = await pool.query(
+        `SELECT COUNT(*)::int AS total FROM bim_ops_tasks
+         WHERE parent_task_id=$1 AND (start_date<$2::date OR COALESCE(adjusted_due_date,due_date)>$3::date)`,
+        [masterId, startDate, dueDate]
+    );
+    return Number(outside.rows[0]?.total || 0) === 0;
+}
+
+async function syncMasterTask(parentTaskId) {
+    if (!parentTaskId) return;
+    await pool.query(
+        `WITH child_summary AS (
+            SELECT parent_task_id,
+                   COUNT(*)::int AS total,
+                   COUNT(*) FILTER (WHERE status='approved_done')::int AS done,
+                   COUNT(*) FILTER (WHERE status='blocked')::int AS blocked,
+                   COUNT(*) FILTER (WHERE status='on_hold')::int AS held,
+                   COUNT(*) FILTER (WHERE status IN ('in_progress','submitted_for_review','rejected_revision'))::int AS active,
+                   COALESCE(AVG(progress_percent),0) AS progress
+            FROM bim_ops_tasks WHERE parent_task_id=$1 AND intake_status='approved' AND status<>'cancelled' GROUP BY parent_task_id
+         )
+         UPDATE bim_ops_tasks master SET
+            progress_percent=ROUND(child.progress,2),
+            status=CASE
+                WHEN child.total>0 AND child.done=child.total THEN 'approved_done'
+                WHEN child.blocked>0 THEN 'blocked'
+                WHEN child.held=child.total THEN 'on_hold'
+                WHEN child.active>0 OR child.done>0 THEN 'in_progress'
+                ELSE 'planned'
+            END,
+            completed_at=CASE WHEN child.total>0 AND child.done=child.total THEN COALESCE(master.completed_at,CURRENT_TIMESTAMP) ELSE NULL END,
+            updated_at=CURRENT_TIMESTAMP
+         FROM child_summary child
+         WHERE master.id=child.parent_task_id AND master.task_kind='master'`,
+        [parentTaskId]
+    );
 }
 
 async function seedKpiCatalog() {
@@ -316,8 +496,33 @@ async function seedKpiCatalog() {
 async function ensureTables() {
     if (!ensureTablesPromise) {
         ensureTablesPromise = (async () => {
+            const staffRoleColumn = await pool.query(`
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema=current_schema()
+                  AND table_name='users'
+                  AND column_name='bim_workspace_staff_role'
+                LIMIT 1
+            `);
+            const shouldInferExistingStaffRoles = staffRoleColumn.rows.length === 0;
             await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_access BOOLEAN DEFAULT false`);
-            await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_role TEXT DEFAULT 'viewer'`);
+            await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_role TEXT DEFAULT 'staff_bim'`);
+            await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_staff_role TEXT DEFAULT 'bim_specialist'`);
+            await pool.query(`ALTER TABLE users ALTER COLUMN bim_workspace_role SET DEFAULT 'staff_bim'`);
+            await pool.query(`UPDATE users SET bim_workspace_role='staff_bim' WHERE COALESCE(bim_workspace_role,'') NOT IN ('staff_bim','division_head')`);
+            if (shouldInferExistingStaffRoles) {
+                await pool.query(`
+                    UPDATE users
+                    SET bim_workspace_staff_role=CASE
+                        WHEN lower(COALESCE(job_role,'')) LIKE '%coordinator%'
+                          OR lower(COALESCE(bim_level,''))='bim coordinator' THEN 'bim_coordinator'
+                        WHEN lower(COALESCE(job_role,'')) LIKE '%modeller%'
+                          OR lower(COALESCE(job_role,'')) LIKE '%modeler%' THEN 'bim_modeller'
+                        WHEN lower(COALESCE(job_role,'')) LIKE '%specialist%' THEN 'bim_specialist'
+                        WHEN lower(COALESCE(bim_level,''))='bim modeller' THEN 'bim_modeller'
+                        ELSE 'bim_specialist'
+                    END
+                `);
+            }
 
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS bim_ops_tasks (
@@ -327,6 +532,8 @@ async function ensureTables() {
                     description TEXT,
                     project_name TEXT,
                     task_type TEXT NOT NULL DEFAULT 'project_task',
+                    task_kind TEXT NOT NULL DEFAULT 'standalone',
+                    parent_task_id TEXT REFERENCES bim_ops_tasks(id) ON DELETE RESTRICT,
                     task_category TEXT NOT NULL DEFAULT 'regular',
                     is_critical BOOLEAN NOT NULL DEFAULT false,
                     critical_reason TEXT,
@@ -338,6 +545,11 @@ async function ensureTables() {
                     delegated_at TIMESTAMPTZ,
                     start_date DATE,
                     due_date DATE,
+                    baseline_start_date DATE,
+                    baseline_due_date DATE,
+                    adjusted_due_date DATE,
+                    approved_hold_days INTEGER NOT NULL DEFAULT 0,
+                    completion_revision_count INTEGER NOT NULL DEFAULT 0,
                     priority TEXT NOT NULL DEFAULT 'normal',
                     intake_status TEXT NOT NULL DEFAULT 'draft',
                     status TEXT NOT NULL DEFAULT 'planned',
@@ -365,6 +577,7 @@ async function ensureTables() {
                     resumed_at TIMESTAMPTZ,
                     resume_note TEXT,
                     is_routine BOOLEAN DEFAULT false,
+                    routine_weekday SMALLINT,
                     carried_from_task_id TEXT REFERENCES bim_ops_tasks(id) ON DELETE SET NULL,
                     source_type TEXT DEFAULT 'manual',
                     source_id TEXT,
@@ -377,6 +590,13 @@ async function ensureTables() {
                 )
             `);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS task_category TEXT NOT NULL DEFAULT 'regular'`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS task_kind TEXT NOT NULL DEFAULT 'standalone'`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS parent_task_id TEXT REFERENCES bim_ops_tasks(id) ON DELETE RESTRICT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS baseline_start_date DATE`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS baseline_due_date DATE`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS adjusted_due_date DATE`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS approved_hold_days INTEGER NOT NULL DEFAULT 0`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS completion_revision_count INTEGER NOT NULL DEFAULT 0`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS is_critical BOOLEAN NOT NULL DEFAULT false`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS critical_reason TEXT`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS delegated_by_user_id TEXT`);
@@ -394,6 +614,9 @@ async function ensureTables() {
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS resumed_by_name_snapshot TEXT`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS resumed_at TIMESTAMPTZ`);
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS resume_note TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS routine_weekday SMALLINT`);
+            await pool.query(`UPDATE bim_ops_tasks SET baseline_start_date=COALESCE(baseline_start_date,start_date), baseline_due_date=COALESCE(baseline_due_date,due_date), adjusted_due_date=COALESCE(adjusted_due_date,due_date) WHERE baseline_start_date IS NULL OR baseline_due_date IS NULL OR adjusted_due_date IS NULL`);
+            await pool.query(`UPDATE bim_ops_tasks SET routine_weekday=EXTRACT(DOW FROM COALESCE(start_date,due_date))::smallint WHERE is_routine=true AND routine_weekday IS NULL AND COALESCE(start_date,due_date) IS NOT NULL`);
 
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS bim_ops_worklogs (
@@ -429,6 +652,7 @@ async function ensureTables() {
                     subject TEXT NOT NULL,
                     scope_type TEXT DEFAULT 'kantor',
                     project_name TEXT,
+                    project_names JSONB NOT NULL DEFAULT '[]'::jsonb,
                     meeting_date DATE NOT NULL,
                     start_time TIME,
                     end_time TIME,
@@ -441,6 +665,15 @@ async function ensureTables() {
                     reference_memo_no TEXT,
                     reference_agenda_no TEXT,
                     reference_archive_no TEXT,
+                    meeting_summary TEXT NOT NULL DEFAULT '',
+                    decisions TEXT,
+                    weekly_progress TEXT NOT NULL DEFAULT '',
+                    constraints_problems TEXT NOT NULL DEFAULT '',
+                    meeting_issues TEXT NOT NULL DEFAULT '',
+                    action_plan TEXT NOT NULL DEFAULT '',
+                    agreements TEXT NOT NULL DEFAULT '',
+                    meeting_rows JSONB NOT NULL DEFAULT '[]'::jsonb,
+                    cc_text TEXT NOT NULL DEFAULT '',
                     status TEXT NOT NULL DEFAULT 'draft',
                     revision_no INTEGER DEFAULT 0,
                     created_by_user_id TEXT NOT NULL,
@@ -451,6 +684,18 @@ async function ensureTables() {
                     closed_at TIMESTAMPTZ
                 )
             `);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS project_names JSONB NOT NULL DEFAULT '[]'::jsonb`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS meeting_summary TEXT NOT NULL DEFAULT ''`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS decisions TEXT`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS weekly_progress TEXT NOT NULL DEFAULT ''`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS constraints_problems TEXT NOT NULL DEFAULT ''`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS meeting_issues TEXT NOT NULL DEFAULT ''`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS action_plan TEXT NOT NULL DEFAULT ''`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS agreements TEXT NOT NULL DEFAULT ''`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS meeting_rows JSONB NOT NULL DEFAULT '[]'::jsonb`);
+            await pool.query(`ALTER TABLE bim_ops_meetings ADD COLUMN IF NOT EXISTS cc_text TEXT NOT NULL DEFAULT ''`);
+            await pool.query(`UPDATE bim_ops_meetings SET weekly_progress=meeting_summary WHERE weekly_progress='' AND meeting_summary<>''`);
+            await pool.query(`UPDATE bim_ops_meetings SET agreements=COALESCE(decisions,'') WHERE agreements='' AND COALESCE(decisions,'')<>''`);
 
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS bim_ops_meeting_attendees (
@@ -647,6 +892,9 @@ async function ensureTables() {
                     actual_evidence_link TEXT,
                     actual_note TEXT,
                     verified_actual NUMERIC(14,4),
+                    raw_achievement NUMERIC(8,6),
+                    task_performance_factor NUMERIC(8,6) NOT NULL DEFAULT 1,
+                    adjusted_achievement NUMERIC(8,6),
                     achievement NUMERIC(8,6),
                     weighted_score NUMERIC(8,6),
                     review_note TEXT,
@@ -666,7 +914,30 @@ async function ensureTables() {
                 )
             `);
 
+            await pool.query(`ALTER TABLE bim_kpi_assignments ADD COLUMN IF NOT EXISTS raw_achievement NUMERIC(8,6)`);
+            await pool.query(`ALTER TABLE bim_kpi_assignments ADD COLUMN IF NOT EXISTS task_performance_factor NUMERIC(8,6) NOT NULL DEFAULT 1`);
+            await pool.query(`ALTER TABLE bim_kpi_assignments ADD COLUMN IF NOT EXISTS adjusted_achievement NUMERIC(8,6)`);
+            await pool.query(`UPDATE bim_kpi_assignments SET raw_achievement=COALESCE(raw_achievement,achievement), task_performance_factor=COALESCE(task_performance_factor,1), adjusted_achievement=COALESCE(adjusted_achievement,achievement) WHERE raw_achievement IS NULL OR task_performance_factor IS NULL OR adjusted_achievement IS NULL`);
+
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS bim_kpi_assignment_task_claims (
+                    assignment_id TEXT NOT NULL REFERENCES bim_kpi_assignments(id) ON DELETE CASCADE,
+                    task_id TEXT NOT NULL REFERENCES bim_ops_tasks(id) ON DELETE CASCADE,
+                    staff_user_id TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending_approval',
+                    reviewed_by_user_id TEXT,
+                    reviewed_by_name_snapshot TEXT,
+                    reviewed_at TIMESTAMPTZ,
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (assignment_id, task_id)
+                )
+            `);
+            await pool.query(`ALTER TABLE bim_kpi_assignment_task_claims DROP CONSTRAINT IF EXISTS bim_kpi_assignment_task_claims_task_id_key`);
+
             await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS kpi_assignment_id TEXT REFERENCES bim_kpi_assignments(id) ON DELETE SET NULL`);
+            await pool.query(`ALTER TABLE bim_ops_tasks ADD COLUMN IF NOT EXISTS kpi_division_indicator_id TEXT REFERENCES bim_kpi_indicators(id) ON DELETE SET NULL`);
+            await pool.query(`UPDATE bim_ops_tasks task SET kpi_division_indicator_id=assignment.division_indicator_id FROM bim_kpi_assignments assignment WHERE task.kpi_assignment_id=assignment.id AND task.kpi_division_indicator_id IS NULL`);
 
             await pool.query(`ALTER TABLE bim_ops_worklogs ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT 'manual'`);
             await pool.query(`ALTER TABLE bim_ops_worklogs ADD COLUMN IF NOT EXISTS source_id TEXT`);
@@ -731,6 +1002,7 @@ async function ensureTables() {
             const indexes = [
                 `CREATE INDEX IF NOT EXISTS idx_bim_tasks_period_status ON bim_ops_tasks(period_month, status)`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_tasks_pic ON bim_ops_tasks(pic_user_id)`,
+                `CREATE INDEX IF NOT EXISTS idx_bim_tasks_parent ON bim_ops_tasks(parent_task_id)`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_worklogs_period_pic ON bim_ops_worklogs(period_month, pic_user_id)`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_meetings_period ON bim_ops_meetings(period_month, meeting_date)`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_actions_status ON bim_ops_meeting_actions(status, planned_due_date)`,
@@ -741,6 +1013,9 @@ async function ensureTables() {
                 `CREATE INDEX IF NOT EXISTS idx_bim_kpi_programs_year ON bim_kpi_programs(period_year, sort_order)`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_kpi_assignments_staff ON bim_kpi_assignments(staff_user_id, status)`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_tasks_kpi_assignment ON bim_ops_tasks(kpi_assignment_id)`,
+                `CREATE INDEX IF NOT EXISTS idx_bim_tasks_kpi_division_indicator ON bim_ops_tasks(kpi_division_indicator_id)`,
+                `CREATE INDEX IF NOT EXISTS idx_bim_kpi_task_claims_status ON bim_kpi_assignment_task_claims(status,staff_user_id)`,
+                `CREATE UNIQUE INDEX IF NOT EXISTS uq_bim_kpi_task_claim_active ON bim_kpi_assignment_task_claims(task_id) WHERE status IN ('pending_approval','verification_pending','approved')`,
                 `CREATE UNIQUE INDEX IF NOT EXISTS idx_bim_worklogs_auto_key ON bim_ops_worklogs(auto_key) WHERE auto_key IS NOT NULL`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_worklogs_source ON bim_ops_worklogs(source_type, source_id, work_date)`,
                 `CREATE INDEX IF NOT EXISTS idx_bim_activity_events_period_pic ON bim_ops_activity_events(event_date, pic_user_id)`,
@@ -943,7 +1218,7 @@ async function requireWorkspace(req, res, next) {
         if (!authUser) return res.status(401).json({ error: 'Authentication required' });
         const identityResult = await pool.query(
             `SELECT id::text,username,email,job_role,mapping_kompetensi_access,dokumen_access,audit_2026_access,
-                    library_download_access,watermark_free_download_access,bim_workspace_access,bim_workspace_role
+                    library_download_access,watermark_free_download_access,bim_workspace_access,bim_workspace_role,bim_workspace_staff_role
              FROM users
              WHERE ($1::text IS NOT NULL AND id::text=$1::text)
                 OR ($2::text IS NOT NULL AND lower(email)=lower($2::text))
@@ -957,8 +1232,8 @@ async function requireWorkspace(req, res, next) {
         if (!profile.bimWorkspaceAccess && !authUser.isAdmin) return res.status(403).json({ error: 'Divisi BIM Workspace access required' });
         const hasStoredWorkspaceRole = !!storedUser && !!storedProfile?.bimWorkspaceAccess;
         const role = hasStoredWorkspaceRole
-            ? normalizeEnum(storedProfile.bimWorkspaceRole, WORKSPACE_ROLES, 'viewer')
-            : authUser.isAdmin ? 'system_admin' : normalizeEnum(profile.bimWorkspaceRole, WORKSPACE_ROLES, 'viewer');
+            ? normalizeEnum(storedProfile.bimWorkspaceRole, WORKSPACE_ROLES, 'staff_bim')
+            : authUser.isAdmin ? 'system_admin' : normalizeEnum(profile.bimWorkspaceRole, WORKSPACE_ROLES, 'staff_bim');
         const workspaceUser = storedUser ? {
             ...authUser,
             id: storedUser.id,
@@ -969,6 +1244,9 @@ async function requireWorkspace(req, res, next) {
         req.authUser = authUser;
         req.workspaceUser = workspaceUser;
         req.workspaceRole = role;
+        req.workspaceStaffRole = role === 'staff_bim'
+            ? normalizeWorkspaceStaffRole(storedProfile?.bimWorkspaceStaffRole || profile.bimWorkspaceStaffRole)
+            : '';
         req.workspaceProfile = profile;
         next();
     } catch (error) {
@@ -983,12 +1261,13 @@ route('get', '/access/me', (req, res) => {
     res.json({
         hasAccess: true,
         role: req.workspaceRole,
-        user: { id: actorId(req), name: actorName(req), email: req.workspaceUser.email || '' },
+        staffRole: req.workspaceStaffRole,
+        user: { id: actorId(req), name: actorName(req), email: req.workspaceUser.email || '', staffRole: req.workspaceStaffRole },
         permissions: {
             canWrite: canWrite(req),
             canApprove: isDivisionHead(req),
             canConfigure: canManageTechnical(req),
-            canExport: req.workspaceRole !== 'viewer'
+            canExport: true
         }
     });
 });
@@ -996,7 +1275,7 @@ route('get', '/access/me', (req, res) => {
 route('get', '/users', async (req, res) => {
     if (!canWrite(req)) return res.json([]);
     const result = await pool.query(
-        `SELECT id::text, username, email, job_role, bim_workspace_role
+        `SELECT id::text, username, email, job_role, bim_workspace_role, bim_workspace_staff_role
          FROM users WHERE is_active = true AND bim_workspace_access = true
          ORDER BY username`
     );
@@ -1005,7 +1284,10 @@ route('get', '/users', async (req, res) => {
         username: row.username,
         email: row.email,
         jobRole: row.job_role || '',
-        workspaceRole: row.bim_workspace_role || 'viewer'
+        workspaceRole: row.bim_workspace_role || 'staff_bim',
+        workspaceStaffRole: row.bim_workspace_role === 'staff_bim'
+            ? normalizeWorkspaceStaffRole(row.bim_workspace_staff_role)
+            : ''
     })));
 });
 
@@ -1209,40 +1491,128 @@ function mapKpiAssignment(row) {
         actualEvidenceLink: row.actual_evidence_link || '',
         actualNote: row.actual_note || '',
         verifiedActual: row.verified_actual == null ? null : Number(row.verified_actual),
+        rawAchievement: row.raw_achievement == null ? null : Number(row.raw_achievement),
+        taskPerformanceFactor: row.task_performance_factor == null ? 1 : Number(row.task_performance_factor),
+        adjustedAchievement: row.adjusted_achievement == null ? null : Number(row.adjusted_achievement),
         achievement: row.achievement == null ? null : Number(row.achievement),
         weightedScore: row.weighted_score == null ? null : Number(row.weighted_score),
         reviewNote: row.review_note || '',
         taskCount: Number(row.task_count || 0),
         completedTaskCount: Number(row.completed_task_count || 0),
+        pendingClaimTaskCount: Number(row.pending_claim_task_count || 0),
+        pendingClaimTaskTitles: Array.isArray(row.pending_claim_task_titles) ? row.pending_claim_task_titles.filter(Boolean) : [],
         createdByName: row.created_by_name_snapshot,
         delegatedByName: row.delegated_by_name_snapshot || '',
         approvedByName: row.approved_by_name_snapshot || '',
         verifiedByName: row.verified_by_name_snapshot || '',
+        verifiedAt: row.verified_at,
         createdAt: row.created_at,
         updatedAt: row.updated_at
+    };
+}
+
+function roundKpi(value, precision = 6) {
+    if (value == null || !Number.isFinite(Number(value))) return null;
+    const factor = 10 ** precision;
+    return Math.round(Number(value) * factor) / factor;
+}
+
+function calculateDivisionProgramResult(row, assignments) {
+    const achieved = assignments.filter((item) => ['achieved', 'closed'].includes(item.status) && item.verifiedActual != null);
+    const config = row.calculation_config || {};
+    const mode = String(config.mode || 'ratio');
+    const programTarget = row.target_value == null ? null : Number(row.target_value);
+    const indicatorTarget = Number(row.indicator_target_value || 0);
+    const indicatorWeight = Number(row.indicator_weight || 0);
+    let aggregatedActual = null;
+    if (achieved.length) {
+        if (mode === 'latest_ratio') {
+            const latest = [...achieved].sort((left, right) => new Date(right.verifiedAt || 0) - new Date(left.verifiedAt || 0))[0];
+            aggregatedActual = latest.verifiedActual;
+        } else {
+            aggregatedActual = achieved.reduce((sum, item) => sum + Number(item.verifiedActual || 0), 0);
+        }
+    }
+
+    const taskWeightTotal = achieved.reduce((sum, item) => sum + Math.max(0, Number(item.targetValue || 0)), 0);
+    const taskPerformanceFactor = achieved.length
+        ? taskWeightTotal > 0
+            ? achieved.reduce((sum, item) => sum + (Number(item.taskPerformanceFactor ?? 1) * Math.max(0, Number(item.targetValue || 0))), 0) / taskWeightTotal
+            : achieved.reduce((sum, item) => sum + Number(item.taskPerformanceFactor ?? 1), 0) / achieved.length
+        : 1;
+
+    let measurement = null;
+    let numerator = null;
+    let denominator = null;
+    if (aggregatedActual != null) {
+        if (mode === 'cumulative_count') {
+            measurement = aggregatedActual;
+            numerator = aggregatedActual;
+        } else if (mode === 'inverse_ratio') {
+            numerator = programTarget;
+            denominator = aggregatedActual;
+            measurement = programTarget != null && aggregatedActual > 0 ? programTarget / aggregatedActual : null;
+        } else {
+            numerator = aggregatedActual;
+            denominator = programTarget;
+            measurement = programTarget != null && programTarget > 0 ? aggregatedActual / programTarget : null;
+        }
+    }
+    const rawAchievement = measurement == null || indicatorTarget <= 0
+        ? null
+        : Math.min(MAX_ACHIEVEMENT, Math.max(0, measurement / indicatorTarget));
+    const adjustedAchievement = rawAchievement == null
+        ? null
+        : Math.min(MAX_ACHIEVEMENT, Math.max(0, rawAchievement * taskPerformanceFactor));
+    const weightedScore = adjustedAchievement == null ? null : adjustedAchievement * indicatorWeight;
+    return {
+        calculationMode: mode,
+        aggregatedActual: roundKpi(aggregatedActual, 4),
+        numerator: roundKpi(numerator, 4),
+        denominator: roundKpi(denominator, 4),
+        measurement: roundKpi(measurement),
+        rawAchievement: roundKpi(rawAchievement),
+        taskPerformanceFactor: roundKpi(taskPerformanceFactor),
+        adjustedAchievement: roundKpi(adjustedAchievement),
+        weightedScore: roundKpi(weightedScore),
+        measured: adjustedAchievement != null,
+        evidenceLinks: [...new Set(achieved.map((item) => item.actualEvidenceLink).filter(Boolean))],
+        verifiedAssignmentCount: achieved.length
     };
 }
 
 async function loadKpiOperations(year) {
     const [programResult, assignmentResult] = await Promise.all([
         pool.query(
-            `SELECT p.*,i.code AS indicator_code,i.indicator_name,i.weight AS indicator_weight,
-                    i.relation_type,i.aggregation_method
+             `SELECT p.*,i.code AS indicator_code,i.indicator_name,i.weight AS indicator_weight,
+                     i.relation_type,i.aggregation_method,i.target_value AS indicator_target_value,
+                     i.target_unit AS indicator_target_unit,i.calculation_config,i.parent_indicator_id,
+                     parent.code AS parent_indicator_code,parent.indicator_name AS parent_indicator_name,
+                     (SELECT COUNT(*)::int FROM bim_ops_tasks task
+                      WHERE task.kpi_division_indicator_id=i.id AND task.period_month LIKE ($1::text || '-%')
+                        AND task.intake_status='approved' AND task.task_kind<>'master' AND task.status<>'cancelled') AS mapped_task_count
              FROM bim_kpi_programs p
              JOIN bim_kpi_indicators i ON i.id=p.division_indicator_id
-             WHERE p.period_year=$1 AND p.is_active=true
+             LEFT JOIN bim_kpi_indicators parent ON parent.id=i.parent_indicator_id
+             WHERE p.period_year=$1::integer AND p.is_active=true
              ORDER BY p.sort_order`,
             [year]
         ),
         pool.query(
             `SELECT a.*,p.code AS program_code,p.program_name,i.code AS indicator_code,i.indicator_name,
                     COUNT(t.id)::int AS task_count,
-                    COUNT(t.id) FILTER (WHERE t.status='approved_done')::int AS completed_task_count
+                    COUNT(t.id) FILTER (WHERE t.status='approved_done')::int AS completed_task_count,
+                    (SELECT COUNT(*)::int FROM bim_kpi_assignment_task_claims claim
+                     WHERE claim.assignment_id=a.id AND claim.status IN ('pending_approval','verification_pending')) AS pending_claim_task_count,
+                    (SELECT COALESCE(jsonb_agg(claim_task.title ORDER BY claim_task.completed_at DESC NULLS LAST),'[]'::jsonb)
+                     FROM bim_kpi_assignment_task_claims claim
+                     JOIN bim_ops_tasks claim_task ON claim_task.id=claim.task_id
+                     WHERE claim.assignment_id=a.id AND claim.status IN ('pending_approval','verification_pending')) AS pending_claim_task_titles
              FROM bim_kpi_assignments a
              JOIN bim_kpi_individual_scorecards s ON s.id=a.scorecard_id
              JOIN bim_kpi_programs p ON p.id=a.program_id
              JOIN bim_kpi_indicators i ON i.id=a.division_indicator_id
-             LEFT JOIN bim_ops_tasks t ON t.kpi_assignment_id=a.id
+             LEFT JOIN bim_ops_tasks t ON t.kpi_assignment_id=a.id AND t.intake_status='approved' AND t.task_kind<>'master'
              WHERE s.period_year=$1
              GROUP BY a.id,p.code,p.program_name,i.code,i.indicator_name
              ORDER BY a.created_at`,
@@ -1256,7 +1626,10 @@ async function loadKpiOperations(year) {
         const active = items.filter((item) => activeStatuses.has(item.status));
         const targetValue = row.target_value == null ? null : Number(row.target_value);
         const allocatedValue = active.reduce((sum, item) => sum + item.targetValue, 0);
-        const verifiedValue = active.reduce((sum, item) => sum + (item.verifiedActual || 0), 0);
+        const verifiedValue = items
+            .filter((item) => ['achieved', 'closed'].includes(item.status))
+            .reduce((sum, item) => sum + (item.verifiedActual || 0), 0);
+        const result = calculateDivisionProgramResult(row, items);
         let coverageStatus = 'target_required';
         if (targetValue != null && allocatedValue === 0) coverageStatus = 'empty';
         else if (targetValue != null && allocatedValue < targetValue) coverageStatus = 'partial';
@@ -1265,7 +1638,7 @@ async function loadKpiOperations(year) {
         let executionStatus = active.length ? 'active' : 'not_started';
         if (active.some((item) => item.status === 'verification_pending')) executionStatus = 'verification';
         if (active.some((item) => item.dueDate && new Date(item.dueDate) < new Date() && !['achieved', 'closed'].includes(item.status))) executionStatus = 'at_risk';
-        if (targetValue != null && verifiedValue >= targetValue) executionStatus = 'achieved';
+        if (result.adjustedAchievement != null && result.adjustedAchievement >= 1) executionStatus = 'achieved';
         return {
             id: row.id,
             year: Number(row.period_year),
@@ -1276,6 +1649,11 @@ async function loadKpiOperations(year) {
             indicatorCode: row.indicator_code,
             indicatorName: row.indicator_name,
             indicatorWeight: Number(row.indicator_weight),
+            indicatorTargetValue: Number(row.indicator_target_value),
+            indicatorTargetUnit: row.indicator_target_unit,
+            parentIndicatorId: row.parent_indicator_id || '',
+            parentIndicatorCode: row.parent_indicator_code || '',
+            parentIndicatorName: row.parent_indicator_name || '',
             relationType: row.relation_type,
             aggregationMethod: row.aggregation_method,
             allocationMode: row.allocation_mode,
@@ -1286,12 +1664,14 @@ async function loadKpiOperations(year) {
             allocatedValue,
             verifiedValue,
             coveragePercent: targetValue ? Math.round((allocatedValue / targetValue) * 100) : null,
-            realizationPercent: targetValue ? Math.round((verifiedValue / targetValue) * 100) : null,
+            realizationPercent: result.rawAchievement == null ? null : Math.round(result.rawAchievement * 100),
             coverageStatus,
             executionStatus,
             assignmentCount: items.length,
             activeAssignmentCount: active.length,
-            assignments: items
+            mappedTaskCount: Number(row.mapped_task_count || 0),
+            assignments: items,
+            result
         };
     });
     const cards = [];
@@ -1309,7 +1689,204 @@ async function loadKpiOperations(year) {
         card.score = approved.reduce((sum, item) => sum + (item.weightedScore || 0), 0);
         card.pendingCount = card.assignments.filter((item) => ['pending_approval', 'verification_pending'].includes(item.status)).length;
     }
-    return { programs, assignments, cards };
+    const measuredPrograms = programs.filter((item) => item.result.measured);
+    const totalWeight = programs.reduce((sum, item) => sum + item.indicatorWeight, 0);
+    const measuredWeight = measuredPrograms.reduce((sum, item) => sum + item.indicatorWeight, 0);
+    const division = {
+        calculationScope: 'division_bim_only',
+        score: roundKpi(measuredPrograms.reduce((sum, item) => sum + Number(item.result.weightedScore || 0), 0)),
+        scorePercent: Math.round(measuredPrograms.reduce((sum, item) => sum + Number(item.result.weightedScore || 0), 0) * 10000) / 100,
+        totalWeight: roundKpi(totalWeight),
+        measuredWeight: roundKpi(measuredWeight),
+        completenessPercent: totalWeight ? Math.round((measuredWeight / totalWeight) * 100) : 0,
+        measuredIndicatorCount: measuredPrograms.length,
+        indicatorCount: programs.length,
+        indicators: programs.map((item) => ({
+            programId: item.id,
+            programCode: item.code,
+            indicatorId: item.indicatorId,
+            indicatorCode: item.indicatorCode,
+            indicatorName: item.indicatorName,
+            weight: item.indicatorWeight,
+            targetValue: item.indicatorTargetValue,
+            targetUnit: item.indicatorTargetUnit,
+            parentIndicatorId: item.parentIndicatorId,
+            parentIndicatorCode: item.parentIndicatorCode,
+            parentIndicatorName: item.parentIndicatorName,
+            relationType: item.relationType,
+            aggregationMethod: item.aggregationMethod,
+            result: item.result
+        }))
+    };
+    return { programs, assignments, cards, division };
+}
+
+const KPI_TASK_RECOMMENDATION_RULES = [
+    { code: 'BIM-10', pattern: /\b(inovasi|improvisasi|qcc|qcp|innovation|improvement)\b/i },
+    { code: 'BIM-09', pattern: /\b(sertifikasi|certification|assessment|kompetensi|competency|capability)\b/i },
+    { code: 'BIM-08', pattern: /\b(pelatihan|training|seminar|workshop|webinar|coaching)\b/i },
+    { code: 'BIM-07', pattern: /\b(pmp|project management plan)\b/i },
+    { code: 'BIM-06', pattern: /\b(digitalisasi|digitalization|aplikasi|application|otomasi|automation|dashboard|sistem)\b/i },
+    { code: 'BIM-05', pattern: /\b(survey|survei|topografi|geospasial|geospatial)\b/i },
+    { code: 'BIM-02', pattern: /\b(rkap|budget|anggaran|efisiensi biaya)\b/i },
+    { code: 'BIM-01', pattern: /\b(value engineering|\bve\b)\b/i },
+    { code: 'BIM-03', pattern: /\b(tender|dukungan|support|proposal|bidding)\b/i },
+    { code: 'BIM-04', pattern: /\b(as[ -]?built|clash|model|modeling|modelling|bim|koordinasi|coordination|3d|4d|5d)\b/i }
+];
+
+function recommendTaskKpiCode(task) {
+    const explicit = trimText(task.indicator_code, 30);
+    if (explicit) return explicit;
+    const haystack = `${task.title || ''} ${task.description || ''} ${task.project_name || ''}`;
+    const keywordRule = KPI_TASK_RECOMMENDATION_RULES.find((rule) => rule.pattern.test(haystack));
+    if (keywordRule) return keywordRule.code;
+    return ({
+        tender_support: 'BIM-03',
+        support: 'BIM-03',
+        project_task: 'BIM-04',
+        coordination: 'BIM-04',
+        routine_monitoring: 'BIM-04',
+        review: 'BIM-04'
+    })[task.task_type] || '';
+}
+
+function recommendationActual(tasks, program) {
+    if (program.allocationMode === 'project_scope') {
+        const projects = new Set(tasks.map((task) => normalizeProjectName(task.project_name)).filter(Boolean));
+        return projects.size || tasks.length;
+    }
+    return tasks.length;
+}
+
+async function loadKpiGuidance(req, year, operations) {
+    if (isDivisionHead(req)) {
+        const pendingAssignments = operations.assignments.filter((item) => item.status === 'pending_approval');
+        const pendingActuals = operations.assignments.filter((item) => item.status === 'verification_pending');
+        return {
+            role: 'division_head',
+            approvalRequired: true,
+            items: [
+                ...pendingAssignments.map((item) => ({
+                    id: `review-${item.id}`, type: 'approval', tone: 'warning', icon: 'fa-user-check',
+                    title: `Review kontribusi ${item.staffName}`,
+                    detail: `${item.programCode} / ${item.title}${item.pendingClaimTaskCount ? ` / ${item.pendingClaimTaskCount} task diklaim` : ''}`,
+                    action: 'kpi-review', actionId: item.id, actionLabel: 'Review usulan'
+                })),
+                ...pendingActuals.map((item) => ({
+                    id: `verify-${item.id}`, type: 'verification', tone: 'critical', icon: 'fa-clipboard-check',
+                    title: `Verifikasi actual ${item.staffName}`,
+                    detail: `${item.programCode} / Actual ${item.submittedActual ?? '-'} ${item.targetUnit}. Score belum bertambah sebelum Anda approve.`,
+                    action: 'kpi-verify', actionId: item.id, actionLabel: 'Verifikasi actual'
+                }))
+            ]
+        };
+    }
+
+    const ownAssignments = operations.assignments.filter((item) => String(item.staffUserId) === actorId(req));
+    const taskResult = await pool.query(
+        `SELECT task.id,task.title,task.description,task.project_name,task.task_type,task.evidence_link,
+                task.completed_at,task.approved_at,indicator.code AS indicator_code
+         FROM bim_ops_tasks task
+         LEFT JOIN bim_kpi_indicators indicator ON indicator.id=task.kpi_division_indicator_id
+         WHERE task.pic_user_id=$1 AND task.status='approved_done' AND task.intake_status='approved'
+           AND task.task_kind<>'master' AND task.period_month LIKE ($2::text || '-%')
+           AND task.kpi_assignment_id IS NULL
+           AND NOT EXISTS (
+               SELECT 1 FROM bim_kpi_assignment_task_claims claim
+               WHERE claim.task_id=task.id AND claim.status IN ('pending_approval','verification_pending','approved')
+           )
+         ORDER BY COALESCE(task.completed_at,task.approved_at,task.updated_at) DESC`,
+        [actorId(req), year]
+    );
+    const grouped = new Map();
+    for (const task of taskResult.rows) {
+        const code = recommendTaskKpiCode(task);
+        if (!code) continue;
+        if (!grouped.has(code)) grouped.set(code, []);
+        grouped.get(code).push(task);
+    }
+    const items = [];
+    for (const assignment of ownAssignments) {
+        if (assignment.status === 'pending_approval') {
+            items.push({ id: `pending-${assignment.id}`, type: 'waiting', tone: 'neutral', icon: 'fa-hourglass-half', title: 'Usulan kontribusi menunggu approval', detail: `${assignment.programCode} / ${assignment.title}. Score belum dihitung.`, action: '', actionId: '', actionLabel: '' });
+        } else if (assignment.status === 'revision_required') {
+            items.push({ id: `revise-${assignment.id}`, type: 'revision', tone: 'warning', icon: 'fa-pen', title: 'Kontribusi perlu direvisi', detail: assignment.reviewNote || `${assignment.programCode} dikembalikan oleh Kepala Divisi.`, action: 'kpi-revise', actionId: assignment.id, actionLabel: 'Perbaiki usulan' });
+        } else if (assignment.status === 'verification_pending') {
+            items.push({ id: `actual-pending-${assignment.id}`, type: 'waiting', tone: 'neutral', icon: 'fa-clock', title: 'Claim score menunggu verifikasi', detail: `${assignment.programCode} / Actual ${assignment.submittedActual ?? '-'} ${assignment.targetUnit}. Score individu dan divisi belum bertambah.`, action: '', actionId: '', actionLabel: '' });
+        }
+    }
+    for (const program of operations.programs) {
+        const tasks = grouped.get(program.indicatorCode) || [];
+        if (!tasks.length) continue;
+        const assignment = ownAssignments.find((item) => item.programId === program.id && ['approved','achieved'].includes(item.status));
+        const canPropose = program.claimPolicy === 'staff_proposable' && program.availabilityStatus === 'open';
+        const common = {
+            taskIds: tasks.map((task) => task.id), taskTitles: tasks.slice(0, 5).map((task) => task.title),
+            suggestedActual: recommendationActual(tasks, program), evidenceLink: tasks.find((task) => task.evidence_link)?.evidence_link || '',
+            programId: program.id, indicatorCode: program.indicatorCode
+        };
+        if (assignment) {
+            items.push({ ...common, id: `claim-${assignment.id}`, type: 'claim', tone: 'positive', icon: 'fa-arrow-up-from-bracket', title: `${tasks.length} task selesai dapat diklaim`, detail: `${program.indicatorCode} / ${program.name}. Periksa actual dan evidence sebelum mengajukan.`, action: 'kpi-claim-actual', actionId: assignment.id, actionLabel: 'Claim score' });
+        } else {
+            items.push({ ...common, id: `propose-${program.id}`, type: 'recommendation', tone: canPropose ? 'positive' : 'neutral', icon: 'fa-lightbulb', title: `Rekomendasi kontribusi ${program.indicatorCode}`, detail: `${tasks.length} task selesai terdeteksi sesuai ${program.name}.${canPropose ? ' Ajukan mapping untuk ditinjau Kepala Divisi.' : ' Program ini perlu didelegasikan Kepala Divisi.'}`, action: canPropose ? 'kpi-program-claim' : '', actionId: program.id, actionLabel: canPropose ? 'Ajukan kontribusi' : '' });
+        }
+    }
+    if (!items.length && !ownAssignments.length) {
+        items.push({ id: 'start-kpi', type: 'empty', tone: 'neutral', icon: 'fa-route', title: 'Belum ada kontribusi KPI aktif', detail: 'Buka Program & Aktivitas, pilih program yang sesuai pekerjaan, lalu ajukan kontribusi untuk approval Kepala Divisi.', action: 'kpi-open-programs', actionId: '', actionLabel: 'Lihat program' });
+    }
+    return { role: req.workspaceRole, approvalRequired: true, items: items.slice(0, 12) };
+}
+
+function buildDivisionContributionPackage(year, operations) {
+    return {
+        schemaVersion: 'bcl.engineering-kpi-contribution.v1',
+        periodYear: year,
+        sourcePlatform: 'BCL Divisi BIM Workspace',
+        sourceOrgUnit: 'Divisi BIM',
+        targetOrgUnit: 'Departemen Engineering',
+        reportingBoundary: 'Nilai berhenti pada KPI Divisi BIM. Score KPI Departemen dihitung di platform eksternal dari kontribusi tiga divisi.',
+        generatedAt: new Date().toISOString(),
+        divisionSummary: {
+            score: operations.division.score,
+            scorePercent: operations.division.scorePercent,
+            completenessPercent: operations.division.completenessPercent,
+            measuredIndicatorCount: operations.division.measuredIndicatorCount,
+            indicatorCount: operations.division.indicatorCount
+        },
+        contributions: operations.division.indicators.map((item) => ({
+            departmentIndicator: {
+                id: item.parentIndicatorId,
+                code: item.parentIndicatorCode,
+                name: item.parentIndicatorName,
+                score: null,
+                calculationOwner: 'external_department_platform'
+            },
+            divisionIndicator: {
+                id: item.indicatorId,
+                code: item.indicatorCode,
+                name: item.indicatorName,
+                relationType: item.relationType,
+                aggregationMethod: item.aggregationMethod,
+                targetValue: item.targetValue,
+                targetUnit: item.targetUnit,
+                weight: item.weight
+            },
+            program: {
+                id: item.programId,
+                code: item.programCode
+            },
+            measurement: item.result.measurement,
+            numerator: item.result.numerator,
+            denominator: item.result.denominator,
+            rawAchievement: item.result.rawAchievement,
+            taskPerformanceFactor: item.result.taskPerformanceFactor,
+            divisionAchievement: item.result.adjustedAchievement,
+            divisionWeightedScore: item.result.weightedScore,
+            verifiedAssignmentCount: item.result.verifiedAssignmentCount,
+            evidenceLinks: item.result.evidenceLinks,
+            measured: item.result.measured
+        }))
+    };
 }
 
 async function resolveKpiStaff(req, requestedUserId) {
@@ -1347,24 +1924,104 @@ async function validateApprovedWeight(scorecardId, assignmentId, weight) {
     return Number(result.rows[0].total || 0) + weight <= 1.000001;
 }
 
-async function resolveKpiTaskLink(req, assignmentId, picUserId) {
-    const id = trimText(assignmentId, 120);
-    if (!id) return null;
+function normalizeTaskIds(value) {
+    return [...new Set((Array.isArray(value) ? value : []).map((item) => trimText(item, 120)).filter(Boolean))].slice(0, 50);
+}
+
+async function validateKpiClaimTasks(taskIds, staffUserId, year, divisionIndicatorId) {
+    const ids = normalizeTaskIds(taskIds);
+    if (!ids.length) return { ids: [], tasks: [] };
     const result = await pool.query(
-        `SELECT id,staff_user_id FROM bim_kpi_assignments
-         WHERE id=$1 AND status IN ('approved','verification_pending','achieved','closed')`,
-        [id]
+        `SELECT task.id,task.title,task.kpi_division_indicator_id
+         FROM bim_ops_tasks task
+         WHERE task.id=ANY($1::text[]) AND task.pic_user_id=$2
+           AND task.status='approved_done' AND task.intake_status='approved' AND task.task_kind<>'master'
+           AND task.period_month LIKE ($3::text || '-%') AND task.kpi_assignment_id IS NULL
+           AND (task.kpi_division_indicator_id IS NULL OR task.kpi_division_indicator_id=$4)
+         ORDER BY task.created_at`,
+        [ids, staffUserId, year, divisionIndicatorId]
     );
-    if (!result.rows.length) return { error: 'Kontribusi KPI belum approved atau tidak ditemukan', status: 400 };
-    if (String(result.rows[0].staff_user_id) !== String(picUserId)) {
-        return { error: 'Kontribusi KPI harus dimiliki oleh PIC task', status: 400 };
+    if (result.rows.length !== ids.length) {
+        return { error: 'Sebagian task tidak valid, bukan milik PIC, belum approved done, atau sudah diklaim ke KPI lain' };
     }
-    return { id };
+    return { ids, tasks: result.rows };
+}
+
+async function saveKpiTaskClaims(assignmentId, staffUserId, taskIds, status = 'pending_approval') {
+    for (const taskId of taskIds) {
+        try {
+            await pool.query(
+                `INSERT INTO bim_kpi_assignment_task_claims (assignment_id,task_id,staff_user_id,status)
+                 VALUES ($1,$2,$3,$4)
+                 ON CONFLICT (assignment_id,task_id) DO UPDATE SET status=EXCLUDED.status,updated_at=CURRENT_TIMESTAMP`,
+                [assignmentId, taskId, staffUserId, status]
+            );
+        } catch (error) {
+            if (error.code === '23505') throw Object.assign(new Error('Task sudah diajukan pada claim KPI lain'), { status: 409 });
+            throw error;
+        }
+    }
+}
+
+async function approveKpiTaskClaims(req, assignment) {
+    await pool.query(
+        `UPDATE bim_ops_tasks task SET
+             kpi_division_indicator_id=$2,kpi_assignment_id=$1,updated_at=CURRENT_TIMESTAMP
+         FROM bim_kpi_assignment_task_claims claim
+         WHERE claim.assignment_id=$1 AND claim.task_id=task.id
+           AND claim.status IN ('pending_approval','verification_pending')
+           AND task.pic_user_id=$3 AND task.status='approved_done' AND task.kpi_assignment_id IS NULL`,
+        [assignment.id, assignment.division_indicator_id, assignment.staff_user_id]
+    );
+    await pool.query(
+        `UPDATE bim_kpi_assignment_task_claims SET status='approved',reviewed_by_user_id=$2,
+             reviewed_by_name_snapshot=$3,reviewed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP
+         WHERE assignment_id=$1 AND status IN ('pending_approval','verification_pending')`,
+        [assignment.id, actorId(req), actorName(req)]
+    );
+}
+
+async function resolveKpiTaskLink(req, indicatorId, assignmentId, picUserId, year) {
+    let divisionIndicatorId = trimText(indicatorId, 120);
+    const individualAssignmentId = trimText(assignmentId, 120);
+
+    if (individualAssignmentId) {
+        const assignment = await pool.query(
+            `SELECT a.id,a.staff_user_id,a.division_indicator_id
+             FROM bim_kpi_assignments a
+             JOIN bim_kpi_individual_scorecards scorecard ON scorecard.id=a.scorecard_id
+             WHERE a.id=$1 AND scorecard.period_year=$2
+               AND a.status IN ('approved','verification_pending','achieved','closed')`,
+            [individualAssignmentId, year]
+        );
+        if (!assignment.rows.length) return { error: 'Mapping KPI individu belum approved atau tidak ditemukan', status: 400 };
+        if (String(assignment.rows[0].staff_user_id) !== String(picUserId)) {
+            return { error: 'Mapping KPI individu harus dimiliki oleh PIC task', status: 400 };
+        }
+        if (divisionIndicatorId && divisionIndicatorId !== assignment.rows[0].division_indicator_id) {
+            return { error: 'KPI individu tidak berada di bawah KPI Divisi yang dipilih', status: 400 };
+        }
+        divisionIndicatorId = assignment.rows[0].division_indicator_id;
+    }
+
+    if (!divisionIndicatorId) return null;
+    const indicator = await pool.query(
+        `SELECT indicator.id
+         FROM bim_kpi_indicators indicator
+         JOIN bim_kpi_scorecards scorecard ON scorecard.id=indicator.scorecard_id
+         WHERE indicator.id=$1 AND scorecard.period_year=$2 AND scorecard.level='division'
+           AND scorecard.org_unit='BIM' AND indicator.is_active=true
+         LIMIT 1`,
+        [divisionIndicatorId, year]
+    );
+    if (!indicator.rows.length) return { error: 'KPI Divisi tidak aktif atau tidak ditemukan pada periode task', status: 400 };
+    return { indicatorId: divisionIndicatorId, assignmentId: individualAssignmentId || null };
 }
 
 route('get', '/kpi', async (req, res) => {
     const year = normalizeYear(req.query.year);
     const operations = await loadKpiOperations(year);
+    const guidance = await loadKpiGuidance(req, year, operations);
     const cardsResult = await pool.query(
         `SELECT id,period_year,level,org_unit,title,status,max_achievement,source_reference
          FROM bim_kpi_scorecards
@@ -1410,17 +2067,34 @@ route('get', '/kpi', async (req, res) => {
         calculationContract: {
             achievement: 'MIN(Hasil pengukuran / Target, 120%)',
             weightedScore: 'SUM(Achievement indikator x Bobot indikator)',
+            individualScore: 'SUM(MIN(Actual / Target, 120%) x Task Performance Factor x Bobot Individu)',
+            divisionScore: 'SUM(Achievement KPI Divisi x Bobot KPI Divisi)',
             zeroDenominator: 'Belum terukur, bukan 0%',
-            maxAchievementPercent: 120
+            maxAchievementPercent: 120,
+            departmentScore: 'Tidak dihitung di BCL; diakumulasi pada platform eksternal Departemen Engineering.'
         },
         scorecards,
         programs: operations.programs,
+        division: operations.division,
+        departmentReporting: {
+            calculationOwner: 'external_department_platform',
+            score: null,
+            contributionPackageAvailable: true,
+            divisionCountContext: 3
+        },
         individual: {
             status: operations.cards.length ? 'active' : 'empty',
             cards: operations.cards,
             assignments: operations.assignments
-        }
+        },
+        guidance
     });
+});
+
+route('get', '/kpi/division-contribution', async (req, res) => {
+    const year = normalizeYear(req.query.year);
+    const operations = await loadKpiOperations(year);
+    res.json(buildDivisionContributionPackage(year, operations));
 });
 
 route('put', '/kpi/programs/:id', async (req, res) => {
@@ -1455,6 +2129,16 @@ route('post', '/kpi/assignments', async (req, res) => {
     }
     const staff = await resolveKpiStaff(req, req.body.staffUserId);
     if (!staff) return res.status(400).json({ error: 'User Staff BIM aktif wajib dipilih' });
+    const taskClaims = await validateKpiClaimTasks(req.body.taskIds, staff.id, Number(program.period_year), program.division_indicator_id);
+    if (taskClaims.error) return res.status(400).json({ error: taskClaims.error });
+    if (taskClaims.ids.length) {
+        const conflicts = await pool.query(
+            `SELECT task_id FROM bim_kpi_assignment_task_claims
+             WHERE task_id=ANY($1::text[]) AND status IN ('pending_approval','verification_pending','approved')`,
+            [taskClaims.ids]
+        );
+        if (conflicts.rows.length) return res.status(409).json({ error: 'Salah satu task sudah berada pada claim KPI lain' });
+    }
     const card = await ensureIndividualScorecard(Number(program.period_year), staff);
     const activeCount = await pool.query(
         `SELECT COUNT(*)::int AS total FROM bim_kpi_assignments
@@ -1488,16 +2172,21 @@ route('post', '/kpi/assignments', async (req, res) => {
              manager ? actorName(req) : null, manager ? actorId(req) : null, manager ? actorName(req) : null,
              manager ? new Date() : null]
         );
+        if (taskClaims.ids.length) {
+            await saveKpiTaskClaims(id, staff.id, taskClaims.ids, 'pending_approval');
+            if (manager) await approveKpiTaskClaims(req, result.rows[0]);
+        }
         await logActivity(req, 'kpi_assignment', id, manager ? 'delegated' : 'proposed', `${manager ? 'Kontribusi didelegasikan' : 'Kontribusi diusulkan'}: ${title}`, { programId: program.id, staffUserId: staff.id });
         res.status(201).json(result.rows[0]);
     } catch (error) {
+        if (error.status) return res.status(error.status).json({ error: error.message });
         if (error.code === '23505') return res.status(409).json({ error: 'Staff tersebut sudah memiliki kontribusi pada program ini' });
         throw error;
     }
 });
 
 route('post', '/kpi/assignments/:id/review', async (req, res) => {
-    if (!isKpiManager(req)) return res.status(403).json({ error: 'KPI review requires Kepala Divisi BIM' });
+    if (!isDivisionHead(req)) return res.status(403).json({ error: 'KPI review requires Kepala Divisi BIM' });
     const current = await pool.query(
         `SELECT a.*,p.target_value AS program_target_value,p.target_unit AS program_target_unit,
                 p.program_name
@@ -1544,6 +2233,16 @@ route('post', '/kpi/assignments/:id/review', async (req, res) => {
          status, note || null, action === 'approve' ? actorId(req) : null, action === 'approve' ? actorName(req) : null,
          action === 'approve' ? new Date() : null]
     );
+    if (action === 'approve') {
+        await approveKpiTaskClaims(req, result.rows[0]);
+    } else if (action === 'reject') {
+        await pool.query(
+            `UPDATE bim_kpi_assignment_task_claims SET status='rejected',reviewed_by_user_id=$2,
+                 reviewed_by_name_snapshot=$3,reviewed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP
+             WHERE assignment_id=$1 AND status='pending_approval'`,
+            [assignment.id, actorId(req), actorName(req)]
+        );
+    }
     await logActivity(req, 'kpi_assignment', assignment.id, `review_${action}`, `Review KPI: ${assignment.commitment_title}`, { note });
     res.json(result.rows[0]);
 });
@@ -1580,6 +2279,15 @@ route('post', '/kpi/assignments/:id/submit-actual', async (req, res) => {
     const actual = normalizeNumber(req.body.actualValue, -1, 0, 1000000000);
     const evidence = trimText(req.body.evidenceLink, 2000);
     if (actual < 0 || !evidence) return res.status(400).json({ error: 'Actual dan evidence wajib diisi' });
+    const scorecard = await pool.query(`SELECT period_year FROM bim_kpi_individual_scorecards WHERE id=$1`, [assignment.scorecard_id]);
+    const taskClaims = await validateKpiClaimTasks(
+        req.body.taskIds,
+        assignment.staff_user_id,
+        Number(scorecard.rows[0]?.period_year || new Date().getFullYear()),
+        assignment.division_indicator_id
+    );
+    if (taskClaims.error) return res.status(400).json({ error: taskClaims.error });
+    if (taskClaims.ids.length) await saveKpiTaskClaims(assignment.id, assignment.staff_user_id, taskClaims.ids, 'verification_pending');
     const result = await pool.query(
         `UPDATE bim_kpi_assignments SET submitted_actual=$2,actual_evidence_link=$3,actual_note=$4,
             status='verification_pending',updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,
@@ -1589,8 +2297,40 @@ route('post', '/kpi/assignments/:id/submit-actual', async (req, res) => {
     res.json(result.rows[0]);
 });
 
+async function loadKpiAssignmentTaskPerformance(assignmentId) {
+    const tasks = await pool.query(
+        `SELECT task.*,
+                COALESCE(worklogs.confirmed_worklog_count,0)::int AS confirmed_worklog_count
+         FROM bim_ops_tasks task
+         LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int AS confirmed_worklog_count
+            FROM bim_ops_worklogs worklog
+            WHERE worklog.task_id=task.id AND worklog.confirmation_status='confirmed'
+         ) worklogs ON true
+         WHERE (task.kpi_assignment_id=$1 OR EXISTS (
+                   SELECT 1 FROM bim_kpi_assignment_task_claims claim
+                   WHERE claim.assignment_id=$1 AND claim.task_id=task.id
+                     AND claim.status IN ('pending_approval','verification_pending','approved')
+               ))
+           AND task.task_kind<>'master'
+           AND task.intake_status='approved'
+         ORDER BY task.created_at`,
+        [assignmentId]
+    );
+    const performances = tasks.rows.map((task) => ({ task, performance: computeTaskPerformance(task) }));
+    const incomplete = performances.filter(({ task }) => !['approved_done', 'cancelled'].includes(task.status));
+    const scores = performances.map((item) => item.performance?.totalScore).filter((value) => Number.isFinite(value));
+    return {
+        taskCount: performances.length,
+        incompleteTaskCount: incomplete.length,
+        incompleteTaskTitles: incomplete.slice(0, 5).map((item) => item.task.title),
+        factor: scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length / 100 : 1,
+        averageScore: scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null
+    };
+}
+
 route('post', '/kpi/assignments/:id/verify', async (req, res) => {
-    if (!isKpiManager(req)) return res.status(403).json({ error: 'Actual verification requires Kepala Divisi BIM' });
+    if (!isDivisionHead(req)) return res.status(403).json({ error: 'Actual verification requires Kepala Divisi BIM' });
     const current = await pool.query(`SELECT * FROM bim_kpi_assignments WHERE id=$1`, [req.params.id]);
     if (!current.rows.length) return res.status(404).json({ error: 'KPI assignment not found' });
     const assignment = current.rows[0];
@@ -1605,45 +2345,107 @@ route('post', '/kpi/assignments/:id/verify', async (req, res) => {
         return res.json(result.rows[0]);
     }
     const verifiedActual = normalizeNumber(req.body.verifiedActual, Number(assignment.submitted_actual), 0, 1000000000);
-    const achievement = Math.min(MAX_ACHIEVEMENT, verifiedActual / Number(assignment.target_value));
-    const weightedScore = achievement * Number(assignment.approved_weight || 0);
+    const taskPerformance = await loadKpiAssignmentTaskPerformance(assignment.id);
+    if (taskPerformance.incompleteTaskCount > 0) {
+        return res.status(409).json({
+            error: 'Task KPI yang tertaut harus selesai atau cancelled sebelum actual diverifikasi',
+            incompleteTaskCount: taskPerformance.incompleteTaskCount,
+            incompleteTaskTitles: taskPerformance.incompleteTaskTitles
+        });
+    }
+    const rawAchievement = Math.min(MAX_ACHIEVEMENT, verifiedActual / Number(assignment.target_value));
+    const taskPerformanceFactor = Math.min(1, Math.max(0, taskPerformance.factor));
+    const adjustedAchievement = Math.min(MAX_ACHIEVEMENT, rawAchievement * taskPerformanceFactor);
+    const weightedScore = adjustedAchievement * Number(assignment.approved_weight || 0);
     const result = await pool.query(
-        `UPDATE bim_kpi_assignments SET verified_actual=$2,achievement=$3,weighted_score=$4,status='achieved',
-            review_note=$5,verified_by_user_id=$6,verified_by_name_snapshot=$7,verified_at=CURRENT_TIMESTAMP,
+        `UPDATE bim_kpi_assignments SET verified_actual=$2,raw_achievement=$3,task_performance_factor=$4,
+            adjusted_achievement=$5,achievement=$5,weighted_score=$6,status='achieved',
+            review_note=$7,verified_by_user_id=$8,verified_by_name_snapshot=$9,verified_at=CURRENT_TIMESTAMP,
             updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,
-        [assignment.id, verifiedActual, achievement, weightedScore, note || null, actorId(req), actorName(req)]
+        [assignment.id, verifiedActual, rawAchievement, taskPerformanceFactor, adjustedAchievement, weightedScore,
+         note || null, actorId(req), actorName(req)]
     );
-    await logActivity(req, 'kpi_assignment', assignment.id, 'actual_verified', `Actual KPI diverifikasi: ${assignment.commitment_title}`, { verifiedActual, achievement });
+    await approveKpiTaskClaims(req, result.rows[0]);
+    await logActivity(req, 'kpi_assignment', assignment.id, 'actual_verified', `Actual KPI diverifikasi: ${assignment.commitment_title}`, {
+        verifiedActual,
+        rawAchievement,
+        taskPerformanceFactor,
+        adjustedAchievement,
+        linkedTaskCount: taskPerformance.taskCount
+    });
     res.json(result.rows[0]);
 });
 
 route('get', '/kpi/task-options', async (req, res) => {
     const year = normalizeYear(req.query.year);
-    const picUserId = isKpiManager(req) && req.query.picUserId ? trimText(req.query.picUserId, 100) : actorId(req);
+    const picUserId = isKpiManager(req)
+        ? trimText(req.query.picUserId, 100)
+        : actorId(req);
     const result = await pool.query(
-        `SELECT a.id,a.commitment_title,a.staff_user_id,p.code AS program_code,p.program_name
-         FROM bim_kpi_assignments a
-         JOIN bim_kpi_individual_scorecards s ON s.id=a.scorecard_id
-         JOIN bim_kpi_programs p ON p.id=a.program_id
-         WHERE s.period_year=$1 AND a.staff_user_id=$2 AND a.status IN ('approved','verification_pending','achieved','closed')
-         ORDER BY p.sort_order,a.commitment_title`,
+        `SELECT indicator.id AS indicator_id,indicator.code AS indicator_code,indicator.sort_order,
+                indicator.indicator_name,indicator.perspective_name,indicator.weight,
+                indicator.target_value AS indicator_target_value,indicator.target_unit AS indicator_target_unit,
+                program.id AS program_id,program.code AS program_code,program.program_name,
+                assignment.id AS assignment_id,assignment.commitment_title,assignment.staff_user_id,
+                assignment.status AS assignment_status,assignment.approved_weight,
+                assignment.target_value AS assignment_target_value,assignment.target_unit AS assignment_target_unit
+         FROM bim_kpi_scorecards scorecard
+         JOIN bim_kpi_indicators indicator ON indicator.scorecard_id=scorecard.id AND indicator.is_active=true
+         LEFT JOIN bim_kpi_programs program ON program.division_indicator_id=indicator.id
+              AND program.period_year=scorecard.period_year AND program.is_active=true
+         LEFT JOIN bim_kpi_assignments assignment ON assignment.division_indicator_id=indicator.id
+              AND assignment.staff_user_id=$2
+              AND assignment.status IN ('approved','verification_pending','achieved','closed')
+         WHERE scorecard.period_year=$1 AND scorecard.level='division' AND scorecard.org_unit='BIM'
+         ORDER BY indicator.sort_order,assignment.commitment_title`,
         [year, picUserId]
     );
-    res.json(result.rows.map((row) => ({ id: row.id, title: row.commitment_title, staffUserId: row.staff_user_id, programCode: row.program_code, programName: row.program_name })));
+    const indicators = new Map();
+    for (const row of result.rows) {
+        if (!indicators.has(row.indicator_id)) {
+            indicators.set(row.indicator_id, {
+                id: row.indicator_id,
+                code: row.indicator_code,
+                sortOrder: Number(row.sort_order),
+                name: row.indicator_name,
+                perspectiveName: row.perspective_name,
+                weight: Number(row.weight),
+                targetValue: Number(row.indicator_target_value),
+                targetUnit: row.indicator_target_unit,
+                programId: row.program_id || '',
+                programCode: row.program_code || '',
+                programName: row.program_name || '',
+                assignments: []
+            });
+        }
+        if (row.assignment_id) {
+            indicators.get(row.indicator_id).assignments.push({
+                id: row.assignment_id,
+                title: row.commitment_title,
+                staffUserId: row.staff_user_id,
+                status: row.assignment_status,
+                approvedWeight: row.approved_weight == null ? null : Number(row.approved_weight),
+                targetValue: Number(row.assignment_target_value),
+                targetUnit: row.assignment_target_unit
+            });
+        }
+    }
+    res.json([...indicators.values()]);
 });
 
 route('get', '/dashboard', async (req, res) => {
     const period = normalizePeriod(req.query.period);
     const [taskSummary, issueSummary, actionSummary, outputs, activity] = await Promise.all([
         pool.query(`
-            SELECT COUNT(*) FILTER (WHERE intake_status='approved')::int AS total,
-                   COUNT(*) FILTER (WHERE status='approved_done')::int AS completed,
-                   COUNT(*) FILTER (WHERE due_date < CURRENT_DATE AND status NOT IN ('approved_done','cancelled'))::int AS overdue,
-                   COUNT(*) FILTER (WHERE status='blocked')::int AS blocked,
-                   COUNT(*) FILTER (WHERE intake_status='pending_approval' OR status='submitted_for_review')::int AS pending_approval,
-                   COUNT(*) FILTER (WHERE intake_status='approved' AND status NOT IN ('approved_done','cancelled'))::int AS active,
-                   COALESCE(ROUND(AVG(progress_percent) FILTER (WHERE intake_status='approved' AND status NOT IN ('cancelled')),1),0) AS average_progress,
-                   COUNT(*) FILTER (WHERE status='approved_done' AND approved_at::date <= due_date)::int AS on_time_completed
+            SELECT COUNT(*) FILTER (WHERE intake_status='approved' AND task_kind<>'master')::int AS total,
+                   COUNT(*) FILTER (WHERE status='approved_done' AND task_kind<>'master')::int AS completed,
+                   COUNT(*) FILTER (WHERE COALESCE(adjusted_due_date,baseline_due_date,due_date) < CURRENT_DATE AND status NOT IN ('approved_done','cancelled','on_hold') AND task_kind<>'master')::int AS overdue,
+                   COUNT(*) FILTER (WHERE status='blocked' AND task_kind<>'master')::int AS blocked,
+                   COUNT(*) FILTER (WHERE (intake_status='pending_approval' OR status='submitted_for_review') AND task_kind<>'master')::int AS pending_approval,
+                   COUNT(*) FILTER (WHERE intake_status='approved' AND status NOT IN ('approved_done','cancelled') AND task_kind<>'master')::int AS active,
+                   COALESCE(ROUND(AVG(progress_percent) FILTER (WHERE intake_status='approved' AND status NOT IN ('cancelled') AND task_kind<>'master'),1),0) AS average_progress,
+                   COUNT(*) FILTER (WHERE status='approved_done' AND completion_submitted_at::date <= COALESCE(adjusted_due_date,baseline_due_date,due_date) AND task_kind<>'master')::int AS on_time_completed,
+                   COUNT(*) FILTER (WHERE task_kind='master')::int AS master_tasks
             FROM bim_ops_tasks WHERE period_month=$1`, [period]),
         pool.query(`SELECT COUNT(*) FILTER (WHERE status IN ('accepted','action_required','resolved_pending_approval'))::int AS open,
                            COUNT(*) FILTER (WHERE status='submitted')::int AS pending,
@@ -1663,6 +2465,7 @@ route('get', '/dashboard', async (req, res) => {
     const task = taskSummary.rows[0];
     const total = Number(task.total || 0);
     const completed = Number(task.completed || 0);
+    const onTimeCompleted = Number(task.on_time_completed || 0);
     res.json({
         period,
         indicators: {
@@ -1670,7 +2473,10 @@ route('get', '/dashboard', async (req, res) => {
             active: Number(task.active || 0),
             completed,
             completionPercent: total ? Math.round((completed / total) * 100) : 0,
-            onTimePercent: completed ? Math.round((Number(task.on_time_completed || 0) / completed) * 100) : 0,
+            onTimeCompleted,
+            lateCompleted: Math.max(0, completed - onTimeCompleted),
+            onTimePercent: completed ? Math.round((onTimeCompleted / completed) * 100) : 0,
+            masterTasks: Number(task.master_tasks || 0),
             averageProgress: Number(task.average_progress || 0),
             overdue: Number(task.overdue || 0),
             blocked: Number(task.blocked || 0),
@@ -1687,6 +2493,7 @@ route('get', '/dashboard', async (req, res) => {
 });
 
 function mapTask(row) {
+    const performance = computeTaskPerformance(row);
     return {
         id: row.id,
         periodMonth: row.period_month,
@@ -1694,6 +2501,8 @@ function mapTask(row) {
         description: row.description || '',
         projectName: row.project_name || '',
         taskType: row.task_type,
+        taskKind: row.task_kind || 'standalone',
+        parentTaskId: row.parent_task_id || '',
         taskCategory: row.task_category || 'regular',
         isCritical: !!row.is_critical,
         criticalReason: row.critical_reason || '',
@@ -1703,14 +2512,23 @@ function mapTask(row) {
         delegatedByUserId: row.delegated_by_user_id || '',
         delegatedByName: row.delegated_by_name_snapshot || '',
         delegatedAt: row.delegated_at,
-        startDate: row.start_date,
-        dueDate: row.due_date,
+        startDate: dateOnlyValue(row.start_date),
+        dueDate: dateOnlyValue(row.due_date),
+        baselineStartDate: dateOnlyValue(row.baseline_start_date || row.start_date),
+        baselineDueDate: dateOnlyValue(row.baseline_due_date || row.due_date),
+        adjustedDueDate: dateOnlyValue(row.adjusted_due_date || row.due_date),
+        approvedHoldDays: Number(row.approved_hold_days || 0),
         priority: row.priority,
         intakeStatus: row.intake_status,
         status: row.status,
         progressPercent: Number(row.progress_percent || 0),
+        childCount: Number(row.child_count || 0),
+        completedChildCount: Number(row.completed_child_count || 0),
+        performance,
         isRoutine: !!row.is_routine,
+        routineWeekday: row.routine_weekday == null ? null : Number(row.routine_weekday),
         evidenceLink: row.evidence_link || '',
+        kpiDivisionIndicatorId: row.kpi_division_indicator_id || '',
         kpiAssignmentId: row.kpi_assignment_id || '',
         sourceType: row.source_type || 'manual',
         sourceId: row.source_id || '',
@@ -1722,7 +2540,7 @@ function mapTask(row) {
         holdPreviousStatus: row.hold_previous_status || '',
         holdReason: row.hold_reason || '',
         holdImpactNote: row.hold_impact_note || '',
-        holdResumeTargetDate: row.hold_resume_target_date,
+        holdResumeTargetDate: dateOnlyValue(row.hold_resume_target_date),
         holdUrgentTaskId: row.hold_urgent_task_id || '',
         holdByUserId: row.hold_by_user_id || '',
         holdByName: row.hold_by_name_snapshot || '',
@@ -1741,12 +2559,66 @@ route('get', '/tasks', async (req, res) => {
     const userId = actorId(req);
     const manager = isDivisionHead(req) || req.workspaceRole === 'system_admin';
     const result = await pool.query(
-        `SELECT * FROM bim_ops_tasks
-         WHERE period_month=$1
-           AND (intake_status='approved' OR created_by_user_id=$2 OR $3::boolean=true)
-         ORDER BY COALESCE(start_date,due_date),created_at`, [period, userId, manager]
+        `SELECT task.*,
+                COALESCE(children.child_count,0)::int AS child_count,
+                COALESCE(children.completed_child_count,0)::int AS completed_child_count,
+                COALESCE(worklogs.confirmed_worklog_count,0)::int AS confirmed_worklog_count
+         FROM bim_ops_tasks task
+         LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int AS child_count,
+                   COUNT(*) FILTER (WHERE child.status='approved_done')::int AS completed_child_count
+            FROM bim_ops_tasks child WHERE child.parent_task_id=task.id
+         ) children ON true
+         LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int AS confirmed_worklog_count
+            FROM bim_ops_worklogs worklog WHERE worklog.task_id=task.id AND worklog.confirmation_status='confirmed'
+         ) worklogs ON true
+         WHERE task.period_month=$1
+           AND (task.intake_status='approved' OR task.created_by_user_id=$2 OR $3::boolean=true)
+         ORDER BY CASE WHEN task.task_kind='master' THEN 0 WHEN task.task_kind='subtask' THEN 1 ELSE 2 END,
+                  COALESCE(task.start_date,task.due_date),task.created_at`, [period, userId, manager]
     );
     res.json(result.rows.map(mapTask));
+});
+
+route('get', '/task-performance-trend', async (req, res) => {
+    const endPeriod = normalizePeriod(req.query.period);
+    const startPeriod = shiftPeriodKey(endPeriod, -5);
+    const userId = actorId(req);
+    const manager = isDivisionHead(req) || req.workspaceRole === 'system_admin';
+    const result = await pool.query(
+        `SELECT task.*,
+                COALESCE(worklogs.confirmed_worklog_count,0)::int AS confirmed_worklog_count
+         FROM bim_ops_tasks task
+         LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int AS confirmed_worklog_count
+            FROM bim_ops_worklogs worklog
+            WHERE worklog.task_id=task.id AND worklog.confirmation_status='confirmed'
+         ) worklogs ON true
+         WHERE task.period_month BETWEEN $1 AND $2
+           AND task.task_kind<>'master'
+           AND task.pic_user_id IS NOT NULL
+           AND (task.intake_status='approved' OR task.created_by_user_id=$3 OR $4::boolean=true)
+         ORDER BY task.period_month,COALESCE(task.completion_submitted_at::date,task.adjusted_due_date,task.baseline_due_date,task.due_date,task.start_date,task.created_at::date),task.created_at`,
+        [startPeriod, endPeriod, userId, manager]
+    );
+    const points = result.rows.map((row) => {
+        const performance = computeTaskPerformance(row);
+        if (!performance) return null;
+        return {
+            taskId: row.id,
+            picUserId: row.pic_user_id,
+            picName: row.pic_name_snapshot || 'PIC',
+            periodMonth: row.period_month,
+            scoreDate: performance.completionDate || effectiveTaskDueDate(row) || dateOnlyValue(row.start_date) || dateOnlyValue(row.created_at),
+            totalScore: performance.totalScore,
+            scheduleScore: performance.scheduleScore,
+            completionScore: performance.completionScore,
+            qualityScore: performance.qualityScore,
+            worklogScore: performance.worklogScore
+        };
+    }).filter(Boolean);
+    res.json({ startPeriod, endPeriod, points });
 });
 
 route('get', '/task-project-contexts', async (req, res) => {
@@ -1775,30 +2647,59 @@ route('post', '/tasks', async (req, res) => {
     const title = trimText(req.body.title, 240);
     if (!title) return res.status(400).json({ error: 'Task title is required' });
     const id = newId('task');
-    const directApproval = isKpiManager(req);
     const period = normalizePeriod(req.body.periodMonth || req.body.period);
-    const assignment = await resolveTaskAssignment(req, req.body.picUserId);
+    const requestedKind = normalizeEnum(req.body.taskKind, TASK_KINDS, trimText(req.body.parentTaskId, 120) ? 'subtask' : 'standalone');
+    const taskKind = trimText(req.body.parentTaskId, 120) ? 'subtask' : requestedKind;
+    if (taskKind === 'master' && !isKpiManager(req)) return res.status(403).json({ error: 'Hanya Kepala Divisi BIM yang dapat membuat Master Task' });
+    const startDate = normalizeDate(req.body.startDate);
+    const dueDate = normalizeDate(req.body.dueDate);
+    if ((startDate || dueDate) && (!startDate || !dueDate || dueDate < startDate)) {
+        return res.status(400).json({ error: validateDateRange(startDate, dueDate) });
+    }
+    if (['master', 'subtask'].includes(taskKind)) {
+        const dateError = validateDateRange(startDate, dueDate, taskKind === 'master' ? 'Master Task' : 'Subtask');
+        if (dateError) return res.status(400).json({ error: dateError });
+    }
+    const parentResolution = taskKind === 'subtask'
+        ? await resolveParentMaster(req, req.body.parentTaskId, period, startDate, dueDate)
+        : null;
+    if (parentResolution?.error) return res.status(parentResolution.status).json({ error: parentResolution.error });
+    const assignment = await resolveTaskAssignment(req, taskKind === 'master' ? '' : req.body.picUserId, {
+        allowUnassigned: taskKind === 'master' || (taskKind === 'subtask' && isKpiManager(req))
+    });
     if (assignment.error) return res.status(assignment.status).json({ error: assignment.error });
-    const kpiLink = await resolveKpiTaskLink(req, req.body.kpiAssignmentId, assignment.picId);
+    const kpiLink = taskKind === 'master' ? null : await resolveKpiTaskLink(
+        req,
+        req.body.kpiDivisionIndicatorId,
+        req.body.kpiAssignmentId,
+        assignment.picId,
+        Number(period.slice(0, 4))
+    );
     if (kpiLink?.error) return res.status(kpiLink.status).json({ error: kpiLink.error });
-    const kpiAssignmentId = kpiLink?.id || null;
+    const kpiDivisionIndicatorId = kpiLink?.indicatorId || null;
+    const kpiAssignmentId = kpiLink?.assignmentId || null;
+    const directApproval = isKpiManager(req);
     const priority = normalizeEnum(req.body.priority, PRIORITIES, 'normal');
     const taskCategory = normalizeTaskCategory(req.body.taskCategory, priority, req.body.isRoutine ? 'routine' : 'regular');
+    const isRoutine = taskCategory === 'routine' || !!req.body.isRoutine;
+    const routineWeekday = normalizeRoutineWeekday(req.body.routineWeekday, startDate, isRoutine);
     const critical = !!req.body.isCritical || priority === 'urgent' || taskCategory === 'urgent';
     const result = await pool.query(
         `INSERT INTO bim_ops_tasks
-         (id,period_month,title,description,project_name,task_type,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,start_date,due_date,
-          priority,intake_status,status,progress_percent,is_routine,source_type,source_id,evidence_link,
-          kpi_assignment_id,created_by_user_id,created_by_name_snapshot,intake_reviewed_by_user_id,intake_reviewed_by_name_snapshot,intake_reviewed_at,
-          delegated_by_user_id,delegated_by_name_snapshot,delegated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'planned',0,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
+         (id,period_month,title,description,project_name,task_type,task_kind,parent_task_id,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,start_date,due_date,
+          baseline_start_date,baseline_due_date,adjusted_due_date,
+          priority,intake_status,status,progress_percent,is_routine,routine_weekday,source_type,source_id,evidence_link,
+           kpi_division_indicator_id,kpi_assignment_id,created_by_user_id,created_by_name_snapshot,intake_reviewed_by_user_id,intake_reviewed_by_name_snapshot,intake_reviewed_at,
+           delegated_by_user_id,delegated_by_name_snapshot,delegated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'planned',0,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35)
          RETURNING *`,
-        [id, period, title, trimText(req.body.description), normalizeProjectName(req.body.projectName),
-         normalizeEnum(req.body.taskType, TASK_TYPES, 'project_task'), taskCategory, critical, trimText(req.body.criticalReason, 1000),
-         assignment.picId, assignment.picName, normalizeDate(req.body.startDate), normalizeDate(req.body.dueDate), priority,
-         directApproval ? 'approved' : 'draft', taskCategory === 'routine' || !!req.body.isRoutine, trimText(req.body.sourceType, 40) || 'manual',
-         trimText(req.body.sourceId, 120) || null, trimText(req.body.evidenceLink, 2000) || null, kpiAssignmentId,
-         actorId(req), actorName(req), directApproval ? actorId(req) : null, directApproval ? actorName(req) : null,
+        [id, period, title, trimText(req.body.description), normalizeProjectName(req.body.projectName) || parentResolution?.parent?.project_name || '',
+         normalizeEnum(req.body.taskType, TASK_TYPES, 'project_task'), taskKind, parentResolution?.parent?.id || null,
+         taskCategory, critical, trimText(req.body.criticalReason, 1000), assignment.picId, assignment.picName,
+         startDate, dueDate, startDate, dueDate, dueDate, priority,
+         directApproval ? 'approved' : 'draft', isRoutine, routineWeekday, trimText(req.body.sourceType, 40) || 'manual',
+         trimText(req.body.sourceId, 120) || null, trimText(req.body.evidenceLink, 2000) || null,
+         kpiDivisionIndicatorId, kpiAssignmentId, actorId(req), actorName(req), directApproval ? actorId(req) : null, directApproval ? actorName(req) : null,
          directApproval ? new Date() : null, assignment.delegated ? actorId(req) : null,
          assignment.delegated ? actorName(req) : null, assignment.delegated ? new Date() : null]
     );
@@ -1806,10 +2707,11 @@ route('post', '/tasks', async (req, res) => {
         req,
         'task',
         id,
-        assignment.delegated ? 'delegated' : 'created',
-        assignment.delegated ? `Task didelegasikan kepada ${assignment.picName}: ${title}` : `Task dibuat: ${title}`,
-        { intakeStatus: directApproval ? 'approved' : 'draft', picUserId: assignment.picId, delegated: assignment.delegated }
+        assignment.delegated ? 'delegated' : taskKind === 'master' ? 'master_created' : taskKind === 'subtask' ? 'subtask_created' : 'created',
+        assignment.delegated ? `Task didelegasikan kepada ${assignment.picName}: ${title}` : `${taskKind === 'master' ? 'Master Task' : taskKind === 'subtask' ? 'Subtask' : 'Task'} dibuat: ${title}`,
+        { intakeStatus: directApproval ? 'approved' : 'draft', taskKind, parentTaskId: parentResolution?.parent?.id || null, picUserId: assignment.picId, delegated: assignment.delegated }
     );
+    if (parentResolution?.parent?.id) await syncMasterTask(parentResolution.parent.id);
     res.status(201).json(mapTask(result.rows[0]));
 });
 
@@ -1818,6 +2720,7 @@ route('put', '/tasks/:id', async (req, res) => {
     const existing = await pool.query(`SELECT * FROM bim_ops_tasks WHERE id=$1`, [req.params.id]);
     if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
     const task = existing.rows[0];
+    const taskKind = task.task_kind || 'standalone';
     const isCreator = task.created_by_user_id === actorId(req);
     const isPic = task.pic_user_id === actorId(req);
     const manager = isDivisionHead(req) || req.workspaceRole === 'system_admin';
@@ -1830,6 +2733,29 @@ route('put', '/tasks/:id', async (req, res) => {
     const nextStatus = manager || ['planned', 'in_progress', 'blocked'].includes(requestedStatus)
         ? requestedStatus
         : task.status;
+    const nextStartDate = canEditDefinition ? normalizeDate(req.body.startDate) : dateOnlyValue(task.start_date);
+    const nextDueDate = canEditDefinition ? normalizeDate(req.body.dueDate) : dateOnlyValue(task.due_date);
+    if ((nextStartDate || nextDueDate) && (!nextStartDate || !nextDueDate || nextDueDate < nextStartDate)) {
+        return res.status(400).json({ error: validateDateRange(nextStartDate, nextDueDate) });
+    }
+    if (['master', 'subtask'].includes(taskKind)) {
+        const dateError = validateDateRange(nextStartDate, nextDueDate, taskKind === 'master' ? 'Master Task' : 'Subtask');
+        if (dateError) return res.status(400).json({ error: dateError });
+    }
+    const scheduleChanged = canEditDefinition && (
+        nextStartDate !== dateOnlyValue(task.start_date) || nextDueDate !== dateOnlyValue(task.due_date)
+    );
+    const scheduleChangeReason = trimText(req.body.scheduleChangeReason, 2000);
+    if (scheduleChanged && task.intake_status === 'approved' && !scheduleChangeReason) {
+        return res.status(400).json({ error: 'Alasan perubahan jadwal wajib diisi agar baseline dan audit tetap jelas' });
+    }
+    if (taskKind === 'master' && scheduleChanged && !(await validateMasterScheduleAgainstChildren(task.id, nextStartDate, nextDueDate))) {
+        return res.status(409).json({ error: 'Jadwal Master Task tidak dapat diubah karena ada subtask di luar rentang baru' });
+    }
+    if (taskKind === 'subtask' && canEditDefinition) {
+        const parentResolution = await resolveParentMaster(req, task.parent_task_id, task.period_month, nextStartDate, nextDueDate);
+        if (parentResolution?.error) return res.status(parentResolution.status).json({ error: parentResolution.error });
+    }
     let assignment = {
         picId: task.pic_user_id,
         picName: task.pic_name_snapshot,
@@ -1839,22 +2765,41 @@ route('put', '/tasks/:id', async (req, res) => {
         delegatedAt: task.delegated_at
     };
     if (canEditDefinition) {
-        assignment = await resolveTaskAssignment(req, req.body.picUserId);
+        assignment = await resolveTaskAssignment(req, taskKind === 'master' ? '' : req.body.picUserId, {
+            allowUnassigned: taskKind === 'master' || (taskKind === 'subtask' && isKpiManager(req))
+        });
         if (assignment.error) return res.status(assignment.status).json({ error: assignment.error });
         const existingDelegation = assignment.delegated && task.pic_user_id === assignment.picId && task.delegated_by_user_id;
         assignment.delegatedByUserId = assignment.delegated ? (existingDelegation ? task.delegated_by_user_id : actorId(req)) : null;
         assignment.delegatedByName = assignment.delegated ? (existingDelegation ? task.delegated_by_name_snapshot : actorName(req)) : null;
         assignment.delegatedAt = assignment.delegated ? (existingDelegation ? task.delegated_at : new Date()) : null;
     }
-    const kpiLink = canEditDefinition
-        ? await resolveKpiTaskLink(req, req.body.kpiAssignmentId, assignment.picId)
-        : { id: task.kpi_assignment_id };
+    const kpiLink = taskKind === 'master' ? null : canEditDefinition
+        ? await resolveKpiTaskLink(
+            req,
+            req.body.kpiDivisionIndicatorId,
+            req.body.kpiAssignmentId,
+            assignment.picId,
+            Number(String(task.period_month).slice(0, 4))
+        )
+        : { indicatorId: task.kpi_division_indicator_id, assignmentId: task.kpi_assignment_id };
     if (kpiLink?.error) return res.status(kpiLink.status).json({ error: kpiLink.error });
-    const kpiAssignmentId = kpiLink?.id || null;
+    const kpiDivisionIndicatorId = kpiLink?.indicatorId || null;
+    const kpiAssignmentId = kpiLink?.assignmentId || null;
     const nextPriority = canEditDefinition ? normalizeEnum(req.body.priority, PRIORITIES, task.priority) : task.priority;
     const nextCategory = canEditDefinition
         ? normalizeTaskCategory(req.body.taskCategory, nextPriority, task.task_category || (task.is_routine ? 'routine' : 'regular'))
         : task.task_category;
+    const nextIsRoutine = canEditDefinition ? (nextCategory === 'routine' || !!req.body.isRoutine) : task.is_routine;
+    const nextRoutineWeekday = canEditDefinition
+        ? normalizeRoutineWeekday(req.body.routineWeekday, nextStartDate, nextIsRoutine)
+        : task.routine_weekday;
+    const routineScheduleChanged = canEditDefinition && (
+        !!task.is_routine !== !!nextIsRoutine || Number(task.routine_weekday) !== Number(nextRoutineWeekday)
+    );
+    if (routineScheduleChanged && task.intake_status === 'approved' && !scheduleChangeReason) {
+        return res.status(400).json({ error: 'Alasan perubahan jadwal wajib diisi saat pola hari rutin diubah' });
+    }
     const nextCritical = canEditDefinition
         ? (!!req.body.isCritical || nextPriority === 'urgent' || nextCategory === 'urgent')
         : task.is_critical;
@@ -1863,9 +2808,10 @@ route('put', '/tasks/:id', async (req, res) => {
             title=COALESCE(NULLIF($2,''),title), description=$3, project_name=$4,
             task_type=$5, task_category=$6, is_critical=$7, critical_reason=$8,
             pic_user_id=$9, pic_name_snapshot=$10, start_date=$11, due_date=$12,
-            priority=$13, status=$14, progress_percent=$15, is_routine=$16, evidence_link=$17,
-            delegated_by_user_id=$18, delegated_by_name_snapshot=$19, delegated_at=$20,
-            kpi_assignment_id=$21,
+            priority=$13, status=$14, progress_percent=$15, is_routine=$16, routine_weekday=$17, evidence_link=$18,
+            delegated_by_user_id=$19, delegated_by_name_snapshot=$20, delegated_at=$21,
+            kpi_division_indicator_id=$22,kpi_assignment_id=$23,
+            baseline_start_date=$24,baseline_due_date=$25,adjusted_due_date=$26,
             updated_at=CURRENT_TIMESTAMP
          WHERE id=$1 RETURNING *`,
         [req.params.id, canEditDefinition ? trimText(req.body.title, 240) : task.title,
@@ -1874,13 +2820,15 @@ route('put', '/tasks/:id', async (req, res) => {
          canEditDefinition ? normalizeEnum(req.body.taskType, TASK_TYPES, task.task_type) : task.task_type,
          nextCategory, nextCritical, canEditDefinition ? trimText(req.body.criticalReason, 1000) : task.critical_reason,
          assignment.picId, assignment.picName,
-         canEditDefinition ? normalizeDate(req.body.startDate) : task.start_date,
-         canEditDefinition ? normalizeDate(req.body.dueDate) : task.due_date,
+         nextStartDate, nextDueDate,
          nextPriority,
          nextStatus, normalizeNumber(req.body.progressPercent, Number(task.progress_percent || 0), 0, 100),
-         canEditDefinition ? (nextCategory === 'routine' || !!req.body.isRoutine) : task.is_routine,
-         trimText(req.body.evidenceLink, 2000) || null,
-         assignment.delegatedByUserId, assignment.delegatedByName, assignment.delegatedAt, kpiAssignmentId]
+         nextIsRoutine, nextRoutineWeekday, trimText(req.body.evidenceLink, 2000) || null,
+         assignment.delegatedByUserId, assignment.delegatedByName, assignment.delegatedAt,
+         kpiDivisionIndicatorId, kpiAssignmentId,
+         task.intake_status === 'approved' ? (task.baseline_start_date || task.start_date) : nextStartDate,
+         task.intake_status === 'approved' ? (task.baseline_due_date || task.due_date) : nextDueDate,
+         nextDueDate]
     );
     const reassigned = canEditDefinition && task.pic_user_id !== assignment.picId;
     await logActivity(
@@ -1897,9 +2845,21 @@ route('put', '/tasks/:id', async (req, res) => {
             progressPercent: Number(result.rows[0].progress_percent || 0),
             previousStatus: task.status,
             status: result.rows[0].status,
-            evidenceLink: result.rows[0].evidence_link || ''
+            evidenceLink: result.rows[0].evidence_link || '',
+            ...(scheduleChanged || routineScheduleChanged ? {
+                scheduleChangeReason,
+                previousStartDate: dateOnlyValue(task.start_date),
+                previousDueDate: dateOnlyValue(task.due_date),
+                startDate: nextStartDate,
+                dueDate: nextDueDate,
+                previousRoutineWeekday: task.routine_weekday,
+                routineWeekday: nextRoutineWeekday,
+                baselineDueDate: dateOnlyValue(task.baseline_due_date || task.due_date)
+            } : {})
         }
     );
+    if (task.parent_task_id) await syncMasterTask(task.parent_task_id);
+    if (taskKind === 'master') await syncMasterTask(task.id);
     res.json(mapTask(result.rows[0]));
 });
 
@@ -1922,17 +2882,25 @@ route('post', '/tasks/:id/intake-review', async (req, res) => {
     const next = action === 'approve' ? 'approved' : action === 'revision' ? 'revision_required' : 'rejected';
     const result = await pool.query(
         `UPDATE bim_ops_tasks SET intake_status=$2,intake_reviewed_by_user_id=$3,intake_reviewed_by_name_snapshot=$4,
-                intake_reviewed_at=CURRENT_TIMESTAMP,intake_review_note=$5,updated_at=CURRENT_TIMESTAMP
+                intake_reviewed_at=CURRENT_TIMESTAMP,intake_review_note=$5,
+                baseline_start_date=CASE WHEN $2='approved' THEN start_date ELSE baseline_start_date END,
+                baseline_due_date=CASE WHEN $2='approved' THEN due_date ELSE baseline_due_date END,
+                adjusted_due_date=CASE WHEN $2='approved' THEN due_date ELSE adjusted_due_date END,
+                updated_at=CURRENT_TIMESTAMP
          WHERE id=$1 AND intake_status='pending_approval' RETURNING *`,
         [req.params.id, next, actorId(req), actorName(req), trimText(req.body.note, 2000)]
     );
     if (!result.rows.length) return res.status(409).json({ error: 'Task is not pending register review' });
     await logActivity(req, 'task', req.params.id, `intake_${action}`, `Register task ${action}`, { note: req.body.note || '' });
+    if (result.rows[0].parent_task_id) await syncMasterTask(result.rows[0].parent_task_id);
     res.json(mapTask(result.rows[0]));
 });
 
 route('post', '/tasks/:id/submit-completion', async (req, res) => {
     if (!canWrite(req)) return res.status(403).json({ error: 'Write access required' });
+    const existing = await pool.query(`SELECT task_kind FROM bim_ops_tasks WHERE id=$1`, [req.params.id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
+    if (existing.rows[0].task_kind === 'master') return res.status(409).json({ error: 'Master Task selesai otomatis setelah seluruh subtask approved done' });
     const result = await pool.query(
         `UPDATE bim_ops_tasks SET status='submitted_for_review',progress_percent=100,completion_submitted_at=CURRENT_TIMESTAMP,
                 evidence_link=COALESCE(NULLIF($3,''),evidence_link),updated_at=CURRENT_TIMESTAMP
@@ -1942,6 +2910,7 @@ route('post', '/tasks/:id/submit-completion', async (req, res) => {
     );
     if (!result.rows.length) return res.status(409).json({ error: 'Task cannot be submitted for completion' });
     await logActivity(req, 'task', req.params.id, 'completion_submitted', 'Task diajukan untuk completion review');
+    if (result.rows[0].parent_task_id) await syncMasterTask(result.rows[0].parent_task_id);
     res.json(mapTask(result.rows[0]));
 });
 
@@ -1952,12 +2921,14 @@ route('post', '/tasks/:id/completion-review', async (req, res) => {
     const result = await pool.query(
         `UPDATE bim_ops_tasks SET status=$2,approved_by_user_id=$3,approved_by_name_snapshot=$4,approved_at=CURRENT_TIMESTAMP,
                 review_note=$5,completed_at=CASE WHEN $2='approved_done' THEN CURRENT_TIMESTAMP ELSE NULL END,
+                completion_revision_count=completion_revision_count + CASE WHEN $2='rejected_revision' THEN 1 ELSE 0 END,
                 progress_percent=CASE WHEN $2='approved_done' THEN 100 ELSE progress_percent END,updated_at=CURRENT_TIMESTAMP
          WHERE id=$1 AND status='submitted_for_review' RETURNING *`,
         [req.params.id, next, actorId(req), actorName(req), trimText(req.body.note, 2000)]
     );
     if (!result.rows.length) return res.status(409).json({ error: 'Task is not awaiting completion review' });
     await logActivity(req, 'task', req.params.id, approve ? 'approved' : 'revision_requested', approve ? 'Task disetujui selesai' : 'Task dikembalikan untuk revisi');
+    if (result.rows[0].parent_task_id) await syncMasterTask(result.rows[0].parent_task_id);
     res.json(mapTask(result.rows[0]));
 });
 
@@ -1966,6 +2937,7 @@ route('post', '/tasks/:id/hold', async (req, res) => {
     const existing = await pool.query(`SELECT * FROM bim_ops_tasks WHERE id=$1`, [req.params.id]);
     if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
     const task = existing.rows[0];
+    if ((task.task_kind || 'standalone') === 'master') return res.status(409).json({ error: 'Hold diterapkan pada subtask/PIC, bukan Master Task' });
     if (task.intake_status !== 'approved') return res.status(409).json({ error: 'Hanya task approved yang dapat di-hold' });
     if (['approved_done', 'cancelled', 'submitted_for_review', 'on_hold'].includes(task.status)) {
         return res.status(409).json({ error: 'Task tidak dapat di-hold pada status saat ini' });
@@ -1999,6 +2971,7 @@ route('post', '/tasks/:id/hold', async (req, res) => {
         resumeTargetDate: normalizeDate(req.body.resumeTargetDate),
         urgentTaskId
     });
+    if (task.parent_task_id) await syncMasterTask(task.parent_task_id);
     res.json(mapTask(result.rows[0]));
 });
 
@@ -2008,22 +2981,30 @@ route('post', '/tasks/:id/resume', async (req, res) => {
     if (!existing.rows.length) return res.status(404).json({ error: 'Task not found' });
     const task = existing.rows[0];
     if (task.status !== 'on_hold') return res.status(409).json({ error: 'Hanya task On Hold yang dapat di-start again' });
-    const nextDueDate = normalizeDate(req.body.dueDate);
+    const holdDays = Math.max(0, calendarDayDifference(task.hold_at, new Date().toISOString().slice(0, 10)));
+    const automaticDue = effectiveTaskDueDate(task) ? addCalendarDays(effectiveTaskDueDate(task), holdDays) : '';
+    const nextDueDate = normalizeDate(req.body.dueDate) || automaticDue || dateOnlyValue(task.due_date);
+    if (task.parent_task_id) {
+        const parentResolution = await resolveParentMaster(req, task.parent_task_id, task.period_month, dateOnlyValue(task.start_date), nextDueDate);
+        if (parentResolution?.error) return res.status(parentResolution.status).json({ error: parentResolution.error });
+    }
     const result = await pool.query(
         `UPDATE bim_ops_tasks SET status='in_progress',
-                due_date=COALESCE($2,due_date),
+                due_date=$2,adjusted_due_date=$2,approved_hold_days=approved_hold_days+$6,
                 resumed_by_user_id=$3,resumed_by_name_snapshot=$4,resumed_at=CURRENT_TIMESTAMP,
                 resume_note=$5,updated_at=CURRENT_TIMESTAMP
          WHERE id=$1 RETURNING *`,
-        [task.id, nextDueDate, actorId(req), actorName(req), trimText(req.body.note, 4000)]
+        [task.id, nextDueDate, actorId(req), actorName(req), trimText(req.body.note, 4000), holdDays]
     );
     await logActivity(req, 'task', task.id, 'resumed', `Task dimulai kembali: ${task.title}`, {
         previousStatus: 'on_hold',
         status: 'in_progress',
         previousDueDate: task.due_date,
-        dueDate: nextDueDate || task.due_date,
+        dueDate: nextDueDate,
+        approvedHoldDays: holdDays,
         note: trimText(req.body.note, 4000)
     });
+    if (task.parent_task_id) await syncMasterTask(task.parent_task_id);
     res.json(mapTask(result.rows[0]));
 });
 
@@ -2113,6 +3094,7 @@ route('post', '/tasks/carry-forward', async (req, res) => {
     const ids = Array.isArray(req.body.taskIds) ? req.body.taskIds.map((id) => trimText(id, 120)).filter(Boolean) : [];
     const params = [sourcePeriod];
     let filter = `period_month=$1 AND intake_status='approved'
+                  AND task_kind='standalone'
                   AND (status NOT IN ('approved_done','cancelled') OR ($2::boolean=true AND is_routine=true))`;
     params.push(includeRoutine);
     if (ids.length) {
@@ -2126,19 +3108,26 @@ route('post', '/tasks/carry-forward', async (req, res) => {
     )`;
     const source = await pool.query(`SELECT * FROM bim_ops_tasks WHERE ${filter}`, params);
     const created = [];
+    const preserveKpiMapping = sourcePeriod.slice(0, 4) === targetPeriod.slice(0, 4);
     for (const task of source.rows) {
         const id = newId('task');
+        const routineStart = task.is_routine ? `${targetPeriod}-01` : null;
+        const routineDue = task.is_routine ? addCalendarDays(`${shiftPeriodKey(targetPeriod, 1)}-01`, -1) : null;
         const row = await pool.query(
             `INSERT INTO bim_ops_tasks
-             (id,period_month,title,description,project_name,task_type,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,start_date,due_date,
-              priority,intake_status,status,progress_percent,is_routine,carried_from_task_id,source_type,source_id,evidence_link,
-              created_by_user_id,created_by_name_snapshot)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NULL,NULL,$12,'approved',$13,$14,$15,$16,'carry_forward',$16,$17,$18,$19)
+              (id,period_month,title,description,project_name,task_type,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,start_date,due_date,
+                baseline_start_date,baseline_due_date,adjusted_due_date,priority,intake_status,status,progress_percent,is_routine,routine_weekday,carried_from_task_id,source_type,source_id,evidence_link,
+                kpi_division_indicator_id,kpi_assignment_id,created_by_user_id,created_by_name_snapshot)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$12,$13,$13,$14,'approved',$15,$16,$17,$18,$19,'carry_forward',$19,$20,$21,$22,$23,$24)
              RETURNING *`,
             [id,targetPeriod,task.title,task.description,task.project_name,task.task_type,
              task.task_category || (task.is_routine ? 'routine' : 'regular'), task.is_critical, task.critical_reason,
-             task.pic_user_id,task.pic_name_snapshot,task.priority,task.status === 'approved_done' ? 'planned' : task.status,
-             task.status === 'approved_done' ? 0 : task.progress_percent,task.is_routine,task.id,task.evidence_link,actorId(req),actorName(req)]
+             task.pic_user_id,task.pic_name_snapshot,routineStart,routineDue,task.priority,task.status === 'approved_done' ? 'planned' : task.status,
+             task.status === 'approved_done' ? 0 : task.progress_percent,task.is_routine,
+              normalizeRoutineWeekday(task.routine_weekday, routineStart || task.start_date, task.is_routine),task.id,task.evidence_link,
+              preserveKpiMapping ? task.kpi_division_indicator_id : null,
+              preserveKpiMapping ? task.kpi_assignment_id : null,
+              actorId(req),actorName(req)]
         );
         await logActivity(req, 'task', id, 'carried_forward', `Task dibawa dari ${sourcePeriod}`, { sourceTaskId: task.id });
         created.push(mapTask(row.rows[0]));
@@ -2463,7 +3452,7 @@ route('put', '/worklogs/:id', async (req, res) => {
 
 route('post', '/worklogs/:id/confirm', async (req, res) => {
     const existing = await pool.query(
-        `SELECT w.*,t.status AS linked_task_status
+        `SELECT w.*,t.status AS linked_task_status,t.parent_task_id AS linked_parent_task_id
          FROM bim_ops_worklogs w LEFT JOIN bim_ops_tasks t ON t.id=w.task_id WHERE w.id=$1`, [req.params.id]
     );
     if (!existing.rows.length) return res.status(404).json({ error: 'Worklog tidak ditemukan' });
@@ -2502,6 +3491,7 @@ route('post', '/worklogs/:id/confirm', async (req, res) => {
             status: taskStatus,
             worklogId: row.id
         });
+        if (row.linked_parent_task_id) await syncMasterTask(row.linked_parent_task_id);
     }
     await logActivity(req,'worklog',row.id,'confirmed',`Worklog dikonfirmasi: ${row.task_item_text}`,{sourceType:row.source_type,sourceId:row.source_id});
     res.json(await getMappedWorklog(row.id,req));
@@ -2521,10 +3511,106 @@ async function getMeetingDetail(id) {
     const [meeting, attendees, actions] = await Promise.all([
         pool.query(`SELECT * FROM bim_ops_meetings WHERE id=$1`, [id]),
         pool.query(`SELECT * FROM bim_ops_meeting_attendees WHERE meeting_id=$1 ORDER BY created_at`, [id]),
-        pool.query(`SELECT * FROM bim_ops_meeting_actions WHERE meeting_id=$1 ORDER BY section_type DESC,created_at`, [id])
+        pool.query(`SELECT action.*,source_meeting.meeting_no AS source_meeting_no,source_meeting.meeting_date AS source_meeting_date
+                    FROM bim_ops_meeting_actions action
+                    LEFT JOIN bim_ops_meeting_actions source_action ON source_action.id=action.carried_from_action_id
+                    LEFT JOIN bim_ops_meetings source_meeting ON source_meeting.id=source_action.meeting_id
+                    WHERE action.meeting_id=$1 ORDER BY action.section_type DESC,action.created_at`, [id])
     ]);
     if (!meeting.rows.length) return null;
     return { ...meeting.rows[0], attendees: attendees.rows, actions: actions.rows };
+}
+
+async function replaceMeetingAttendees(client, meetingId, attendees = []) {
+    await client.query(`DELETE FROM bim_ops_meeting_attendees WHERE meeting_id=$1`, [meetingId]);
+    for (const attendee of attendees) {
+        if (!trimText(attendee.name,160)) continue;
+        await client.query(
+            `INSERT INTO bim_ops_meeting_attendees
+             (id,meeting_id,user_id,name,initial,attendance_status,position,company_or_division)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+            [newId('attendee'),meetingId,trimText(attendee.userId,100)||null,trimText(attendee.name,160),trimText(attendee.initial,20),
+             normalizeEnum(attendee.attendanceStatus,new Set(['present','absent','cc']),'present'),trimText(attendee.position,120),trimText(attendee.companyOrDivision,160)]
+        );
+    }
+}
+
+function meetingScopePayload(body = {}, fallbackScope = 'kantor') {
+    const scopeType = normalizeEnum(body.scopeType, MEETING_SCOPE_TYPES, fallbackScope);
+    const projectName = normalizeProjectName(body.projectName);
+    const projectNames = normalizeProjectNames([
+        ...(Array.isArray(body.projectNames) ? body.projectNames : []),
+        ...(scopeType === 'proyek' && projectName ? [projectName] : [])
+    ]);
+    return {
+        scopeType,
+        projectName: scopeType === 'kantor' ? '' : scopeType === 'gabungan' ? 'Semua Proyek' : projectName,
+        projectNames: scopeType === 'gabungan' ? projectNames : (scopeType === 'proyek' ? projectNames.slice(0, 1) : [])
+    };
+}
+
+function normalizeMeetingRows(value) {
+    if (!Array.isArray(value)) return [];
+    return value.slice(0,300).map((row,index) => ({
+        key: trimText(row?.key,100) || `row-${index+1}`,
+        section: normalizeEnum(row?.section,new Set(['progress','agreement']),'progress'),
+        rowType: normalizeEnum(row?.rowType,new Set(['heading','item']),'item'),
+        description: trimText(row?.description,4000),
+        actionOwnerName: trimText(row?.actionOwnerName,160),
+        actionOwnerUserId: trimText(row?.actionOwnerUserId,100),
+        plannedDueDate: normalizeDate(row?.plannedDueDate),
+        reviewerName: trimText(row?.reviewerName,160),
+        reviewerUserId: trimText(row?.reviewerUserId,100),
+        reviewResult: normalizeEnum(row?.reviewResult,ACTION_STATUSES,''),
+        signatureDate: normalizeDate(row?.signatureDate),
+        order: Number.isFinite(Number(row?.order)) ? Math.max(0,Math.trunc(Number(row.order))) : index
+    })).filter((row) => row.description);
+}
+
+function meetingDocumentPayload(body = {}) {
+    return {
+        weeklyProgress: trimText(body.weeklyProgress ?? body.meetingSummary, 30000),
+        constraintsProblems: trimText(body.constraintsProblems, 30000),
+        meetingIssues: trimText(body.meetingIssues, 30000),
+        actionPlan: trimText(body.actionPlan, 30000),
+        agreements: trimText(body.agreements ?? body.decisions, 30000),
+        meetingRows: normalizeMeetingRows(body.meetingRows ?? body.minutesRows),
+        ccText: trimText(body.ccText,4000)
+    };
+}
+
+function hasMeetingDocumentContent(document) {
+    return document.meetingRows.length > 0 || [document.weeklyProgress,document.constraintsProblems,document.meetingIssues,document.actionPlan,document.agreements]
+        .some((value) => trimText(value,30000));
+}
+
+async function getOutstandingMeetingActions(client, { meetingDate, scopeType, projectName }) {
+    return client.query(
+        `SELECT a.*,m.meeting_no AS source_meeting_no,m.subject AS source_subject,
+                m.meeting_date AS source_meeting_date,m.scope_type AS source_scope_type,
+                m.project_name AS source_project_name,m.project_names AS source_project_names
+         FROM bim_ops_meeting_actions a
+         JOIN bim_ops_meetings m ON m.id=a.meeting_id
+         WHERE a.status NOT IN ('closed','cancelled') AND m.meeting_date<$1
+           AND NOT EXISTS (
+               SELECT 1 FROM bim_ops_meeting_actions child
+               WHERE child.carried_from_action_id=a.id
+           )
+           AND (
+               ($2='gabungan' AND m.scope_type IN ('proyek','gabungan'))
+               OR ($2='kantor' AND m.scope_type='kantor')
+               OR ($2='proyek' AND (
+                   (m.scope_type='proyek' AND LOWER(TRIM(m.project_name))=LOWER(TRIM($3)))
+                   OR (m.scope_type='gabungan' AND EXISTS (
+                       SELECT 1 FROM jsonb_array_elements_text(COALESCE(m.project_names,'[]'::jsonb)) project(value)
+                       WHERE LOWER(TRIM(project.value))=LOWER(TRIM($3))
+                   ))
+               ))
+               OR ($2='other' AND m.scope_type='other' AND LOWER(TRIM(m.project_name))=LOWER(TRIM($3)))
+           )
+         ORDER BY a.planned_due_date NULLS LAST,m.meeting_date DESC,a.created_at`,
+        [meetingDate, scopeType, projectName]
+    );
 }
 
 route('get', '/meetings', async (req, res) => {
@@ -2538,6 +3624,43 @@ route('get', '/meetings', async (req, res) => {
          ORDER BY meeting_date DESC,created_at DESC`, [period,actorId(req),manager]
     );
     res.json(result.rows);
+});
+
+route('get', '/meeting-project-contexts', async (req, res) => {
+    if (!canWrite(req)) return res.json([]);
+    const result = await pool.query(`
+        WITH project_history AS (
+            SELECT TRIM(project_name) AS name,meeting_date AS last_used
+            FROM bim_ops_meetings
+            WHERE scope_type='proyek' AND NULLIF(TRIM(project_name),'') IS NOT NULL
+            UNION ALL
+            SELECT TRIM(project.value) AS name,meeting.meeting_date AS last_used
+            FROM bim_ops_meetings meeting
+            CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(meeting.project_names,'[]'::jsonb)) project(value)
+            WHERE NULLIF(TRIM(project.value),'') IS NOT NULL
+        ), ranked AS (
+            SELECT name,ROW_NUMBER() OVER (PARTITION BY LOWER(name) ORDER BY last_used DESC) AS position
+            FROM project_history
+        )
+        SELECT name FROM ranked WHERE position=1 ORDER BY LOWER(name) LIMIT 200
+    `);
+    const contexts = new Map(result.rows.map((row) => [String(row.name).toLocaleLowerCase('id-ID'), row.name]));
+    for (const item of walkLegacyRisalahFiles(LEGACY_RISALAH_ROOT)) {
+        const name = normalizeProjectName(item.projectName);
+        if (!name || item.scopeType !== 'proyek') continue;
+        const key = name.toLocaleLowerCase('id-ID');
+        if (!contexts.has(key)) contexts.set(key, name);
+    }
+    res.json([...contexts.values()].sort((left, right) => left.localeCompare(right, 'id-ID')));
+});
+
+route('get', '/meeting-actions/outstanding', async (req, res) => {
+    if (!canWrite(req)) return res.json([]);
+    const meetingDate = normalizeDate(req.query.before) || new Date().toISOString().slice(0,10);
+    const scope = meetingScopePayload({ scopeType: req.query.scopeType, projectName: req.query.projectName });
+    if (scope.scopeType === 'proyek' && !scope.projectName) return res.json([]);
+    const result = await getOutstandingMeetingActions(pool, { meetingDate, ...scope });
+    res.json(result.rows.slice(0, 100));
 });
 
 route('get', '/legacy-risalah', async (req, res) => {
@@ -2575,8 +3698,13 @@ route('get', '/meetings/:id', async (req, res) => {
 route('post', '/meetings', async (req, res) => {
     if (!canWrite(req)) return res.status(403).json({ error: 'Write access required' });
     const subject = trimText(req.body.subject, 300);
+    const document = meetingDocumentPayload(req.body);
     const meetingDate = normalizeDate(req.body.meetingDate) || new Date().toISOString().slice(0,10);
+    const scope = meetingScopePayload(req.body);
     if (!subject) return res.status(400).json({ error: 'Perihal rapat wajib diisi' });
+    if (!hasMeetingDocumentContent(document)) return res.status(400).json({ error: 'Isi minimal satu section standar risalah sebelum menyimpan draft' });
+    if (scope.scopeType === 'proyek' && !scope.projectName) return res.status(400).json({ error: 'Nama project wajib dipilih' });
+    if (scope.scopeType === 'gabungan' && !scope.projectNames.length) return res.status(400).json({ error: 'Pilih minimal satu project untuk rapat koordinasi gabungan' });
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -2584,38 +3712,25 @@ route('post', '/meetings', async (req, res) => {
         const meetingNo = await nextMeetingNumber(client, meetingDate);
         await client.query(
             `INSERT INTO bim_ops_meetings
-             (id,meeting_no,period_month,subject,scope_type,project_name,meeting_date,start_time,end_time,place,
+             (id,meeting_no,period_month,subject,scope_type,project_name,project_names,meeting_date,start_time,end_time,place,
               reported_by_name,reported_by_position,acknowledged_by_name,acknowledged_by_position,department_division,
-              reference_memo_no,reference_agenda_no,reference_archive_no,created_by_user_id,created_by_name_snapshot)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
-            [id,meetingNo,meetingDate.slice(0,7),subject,trimText(req.body.scopeType,40)||'kantor',trimText(req.body.projectName,240),
+              reference_memo_no,reference_agenda_no,reference_archive_no,meeting_summary,decisions,
+              weekly_progress,constraints_problems,meeting_issues,action_plan,agreements,
+              meeting_rows,cc_text,created_by_user_id,created_by_name_snapshot)
+             VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27::jsonb,$28,$29,$30)`,
+            [id,meetingNo,meetingDate.slice(0,7),subject,scope.scopeType,scope.projectName,JSON.stringify(scope.projectNames),
              meetingDate,trimText(req.body.startTime,8)||null,trimText(req.body.endTime,8)||null,trimText(req.body.place,240),
              trimText(req.body.reportedByName,160)||actorName(req),trimText(req.body.reportedByPosition,160),
-             trimText(req.body.acknowledgedByName,160),trimText(req.body.acknowledgedByPosition,160),
-             trimText(req.body.departmentDivision,160)||'Engineering / BIM',trimText(req.body.referenceMemoNo,120),
-             trimText(req.body.referenceAgendaNo,120),trimText(req.body.referenceArchiveNo,120),actorId(req),actorName(req)]
+              trimText(req.body.acknowledgedByName,160),trimText(req.body.acknowledgedByPosition,160),
+              trimText(req.body.departmentDivision,160)||'Engineering / BIM',trimText(req.body.referenceMemoNo,120),
+             trimText(req.body.referenceAgendaNo,120),trimText(req.body.referenceArchiveNo,120),document.weeklyProgress,
+             document.agreements,document.weeklyProgress,document.constraintsProblems,document.meetingIssues,
+             document.actionPlan,document.agreements,JSON.stringify(document.meetingRows),document.ccText,actorId(req),actorName(req)]
         );
         const attendees = Array.isArray(req.body.attendees) ? req.body.attendees : [];
-        for (const attendee of attendees) {
-            if (!trimText(attendee.name,160)) continue;
-            await client.query(
-                `INSERT INTO bim_ops_meeting_attendees
-                 (id,meeting_id,user_id,name,initial,attendance_status,position,company_or_division)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-                [newId('attendee'),id,trimText(attendee.userId,100)||null,trimText(attendee.name,160),trimText(attendee.initial,20),
-                 trimText(attendee.attendanceStatus,20)||'present',trimText(attendee.position,120),trimText(attendee.companyOrDivision,160)]
-            );
-        }
+        await replaceMeetingAttendees(client,id,attendees);
         if (req.body.carryForward !== false) {
-            const outstanding = await client.query(
-                `SELECT a.* FROM bim_ops_meeting_actions a JOIN bim_ops_meetings m ON m.id=a.meeting_id
-                  WHERE a.status NOT IN ('closed','cancelled') AND m.meeting_date<$1
-                  AND NOT EXISTS (
-                      SELECT 1 FROM bim_ops_meeting_actions child
-                      WHERE child.carried_from_action_id=a.id
-                  )
-                  ORDER BY a.planned_due_date NULLS LAST,a.created_at`, [meetingDate]
-            );
+            const outstanding = await getOutstandingMeetingActions(client, { meetingDate, ...scope });
             for (const action of outstanding.rows) {
                 await client.query(
                     `INSERT INTO bim_ops_meeting_actions
@@ -2644,17 +3759,50 @@ route('put', '/meetings/:id', async (req, res) => {
     const meeting = existing.rows[0];
     if (meeting.status !== 'draft') return res.status(409).json({ error: 'Issued Risalah must be revised, not overwritten' });
     if (meeting.created_by_user_id !== actorId(req) && !isDivisionHead(req)) return res.status(403).json({ error: 'Draft edit denied' });
-    await pool.query(
-        `UPDATE bim_ops_meetings SET subject=COALESCE(NULLIF($2,''),subject),scope_type=$3,project_name=$4,
-                meeting_date=$5,start_time=$6,end_time=$7,place=$8,reported_by_name=$9,reported_by_position=$10,
-                acknowledged_by_name=$11,acknowledged_by_position=$12,reference_memo_no=$13,reference_agenda_no=$14,
-                reference_archive_no=$15,updated_at=CURRENT_TIMESTAMP WHERE id=$1`,
-        [req.params.id,trimText(req.body.subject,300),trimText(req.body.scopeType,40)||meeting.scope_type,trimText(req.body.projectName,240),
-         normalizeDate(req.body.meetingDate)||meeting.meeting_date,trimText(req.body.startTime,8)||null,trimText(req.body.endTime,8)||null,
-         trimText(req.body.place,240),trimText(req.body.reportedByName,160),trimText(req.body.reportedByPosition,160),
-         trimText(req.body.acknowledgedByName,160),trimText(req.body.acknowledgedByPosition,160),trimText(req.body.referenceMemoNo,120),
-         trimText(req.body.referenceAgendaNo,120),trimText(req.body.referenceArchiveNo,120)]
-    );
+    const scope = meetingScopePayload({
+        scopeType: req.body.scopeType || meeting.scope_type,
+        projectName: req.body.projectName ?? meeting.project_name,
+        projectNames: Array.isArray(req.body.projectNames) ? req.body.projectNames : meeting.project_names
+    }, meeting.scope_type);
+    const document = meetingDocumentPayload({
+        weeklyProgress: req.body.weeklyProgress ?? meeting.weekly_progress ?? meeting.meeting_summary,
+        constraintsProblems: req.body.constraintsProblems ?? meeting.constraints_problems,
+        meetingIssues: req.body.meetingIssues ?? meeting.meeting_issues,
+        actionPlan: req.body.actionPlan ?? meeting.action_plan,
+        agreements: req.body.agreements ?? meeting.agreements ?? meeting.decisions,
+        meetingRows: req.body.meetingRows ?? meeting.meeting_rows,
+        ccText: req.body.ccText ?? meeting.cc_text
+    });
+    if (!hasMeetingDocumentContent(document)) return res.status(400).json({ error: 'Isi minimal satu section standar risalah sebelum menyimpan draft' });
+    if (scope.scopeType === 'proyek' && !scope.projectName) return res.status(400).json({ error: 'Nama project wajib dipilih' });
+    if (scope.scopeType === 'gabungan' && !scope.projectNames.length) return res.status(400).json({ error: 'Pilih minimal satu project untuk rapat koordinasi gabungan' });
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        await client.query(
+            `UPDATE bim_ops_meetings SET subject=COALESCE(NULLIF($2,''),subject),scope_type=$3,project_name=$4,project_names=$5::jsonb,
+                    meeting_date=$6,start_time=$7,end_time=$8,place=$9,reported_by_name=$10,reported_by_position=$11,
+                    acknowledged_by_name=$12,acknowledged_by_position=$13,department_division=$14,reference_memo_no=$15,
+                    reference_agenda_no=$16,reference_archive_no=$17,meeting_summary=$18,decisions=$19,weekly_progress=$20,
+                    constraints_problems=$21,meeting_issues=$22,action_plan=$23,agreements=$24,meeting_rows=$25::jsonb,
+                    cc_text=$26,updated_at=CURRENT_TIMESTAMP WHERE id=$1`,
+            [req.params.id,trimText(req.body.subject,300),scope.scopeType,scope.projectName,JSON.stringify(scope.projectNames),
+             normalizeDate(req.body.meetingDate)||meeting.meeting_date,trimText(req.body.startTime,8)||null,trimText(req.body.endTime,8)||null,
+             trimText(req.body.place,240),trimText(req.body.reportedByName,160),trimText(req.body.reportedByPosition,160),
+             trimText(req.body.acknowledgedByName,160),trimText(req.body.acknowledgedByPosition,160),
+             trimText(req.body.departmentDivision,160)||meeting.department_division||'Engineering / BIM',trimText(req.body.referenceMemoNo,120),
+             trimText(req.body.referenceAgendaNo,120),trimText(req.body.referenceArchiveNo,120),document.weeklyProgress,document.agreements,
+             document.weeklyProgress,document.constraintsProblems,document.meetingIssues,document.actionPlan,document.agreements,
+             JSON.stringify(document.meetingRows),document.ccText]
+        );
+        if (Array.isArray(req.body.attendees)) await replaceMeetingAttendees(client,req.params.id,req.body.attendees);
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
     await logActivity(req,'meeting',req.params.id,'updated','Draft Risalah diperbarui');
     res.json(await getMeetingDetail(req.params.id));
 });
@@ -2663,6 +3811,21 @@ route('post', '/meetings/:id/status', async (req, res) => {
     if (!isDivisionHead(req)) return res.status(403).json({ error: 'Division Head approval required' });
     const status = normalizeEnum(req.body.status, MEETING_STATUSES, '');
     if (!status || status === 'draft') return res.status(400).json({ error: 'Invalid meeting status' });
+    if (status === 'issued') {
+        const documentResult = await pool.query(`SELECT meeting_summary,decisions,weekly_progress,constraints_problems,meeting_issues,action_plan,agreements,meeting_rows,cc_text FROM bim_ops_meetings WHERE id=$1`, [req.params.id]);
+        if (!documentResult.rows.length) return res.status(404).json({ error: 'Risalah not found' });
+        const row = documentResult.rows[0];
+        const content = meetingDocumentPayload({
+            weeklyProgress: row.weekly_progress || row.meeting_summary,
+            constraintsProblems: row.constraints_problems,
+            meetingIssues: row.meeting_issues,
+            actionPlan: row.action_plan,
+            agreements: row.agreements || row.decisions,
+            meetingRows: row.meeting_rows,
+            ccText: row.cc_text
+        });
+        if (!hasMeetingDocumentContent(content)) return res.status(409).json({ error: 'Isi minimal satu section standar risalah sebelum diterbitkan' });
+    }
     const result = await pool.query(
         `UPDATE bim_ops_meetings SET status=$2,issued_at=CASE WHEN $2='issued' THEN CURRENT_TIMESTAMP ELSE issued_at END,
                 closed_at=CASE WHEN $2='closed' THEN CURRENT_TIMESTAMP ELSE closed_at END,updated_at=CURRENT_TIMESTAMP
@@ -2914,8 +4077,12 @@ route('post', '/issues/:id/create-task', async (req, res) => {
 route('get', '/reports/summary', async (req, res) => {
     const period = normalizePeriod(req.query.period);
     const [tasks, issues, actions, worklogs] = await Promise.all([
-        pool.query(`SELECT id,title,project_name,pic_name_snapshot,start_date,due_date,priority,status,progress_percent,intake_status,evidence_link
-                    FROM bim_ops_tasks WHERE period_month=$1 AND intake_status='approved' ORDER BY due_date NULLS LAST,title`,[period]),
+        pool.query(`SELECT task.id,task.title,task.project_name,task.pic_user_id,task.pic_name_snapshot,task.task_kind,task.parent_task_id,
+                           task.start_date,task.due_date,task.baseline_due_date,task.adjusted_due_date,task.priority,task.status,
+                           task.progress_percent,task.intake_status,task.evidence_link,task.completion_submitted_at,task.completed_at,
+                           task.approved_at,task.completion_revision_count,task.hold_at,
+                           (SELECT COUNT(*)::int FROM bim_ops_worklogs worklog WHERE worklog.task_id=task.id AND worklog.confirmation_status='confirmed') AS confirmed_worklog_count
+                    FROM bim_ops_tasks task WHERE task.period_month=$1 AND task.intake_status='approved' ORDER BY task.due_date NULLS LAST,task.title`,[period]),
         pool.query(`SELECT issue_date,title,project_context,severity,status,reported_by_name_snapshot,owner_name_snapshot,due_date
                     FROM bim_ops_issues WHERE period_month=$1 AND status NOT IN ('draft','rejected','cancelled') ORDER BY severity,due_date`,[period]),
         pool.query(`SELECT m.meeting_no,m.subject,a.description,a.action_owner_name,a.planned_due_date,a.status
@@ -2932,7 +4099,8 @@ route('get', '/reports/summary', async (req, res) => {
         ...row,
         hours_spent: row.pic_user_id === actorId(req) ? Number(row.hours_spent || 0) : null
     }));
-    res.json({ period,tasks:tasks.rows,issues:issues.rows,meetingActions:actions.rows,worklogs:sanitizedWorklogs });
+    const scoredTasks = tasks.rows.map((row) => ({ ...row, performance: computeTaskPerformance(row) }));
+    res.json({ period,tasks:scoredTasks,issues:issues.rows,meetingActions:actions.rows,worklogs:sanitizedWorklogs });
 });
 
 router.use((error, req, res, next) => {

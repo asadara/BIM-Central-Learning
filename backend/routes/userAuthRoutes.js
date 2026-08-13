@@ -931,13 +931,18 @@ function createUserAuthRoutes({
                 return res.status(400).json({ error: err.message || "Upload failed" });
             }
 
-            if (!req.file) {
+            const uploadedImage =
+                (req.files && req.files["profile-image"] && req.files["profile-image"][0]) ||
+                (req.files && req.files.profileImage && req.files.profileImage[0]) ||
+                null;
+
+            if (!uploadedImage) {
                 return res.status(400).json({ error: "No image uploaded" });
             }
 
             const userId = req.user && req.user.userId ? req.user.userId : null;
             const email = req.user && req.user.email ? req.user.email : null;
-            const imageUrl = `/uploads/profile-images/${req.file.filename}`;
+            const imageUrl = `/uploads/profile-images/${uploadedImage.filename}`;
 
             let saved = false;
             if (userId || email) {

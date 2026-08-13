@@ -151,7 +151,7 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                        mapping_kompetensi_access, dokumen_access, audit_2026_access,
                        library_download_access,
                        watermark_free_download_access,
-                       bim_workspace_access, bim_workspace_role
+                       bim_workspace_access, bim_workspace_role, bim_workspace_staff_role
                 FROM users
                 ORDER BY registration_date DESC
             `;
@@ -177,7 +177,8 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 libraryDownloadAccess: user.library_download_access || false,
                 watermarkFreeDownloadAccess: user.watermark_free_download_access || false,
                 bimWorkspaceAccess: user.bim_workspace_access || false,
-                bimWorkspaceRole: user.bim_workspace_role || 'viewer'
+                bimWorkspaceRole: user.bim_workspace_role || 'staff_bim',
+                bimWorkspaceStaffRole: user.bim_workspace_staff_role || 'bim_specialist'
             }));
 
             return res.json(safeUsers);
@@ -205,7 +206,8 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 libraryDownloadAccess: user.libraryDownloadAccess || user.library_download_access || false,
                 watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false,
                 bimWorkspaceAccess: user.bimWorkspaceAccess || user.bim_workspace_access || false,
-                bimWorkspaceRole: user.bimWorkspaceRole || user.bim_workspace_role || 'viewer'
+                bimWorkspaceRole: user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim',
+                bimWorkspaceStaffRole: user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || 'bim_specialist'
             }));
 
             console.log(`📄 Returned ${safeUsers.length} users from JSON fallback`);
@@ -430,7 +432,8 @@ router.post('/create', requireAdmin, async (req, res) => {
                 libraryDownloadAccess: false,
                 watermarkFreeDownloadAccess: false,
                 bimWorkspaceAccess: false,
-                bimWorkspaceRole: 'viewer'
+                bimWorkspaceRole: 'staff_bim',
+                bimWorkspaceStaffRole: 'bim_specialist'
             };
 
             return res.status(201).json({
@@ -480,8 +483,10 @@ router.post('/create', requireAdmin, async (req, res) => {
                 watermark_free_download_access: false,
                 bimWorkspaceAccess: false,
                 bim_workspace_access: false,
-                bimWorkspaceRole: 'viewer',
-                bim_workspace_role: 'viewer'
+                bimWorkspaceRole: 'staff_bim',
+                bim_workspace_role: 'staff_bim',
+                bimWorkspaceStaffRole: 'bim_specialist',
+                bim_workspace_staff_role: 'bim_specialist'
             };
 
             users.push(newUser);
@@ -544,7 +549,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 bimWorkspaceAccess: 'bim_workspace_access',
                 bim_workspace_access: 'bim_workspace_access',
                 bimWorkspaceRole: 'bim_workspace_role',
-                bim_workspace_role: 'bim_workspace_role'
+                bim_workspace_role: 'bim_workspace_role',
+                bimWorkspaceStaffRole: 'bim_workspace_staff_role',
+                bim_workspace_staff_role: 'bim_workspace_staff_role'
             };
 
             // Build SET clause and values array
@@ -553,7 +560,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 if (columnName && key !== 'password' && !seenUpdateColumns.has(columnName)) {
                     const normalizedValue = columnName === 'bim_workspace_role'
                         ? normalizeAccessProfile({ bimWorkspaceRole: updates[key] }).bimWorkspaceRole
-                        : updates[key];
+                        : columnName === 'bim_workspace_staff_role'
+                            ? normalizeAccessProfile({ bimWorkspaceStaffRole: updates[key] }).bimWorkspaceStaffRole
+                            : updates[key];
                     seenUpdateColumns.add(columnName);
                     updateFields.push(`${columnName} = $${paramIndex}`);
                     values.push(normalizedValue);
@@ -580,7 +589,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
                          mapping_kompetensi_access, dokumen_access, audit_2026_access,
                          library_download_access,
                          watermark_free_download_access,
-                         bim_workspace_access, bim_workspace_role
+                         bim_workspace_access, bim_workspace_role, bim_workspace_staff_role
             `;
 
             const result = await pool.query(updateQuery, values);
@@ -610,7 +619,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 libraryDownloadAccess: updatedUser.library_download_access || false,
                 watermarkFreeDownloadAccess: updatedUser.watermark_free_download_access || false,
                 bimWorkspaceAccess: updatedUser.bim_workspace_access || false,
-                bimWorkspaceRole: updatedUser.bim_workspace_role || 'viewer'
+                bimWorkspaceRole: updatedUser.bim_workspace_role || 'staff_bim',
+                bimWorkspaceStaffRole: updatedUser.bim_workspace_staff_role || 'bim_specialist'
             };
 
             return res.json({
@@ -665,6 +675,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
             const hasWorkspaceRoleUpdate =
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'bimWorkspaceRole') ||
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_role');
+            const hasWorkspaceStaffRoleUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'bimWorkspaceStaffRole') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_staff_role');
 
             users[userIndex] = { ...users[userIndex], ...safeUpdates };
 
@@ -701,6 +714,11 @@ router.put('/:id', requireAdmin, async (req, res) => {
             if (hasWorkspaceRoleUpdate) {
                 users[userIndex].bimWorkspaceRole = accessUpdates.bimWorkspaceRole;
                 users[userIndex].bim_workspace_role = accessUpdates.bimWorkspaceRole;
+            }
+
+            if (hasWorkspaceStaffRoleUpdate) {
+                users[userIndex].bimWorkspaceStaffRole = accessUpdates.bimWorkspaceStaffRole;
+                users[userIndex].bim_workspace_staff_role = accessUpdates.bimWorkspaceStaffRole;
             }
 
             // Save users

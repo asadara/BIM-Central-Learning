@@ -1477,7 +1477,10 @@
                                     <td><span class="badge bg-secondary">${escapeHtml(attempt.sourceType || '-')}</span></td>
                                     <td>${escapeHtml(attempt.quizCategory || '-')}</td>
                                     <td><strong>${Number(attempt.percentage || 0)}%</strong></td>
-                                    <td>${attempt.passed ? '<span class="badge bg-success">Lulus</span>' : '<span class="badge bg-light text-dark">Selesai</span>'}</td>
+                                    <td>
+                                        ${attempt.passed ? '<span class="badge bg-success">Lulus</span>' : '<span class="badge bg-light text-dark">Selesai</span>'}
+                                        ${attempt.verified ? '<span class="badge bg-primary ms-1">Verified</span>' : '<span class="badge bg-warning text-dark ms-1">Tercatat - belum verified</span>'}
+                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -1513,6 +1516,31 @@
                                     <td>${escapeHtml(event.eventType || '-')}</td>
                                     <td>${escapeHtml(event.category || '-')}</td>
                                     <td>${Number(event.progressPercent || 0)}%</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderTrainingRows(trainings) {
+            if (!Array.isArray(trainings) || trainings.length === 0) {
+                return '<div class="text-center text-muted py-3">Belum ada enrollment training batch.</div>';
+            }
+
+            return `
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead><tr><th>Training</th><th>Periode</th><th>Role</th><th>Status</th><th>Nilai Akhir</th></tr></thead>
+                        <tbody>
+                            ${trainings.map(training => `
+                                <tr>
+                                    <td><strong>${escapeHtml(training.title || training.code || 'Training')}</strong><div class="small text-muted">${escapeHtml(training.code || '')}</div></td>
+                                    <td>${escapeHtml(formatDateTime(training.startDate))} - ${escapeHtml(formatDateTime(training.endDate))}</td>
+                                    <td>${escapeHtml(training.role || '-')}</td>
+                                    <td>${escapeHtml(training.status === 'archived' ? 'archived' : (training.finalStatus || training.enrollmentStatus || training.status || '-'))}</td>
+                                    <td>${training.finalScore == null ? '-' : `${Number(training.finalScore)}%`}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -1578,6 +1606,7 @@
             const coverage = (user.dimensions && user.dimensions.coverage) || {};
             const attemptSummary = detail.attemptSummary || {};
             const activitySummary = detail.activitySummary || {};
+            const trainingSummary = detail.trainingSummary || {};
 
             container.innerHTML = `
                 <div class="competency-card mb-4">
@@ -1597,6 +1626,10 @@
                             ${renderUserHistoryMetric('Quiz Attempts', Number(progress.quizAttempts || 0), 'fa-question-circle', 'info')}
                             ${renderUserHistoryMetric('Practice', Number(progress.practiceAttempts || 0), 'fa-pen-to-square', 'success')}
                             ${renderUserHistoryMetric('Exam Attempts', Number(progress.examAttempts || 0), 'fa-clipboard-check', 'warning')}
+                            ${renderUserHistoryMetric('Verified Evidence', Number(progress.verifiedAttempts || attemptSummary.verifiedAttempts || 0), 'fa-shield-check', 'primary')}
+                            ${renderUserHistoryMetric('Pending Verification', Number(progress.pendingVerificationAttempts || attemptSummary.pendingVerificationAttempts || 0), 'fa-hourglass-half', 'warning')}
+                            ${renderUserHistoryMetric('Training Diikuti', Number(progress.trainingEnrollments || trainingSummary.enrollments || 0), 'fa-chalkboard-user', 'info')}
+                            ${renderUserHistoryMetric('Training Selesai', Number(progress.trainingsCompleted || trainingSummary.completed || 0), 'fa-graduation-cap', 'success')}
                             ${renderUserHistoryMetric('Avg Score', `${Number(progress.averageAttemptScore || attemptSummary.averageScore || 0)}%`, 'fa-chart-line', 'success')}
                             ${renderUserHistoryMetric('Assessment Coverage', `${Number(coverage.covered || 0)}/${Number(coverage.required || 0)}`, 'fa-layer-group', 'primary')}
                             ${renderUserHistoryMetric('PDF Reads', Number(activitySummary.pdfReads || 0), 'fa-file-pdf', 'danger')}
@@ -1628,6 +1661,11 @@
                 <div class="competency-card mt-4">
                     <div class="card-header"><h6 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Rekaman Pembelajaran Materi</h6></div>
                     <div class="card-body p-0">${renderLearningActivityRows(detail.activityEvents)}</div>
+                </div>
+
+                <div class="competency-card mt-4">
+                    <div class="card-header"><h6 class="mb-0"><i class="fas fa-chalkboard-user me-2"></i>Riwayat Training Batch</h6></div>
+                    <div class="card-body p-0">${renderTrainingRows(detail.trainingHistory)}</div>
                 </div>
             `;
         }

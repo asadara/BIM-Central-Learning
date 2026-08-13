@@ -264,8 +264,21 @@ class NewsModule {
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Berita Lengkap (untuk halaman updates) *</label>
-                                        <textarea class="form-control" id="newsFullContent" rows="8" required
-                                            placeholder="Masukkan isi berita lengkap di sini...">${this.escapeHtml(fullContentValue)}</textarea>
+                                        <div class="news-rich-editor">
+                                            <div class="news-rich-toolbar" role="toolbar" aria-label="Format isi berita">
+                                                <button type="button" class="btn btn-sm btn-light" data-news-format="bold" title="Tebal (Ctrl+B)" aria-label="Tebal"><i class="fas fa-bold"></i></button>
+                                                <button type="button" class="btn btn-sm btn-light" data-news-format="italic" title="Miring (Ctrl+I)" aria-label="Miring"><i class="fas fa-italic"></i></button>
+                                                <span>Blok teks lalu pilih format, atau gunakan <code>**tebal**</code> dan <code>*miring*</code>.</span>
+                                            </div>
+                                            <div class="news-rich-editor__grid">
+                                                <textarea class="form-control" id="newsFullContent" rows="10" required
+                                                    placeholder="Masukkan isi berita lengkap di sini...">${this.escapeHtml(fullContentValue)}</textarea>
+                                                <section class="news-rich-preview" aria-labelledby="newsRichPreviewLabel">
+                                                    <div id="newsRichPreviewLabel">Preview format</div>
+                                                    <article id="newsFullContentPreview" aria-live="polite"></article>
+                                                </section>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Sumber</label>
@@ -349,6 +362,32 @@ class NewsModule {
         const mediaFilesInput = document.getElementById('newsMediaFiles');
         const addMediaButton = document.getElementById('newsAddMediaUrlBtn');
         const mediaList = document.getElementById('newsMediaList');
+        const fullContentInput = document.getElementById('newsFullContent');
+        const fullContentPreview = document.getElementById('newsFullContentPreview');
+        const formatButtons = [...document.querySelectorAll('[data-news-format]')];
+
+        const updateContentPreview = () => {
+            if (!fullContentPreview) return;
+            const content = fullContentInput?.value || '';
+            fullContentPreview.innerHTML = content.trim()
+                ? this.renderRichText(content)
+                : '<p class="news-rich-preview__empty">Preview akan muncul saat isi berita ditulis.</p>';
+        };
+
+        formatButtons.forEach((button) => button.addEventListener('click', () => {
+            this.applyTextFormat(fullContentInput, button.dataset.newsFormat);
+            updateContentPreview();
+        }));
+        fullContentInput?.addEventListener('input', updateContentPreview);
+        fullContentInput?.addEventListener('keydown', (event) => {
+            if (!(event.ctrlKey || event.metaKey)) return;
+            const format = event.key.toLowerCase() === 'b' ? 'bold' : event.key.toLowerCase() === 'i' ? 'italic' : '';
+            if (!format) return;
+            event.preventDefault();
+            this.applyTextFormat(fullContentInput, format);
+            updateContentPreview();
+        });
+        updateContentPreview();
 
         const addMediaUrl = () => {
             const type = mediaTypeInput?.value === 'video' ? 'video' : 'image';
@@ -694,9 +733,9 @@ class NewsModule {
                                 <div class="col-md-7">
                                     <h4>${this.escapeHtml(news.title || '-')}</h4>
                                     <p class="mb-2"><strong>Kalimat Utama:</strong></p>
-                                    <div class="p-3 border rounded bg-light mb-3">${this.escapeHtml(news.stickerText || news.description || '-')}</div>
+                                    <div class="p-3 border rounded bg-light mb-3">${this.renderInlineText(news.stickerText || news.description || '-')}</div>
                                     <p class="mb-2"><strong>Berita Lengkap:</strong></p>
-                                    <div class="p-3 border rounded" style="white-space:pre-wrap;">${this.escapeHtml(news.fullContent || news.content || '-')}</div>
+                                    <div class="p-3 border rounded news-admin-rich-content">${this.renderRichText(news.fullContent || news.content || '-')}</div>
                                 </div>
                             </div>
                         </div>
@@ -831,6 +870,36 @@ class NewsModule {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    renderInlineText(value) {
+        return this.escapeHtml(value)
+            .replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+            .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s.,!?;:)])/g, '$1<em>$2</em>');
+    }
+
+    renderRichText(value) {
+        const content = String(value || '').trim();
+        if (!content) return '';
+        return content
+            .split(/\n{2,}/)
+            .map((paragraph) => `<p>${this.renderInlineText(paragraph).replace(/\n/g, '<br>')}</p>`)
+            .join('');
+    }
+
+    applyTextFormat(textarea, format) {
+        if (!textarea) return;
+        const marker = format === 'italic' ? '*' : '**';
+        const fallback = format === 'italic' ? 'teks miring' : 'teks tebal';
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? start;
+        const selected = textarea.value.slice(start, end) || fallback;
+        const replacement = `${marker}${selected}${marker}`;
+        textarea.setRangeText(replacement, start, end, 'end');
+        if (start === end) textarea.setSelectionRange(start + marker.length, start + marker.length + selected.length);
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     escapeAttr(value) {

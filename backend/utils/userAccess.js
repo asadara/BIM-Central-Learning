@@ -12,9 +12,11 @@ const ACCESS_COLUMN_DEFINITIONS = [
     ['library_download_access', 'BOOLEAN DEFAULT false'],
     ['watermark_free_download_access', 'BOOLEAN DEFAULT false'],
     ['bim_workspace_access', 'BOOLEAN DEFAULT false'],
-    ['bim_workspace_role', "TEXT DEFAULT 'viewer'"]
+    ['bim_workspace_role', "TEXT DEFAULT 'staff_bim'"],
+    ['bim_workspace_staff_role', "TEXT DEFAULT 'bim_specialist'"]
 ];
-const BIM_WORKSPACE_ROLES = new Set(['staff_bim', 'division_head', 'department_head', 'viewer']);
+const BIM_WORKSPACE_ROLES = new Set(['staff_bim', 'division_head']);
+const BIM_WORKSPACE_STAFF_ROLES = new Set(['bim_modeller', 'bim_specialist', 'bim_coordinator']);
 
 const pool = new Pool(createPgConfig({
     max: 4,
@@ -41,7 +43,10 @@ function normalizeBoolean(value) {
 
 function normalizeAccessProfile(source = {}) {
     const requestedWorkspaceRole = String(
-        source.bimWorkspaceRole ?? source.bim_workspace_role ?? 'viewer'
+        source.bimWorkspaceRole ?? source.bim_workspace_role ?? 'staff_bim'
+    ).trim().toLowerCase();
+    const requestedWorkspaceStaffRole = String(
+        source.bimWorkspaceStaffRole ?? source.bim_workspace_staff_role ?? 'bim_specialist'
     ).trim().toLowerCase();
 
     return {
@@ -63,7 +68,10 @@ function normalizeAccessProfile(source = {}) {
         bimWorkspaceAccess: normalizeBoolean(
             source.bimWorkspaceAccess ?? source.bim_workspace_access
         ),
-        bimWorkspaceRole: BIM_WORKSPACE_ROLES.has(requestedWorkspaceRole) ? requestedWorkspaceRole : 'viewer'
+        bimWorkspaceRole: BIM_WORKSPACE_ROLES.has(requestedWorkspaceRole) ? requestedWorkspaceRole : 'staff_bim',
+        bimWorkspaceStaffRole: BIM_WORKSPACE_STAFF_ROLES.has(requestedWorkspaceStaffRole)
+            ? requestedWorkspaceStaffRole
+            : 'bim_specialist'
     };
 }
 
@@ -81,10 +89,38 @@ function readUsers() {
 async function ensureAccessColumns(targetPool = pool) {
     if (!ensureColumnsPromise) {
         ensureColumnsPromise = (async () => {
+            const staffRoleColumn = await targetPool.query(`
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema=current_schema()
+                  AND table_name='users'
+                  AND column_name='bim_workspace_staff_role'
+                LIMIT 1
+            `);
+            const shouldInferExistingStaffRoles = staffRoleColumn.rows.length === 0;
             for (const [columnName, definition] of ACCESS_COLUMN_DEFINITIONS) {
                 await targetPool.query(
                     `ALTER TABLE users ADD COLUMN IF NOT EXISTS ${columnName} ${definition}`
                 );
+            }
+            await targetPool.query(`ALTER TABLE users ALTER COLUMN bim_workspace_role SET DEFAULT 'staff_bim'`);
+            await targetPool.query(`
+                UPDATE users
+                SET bim_workspace_role='staff_bim'
+                WHERE COALESCE(bim_workspace_role,'') NOT IN ('staff_bim','division_head')
+            `);
+            if (shouldInferExistingStaffRoles) {
+                await targetPool.query(`
+                    UPDATE users
+                    SET bim_workspace_staff_role=CASE
+                        WHEN lower(COALESCE(job_role,'')) LIKE '%coordinator%'
+                          OR lower(COALESCE(bim_level,''))='bim coordinator' THEN 'bim_coordinator'
+                        WHEN lower(COALESCE(job_role,'')) LIKE '%modeller%'
+                          OR lower(COALESCE(job_role,'')) LIKE '%modeler%' THEN 'bim_modeller'
+                        WHEN lower(COALESCE(job_role,'')) LIKE '%specialist%' THEN 'bim_specialist'
+                        WHEN lower(COALESCE(bim_level,''))='bim modeller' THEN 'bim_modeller'
+                        ELSE 'bim_specialist'
+                    END
+                `);
             }
         })().catch((error) => {
             ensureColumnsPromise = null;
@@ -101,7 +137,7 @@ async function fetchAccessProfileFromDb(userId, email) {
     const result = await pool.query(
         `SELECT mapping_kompetensi_access, dokumen_access, audit_2026_access,
                 library_download_access, watermark_free_download_access,
-                bim_workspace_access, bim_workspace_role
+                bim_workspace_access, bim_workspace_role, bim_workspace_staff_role
          FROM users
          WHERE ($1::text IS NOT NULL AND id::text = $1::text)
             OR ($2::text IS NOT NULL AND lower(email) = lower($2))
@@ -143,7 +179,8 @@ async function resolveAccessProfile(authUser) {
             libraryDownloadAccess: true,
             watermarkFreeDownloadAccess: true,
             bimWorkspaceAccess: true,
-            bimWorkspaceRole: 'system_admin'
+            bimWorkspaceRole: 'system_admin',
+            bimWorkspaceStaffRole: 'bim_specialist'
         };
     }
 

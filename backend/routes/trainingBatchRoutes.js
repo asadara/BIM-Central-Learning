@@ -1325,7 +1325,6 @@ router.get('/my-batches', requireAuthenticated, async (req, res) => {
              LEFT JOIN batch_members all_members ON all_members.batch_id = b.id
              WHERE bm.user_id = $1
                AND bm.enrollment_status <> 'dropped'
-               AND b.status <> 'archived'
              GROUP BY b.id, bm.role, bm.enrollment_status, bm.joined_at
              ORDER BY b.start_date NULLS LAST, b.created_at DESC`,
             [userId]

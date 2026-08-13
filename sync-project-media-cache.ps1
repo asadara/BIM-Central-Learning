@@ -73,6 +73,14 @@ function Get-MediaDisplayUrl([string]$mediaUrl) {
 
 function Resolve-ProjectPath([string]$sourceId, [string]$projectName, [string]$projectPath) {
     $normalizedSourceId = if ($null -ne $sourceId) { $sourceId.ToLowerInvariant() } else { '' }
+
+    if ($projectPath -and (Test-Path -LiteralPath $projectPath)) {
+        return [pscustomobject]@{
+            Path = $projectPath
+            UsedFallback = $false
+        }
+    }
+
     $localRoot = $pcBim02LocalRoots[$normalizedSourceId]
     if ($localRoot) {
         $localProjectPath = Join-Path $localRoot $projectName
@@ -81,13 +89,6 @@ function Resolve-ProjectPath([string]$sourceId, [string]$projectName, [string]$p
                 Path = $localProjectPath
                 UsedFallback = $true
             }
-        }
-    }
-
-    if ($projectPath -and (Test-Path -LiteralPath $projectPath)) {
-        return [pscustomobject]@{
-            Path = $projectPath
-            UsedFallback = $false
         }
     }
 
@@ -108,6 +109,10 @@ function Scan-MediaFiles([string]$projectPath, [string]$baseDir, [string]$mediaR
                 if (-not (Should-SkipDirectory $sourceId $entry.Name)) {
                     $stack.Push($entry.FullName)
                 }
+                continue
+            }
+
+            if ($entry.Name.StartsWith('._') -or $entry.Length -le 0) {
                 continue
             }
 

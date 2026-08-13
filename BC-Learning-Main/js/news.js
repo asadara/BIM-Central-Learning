@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${buildOriginTag(lead)}
                         </div>
                         <h2>${escapeHtml(lead.title)}</h2>
-                        <p class="news-description">${escapeHtml(summarizeText(lead.stickerText || lead.description, 260) || 'Ringkasan belum tersedia.')}</p>
+                        <p class="news-description">${renderInlineNewsText(summarizeText(lead.stickerText || lead.description, 260) || 'Ringkasan belum tersedia.')}</p>
                         ${buildMeta(lead)}
                         <div class="news-actions">
                             ${buildPrimaryAction(lead)}
@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${buildOriginTag(article)}
                     </div>
                     <h3>${escapeHtml(summarizeText(article.title, 115))}</h3>
-                    <p class="news-description">${escapeHtml(description)}</p>
+                    <p class="news-description">${renderInlineNewsText(description)}</p>
                     ${buildMeta(article)}
                     <div class="news-actions">
                         ${buildPrimaryAction(article)}
@@ -416,8 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="modal-body">
                             ${buildArticleMedia(article)}
                             ${buildMeta(article)}
-                            <div class="news-modal-summary p-3 mb-4">${escapeHtml(article.stickerText || article.description || 'Ringkasan belum tersedia.')}</div>
-                            <div class="news-modal-content lh-lg">${escapeHtml(article.fullContent || article.description || 'Isi lengkap belum tersedia.')}</div>
+                            <div class="news-modal-summary p-3 mb-4">${renderInlineNewsText(article.stickerText || article.description || 'Ringkasan belum tersedia.')}</div>
+                            <div class="news-modal-content">${renderNewsRichText(article.fullContent || article.description || 'Isi lengkap belum tersedia.')}</div>
                         </div>
                         <div class="modal-footer">
                             ${sourceLink}
@@ -720,6 +720,22 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    function renderInlineNewsText(value) {
+        return escapeHtml(value)
+            .replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+            .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s.,!?;:)])/g, '$1<em>$2</em>');
+    }
+
+    function renderNewsRichText(value) {
+        const content = String(value ?? '').trim();
+        if (!content) return '';
+        return content
+            .split(/\n{2,}/)
+            .map((paragraph) => `<p>${renderInlineNewsText(paragraph).replace(/\n/g, '<br>')}</p>`)
+            .join('');
     }
 
     function escapeAttribute(value) {

@@ -171,11 +171,14 @@ async function fetchCompetencyUsersFromDb() {
                 COUNT(*) FILTER (WHERE source_type = 'exam')::int AS exam_attempts,
                 COUNT(*) FILTER (WHERE source_type = 'exam' AND passed = true)::int AS exams_passed,
                 COUNT(*) FILTER (WHERE passed = true)::int AS passed_attempts,
-                COALESCE(ROUND(AVG(percentage)), 0)::int AS average_attempt_score,
+                COUNT(*) FILTER (WHERE is_verified = true)::int AS verified_attempts,
+                COUNT(*) FILTER (WHERE is_verified = true AND passed = true)::int AS verified_passed_attempts,
+                COALESCE(ROUND(AVG(percentage) FILTER (WHERE is_verified = true)), 0)::int AS verified_average_score,
                 MAX(submitted_at) AS last_attempt_at,
-                ARRAY_REMOVE(ARRAY_AGG(DISTINCT quiz_category), NULL) AS categories_attempted
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT quiz_category), NULL) AS categories_attempted,
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT quiz_category) FILTER (WHERE is_verified = true), NULL) AS verified_categories
             FROM learning_attempts
-            WHERE user_id IS NOT NULL AND is_verified = true
+            WHERE user_id IS NOT NULL
             GROUP BY user_id
         ), certificate_stats AS (
             SELECT
@@ -211,8 +214,11 @@ async function fetchCompetencyUsersFromDb() {
             COALESCE(ast.exam_attempts, 0) AS exam_attempts,
             COALESCE(ast.exams_passed, 0) AS exams_passed,
             COALESCE(ast.passed_attempts, 0) AS passed_attempts,
-            COALESCE(ast.average_attempt_score, 0) AS average_attempt_score,
+            COALESCE(ast.verified_attempts, 0) AS verified_attempts,
+            COALESCE(ast.verified_passed_attempts, 0) AS verified_passed_attempts,
+            COALESCE(ast.verified_average_score, 0) AS verified_average_score,
             COALESCE(ast.categories_attempted, ARRAY[]::text[]) AS categories_attempted,
+            COALESCE(ast.verified_categories, ARRAY[]::text[]) AS verified_categories,
             ast.last_attempt_at,
             COALESCE(cert.certificate_count, 0) AS certificates_earned,
             COALESCE(cert.certificate_exam_ids, ARRAY[]::text[]) AS certificate_exam_ids
@@ -224,7 +230,34 @@ async function fetchCompetencyUsersFromDb() {
          ORDER BY u.id ASC`
     );
 
+    let trainingStatsByUser = new Map();
+    try {
+        const trainingResult = await pool.query(
+            `SELECT bm.user_id,
+                    COUNT(*)::int AS training_enrollments,
+                    COUNT(*) FILTER (
+                        WHERE bm.enrollment_status = 'completed'
+                           OR be.final_status IN ('passed','completed')
+                    )::int AS trainings_completed,
+                    COUNT(*) FILTER (
+                        WHERE bm.enrollment_status <> 'completed'
+                          AND b.status <> 'archived'
+                          AND COALESCE(be.final_status,'in_progress') NOT IN ('passed','completed','dropped','failed')
+                    )::int AS trainings_active,
+                    COUNT(*) FILTER (WHERE b.status = 'archived')::int AS trainings_archived
+             FROM batch_members bm
+             JOIN training_batches b ON b.id=bm.batch_id
+             LEFT JOIN batch_evaluations be ON be.batch_id=bm.batch_id AND be.user_id=bm.user_id
+             WHERE bm.enrollment_status <> 'dropped'
+             GROUP BY bm.user_id`
+        );
+        trainingStatsByUser = new Map(trainingResult.rows.map((row) => [String(row.user_id), row]));
+    } catch (error) {
+        console.warn('WARN: Failed to load training enrollment stats:', error.message);
+    }
+
     return result.rows.map((row) => {
+        const training = trainingStatsByUser.get(String(row.id)) || {};
         const learningProgress = {
             coursesCompleted: Number(row.courses_completed || 0),
             totalEvents: Number(row.learning_events || 0),
@@ -237,9 +270,12 @@ async function fetchCompetencyUsersFromDb() {
             examsPassed: Number(row.exams_passed || 0),
             passedAttempts: Number(row.passed_attempts || 0),
             totalAttempts: Number(row.total_attempts || 0),
-            averageAttemptScore: Number(row.average_attempt_score || 0),
+            averageAttemptScore: Number(row.verified_average_score || 0),
+            verifiedAttempts: Number(row.verified_attempts || 0),
+            verifiedPassedAttempts: Number(row.verified_passed_attempts || 0),
+            verifiedCategories: Array.isArray(row.verified_categories) ? row.verified_categories.filter(Boolean) : [],
             categoriesAttempted: Array.isArray(row.categories_attempted) ? row.categories_attempted.filter(Boolean) : [],
-            source: 'verified-server-attempts'
+            source: 'server-attempts-with-verification-state'
         };
         const credentials = {
             certificatesEarned: Number(row.certificates_earned || 0),
@@ -268,15 +304,21 @@ async function fetchCompetencyUsersFromDb() {
                 certificatesEarned: credentials.certificatesEarned,
                 totalAttempts: assessment.totalAttempts,
                 averageAttemptScore: assessment.averageAttemptScore,
-                categoriesAttempted: assessment.categoriesAttempted
+                categoriesAttempted: assessment.categoriesAttempted,
+                verifiedAttempts: assessment.verifiedAttempts,
+                pendingVerificationAttempts: Math.max(0, assessment.totalAttempts - assessment.verifiedAttempts),
+                trainingEnrollments: Number(training.training_enrollments || 0),
+                trainingsActive: Number(training.trainings_active || 0),
+                trainingsCompleted: Number(training.trainings_completed || 0),
+                trainingsArchived: Number(training.trainings_archived || 0)
             }
         };
 
         return applyCompetencyProfile(normalizedUser, {
-            verifiedAttempts: assessment.totalAttempts,
-            verifiedPassedAttempts: assessment.passedAttempts,
+            verifiedAttempts: assessment.verifiedAttempts,
+            verifiedPassedAttempts: assessment.verifiedPassedAttempts,
             verifiedAverageScore: assessment.averageAttemptScore,
-            verifiedCategories: assessment.categoriesAttempted,
+            verifiedCategories: assessment.verifiedCategories,
             verifiedCertificateExamIds: credentials.examIds
         });
     });
@@ -300,11 +342,12 @@ async function fetchCompetencyUserDetailFromDb(userId) {
             total_questions,
             percentage,
             passed,
+            is_verified,
             time_taken,
             verification_method,
             submitted_at
          FROM learning_attempts
-         WHERE user_id::text = $1::text AND is_verified = true
+         WHERE user_id::text = $1::text
          ORDER BY submitted_at DESC
          LIMIT 100`,
         [String(userId)]
@@ -390,7 +433,7 @@ async function fetchCompetencyUserDetailFromDb(userId) {
         percentage: Number(attempt.percentage || 0),
         passed: !!attempt.passed,
         timeTaken: Number(attempt.time_taken || 0),
-        verified: true,
+        verified: attempt.is_verified === true,
         verificationMethod: attempt.verification_method || null,
         submittedAt: attempt.submitted_at
     }));
@@ -418,6 +461,38 @@ async function fetchCompetencyUserDetailFromDb(userId) {
         return summary;
     }, {});
 
+    let trainingHistory = [];
+    try {
+        const trainingResult = await pool.query(
+            `SELECT b.id,b.code,b.title,b.status,b.start_date,b.end_date,
+                    bm.role,bm.enrollment_status,bm.joined_at,bm.completed_at,
+                    be.final_status,be.final_score,be.evaluated_at
+             FROM batch_members bm
+             JOIN training_batches b ON b.id=bm.batch_id
+             LEFT JOIN batch_evaluations be ON be.batch_id=bm.batch_id AND be.user_id=bm.user_id
+             WHERE bm.user_id::text=$1::text AND bm.enrollment_status <> 'dropped'
+             ORDER BY COALESCE(be.evaluated_at,bm.completed_at,bm.joined_at) DESC`,
+            [String(userId)]
+        );
+        trainingHistory = trainingResult.rows.map((item) => ({
+            id: item.id,
+            code: item.code,
+            title: item.title,
+            status: item.status,
+            role: item.role,
+            enrollmentStatus: item.enrollment_status,
+            finalStatus: item.final_status || null,
+            finalScore: item.final_score == null ? null : Number(item.final_score),
+            startDate: item.start_date,
+            endDate: item.end_date,
+            joinedAt: item.joined_at,
+            completedAt: item.completed_at,
+            evaluatedAt: item.evaluated_at
+        }));
+    } catch (error) {
+        console.warn('WARN: Failed to load user training history:', error.message);
+    }
+
     const timeline = [
         ...attempts.slice(0, 50).map((attempt) => ({
             type: attempt.sourceType || 'quiz',
@@ -434,6 +509,14 @@ async function fetchCompetencyUserDetailFromDb(userId) {
             status: event.eventType || 'opened',
             progressPercent: event.progressPercent,
             occurredAt: event.createdAt
+        })),
+        ...trainingHistory.slice(0, 30).map((training) => ({
+            type: 'training',
+            title: training.title || training.code || 'Training batch',
+            category: training.code || '',
+            status: training.finalStatus || training.enrollmentStatus || training.status,
+            score: training.finalScore,
+            occurredAt: training.evaluatedAt || training.completedAt || training.joinedAt
         }))
     ]
         .filter((item) => item.occurredAt)
@@ -448,6 +531,8 @@ async function fetchCompetencyUserDetailFromDb(userId) {
             practiceAttempts: attempts.filter((attempt) => attempt.sourceType === 'practice').length,
             examAttempts: attempts.filter((attempt) => attempt.sourceType === 'exam').length,
             passedAttempts: attempts.filter((attempt) => attempt.passed).length,
+            verifiedAttempts: attempts.filter((attempt) => attempt.verified).length,
+            pendingVerificationAttempts: attempts.filter((attempt) => !attempt.verified).length,
             averageScore: attempts.length
                 ? Math.round(attempts.reduce((sum, attempt) => sum + attempt.percentage, 0) / attempts.length)
                 : 0
@@ -459,6 +544,13 @@ async function fetchCompetencyUserDetailFromDb(userId) {
         attempts,
         activitySummary,
         activityEvents,
+        trainingSummary: {
+            enrollments: trainingHistory.length,
+            active: trainingHistory.filter((item) => item.status !== 'archived' && item.enrollmentStatus !== 'completed' && !['passed','completed'].includes(item.finalStatus)).length,
+            completed: trainingHistory.filter((item) => item.enrollmentStatus === 'completed' || ['passed','completed'].includes(item.finalStatus)).length,
+            archived: trainingHistory.filter((item) => item.status === 'archived').length
+        },
+        trainingHistory,
         timeline
     };
 }

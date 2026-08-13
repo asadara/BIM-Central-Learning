@@ -569,19 +569,57 @@
                                     <div class="stat-label">Last Quiz</div>
                                 </div>
                             </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="verified-attempts">0</div>
+                                    <div class="stat-label">Verified Evidence</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="pending-verification-attempts">0</div>
+                                    <div class="stat-label">Tercatat, Belum Verified</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="dashboard-panel" open>
+                    <summary><span><i class="fas fa-chalkboard-teacher"></i> Training Saya</span></summary>
+                    <div class="dashboard-panel__body">
+                        <div class="stats-overview">
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-user-graduate"></i></div>
+                                <div class="stat-content"><div class="stat-number" id="training-enrollments">0</div><div class="stat-label">Training Diikuti</div></div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-play-circle"></i></div>
+                                <div class="stat-content"><div class="stat-number" id="training-active">0</div><div class="stat-label">Training Aktif</div></div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="stat-content"><div class="stat-number" id="training-completed">0</div><div class="stat-label">Training Selesai</div></div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon"><i class="fas fa-archive"></i></div>
+                                <div class="stat-content"><div class="stat-number" id="training-archived">0</div><div class="stat-label">Riwayat Diarsipkan</div></div>
+                            </div>
                         </div>
                     </div>
                 </details>
 
                 <details class="dashboard-panel" id="quiz-history-panel">
-                    <summary><span><i class="fas fa-history"></i> Quiz History</span></summary>
+                    <summary><span><i class="fas fa-history"></i> Riwayat Quiz / Practice / Exam</span></summary>
                     <div class="dashboard-panel__body">
                         <div class="quiz-history">
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th>Quiz Name</th>
+                                            <th>Aktivitas</th>
                                             <th>Category</th>
                                             <th>Score</th>
                                             <th>Status</th>
@@ -690,7 +728,7 @@
     <script src="js/component-loader.js?v=20260717b"></script>
     <script src="js/script.js"></script>
     <script src="js/sidebar-loader.js?v=20260717b"></script>
-    <script src="js/dashboard.js?v=20260526-dashboard-entry2"></script>
+    <script src="js/dashboard.js?v=20260806-learning-sync1"></script>
     <script src="js/user.js"></script>
 </body>
 </html>

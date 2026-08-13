@@ -162,7 +162,10 @@ function createUserAuthService({
                 cb(new Error("Invalid file type. Only JPG, PNG, or WEBP are allowed."));
             }
         }
-    }).single("profile-image");
+    }).fields([
+        { name: "profile-image", maxCount: 1 },
+        { name: "profileImage", maxCount: 1 }
+    ]);
 
     const profileUpdateUpload = multer({
         storage: profileImageStorage,

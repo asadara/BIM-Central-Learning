@@ -253,6 +253,7 @@ body.bimws-page {
     flex: 0 0 auto;
     min-width: 134px;
 }
+.bimws-filterbar.bimws-task-filterbar #task-pic-filter { min-width: 170px; }
 .bimws-filter-toggle {
     display: inline-flex;
     align-items: center;
@@ -367,8 +368,23 @@ body.bimws-page {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    max-width: 190px;
+    max-width: none;
 }
+.bimws-risk-cell { display: grid; gap: 6px; min-width: 190px; max-width: 270px; }
+.bimws-overlap-detail {
+    display: grid;
+    gap: 2px;
+    padding: 7px 8px;
+    border-left: 3px solid #c11574;
+    border-radius: 0 5px 5px 0;
+    background: #fff5fa;
+    color: #7a284f;
+    font-size: 11px;
+    line-height: 1.35;
+}
+.bimws-overlap-detail strong { color: #9e165f; font-size: 11px; }
+.bimws-overlap-detail strong i { margin-right: 4px; }
+.bimws-overlap-detail span { color: #667085; overflow-wrap: anywhere; }
 .bimws-task-chip,
 .bimws-risk-chip {
     display: inline-flex;
@@ -548,8 +564,10 @@ body.bimws-page {
 .bimws-table tr[data-priority="urgent"] td:first-child { box-shadow: inset 4px 0 0 #d92d20; }
 .bimws-table tr[data-priority="urgent"]:not([data-status="on_hold"]) td { background: #fff8f6; }
 .bimws-table tr[data-demo="true"] td:first-child { box-shadow: inset 4px 0 0 #667085; }
+.bimws-task-row[data-clash="true"]:not([data-demo="true"]) td:first-child { box-shadow: inset 3px 0 0 #c11574; }
 .bimws-table-title { min-width: 190px; font-weight: 700; color: var(--ws-ink); }
 .bimws-demo-pill { display: inline-flex; align-items: center; min-height: 20px; margin-left: 7px; padding: 2px 7px; border-radius: 999px; background: #eef2f6; color: #475467; font-size: 11px; font-weight: 800; vertical-align: middle; }
+.bimws-carry-pill { display: inline-flex; align-items: center; min-height: 20px; margin-left: 7px; padding: 2px 7px; border-radius: 999px; background: #e6f4f5; color: #086b75; font-size: 11px; font-weight: 800; vertical-align: middle; }
 .bimws-table-sub { display: block; margin-top: 2px; color: var(--ws-muted); font-size: 12px; }
 .bimws-task-row.is-master td { background: #f0f8f9; border-bottom-color: #cde5e8; }
 .bimws-task-row.is-master .bimws-table-title { font-size: 14px; }
@@ -588,6 +606,7 @@ body.bimws-page {
 .bimws-task-group-stats small { font-size: 11px; font-weight: 700; }
 .bimws-task-group-summary { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #edf0f3; background: #fbfcfd; }
 .bimws-task-group-summary span { color: var(--ws-muted); font-size: 12px; font-weight: 700; }
+.bimws-task-group-summary [data-risk="clash"] { color: #c11574; }
 
 .bimws-meeting-groups { display: grid; gap: 14px; padding: 14px; background: var(--ws-soft); }
 .bimws-meeting-group { overflow: hidden; background: #fff; border: 1px solid var(--ws-line); border-radius: 6px; }
@@ -927,6 +946,7 @@ body.bimws-page {
 .bimws-dialog header p { color: var(--ws-teal); }
 .bimws-dialog header h2 { margin: 2px 0 0; font: 800 21px/1.2 "Nunito",sans-serif; }
 .bimws-dialog-body { overflow-y: auto; padding: 18px; }
+.bimws-dialog-note { margin: 14px 0 0; padding: 11px 12px; border-left: 3px solid var(--ws-teal); background: #f3f9fa; color: #475467; font-size: 12px; line-height: 1.55; }
 .bimws-dialog footer { display: flex; justify-content: flex-end; gap: 8px; padding: 13px 18px; border-top: 1px solid var(--ws-line); }
 .bimws-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .bimws-field { display: grid; gap: 5px; }

@@ -357,7 +357,7 @@
         const previousSourceId = this.selectedSourceId;
         const previousProject = this.selectedProject;
 
-        await this.loadYears();
+        await this.loadYears({ preserveSelection: true });
 
         if (!previousYear) {
             return;
@@ -555,7 +555,10 @@
         });
     }
 
-    async loadYears() {
+    async loadYears(options = {}) {
+        const preserveSelection = options.preserveSelection === true;
+        const preservedYear = preserveSelection ? this.selectedYear : null;
+        const preservedSourceId = preserveSelection ? this.selectedSourceId : null;
         const yearList = document.getElementById('year-list');
         if (yearList) {
             yearList.innerHTML = `
@@ -586,6 +589,19 @@
             this.allProjectsIndexLoaded = false;
             this.projectSearchLoadPromise = null;
             this.renderYearList();
+
+            if (preservedYear) {
+                const availableYears = preservedSourceId
+                    ? this.getUniqueSortedYearsForSource(preservedSourceId)
+                    : this.years;
+                if (availableYears.includes(preservedYear)) {
+                    // Force selectYear() to fetch the refreshed project catalog even
+                    // when the user remains in the same year/source context.
+                    this.selectedYearKey = null;
+                    await this.selectYear(preservedYear, preservedSourceId || null);
+                    return;
+                }
+            }
 
             const initialProjectContext = this.getInitialProjectContext();
             if (initialProjectContext.year) {

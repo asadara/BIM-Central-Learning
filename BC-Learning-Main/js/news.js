@@ -18,8 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeNews = [];
     let currentCategory = 'all';
     let currentPage = 0;
-    let searchTerm = '';
+    let searchTerm = new URLSearchParams(window.location.search).get('search')?.trim() || '';
     let searchTimer = null;
+
+    if (searchInput && searchTerm) {
+        searchInput.value = searchTerm;
+    }
 
     attachEventListeners();
     showLoadingState();

@@ -451,7 +451,7 @@ if %errorlevel% equ 0 (
     echo [WARNING] Port %BACKEND_PORT% is already in use. Will attempt to free it.
 )
 
-netstat -ano | findstr ":80" >nul
+netstat -ano | findstr /R /C:":80 .*LISTENING" >nul
 if %errorlevel% equ 0 (
     echo [WARNING] Port 80 is already in use. Will attempt to free it.
 )
@@ -619,7 +619,7 @@ if "%RESET_MODE%"=="1" (
     call :sleep 3
 
     :: Check if nginx is still running on port 80, force kill if needed
-    for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":80.*LISTENING"') do (
+    for /f "tokens=5" %%p in ('netstat -ano ^| findstr /R /C:":80 .*LISTENING"') do (
         echo [INFO] Force killing nginx process PID: %%p
         taskkill /PID %%p /F >nul 2>&1
     )
@@ -732,10 +732,10 @@ if not errorlevel 1 (
 )
 
 :: Port 80 conflict check (simple)
-netstat -ano | findstr ":80.*LISTENING" >nul
+netstat -ano | findstr /R /C:":80 .*LISTENING" >nul
 if %errorlevel% equ 0 (
     echo [ERROR] Port 80 is already in use by another process.
-    echo [INFO] Run: netstat -ano ^| findstr ":80"
+    echo [INFO] Run: netstat -ano ^| findstr /R /C:":80 .*LISTENING"
     set ERROR_FLAG=1
     goto :error_exit
 )
@@ -794,7 +794,7 @@ if errorlevel 1 (
 )
 
 :: Test 2: Check if port 80 is listening
-netstat -ano | findstr ":80.*LISTENING" >nul
+netstat -ano | findstr /R /C:":80 .*LISTENING" >nul
 if errorlevel 1 (
     echo.
     echo ================================================================================

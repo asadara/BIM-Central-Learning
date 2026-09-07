@@ -72,23 +72,15 @@ function createAdminSessionRoutes({
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !email.endsWith(".local");
     }
 
-    function getRecoveryRecipient(user) {
+    function getRecoveryRecipient() {
         const configured = String(process.env.ADMIN_RECOVERY_EMAIL || "").trim();
-        if (configured) {
-            return configured;
-        }
-
-        if (isRoutableEmail(user.email)) {
-            return user.email;
-        }
-
-        return "";
+        return isRoutableEmail(configured) ? configured : "";
     }
 
     async function sendRecoveryEmail({ req, user, token }) {
         const mail = getConfiguredMailTransport();
         const resetLink = getResetLink(req, token);
-        const recipient = getRecoveryRecipient(user);
+        const recipient = getRecoveryRecipient();
 
         if (!mail) {
             console.warn(`Admin password recovery email skipped; SMTP is not configured. target=${user.email || user.username}`);
@@ -96,7 +88,7 @@ function createAdminSessionRoutes({
         }
 
         if (!recipient) {
-            console.warn(`Admin password recovery email skipped; no routable ADMIN_RECOVERY_EMAIL for account=${user.email || user.username}`);
+            console.warn(`Admin password recovery email skipped; ADMIN_RECOVERY_EMAIL is missing or invalid for account=${user.email || user.username}`);
             return false;
         }
 

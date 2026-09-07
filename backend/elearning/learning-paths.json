@@ -50,7 +50,19 @@
         "title": "Kontrol Informasi dan Keputusan",
         "outcome": "Peserta dapat membedakan pembuat informasi, pemeriksa, pemberi approval, dan pengguna informasi.",
         "materials": [
-          { "type": "reading", "title": "BIM Governance", "source": "/pages/bim-governance-quiz.html" }
+          { "type": "reading", "title": "Regulasi BIM", "source": "/pages/regulasi-bim.html" },
+          { "type": "reading", "title": "Definisi & Status Informasi", "source": "/pages/manajemen-informasi-validity.html" },
+          { "type": "reading", "title": "Alur Informasi Proyek", "source": "/pages/manajemen-informasi-flow.html" },
+          { "type": "reading", "title": "Otoritas & Validasi Data", "source": "/pages/manajemen-informasi-authority.html" },
+          { "type": "reading", "title": "Penggunaan Informasi untuk Keputusan", "source": "/pages/manajemen-informasi-decision.html" },
+          { "type": "reading", "title": "Peran dalam Sistem BIM", "source": "/pages/peran-role.html" },
+          { "type": "reading", "title": "Batas Tanggung Jawab Informasi", "source": "/pages/peran-responsibility.html" },
+          { "type": "reading", "title": "Hak & Kewenangan Keputusan", "source": "/pages/peran-authority.html" },
+          { "type": "reading", "title": "Koordinasi Antar Peran", "source": "/pages/peran-interface.html" },
+          { "type": "reading", "title": "Quality Gate Data BIM", "source": "/pages/quality-gate.html" },
+          { "type": "reading", "title": "Risiko Salah Pakai Informasi", "source": "/pages/risk-impact.html" },
+          { "type": "reading", "title": "Issue, RFI, & Perubahan", "source": "/pages/change-control.html" },
+          { "type": "reading", "title": "Audit Trail & Lessons Learned", "source": "/pages/trace-lessons.html" }
         ],
         "practice": { "category": "bim-governance", "minimumAttempts": 3, "minimumAverageScore": 80 }
       }
@@ -87,7 +99,14 @@
         "title": "Workflow Delivery Informasi",
         "outcome": "Peserta memahami kebutuhan informasi, produksi, koordinasi, validasi, rilis, dan penggunaan informasi.",
         "materials": [
-          { "type": "reading", "title": "BIM Delivery Workflow", "source": "/pages/bim-delivery-workflow-quiz.html" }
+          { "type": "reading", "title": "BIM NKE Workflow", "source": "/pages/workflow-bim-nke.html" },
+          { "type": "reading", "title": "Peta Alur BIM (End-to-End)", "source": "/pages/workflow-overview.html" },
+          { "type": "reading", "title": "Standar & Aturan Main", "source": "/pages/workflow-standar.html" },
+          { "type": "reading", "title": "Produksi Model", "source": "/pages/workflow-produksi.html" },
+          { "type": "reading", "title": "Koordinasi & Integrasi", "source": "/pages/workflow-koordinasi.html" },
+          { "type": "reading", "title": "Simulasi & Analisis", "source": "/pages/workflow-simulasi.html" },
+          { "type": "reading", "title": "Dokumen Teknis", "source": "/pages/workflow-deliverables.html" },
+          { "type": "reading", "title": "Tools & Alur Kerja", "source": "/pages/workflow-tools.html" }
         ],
         "practice": { "category": "delivery-workflow", "minimumAttempts": 3, "minimumAverageScore": 80 }
       }

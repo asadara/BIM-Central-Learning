@@ -103,7 +103,7 @@
         tasks: {
             title: 'Task Scheduler',
             subtitle: 'Mengelola Master Task, subtask staff, baseline jadwal, dan performa pelaksanaan.',
-            steps: ['Kadiv membuat Master Task dengan jadwal induk tanpa menentukan PIC.', 'Staff membuka Master Task lalu menambahkan subtask miliknya sesuai pembagian meeting internal.', 'Start dan Due subtask wajib berada di dalam jadwal induk; baseline awal tetap tersimpan bila jadwal efektif berubah.', 'Untuk task rutin, pilih hari mingguan. Timeline hanya menampilkan marker pada hari tersebut dan pola dapat digeser melalui Edit Task.', 'Hold yang disetujui Kadiv menambah deadline efektif. Tanpa Hold/perpanjangan resmi, hari lewat deadline dihitung sebagai keterlambatan PIC.', 'Task Performance Score terdiri dari Schedule 45%, Completion 25%, Quality 20%, dan Worklog 10%; grafik tren membandingkan score mingguan atau bulanan per PIC.'],
+            steps: ['Kadiv membuat Master Task dengan jadwal induk tanpa menentukan PIC.', 'Staff membuka Master Task lalu menambahkan subtask miliknya sesuai pembagian meeting internal.', 'Master Task bulan sebelumnya tetap tersedia pada bulan aktif selama jadwal induknya masih berjalan.', 'Gunakan Carry pada bulan tujuan untuk membuat kelanjutan Master Task yang masih outstanding; subtask lama tetap menjadi histori bulan asal.', 'Start dan Due subtask wajib berada di dalam jadwal induk; baseline awal tetap tersimpan bila jadwal efektif berubah.', 'Untuk task rutin, pilih hari mingguan. Timeline hanya menampilkan marker pada hari tersebut dan pola dapat digeser melalui Edit Task.', 'Hold yang disetujui Kadiv menambah deadline efektif. Tanpa Hold/perpanjangan resmi, hari lewat deadline dihitung sebagai keterlambatan PIC.', 'Task Performance Score terdiri dari Schedule 45%, Completion 25%, Quality 20%, dan Worklog 10%; grafik tren membandingkan score mingguan atau bulanan per PIC.'],
             note: 'Waktu selesai PIC memakai saat task diajukan untuk completion review, bukan saat Kadiv menekan approve. Master Task tidak memiliki PIC dan tidak diberi score.'
         },
         worklogs: {
@@ -648,6 +648,7 @@
         document.getElementById('report-print-btn').onclick = () => window.print();
         document.getElementById('report-export-btn').onclick = exportReportCsv;
         document.getElementById('task-search').oninput = renderTasks;
+        document.getElementById('task-pic-filter').onchange = renderTasks;
         document.getElementById('task-status-filter').onchange = renderTasks;
         document.getElementById('task-intake-filter').onchange = renderTasks;
         document.getElementById('task-mine-filter').onclick = () => {
@@ -900,7 +901,7 @@
     }
 
     function isLoadActiveTask(task) {
-        return task.taskKind !== 'master' && !!task.picUserId && !['approved_done', 'cancelled', 'on_hold'].includes(task.status) && !['rejected', 'replaced'].includes(task.intakeStatus);
+        return task.taskKind !== 'master' && !!(task.picUserId || task.picName) && !['approved_done', 'cancelled', 'on_hold'].includes(task.status) && !['rejected', 'replaced'].includes(task.intakeStatus);
     }
 
     function isTaskCritical(task) {
@@ -917,6 +918,7 @@
 
     function analyzeTaskLoad(tasks) {
         const active = tasks.filter((task) => isLoadActiveTask(task) && taskDateRange(task));
+        const taskById = new Map(tasks.map((task) => [task.id, task]));
         const byId = new Map();
         const byPicDay = new Map();
         const byPicWeek = new Map();
@@ -938,14 +940,26 @@
             const pic = taskPicKey(task);
             let maxDayLoad = 0;
             let maxWeekLoad = 0;
-            let clashCount = 0;
+            const clashDatesByTask = new Map();
             days.forEach((date) => {
                 const daySet = byPicDay.get(`${pic}|${dateKey(date)}`) || new Set();
                 const weekSet = byPicWeek.get(`${pic}|${taskWeekKey(date)}`) || new Set();
                 maxDayLoad = Math.max(maxDayLoad, daySet.size);
                 maxWeekLoad = Math.max(maxWeekLoad, weekSet.size);
-                if (daySet.has(task.id) && daySet.size > 1) clashCount = Math.max(clashCount, daySet.size - 1);
+                if (daySet.has(task.id) && daySet.size > 1) {
+                    daySet.forEach((otherTaskId) => {
+                        if (otherTaskId === task.id) return;
+                        if (!clashDatesByTask.has(otherTaskId)) clashDatesByTask.set(otherTaskId, new Set());
+                        clashDatesByTask.get(otherTaskId).add(dateKey(date));
+                    });
+                }
             });
+            const clashTasks = [...clashDatesByTask.entries()].map(([id, overlapDates]) => ({
+                id,
+                title: taskById.get(id)?.title || 'Task lain',
+                overlapDates: [...overlapDates].sort()
+            })).sort((left, right) => left.title.localeCompare(right.title, 'id-ID'));
+            const overlapDates = [...new Set(clashTasks.flatMap((item) => item.overlapDates))].sort();
             const critical = isTaskCritical(task);
             const today = parseDateOnly(dateKey(new Date()));
             const due = parseDateOnly(task.dueDate);
@@ -956,8 +970,10 @@
                 !['high', 'urgent'].includes(task.priority) &&
                 (daysToDue == null || daysToDue > 3);
             byId.set(task.id, {
-                clash: clashCount > 0,
-                clashCount,
+                clash: clashTasks.length > 0,
+                clashCount: clashTasks.length,
+                clashTasks,
+                overlapDates,
                 overload: maxDayLoad >= 3 || maxWeekLoad > 6,
                 maxDayLoad,
                 maxWeekLoad,
@@ -975,8 +991,68 @@
         };
     }
 
+    function taskPicFilterValue(task) {
+        return taskPicKey(task);
+    }
+
+    function syncTaskPicFilter() {
+        const select = document.getElementById('task-pic-filter');
+        if (!select) return '';
+        const currentValue = select.value;
+        const pics = new Map();
+        state.tasks.forEach((task) => {
+            if (task.taskKind === 'master' || !(task.picUserId || task.picName)) return;
+            const value = taskPicFilterValue(task);
+            if (!pics.has(value)) pics.set(value, task.picName || 'PIC tanpa nama');
+        });
+        const options = [...pics.entries()].sort((left, right) => left[1].localeCompare(right[1], 'id-ID'));
+        select.innerHTML = `<option value="">Semua PIC</option>${options.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join('')}`;
+        select.value = pics.has(currentValue) ? currentValue : '';
+        return select.value;
+    }
+
+    function scopedTaskLoad(load, tasks) {
+        const risks = tasks.map((task) => load.byId.get(task.id) || {});
+        return {
+            ...load,
+            clash: risks.filter((risk) => risk.clash).length,
+            overload: risks.filter((risk) => risk.overload).length,
+            critical: risks.filter((risk) => risk.critical).length,
+            canHold: risks.filter((risk) => risk.canHold).length
+        };
+    }
+
     function taskCategoryBadge(task) {
         return `<span class="bimws-task-chip" data-category="${escapeHtml(task.taskCategory || 'regular')}">${escapeHtml(taskCategoryLabels[task.taskCategory] || 'Regular')}</span>`;
+    }
+
+    function formatOverlapDates(values) {
+        const dates = [...new Set(values || [])].sort();
+        if (!dates.length) return 'tanggal yang sama';
+        const ranges = [];
+        let start = dates[0];
+        let previous = dates[0];
+        for (let index = 1; index <= dates.length; index += 1) {
+            const current = dates[index];
+            const isConsecutive = current && dayDifference(parseDateOnly(previous), parseDateOnly(current)) === 1;
+            if (isConsecutive) {
+                previous = current;
+                continue;
+            }
+            ranges.push(start === previous ? formatDate(start) : `${formatDate(start)}–${formatDate(previous)}`);
+            start = current;
+            previous = current;
+        }
+        return ranges.slice(0, 2).join(', ') + (ranges.length > 2 ? ` +${ranges.length - 2} periode` : '');
+    }
+
+    function taskOverlapDetail(task) {
+        const risk = state.taskLoad?.byId?.get(task.id) || {};
+        if (!risk.clash || !risk.clashTasks?.length) return '';
+        const visibleTasks = risk.clashTasks.slice(0, 2).map((item) => item.title);
+        const remaining = Math.max(0, risk.clashTasks.length - visibleTasks.length);
+        const taskNames = visibleTasks.join(', ') + (remaining ? ` +${remaining} task` : '');
+        return `<div class="bimws-overlap-detail" data-risk="clash"><strong><i class="fas fa-code-branch"></i>Overlap ${escapeHtml(formatOverlapDates(risk.overlapDates))}</strong><span>Dengan ${escapeHtml(taskNames)}</span></div>`;
     }
 
     function taskRiskBadges(task) {
@@ -986,7 +1062,7 @@
         if (risk.clash) chips.push(`<span class="bimws-risk-chip" data-risk="clash">Clash${risk.clashCount ? ` +${risk.clashCount}` : ''}</span>`);
         if (risk.overload) chips.push('<span class="bimws-risk-chip" data-risk="overload">Overload</span>');
         if (risk.canHold) chips.push('<span class="bimws-risk-chip" data-risk="hold">Can Hold</span>');
-        return `<div class="bimws-risk-badges">${chips.join('')}</div>`;
+        return `<div class="bimws-risk-cell"><div class="bimws-risk-badges">${chips.join('')}</div>${taskOverlapDetail(task)}</div>`;
     }
 
     function taskGanttRiskIcons(task) {
@@ -1046,13 +1122,17 @@
         const ordered = hierarchicalTasks(tasks);
         return `<table class="bimws-table"><thead><tr><th>Task</th><th>PIC</th><th>Periode</th><th>Progress</th><th>Score</th><th>Risk / Load</th><th>Register</th><th>Status</th>${actions ? '<th>Aksi</th>' : ''}</tr></thead><tbody>${ordered.map((task) => {
             const overdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().toISOString().slice(0,10)) && !['approved_done','cancelled','on_hold'].includes(task.status);
+            const risk = state.taskLoad?.byId?.get(task.id) || {};
             const demoPill = task.isDemo ? '<span class="bimws-demo-pill">Demo</span>' : '';
-            const kindLabel = task.taskKind === 'master' ? '<span class="bimws-task-kind">Master</span>' : task.taskKind === 'subtask' ? '<span class="bimws-task-kind is-subtask">Subtask</span>' : '';
-            const masterCanAdd = task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status);
+            const carryPill = task.sourceType === 'carry_forward' ? '<span class="bimws-carry-pill">Carry</span>' : '';
+            const kindLabel = task.taskKind === 'master'
+                ? `<span class="bimws-task-kind">Master${task.contextOnly ? ` · ${escapeHtml(formatMonth(task.periodMonth))}` : ''}</span>`
+                : task.taskKind === 'subtask' ? '<span class="bimws-task-kind is-subtask">Subtask</span>' : '';
+            const masterCanAdd = task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status) && !hasCurrentCarry(task);
             const title = masterCanAdd
-                ? `<button type="button" class="bimws-table-title bimws-master-task-link" data-action="task-add-subtask" data-id="${escapeHtml(task.id)}" title="Klik untuk menambah subtask">${kindLabel}${escapeHtml(task.title)}${demoPill}</button>`
-                : `<span class="bimws-table-title">${kindLabel}${escapeHtml(task.title)}${demoPill}</span>`;
-            return `<tr class="bimws-task-row is-${escapeHtml(task.taskKind || 'standalone')}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-demo="${task.isDemo ? 'true' : 'false'}"><td>${title}<span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}${masterCanAdd ? ' / Klik nama untuk tambah subtask' : ''}</span></td><td>${escapeHtml(task.taskKind === 'master' ? 'Belum dibagi' : (task.picName || '-'))}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span>${task.baselineDueDate && String(task.baselineDueDate).slice(0,10) !== String(task.dueDate || '').slice(0,10) ? `<span class="bimws-table-sub">Baseline ${formatDate(task.baselineDueDate)}</span>` : ''}</td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${taskPerformanceBadge(task)}</td><td>${taskRiskBadges(task)}</td><td>${registerBadge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
+                ? `<button type="button" class="bimws-table-title bimws-master-task-link" data-action="task-add-subtask" data-id="${escapeHtml(task.id)}" title="Klik untuk menambah subtask">${kindLabel}${escapeHtml(task.title)}${carryPill}${demoPill}</button>`
+                : `<span class="bimws-table-title">${kindLabel}${escapeHtml(task.title)}${carryPill}${demoPill}</span>`;
+            return `<tr class="bimws-task-row is-${escapeHtml(task.taskKind || 'standalone')}" data-status="${escapeHtml(task.status)}" data-priority="${escapeHtml(task.priority)}" data-category="${escapeHtml(task.taskCategory || 'regular')}" data-clash="${risk.clash ? 'true' : 'false'}" data-demo="${task.isDemo ? 'true' : 'false'}"><td>${title}<span class="bimws-table-sub">${escapeHtml(task.projectName || 'Internal')} / ${escapeHtml(task.taskType.replaceAll('_',' '))}${masterCanAdd ? ' / Klik nama untuk tambah subtask' : ''}</span></td><td>${escapeHtml(task.taskKind === 'master' ? 'Belum dibagi' : (task.picName || '-'))}</td><td>${formatDate(task.startDate)}<span class="bimws-table-sub ${overdue ? 'text-danger' : ''}">Due ${formatDate(task.dueDate)}</span>${task.baselineDueDate && String(task.baselineDueDate).slice(0,10) !== String(task.dueDate || '').slice(0,10) ? `<span class="bimws-table-sub">Baseline ${formatDate(task.baselineDueDate)}</span>` : ''}</td><td><div class="bimws-progress"><span style="width:${task.progressPercent}%"></span></div><span class="bimws-table-sub">${task.progressPercent}%</span></td><td>${taskPerformanceBadge(task)}</td><td>${taskRiskBadges(task)}</td><td>${registerBadge(task.intakeStatus)}</td><td>${badge(task.status)}</td>${actions ? `<td><div class="bimws-row-actions">${taskActions(task)}</div></td>` : ''}</tr>`;
         }).join('')}</tbody></table>`;
     }
 
@@ -1078,8 +1158,9 @@
         const blocked = tasks.filter((task) => task.status === 'blocked').length;
         const held = tasks.filter((task) => task.status === 'on_hold').length;
         const active = tasks.filter((task) => !['approved_done','cancelled'].includes(task.status)).length;
+        const clash = tasks.filter((task) => state.taskLoad?.byId?.get(task.id)?.clash).length;
         const progress = total ? Math.round(tasks.reduce((sum, task) => sum + Math.min(100, Math.max(0, Number(task.progressPercent) || 0)), 0) / total) : 0;
-        return { total, done, blocked, held, active, progress };
+        return { total, done, blocked, held, active, clash, progress };
     }
 
     function groupedTaskView(tasks, mode) {
@@ -1103,11 +1184,15 @@
                     </div>
                 </header>
                 <div class="bimws-task-group-summary">
-                    <span>${summary.active} aktif</span><span>${summary.done} selesai</span><span>${summary.blocked} blocked</span><span>${summary.held} hold</span>
+                    <span>${summary.active} aktif</span><span>${summary.done} selesai</span><span>${summary.blocked} blocked</span><span>${summary.held} hold</span>${summary.clash ? `<span data-risk="clash">${summary.clash} task overlap</span>` : ''}
                 </div>
                 <div class="bimws-table-wrap">${taskTable(items)}</div>
             </section>`;
         }).join('')}</div>`;
+    }
+
+    function hasCurrentCarry(task) {
+        return !!task.contextOnly && state.tasks.some((item) => item.periodMonth === state.period && item.carriedFromTaskId === task.id);
     }
 
     function taskActions(task) {
@@ -1115,7 +1200,7 @@
         const creator = isOwn(task.createdByUserId);
         const pic = isOwn(task.picUserId);
         const manager = isKpiManager();
-        if (task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status)) buttons.push(actionButton('fa-plus','Tambah subtask','task-add-subtask',task.id,'is-success'));
+        if (task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status) && !hasCurrentCarry(task)) buttons.push(actionButton('fa-plus','Tambah subtask','task-add-subtask',task.id,'is-success'));
         if ((creator || pic || manager) && task.intakeStatus !== 'pending_approval' && !['submitted_for_review','approved_done'].includes(task.status) && (manager || task.status !== 'on_hold')) buttons.push(actionButton('fa-pen','Edit task','task-edit',task.id));
         if (creator && ['draft','revision_required'].includes(task.intakeStatus)) buttons.push(actionButton('fa-paper-plane','Ajukan register','task-submit',task.id));
         if (manager && task.intakeStatus === 'pending_approval') buttons.push(actionButton('fa-user-check','Review register task','task-intake-review',task.id));
@@ -1130,6 +1215,7 @@
 
     function renderTasks() {
         const query = document.getElementById('task-search').value.toLowerCase();
+        const pic = syncTaskPicFilter();
         const status = document.getElementById('task-status-filter').value;
         const intake = document.getElementById('task-intake-filter').value;
         const mineButton = document.getElementById('task-mine-filter');
@@ -1137,8 +1223,8 @@
             mineButton.classList.toggle('is-active', state.taskMineOnly);
             mineButton.setAttribute('aria-pressed', state.taskMineOnly ? 'true' : 'false');
         }
-        const filtered = state.tasks.filter((task) => (!state.taskMineOnly || isMyTask(task)) && (!query || `${task.title} ${task.projectName} ${task.picName}`.toLowerCase().includes(query)) && (!status || task.status === status) && (!intake || task.intakeStatus === intake));
-        state.taskLoad = analyzeTaskLoad(filtered);
+        const filtered = state.tasks.filter((task) => (!state.taskMineOnly || isMyTask(task)) && (!pic || taskPicFilterValue(task) === pic) && (!query || `${task.title} ${task.projectName} ${task.picName}`.toLowerCase().includes(query)) && (!status || task.status === status) && (!intake || task.intakeStatus === intake));
+        state.taskLoad = scopedTaskLoad(analyzeTaskLoad(state.tasks), filtered);
         renderTaskLoadSummary(state.taskLoad);
         document.querySelectorAll('[data-task-view]').forEach((button) => button.classList.toggle('is-active', button.dataset.taskView === state.taskViewMode));
         renderTaskGantt(filtered);
@@ -1362,7 +1448,7 @@
                 const progress = Math.min(100, Math.max(0, Number(task.progressPercent || 0)));
                 const picColor = getPicTimelineColor(task);
                 const risk = state.taskLoad?.byId?.get(task.id) || {};
-                const barAction = task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status) ? 'task-add-subtask' : 'task-view';
+                const barAction = task.taskKind === 'master' && canWrite() && task.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(task.status) && !hasCurrentCarry(task) ? 'task-add-subtask' : 'task-view';
                 const barHelp = barAction === 'task-add-subtask' ? 'klik untuk tambah subtask' : (task.picName || 'Belum ada PIC');
                 const schedule = taskScheduleVisual(task, taskStart, targetEnd);
                 const isRoutine = !!task.isRoutine || task.taskCategory === 'routine';
@@ -1492,10 +1578,13 @@
         const initialKpiIndicatorId = task?.kpiDivisionIndicatorId
             || initialKpiOptions.find((item) => item.assignments?.some((assignment) => String(assignment.id) === String(task?.kpiAssignmentId)))?.id
             || '';
-        const masters = state.tasks.filter((item) => item.taskKind === 'master' && item.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(item.status));
-        const parentItems = [{ value: '', label: 'Standalone / tidak memakai induk' }, ...masters.map((item) => ({ value: item.id, label: `${item.title} / ${formatDate(item.startDate)}-${formatDate(item.dueDate)}` }))];
+        const masters = state.tasks.filter((item) => item.taskKind === 'master' && item.intakeStatus === 'approved' && !['approved_done','cancelled'].includes(item.status) && !hasCurrentCarry(item));
+        const parentItems = [{ value: '', label: 'Standalone / tidak memakai induk' }, ...masters.map((item) => ({
+            value: item.id,
+            label: `${item.title}${item.contextOnly ? ` / Master ${formatMonth(item.periodMonth)}` : ''} / ${formatDate(item.startDate)}-${formatDate(item.adjustedDueDate || item.dueDate)}`
+        }))];
         const parentField = !isMaster && (!task || parentTaskId)
-            ? field('parentTaskId','Master Task',parentTaskId,{type:'select',items:parentItems,disabled:!!task,help:'Pilih induk hasil meeting internal. Jadwal subtask wajib berada dalam rentang induk.'})
+            ? field('parentTaskId','Master Task',parentTaskId,{type:'select',items:parentItems,disabled:!!task,help:'Pilih induk hasil meeting internal. Master bulan sebelumnya tetap tersedia bila jadwalnya masih aktif; jadwal subtask wajib berada dalam rentang induk.'})
             : '';
         const assignmentFields = isMaster
             ? '<div class="bimws-field bimws-field-full bimws-master-note"><strong>Master Task tanpa PIC</strong><small>Staff akan mengisi subtask masing-masing setelah pembagian pekerjaan dibahas di meeting internal.</small></div>'
@@ -1507,8 +1596,13 @@
                 </select></div>
                 <div class="bimws-field" id="task-delegate-field" ${delegatedTask ? '' : 'hidden'}><label>Staff BIM</label><select name="delegateUserId" id="task-delegate-user">${staffUserOptions(delegatedTask ? task.picUserId : '')}</select></div>`
             : `<div class="bimws-field"><label>PIC</label><input type="text" value="${escapeHtml(currentUserName)}" disabled><small>Subtask menjadi tanggung jawab Anda dan memerlukan review register Kadiv.</small></div>`;
-        const initialStart = task?.startDate ? String(task.startDate).slice(0,10) : parent?.startDate ? String(parent.startDate).slice(0,10) : '';
-        const initialDue = task?.dueDate ? String(task.dueDate).slice(0,10) : parent?.dueDate ? String(parent.dueDate).slice(0,10) : '';
+        const periodStart = `${state.period}-01`;
+        const periodEnd = `${state.period}-${String(daysInPeriod(state.period)).padStart(2, '0')}`;
+        const parentStart = parent?.startDate ? String(parent.startDate).slice(0,10) : '';
+        const parentDueValue = parent?.adjustedDueDate || parent?.dueDate || '';
+        const parentDue = parentDueValue ? String(parentDueValue).slice(0,10) : '';
+        const initialStart = task?.startDate ? String(task.startDate).slice(0,10) : parentStart ? (parentStart < periodStart ? periodStart : parentStart) : '';
+        const initialDue = task?.dueDate ? String(task.dueDate).slice(0,10) : parentDue ? (parentDue > periodEnd ? periodEnd : parentDue) : '';
         const initialRoutine = !!task?.isRoutine || task?.taskCategory === 'routine';
         const initialRoutineWeekday = task?.routineWeekday == null
             ? (parseDateOnly(initialStart)?.getDay() ?? 1)
@@ -1663,7 +1757,13 @@
         parentSelect?.addEventListener('change',()=>{
             const selected=state.tasks.find((item)=>item.id===parentSelect.value);
             const start=dialog.querySelector('[name="startDate"]');const due=dialog.querySelector('[name="dueDate"]');
-            if(selected){start.min=String(selected.startDate).slice(0,10);start.max=String(selected.dueDate).slice(0,10);due.min=start.min;due.max=start.max;start.required=true;due.required=true;if(isKpiManager()&&assignmentMode)assignmentMode.value='unassigned';syncDelegation();}
+            if(selected){
+                const selectedStart=String(selected.startDate).slice(0,10);
+                const selectedDue=String(selected.adjustedDueDate||selected.dueDate).slice(0,10);
+                start.min=selectedStart;start.max=selectedDue;due.min=selectedStart;due.max=selectedDue;start.required=true;due.required=true;
+                if(!task){start.value=selectedStart<periodStart?periodStart:selectedStart;due.value=selectedDue>periodEnd?periodEnd:selectedDue;}
+                if(isKpiManager()&&assignmentMode)assignmentMode.value='unassigned';syncDelegation();
+            }
             else{start.removeAttribute('min');start.removeAttribute('max');due.removeAttribute('min');due.removeAttribute('max');start.required=isMaster;due.required=isMaster;}
             renderLoadPreview();
         });
@@ -1905,11 +2005,20 @@
         const [year,month]=state.period.split('-').map(Number);
         const sourceDate=new Date(year,month-2,1);
         const sourcePeriod=`${sourceDate.getFullYear()}-${String(sourceDate.getMonth()+1).padStart(2,'0')}`;
+        const masterCarryField = isKpiManager()
+            ? field('includeMasters','Master Task outstanding',true,{type:'checkbox',full:true,checkboxLabel:'Bawa juga Master Task yang belum selesai'})
+            : '';
         showDialog({
             eyebrow:'Task Scheduler',title:'Carry Forward Outstanding',
-            body:`<p>Salin seluruh outstanding task dari <strong>${formatMonth(sourcePeriod)}</strong> ke <strong>${formatMonth(state.period)}</strong>. Periode baru tetap kosong jika tidak ada outstanding.</p><div class="bimws-form-grid">${field('includeRoutine','Task rutin',false,{type:'checkbox',full:true,checkboxLabel:'Generate juga task rutin dari bulan sebelumnya'})}</div>`,
+            body:`<p>Salin pekerjaan outstanding dari <strong>${formatMonth(sourcePeriod)}</strong> ke <strong>${formatMonth(state.period)}</strong>. Item yang sudah pernah dibawa ke bulan ini tidak akan dibuat ulang.</p><div class="bimws-form-grid">${masterCarryField}${field('includeRoutine','Task rutin',false,{type:'checkbox',full:true,checkboxLabel:'Generate juga task rutin dari bulan sebelumnya'})}</div>${isKpiManager()?'<p class="bimws-dialog-note"><strong>Master Task:</strong> kelanjutan dibuat dengan jadwal satu bulan penuh dan progress awal 0%. Subtask lama tetap tersimpan sebagai histori; buat subtask bulan aktif pada Master hasil carry.</p>':''}`,
             submitLabel:'Carry Forward',
-            onSubmit:async(formData)=>{const created=await api('/tasks/carry-forward',{method:'POST',body:JSON.stringify({sourcePeriod,targetPeriod:state.period,includeRoutine:formData.has('includeRoutine')})});toast(`${created.length} task dibawa ke periode aktif.`);await loadTasks(true);}
+            onSubmit:async(formData)=>{
+                const created=await api('/tasks/carry-forward',{method:'POST',body:JSON.stringify({sourcePeriod,targetPeriod:state.period,includeRoutine:formData.has('includeRoutine'),includeMasters:isKpiManager()&&formData.has('includeMasters')})});
+                const masterCount=created.filter((task)=>task.taskKind==='master').length;
+                const taskCount=created.length-masterCount;
+                toast(masterCount?`${masterCount} Master Task dan ${taskCount} task dibawa ke ${formatMonth(state.period)}.`:`${taskCount} task dibawa ke ${formatMonth(state.period)}.`);
+                await loadTasks(true);
+            }
         });
     }
 

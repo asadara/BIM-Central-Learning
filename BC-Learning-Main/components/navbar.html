@@ -10,6 +10,7 @@
                 <img src="/img/icons/trimmed/main_logo_BCL_3.png?v=20260713-crop1" alt="" class="bcl-brand-logo bcl-brand-logo-bcl">
             </span>
         </div>
+        <span class="bcl-brand-home"><i class="fas fa-house" aria-hidden="true"></i>Home</span>
     </a>
 
     <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
@@ -19,6 +20,17 @@
 
     <div class="collapse navbar-collapse" id="navbarCollapse">
         <div class="navbar-nav bcl-navbar-nav ms-auto">
+            <div class="nav-item bcl-search-nav-item">
+                <form class="bcl-navbar-search" action="/pages/search.html" method="get" role="search">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <label class="visually-hidden" for="bcl-navbar-search-input">Cari seluruh konten BCL</label>
+                    <input id="bcl-navbar-search-input" name="q" type="search" minlength="2" maxlength="120"
+                        placeholder="Cari halaman, berita, materi, atau file..." autocomplete="off" required>
+                    <button type="submit" aria-label="Jalankan pencarian">
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
             <div class="nav-item">
                 <a href="/pages/help.html" class="nav-link">
                     <i class="fas fa-question-circle bcl-inline-icon-sm"></i>
@@ -102,6 +114,7 @@
                     <a href="/pages/lesson-learn.html" class="dropdown-item">Lessons Learned</a>
                     <div class="dropdown-divider"></div>
                     <h6 class="dropdown-header">Praktik & Perkembangan</h6>
+                    <a href="/pages/bim-methode.html" class="dropdown-item">BIM Methode</a>
                     <a href="/pages/tutorial.html" class="dropdown-item">Tutorial Video</a>
                     <a href="/pages/ifc-viewer.html" class="dropdown-item">IFC Viewer</a>
                     <a href="/pages/updates.html" class="dropdown-item">Berita & Perkembangan</a>
@@ -236,6 +249,26 @@
         white-space: nowrap;
     }
 
+    .bcl-main-navbar .bcl-brand-home {
+        display: inline-flex;
+        min-height: 30px;
+        align-items: center;
+        gap: 7px;
+        margin-left: 12px;
+        padding-left: 14px;
+        border-left: 1px solid rgba(24, 29, 56, 0.16);
+        color: #28334c;
+        font-family: "Nunito", sans-serif;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+    }
+
+    .bcl-main-navbar .bcl-brand-home i {
+        color: #f47a32;
+        font-size: 0.76rem;
+    }
+
     .bcl-main-navbar .bcl-brand-logo {
         display: block;
         width: auto;
@@ -339,6 +372,87 @@
 
     .bcl-main-navbar .navbar-nav .nav-item {
         flex: 0 0 auto;
+    }
+
+    .bcl-main-navbar .bcl-navbar-nav {
+        width: 100%;
+        flex: 1 1 auto;
+        margin-left: 0 !important;
+    }
+
+    .bcl-main-navbar .navbar-nav .bcl-search-nav-item {
+        min-width: clamp(190px, 18vw, 360px);
+        flex: 1 1 auto;
+        padding: 0 10px;
+    }
+
+    .bcl-main-navbar .bcl-navbar-search {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        height: 42px;
+        align-items: center;
+        gap: 9px;
+        padding: 0 6px 0 14px;
+        border: 1px solid #d8dde6;
+        border-radius: 10px;
+        background: #f7f8fa;
+        color: #667085;
+        transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    }
+
+    .bcl-main-navbar .bcl-navbar-search:focus-within {
+        border-color: #f47a32;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(244, 122, 50, 0.14);
+    }
+
+    .bcl-main-navbar .bcl-navbar-search > i {
+        flex: 0 0 auto;
+        color: #344054;
+        font-size: 0.85rem;
+    }
+
+    .bcl-main-navbar .bcl-navbar-search input {
+        width: 100%;
+        min-width: 0;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #181d38;
+        font: 500 0.88rem/1.2 "Heebo", sans-serif;
+    }
+
+    .bcl-main-navbar .bcl-navbar-search input::placeholder {
+        color: #7d8798;
+        opacity: 1;
+    }
+
+    .bcl-main-navbar .bcl-navbar-search input::-webkit-search-cancel-button {
+        cursor: pointer;
+    }
+
+    .bcl-main-navbar .bcl-navbar-search button {
+        display: inline-grid;
+        width: 31px;
+        height: 31px;
+        flex: 0 0 31px;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        border-radius: 7px;
+        background: #181d38;
+        color: #ffffff;
+        cursor: pointer;
+        transition: background-color 160ms ease, transform 160ms ease;
+    }
+
+    .bcl-main-navbar .bcl-navbar-search button:hover,
+    .bcl-main-navbar .bcl-navbar-search button:focus-visible {
+        background: #f47a32;
+        transform: translateX(1px);
     }
 
     .bcl-main-navbar .navbar-nav .nav-link {
@@ -461,12 +575,32 @@
         padding-bottom: 10px !important;
     }
 
+    .nav-compact .bcl-main-navbar .bcl-brand-home {
+        margin-left: 7px;
+        padding-left: 9px;
+        font-size: 0.76rem;
+    }
+
     .nav-compact .bcl-main-navbar .navbar-nav {
         margin-right: var(--bcl-nav-margin-inline-end) !important;
     }
 
     .nav-compact .bcl-main-navbar .navbar-nav .nav-link {
         letter-spacing: 0 !important;
+    }
+
+    .nav-compact .bcl-main-navbar .navbar-nav .bcl-search-nav-item {
+        min-width: 150px;
+        padding-inline: 6px;
+    }
+
+    .nav-compact .bcl-main-navbar .bcl-navbar-search {
+        height: 38px;
+        padding-left: 11px;
+    }
+
+    .nav-compact .bcl-main-navbar .bcl-navbar-search input {
+        font-size: 0.8rem;
     }
 
     .nav-compact .bcl-main-navbar .bcl-nav-full {
@@ -519,6 +653,21 @@
 
     .nav-mobile .bcl-main-navbar .navbar-nav .nav-item {
         width: 100%;
+    }
+
+    .nav-mobile .bcl-main-navbar .navbar-nav .bcl-search-nav-item {
+        min-width: 0;
+        padding: 6px;
+    }
+
+    .nav-mobile .bcl-main-navbar .bcl-navbar-search {
+        height: 46px;
+        border-radius: 8px;
+        background: #ffffff;
+    }
+
+    .nav-mobile .bcl-main-navbar .bcl-navbar-search input {
+        font-size: 0.95rem;
     }
 
     .nav-mobile .bcl-main-navbar .navbar-nav .nav-link,
@@ -651,6 +800,11 @@
             --bcl-brand-padding-inline: 8px;
         }
 
+        .bcl-main-navbar .bcl-brand-home {
+            margin-left: 6px;
+            padding-left: 8px;
+        }
+
         .nav-mobile .bcl-main-navbar .navbar-toggler {
             width: 42px;
             height: 42px;
@@ -670,6 +824,17 @@
 
         .bcl-main-navbar .navbar-brand {
             --bcl-brand-padding-inline: 6px;
+        }
+
+        .bcl-main-navbar .bcl-brand-home {
+            gap: 0;
+            margin-left: 4px;
+            padding-left: 6px;
+            font-size: 0;
+        }
+
+        .bcl-main-navbar .bcl-brand-home i {
+            font-size: 0.78rem;
         }
     }
 
@@ -861,7 +1026,17 @@
                 const navItems = navbarNav
                     ? Array.from(navbarNav.querySelectorAll(':scope > .nav-item'))
                     : [];
-                const navItemWidth = navItems.reduce((total, item) => total + getOuterWidth(item), 0);
+                const navItemWidth = navItems.reduce((total, item) => {
+                    if (!item.classList.contains('bcl-search-nav-item')) {
+                        return total + getOuterWidth(item);
+                    }
+
+                    const searchStyle = window.getComputedStyle(item);
+                    const searchMinWidth = parseFloat(searchStyle.minWidth) || 0;
+                    const searchMarginLeft = parseFloat(searchStyle.marginLeft) || 0;
+                    const searchMarginRight = parseFloat(searchStyle.marginRight) || 0;
+                    return total + Math.ceil(searchMinWidth + searchMarginLeft + searchMarginRight);
+                }, 0);
                 const navMarginInlineEnd = navStyle ? (parseFloat(navStyle.marginRight) || 0) : 0;
                 const navItemGap = navStyle ? (parseFloat(navStyle.columnGap || navStyle.gap) || 0) : 0;
                 const navGapWidth = navItemGap * Math.max(0, navItems.length - 1);

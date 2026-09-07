@@ -18,6 +18,8 @@ const MAX_NEWS_IMAGE_BYTES = 12 * 1024 * 1024;
 const MAX_NEWS_VIDEO_BYTES = 80 * 1024 * 1024;
 const NEWS_API_KEY = String(process.env.NEWS_API_KEY || '').trim();
 const SCRAPE_TIMEOUT_MS = 7000;
+const EXTERNAL_NEWS_CACHE_TTL_MS = 15 * 60 * 1000;
+const EXTERNAL_NEWS_RETRY_TTL_MS = 60 * 1000;
 const SCRAPER_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 BCL-News/1.0';
 const EXTERNAL_NEWS_QUERY = [
     '"building information modeling"',
@@ -44,6 +46,11 @@ pool.on('error', (err) => {
 });
 
 let dbReadyPromise = null;
+let externalNewsCache = {
+    articles: [],
+    expiresAt: 0
+};
+let externalNewsRefreshPromise = null;
 
 fs.mkdirSync(NEWS_MEDIA_DIR, { recursive: true });
 
@@ -584,6 +591,50 @@ async function fetchNewsApiArticles() {
     return filterAndNormalizeExternalArticles(response.data.articles || [], 'NewsAPI');
 }
 
+async function refreshExternalNewsCache() {
+    console.log('[NEWS] Refreshing external news cache...');
+    const articles = [];
+    const scrapeResults = await Promise.allSettled([
+        scrapeKompasArticles(),
+        scrapeDetikArticles(),
+        fetchNewsApiArticles()
+    ]);
+
+    scrapeResults.forEach((result, index) => {
+        const sourceName = ['Kompas', 'Detik', 'NewsAPI'][index];
+        if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+            articles.push(...result.value);
+            console.log(`[NEWS] ${sourceName}: ${result.value.length} articles`);
+        } else if (result.status === 'rejected') {
+            console.warn(`[NEWS] ${sourceName} scraping failed:`, result.reason?.message || result.reason);
+        }
+    });
+
+    const normalizedArticles = deduplicateArticles(articles).sort(
+        (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0)
+    );
+    externalNewsCache = {
+        articles: normalizedArticles,
+        expiresAt: Date.now() + (normalizedArticles.length > 0
+            ? EXTERNAL_NEWS_CACHE_TTL_MS
+            : EXTERNAL_NEWS_RETRY_TTL_MS)
+    };
+    console.log(`[NEWS] External cache ready: ${normalizedArticles.length} articles`);
+}
+
+function scheduleExternalNewsRefresh() {
+    if (externalNewsRefreshPromise || Date.now() < externalNewsCache.expiresAt) return;
+
+    externalNewsRefreshPromise = refreshExternalNewsCache()
+        .catch((error) => {
+            externalNewsCache.expiresAt = Date.now() + EXTERNAL_NEWS_RETRY_TTL_MS;
+            console.warn('[NEWS] External cache refresh failed:', error.message);
+        })
+        .finally(() => {
+            externalNewsRefreshPromise = null;
+        });
+}
+
 // Scraping berita dari Kompas.com
 router.get('/scrape-kompas', async (req, res) => {
     try {
@@ -810,29 +861,10 @@ router.get('/scrape-detik', async (req, res) => {
 // Get all news (scraped + local PostgreSQL)
 router.get('/all-news', async (req, res) => {
     try {
-        console.log('[NEWS] Starting news aggregation...');
-
-        let scrapedArticles = [];
-        const scrapeResults = await Promise.allSettled([
-            scrapeKompasArticles(),
-            scrapeDetikArticles(),
-            fetchNewsApiArticles()
-        ]);
-
-        scrapeResults.forEach((result, index) => {
-            const sourceName = ['Kompas', 'Detik', 'NewsAPI'][index];
-            if (result.status === 'fulfilled' && Array.isArray(result.value)) {
-                scrapedArticles.push(...result.value);
-                console.log(`[NEWS] ${sourceName}: ${result.value.length} articles`);
-            } else if (result.status === 'rejected') {
-                console.warn(`[NEWS] ${sourceName} scraping failed:`, result.reason?.message || result.reason);
-            }
-        });
-
         const localNews = await fetchLocalNewsFromDb({ publishedOnly: true });
-        console.log(`[NEWS] Local PostgreSQL news: ${localNews.length} articles`);
+        scheduleExternalNewsRefresh();
 
-        const mergedArticles = [...scrapedArticles, ...localNews].map((article) => {
+        const mergedArticles = [...externalNewsCache.articles, ...localNews].map((article) => {
             const normalized = normalizeNewsPayload(article, article);
             return {
                 id: normalized.id,
@@ -857,6 +889,7 @@ router.get('/all-news', async (req, res) => {
             (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0)
         );
 
+        res.set('Cache-Control', 'no-store');
         return res.json(uniqueNews);
     } catch (error) {
         console.error('[NEWS] Error in all-news:', error);

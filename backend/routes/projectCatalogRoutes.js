@@ -130,15 +130,13 @@ function createProjectCatalogRoutes({
 
         const bclRoot = path.resolve(backendDir, "..");
         const projectSyncScriptPath = path.join(bclRoot, "sync-projects-explorer-cache.ps1");
-        const mediaSyncScriptPath = path.join(bclRoot, "sync-project-media-cache.ps1");
 
         activeSync = (async () => {
             const projectResult = await runPowerShellScript(projectSyncScriptPath, bclRoot);
-            const mediaResult = await runPowerShellScript(mediaSyncScriptPath, bclRoot);
 
             return {
-                stdout: [projectResult.stdout, mediaResult.stdout].filter(Boolean).join("\n"),
-                stderr: [projectResult.stderr, mediaResult.stderr].filter(Boolean).join("\n")
+                stdout: projectResult.stdout,
+                stderr: projectResult.stderr
             };
         })().finally(() => {
             activeSync = null;

@@ -360,6 +360,108 @@ function ensureOfficialLearningPathStyles() {
             display: grid;
             gap: .7rem;
         }
+        .official-path-modules {
+            border-top: 1px solid #e0e0e0;
+            display: grid;
+            gap: 1.2rem;
+            padding-top: 1rem;
+        }
+        .official-path-module {
+            display: grid;
+            gap: .7rem;
+        }
+        .official-path-module + .official-path-module {
+            border-top: 1px solid #edf0f2;
+            padding-top: 1.2rem;
+        }
+        .official-path-module-heading {
+            align-items: flex-start;
+            color: var(--black);
+            display: grid;
+            font-size: 1.35rem;
+            gap: .8rem;
+            grid-template-columns: 2.6rem 1fr;
+            line-height: 1.45;
+        }
+        .official-path-module-heading > span:first-child {
+            align-items: center;
+            background: rgba(13, 110, 253, 0.08);
+            border-radius: 999px;
+            color: #0d6efd;
+            display: inline-flex;
+            font-size: 1.15rem;
+            font-weight: 800;
+            height: 2.6rem;
+            justify-content: center;
+            width: 2.6rem;
+        }
+        .official-path-module-outcome {
+            color: #666;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 0 0 0 3.4rem;
+        }
+        .official-path-materials {
+            display: grid;
+            gap: .65rem;
+            margin-left: 3.4rem;
+        }
+        .official-path-material-link {
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #dfe3e7;
+            border-radius: 9px;
+            color: var(--black);
+            display: grid;
+            gap: .8rem;
+            grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+            padding: .85rem 1rem;
+            text-decoration: none;
+            transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+        }
+        .official-path-material-link:hover,
+        .official-path-material-link:focus-visible {
+            background: #fff;
+            border-color: var(--main-color);
+            color: var(--main-color);
+            transform: translateY(-1px);
+        }
+        .official-path-material-link > i:first-child {
+            align-items: center;
+            background: rgba(142, 68, 173, 0.12);
+            border-radius: 999px;
+            color: var(--main-color);
+            display: inline-flex;
+            height: 2.5rem;
+            justify-content: center;
+            width: 2.5rem;
+        }
+        .official-path-material-copy {
+            display: grid;
+            gap: .15rem;
+            min-width: 0;
+        }
+        .official-path-material-type {
+            color: #6b7280;
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+        }
+        .official-path-material-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+        .official-path-material-link > i:last-child {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+        .official-path-material-empty {
+            color: #777;
+            font-size: 1.2rem;
+            margin-left: 3.4rem;
+        }
         .official-path-progress {
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
@@ -441,6 +543,19 @@ function ensureOfficialLearningPathStyles() {
             justify-content: center;
             gap: .6rem;
         }
+        @media (max-width: 575px) {
+            .official-path-materials,
+            .official-path-module-outcome,
+            .official-path-material-empty {
+                margin-left: 0;
+            }
+            .official-path-material-link {
+                grid-template-columns: 2.5rem minmax(0, 1fr);
+            }
+            .official-path-material-link > i:last-child {
+                display: none;
+            }
+        }
     `;
     document.head.appendChild(style);
 }
@@ -493,17 +608,17 @@ function ensureLearningGuideSection() {
                         </div>
                     </div>
                     <div class="learning-guide-step">
-                        <i class="fas fa-dumbbell"></i>
+                        <i class="fas fa-book-open"></i>
                         <div>
-                            <h3>2. Kerjakan task</h3>
-                            <p>Gunakan practice sesuai path. PDF dan video adalah task library pendukung, bukan langkah pertama.</p>
+                            <h3>2. Pelajari materi</h3>
+                            <p>Buka materi teori, halaman, PDF, atau video yang tertaut langsung pada setiap module.</p>
                         </div>
                     </div>
                     <div class="learning-guide-step">
                         <i class="fas fa-certificate"></i>
                         <div>
-                            <h3>3. Ambil exam</h3>
-                            <p>Exam baru terbuka setelah readiness cukup. Sertifikat keluar hanya setelah exam lulus dan syarat path terpenuhi.</p>
+                            <h3>3. Practice & exam</h3>
+                            <p>Kerjakan practice sampai readiness cukup, lalu ambil exam untuk membuka sertifikat.</p>
                         </div>
                     </div>
                 </div>
@@ -847,7 +962,7 @@ function buildOfficialPathProgress(learningPath, certificates) {
         status: 'not-started',
         label: 'Belum mulai',
         progress: 0,
-        note: 'Mulai dari practice path agar sistem dapat mengukur readiness Anda.',
+        note: 'Buka materi pertama, lalu lanjutkan ke practice agar readiness Anda dapat diukur.',
         readiness,
         practice,
         certificate: null
@@ -880,6 +995,157 @@ async function loadOfficialLearningPaths() {
     }
 }
 
+const OFFICIAL_MATERIAL_TYPE_META = Object.freeze({
+    reading: { label: 'Materi teori', action: 'Buka Materi', icon: 'fas fa-book-open' },
+    theory: { label: 'Materi teori', action: 'Buka Materi', icon: 'fas fa-book-open' },
+    article: { label: 'Artikel', action: 'Baca Materi', icon: 'fas fa-newspaper' },
+    page: { label: 'Halaman materi', action: 'Buka Materi', icon: 'fas fa-file-lines' },
+    html: { label: 'Halaman materi', action: 'Buka Materi', icon: 'fas fa-file-lines' },
+    pdf: { label: 'PDF', action: 'Baca PDF', icon: 'fas fa-file-pdf' },
+    video: { label: 'Video', action: 'Tonton Video', icon: 'fas fa-circle-play' },
+    quiz: { label: 'Quiz', action: 'Mulai Quiz', icon: 'fas fa-clipboard-question' },
+    exam: { label: 'Exam', action: 'Mulai Exam', icon: 'fas fa-clipboard-check' },
+    link: { label: 'Tautan materi', action: 'Buka Materi', icon: 'fas fa-link' },
+    url: { label: 'Tautan materi', action: 'Buka Materi', icon: 'fas fa-link' }
+});
+
+function getOfficialMaterialTypeMeta(material) {
+    const type = String(material?.type || 'material').trim().toLowerCase();
+    return {
+        type,
+        ...(OFFICIAL_MATERIAL_TYPE_META[type] || {
+            label: type && type !== 'material' ? type : 'Materi',
+            action: 'Buka Materi',
+            icon: 'fas fa-arrow-up-right-from-square'
+        })
+    };
+}
+
+function resolveOfficialMaterialSource(material) {
+    const source = String(material?.source || material?.url || material?.href || '').trim();
+    if (!source || /^(?:javascript|data|vbscript):/i.test(source)) return '';
+
+    if (/^https?:\/\//i.test(source) || source.startsWith('/') || source.startsWith('./') || source.startsWith('../')) {
+        return source;
+    }
+
+    return `/${source.replace(/^\/+/, '')}`;
+}
+
+function getOfficialPathMaterials(learningPath) {
+    return (Array.isArray(learningPath?.modules) ? learningPath.modules : []).flatMap((module) =>
+        (Array.isArray(module.materials) ? module.materials : [])
+            .map((material) => ({
+                ...material,
+                moduleId: module.id || '',
+                moduleTitle: module.title || ''
+            }))
+            .filter((material) => resolveOfficialMaterialSource(material))
+    );
+}
+
+function renderOfficialMaterialLink(material, learningPath, compact = false) {
+    const source = resolveOfficialMaterialSource(material);
+    if (!source) return '';
+
+    const meta = getOfficialMaterialTypeMeta(material);
+    const title = String(material.title || meta.label || 'Materi pembelajaran').trim();
+    const isExternal = /^https?:\/\//i.test(source) && !source.startsWith(window.location.origin);
+    const externalAttributes = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+
+    if (compact) {
+        return `
+            <a class="preview-btn official-path-primary-material"
+               href="${sanitizeHTML(source)}"
+               data-official-material-source="${sanitizeHTML(source)}"
+               data-official-material-type="${sanitizeHTML(meta.type)}"
+               data-official-material-title="${sanitizeHTML(title)}"
+               data-official-module-id="${sanitizeHTML(material.moduleId || '')}"
+               data-official-path-id="${sanitizeHTML(learningPath.id || '')}"${externalAttributes}>
+                <i class="${meta.icon}"></i> ${sanitizeHTML(meta.action)}
+            </a>
+        `;
+    }
+
+    return `
+        <a class="official-path-material-link"
+           href="${sanitizeHTML(source)}"
+           data-official-material-source="${sanitizeHTML(source)}"
+           data-official-material-type="${sanitizeHTML(meta.type)}"
+           data-official-material-title="${sanitizeHTML(title)}"
+           data-official-module-id="${sanitizeHTML(material.moduleId || '')}"
+           data-official-path-id="${sanitizeHTML(learningPath.id || '')}"${externalAttributes}>
+            <i class="${meta.icon}" aria-hidden="true"></i>
+            <span class="official-path-material-copy">
+                <span class="official-path-material-type">${sanitizeHTML(meta.label)}</span>
+                <span class="official-path-material-title">${sanitizeHTML(title)}</span>
+            </span>
+            <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+        </a>
+    `;
+}
+
+function renderOfficialPathModules(learningPath) {
+    const modules = Array.isArray(learningPath.modules) ? learningPath.modules : [];
+    if (!modules.length) return '';
+
+    return `
+        <div class="official-path-modules">
+            ${modules.map((module, index) => {
+                const materials = Array.isArray(module.materials) ? module.materials : [];
+                return `
+                    <section class="official-path-module">
+                        <div class="official-path-module-heading">
+                            <span>${index + 1}</span>
+                            <strong>${sanitizeHTML(module.title || `Module ${index + 1}`)}</strong>
+                        </div>
+                        ${module.outcome ? `<p class="official-path-module-outcome">${sanitizeHTML(module.outcome)}</p>` : ''}
+                        ${materials.length
+                            ? `<div class="official-path-materials">${materials.map((material) => renderOfficialMaterialLink({ ...material, moduleId: module.id || '' }, learningPath)).join('')}</div>`
+                            : '<span class="official-path-material-empty">Materi untuk module ini belum ditautkan.</span>'}
+                        ${module.practice?.category ? `
+                            <div class="official-path-step">
+                                <i class="fas fa-dumbbell"></i>
+                                <span><strong>Practice:</strong> ${sanitizeHTML(module.practice.category)} (${Number(module.practice.minimumAttempts || 0)} attempt, ${Number(module.practice.minimumAverageScore || 0)}% avg)</span>
+                            </div>
+                        ` : ''}
+                    </section>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function bindOfficialMaterialTracking(container) {
+    container.querySelectorAll('[data-official-material-source]').forEach((link) => {
+        link.addEventListener('click', () => {
+            const source = link.dataset.officialMaterialSource || '';
+            const title = link.dataset.officialMaterialTitle || 'Materi pembelajaran';
+            const type = link.dataset.officialMaterialType || 'material';
+            const moduleId = link.dataset.officialModuleId || source || title;
+
+            rememberLearningMarker('bcl_path_material_opened_', `${link.dataset.officialPathId || 'path'}:${moduleId}`, {
+                pathId: link.dataset.officialPathId || '',
+                moduleId,
+                title,
+                type,
+                source,
+                openedAt: new Date().toISOString()
+            });
+
+            trackLearningActivity({
+                moduleId,
+                moduleType: type,
+                eventType: 'opened',
+                title,
+                category: link.dataset.officialPathId || '',
+                source: 'official-learning-path',
+                progressPercent: 0
+            });
+        });
+    });
+}
+
 function renderOfficialLearningPaths(paths, container, certificates = []) {
     if (!paths.length) {
         container.innerHTML = `
@@ -892,11 +1158,13 @@ function renderOfficialLearningPaths(paths, container, certificates = []) {
     }
 
     container.innerHTML = paths.map((learningPath) => {
-        const firstModule = Array.isArray(learningPath.modules) ? learningPath.modules[0] : null;
-        const practice = firstModule && firstModule.practice ? firstModule.practice : {};
         const practiceHref = `practice.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}&view=skill-drills`;
         const examHref = `exams.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}`;
         const progress = buildOfficialPathProgress(learningPath, certificates);
+        const pathMaterials = getOfficialPathMaterials(learningPath);
+        const firstMaterialAction = pathMaterials.length
+            ? renderOfficialMaterialLink(pathMaterials[0], learningPath, true)
+            : '';
         const certificateHref = progress.certificate
             ? `certification.html?cert=${encodeURIComponent(progress.certificate.id || '')}`
             : 'certification.html';
@@ -934,14 +1202,7 @@ function renderOfficialLearningPaths(paths, container, certificates = []) {
                         <i class="fas fa-book-open"></i>
                         <span><strong>Course:</strong> ${sanitizeHTML(learningPath.title)}</span>
                     </div>
-                    <div class="official-path-step">
-                        <i class="fas fa-layer-group"></i>
-                        <span><strong>Module:</strong> ${sanitizeHTML(firstModule?.title || 'Module pembelajaran')}</span>
-                    </div>
-                    <div class="official-path-step">
-                        <i class="fas fa-dumbbell"></i>
-                        <span><strong>Practice:</strong> ${sanitizeHTML(practice.category || '-')} (${Number(practice.minimumAttempts || 0)} attempt, ${Number(practice.minimumAverageScore || 0)}% avg)</span>
-                    </div>
+                    ${renderOfficialPathModules(learningPath)}
                     <div class="official-path-step">
                         <i class="fas fa-clipboard-check"></i>
                         <span><strong>Exam:</strong> ${sanitizeHTML(learningPath.exam?.title || '-')}</span>
@@ -952,15 +1213,14 @@ function renderOfficialLearningPaths(paths, container, certificates = []) {
                     </div>
                 </div>
                 <div class="official-path-actions">
+                    ${firstMaterialAction}
                     ${primaryAction}
-                    <a class="preview-btn" href="${progress.status === 'ready' ? practiceHref : examHref}">
-                        <i class="fas fa-${progress.status === 'ready' ? 'dumbbell' : 'clipboard-check'}"></i>
-                        ${progress.status === 'ready' ? 'Review Practice' : 'Exam Gate'}
-                    </a>
                 </div>
             </article>
         `;
     }).join('');
+
+    bindOfficialMaterialTracking(container);
 }
 
 function fetchCourses() {

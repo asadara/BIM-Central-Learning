@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/index-landing.css?v=20260813a">
+    <link rel="stylesheet" href="/css/index-landing.css?v=20260902a">
     <link rel="icon" href="/img/icons/trimmed/main_ico_bcl.ico" type="image/x-icon">
 </head>
 
@@ -26,27 +26,24 @@
     <div id="navbar-container"></div>
 
     <main id="main-content" class="bcl-home">
-        <section class="bcl-hero" aria-labelledby="hero-title">
-            <img class="bcl-hero__image" src="/img/bcl-hero-2026.jpg"
-                alt="Tim BIM berkoordinasi menggunakan model digital di lokasi proyek konstruksi">
-            <div class="bcl-hero__scrim" aria-hidden="true"></div>
-            <div class="bcl-hero__inner">
-                <div class="bcl-hero__content">
-                    <p class="bcl-eyebrow bcl-hero-enter">BIM Central Learning · NKE</p>
-                    <h1 id="hero-title" class="bcl-hero-enter">Belajar BIM.<br><span
-                            class="bcl-hero__title-line">Belajar lebih SMART.</span></h1>
-                    <p class="bcl-hero__lead bcl-hero-enter">Satu pusat untuk pengetahuan, jalur belajar, standar,
-                        dan pengalaman proyek BIM NKE.</p>
-                    <div class="bcl-hero__actions bcl-hero-enter">
-                        <a class="bcl-button bcl-button--primary" href="/elearning-assets/dashboard.html">
-                            Mulai belajar <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                        </a>
-                        <a class="bcl-button bcl-button--ghost" href="/pages/projects.html">Jelajahi proyek</a>
-                    </div>
+        <section class="bcl-section bcl-updates bcl-updates--hero" aria-labelledby="updates-title">
+            <div class="bcl-shell">
+                <div class="bcl-updates__header bcl-hero-enter">
+                    <p class="bcl-eyebrow bcl-hero-enter">Update terbaru · BIM Central Learning</p>
+                    <h1 id="updates-title">Yang perlu Anda ketahui hari ini.</h1>
+                    <p>Perkembangan proyek, praktik BIM, dan kabar pilihan dari ekosistem NKE.</p>
                 </div>
-                <a class="bcl-hero__scroll" href="#akses" aria-label="Lanjut ke akses utama BCL">
-                    <span>Jelajahi BCL</span><i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
-                </a>
+                <a class="bcl-inline-link" href="/pages/updates.html">Semua berita <i
+                        class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="bcl-shell">
+            <div class="bcl-news-list bcl-hero-enter" id="news-container" aria-live="polite">
+                <p class="bcl-loading" id="news-loading">Memuat berita terbaru…</p>
+            </div>
+            <div class="bcl-updates__quick-actions bcl-hero-enter" aria-label="Akses cepat BCL">
+                <a href="/elearning-assets/dashboard.html">Mulai belajar <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                <a href="/pages/projects.html">Jelajahi proyek <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
             </div>
         </section>
 
@@ -71,23 +68,6 @@
                 </div>
             </div>
         </aside>
-
-        <section class="bcl-section bcl-updates" aria-labelledby="updates-title">
-            <div class="bcl-shell">
-                <div class="bcl-updates__header bcl-reveal">
-                    <div>
-                        <p class="bcl-kicker">BCL Newsroom</p>
-                        <h2 id="updates-title">Terbaru dari ekosistem BIM NKE.</h2>
-                        <p>Perkembangan proyek, praktik BIM, dan kabar pilihan untuk membantu Anda tetap terhubung.</p>
-                    </div>
-                    <a class="bcl-inline-link" href="/pages/updates.html">Buka newsroom <i
-                            class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-                </div>
-                <div class="bcl-news-list" id="news-container" aria-live="polite">
-                    <p class="bcl-loading" id="news-loading">Memuat berita terbaru…</p>
-                </div>
-            </div>
-        </section>
 
         <section id="akses" class="bcl-section bcl-access" aria-labelledby="access-title">
             <div class="bcl-shell">
@@ -271,7 +251,7 @@
     <script src="/js/user.js"></script>
     <script src="/js/loadComponents.js?v=20260722b"></script>
     <script src="/js/pesan.js"></script>
-    <script src="/js/index-landing.js?v=20260813a"></script>
+    <script src="/js/index-landing.js?v=20260907b"></script>
     <script src="/js/page-tracker.js"></script>
 </body>
 

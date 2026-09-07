@@ -356,6 +356,16 @@ function validateDateRange(startDate, dueDate, label = 'Task') {
     return '';
 }
 
+function periodDateBounds(period) {
+    const normalized = normalizePeriod(period);
+    const [year, month] = normalized.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    return {
+        start: `${normalized}-01`,
+        end: `${normalized}-${String(lastDay).padStart(2, '0')}`
+    };
+}
+
 async function resolveParentMaster(req, parentTaskId, period, startDate, dueDate) {
     const parentId = trimText(parentTaskId, 120);
     if (!parentId) return { error: 'Subtask wajib memilih Master Task', status: 400 };
@@ -364,9 +374,13 @@ async function resolveParentMaster(req, parentTaskId, period, startDate, dueDate
     const parent = result.rows[0];
     if ((parent.task_kind || 'standalone') !== 'master') return { error: 'Parent task yang dipilih bukan Master Task', status: 400 };
     if (parent.intake_status !== 'approved') return { error: 'Master Task belum approved', status: 409 };
-    if (parent.period_month !== period) return { error: 'Subtask harus berada pada periode yang sama dengan Master Task', status: 400 };
+    if (['approved_done', 'cancelled'].includes(parent.status)) return { error: 'Master Task sudah ditutup dan tidak dapat menerima subtask baru', status: 409 };
     const parentStart = dateOnlyValue(parent.start_date || parent.baseline_start_date);
     const parentDue = effectiveTaskDueDate(parent);
+    const periodBounds = periodDateBounds(period);
+    if (dueDate < periodBounds.start || startDate > periodBounds.end) {
+        return { error: `Jadwal subtask harus beririsan dengan periode ${period}`, status: 400 };
+    }
     if (startDate < parentStart || dueDate > parentDue) {
         return { error: `Jadwal subtask harus berada di dalam jadwal Master Task (${parentStart} s.d. ${parentDue})`, status: 400 };
     }
@@ -2497,6 +2511,7 @@ function mapTask(row) {
     return {
         id: row.id,
         periodMonth: row.period_month,
+        contextOnly: !!row.context_only,
         title: row.title,
         description: row.description || '',
         projectName: row.project_name || '',
@@ -2527,6 +2542,7 @@ function mapTask(row) {
         performance,
         isRoutine: !!row.is_routine,
         routineWeekday: row.routine_weekday == null ? null : Number(row.routine_weekday),
+        carriedFromTaskId: row.carried_from_task_id || '',
         evidenceLink: row.evidence_link || '',
         kpiDivisionIndicatorId: row.kpi_division_indicator_id || '',
         kpiAssignmentId: row.kpi_assignment_id || '',
@@ -2560,6 +2576,7 @@ route('get', '/tasks', async (req, res) => {
     const manager = isDivisionHead(req) || req.workspaceRole === 'system_admin';
     const result = await pool.query(
         `SELECT task.*,
+                (task.period_month<>$1)::boolean AS context_only,
                 COALESCE(children.child_count,0)::int AS child_count,
                 COALESCE(children.completed_child_count,0)::int AS completed_child_count,
                 COALESCE(worklogs.confirmed_worklog_count,0)::int AS confirmed_worklog_count
@@ -2573,7 +2590,17 @@ route('get', '/tasks', async (req, res) => {
             SELECT COUNT(*)::int AS confirmed_worklog_count
             FROM bim_ops_worklogs worklog WHERE worklog.task_id=task.id AND worklog.confirmation_status='confirmed'
          ) worklogs ON true
-         WHERE task.period_month=$1
+         WHERE (
+                task.period_month=$1
+                OR (
+                    task.task_kind='master'
+                    AND task.period_month<$1
+                    AND task.intake_status='approved'
+                    AND task.status NOT IN ('approved_done','cancelled')
+                    AND COALESCE(task.start_date,task.baseline_start_date)<(($1 || '-01')::date + INTERVAL '1 month')
+                    AND COALESCE(task.adjusted_due_date,task.due_date)>=(($1 || '-01')::date)
+                )
+           )
            AND (task.intake_status='approved' OR task.created_by_user_id=$2 OR $3::boolean=true)
          ORDER BY CASE WHEN task.task_kind='master' THEN 0 WHEN task.task_kind='subtask' THEN 1 ELSE 2 END,
                   COALESCE(task.start_date,task.due_date),task.created_at`, [period, userId, manager]
@@ -3090,47 +3117,86 @@ route('post', '/tasks/carry-forward', async (req, res) => {
     if (!canWrite(req)) return res.status(403).json({ error: 'Write access required' });
     const sourcePeriod = normalizePeriod(req.body.sourcePeriod);
     const targetPeriod = normalizePeriod(req.body.targetPeriod);
+    if (targetPeriod !== shiftPeriodKey(sourcePeriod, 1)) {
+        return res.status(400).json({ error: 'Carry hanya dapat dilakukan ke bulan berikutnya' });
+    }
     const includeRoutine = req.body.includeRoutine === true;
+    const includeMasters = req.body.includeMasters === true;
+    if (includeMasters && !isKpiManager(req)) {
+        return res.status(403).json({ error: 'Hanya Kepala Divisi BIM yang dapat melakukan carry Master Task' });
+    }
     const ids = Array.isArray(req.body.taskIds) ? req.body.taskIds.map((id) => trimText(id, 120)).filter(Boolean) : [];
-    const params = [sourcePeriod];
+    const params = [sourcePeriod, includeRoutine, includeMasters];
     let filter = `period_month=$1 AND intake_status='approved'
-                  AND task_kind='standalone'
-                  AND (status NOT IN ('approved_done','cancelled') OR ($2::boolean=true AND is_routine=true))`;
-    params.push(includeRoutine);
+                  AND (
+                    (task_kind='standalone' AND (status NOT IN ('approved_done','cancelled') OR ($2::boolean=true AND is_routine=true)))
+                    OR ($3::boolean=true AND task_kind='master' AND status NOT IN ('approved_done','cancelled'))
+                  )`;
     if (ids.length) {
         params.push(ids);
-        filter += ` AND id=ANY($3::text[])`;
+        filter += ` AND id=ANY($${params.length}::text[])`;
     }
     params.push(targetPeriod);
     filter += ` AND NOT EXISTS (
         SELECT 1 FROM bim_ops_tasks target
         WHERE target.period_month=$${params.length} AND target.carried_from_task_id=bim_ops_tasks.id
     )`;
-    const source = await pool.query(`SELECT * FROM bim_ops_tasks WHERE ${filter}`, params);
+    const client = await pool.connect();
     const created = [];
     const preserveKpiMapping = sourcePeriod.slice(0, 4) === targetPeriod.slice(0, 4);
-    for (const task of source.rows) {
-        const id = newId('task');
-        const routineStart = task.is_routine ? `${targetPeriod}-01` : null;
-        const routineDue = task.is_routine ? addCalendarDays(`${shiftPeriodKey(targetPeriod, 1)}-01`, -1) : null;
-        const row = await pool.query(
-            `INSERT INTO bim_ops_tasks
-              (id,period_month,title,description,project_name,task_type,task_category,is_critical,critical_reason,pic_user_id,pic_name_snapshot,start_date,due_date,
-                baseline_start_date,baseline_due_date,adjusted_due_date,priority,intake_status,status,progress_percent,is_routine,routine_weekday,carried_from_task_id,source_type,source_id,evidence_link,
-                kpi_division_indicator_id,kpi_assignment_id,created_by_user_id,created_by_name_snapshot)
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$12,$13,$13,$14,'approved',$15,$16,$17,$18,$19,'carry_forward',$19,$20,$21,$22,$23,$24)
-             RETURNING *`,
-            [id,targetPeriod,task.title,task.description,task.project_name,task.task_type,
-             task.task_category || (task.is_routine ? 'routine' : 'regular'), task.is_critical, task.critical_reason,
-             task.pic_user_id,task.pic_name_snapshot,routineStart,routineDue,task.priority,task.status === 'approved_done' ? 'planned' : task.status,
-             task.status === 'approved_done' ? 0 : task.progress_percent,task.is_routine,
-              normalizeRoutineWeekday(task.routine_weekday, routineStart || task.start_date, task.is_routine),task.id,task.evidence_link,
-              preserveKpiMapping ? task.kpi_division_indicator_id : null,
-              preserveKpiMapping ? task.kpi_assignment_id : null,
-              actorId(req),actorName(req)]
-        );
-        await logActivity(req, 'task', id, 'carried_forward', `Task dibawa dari ${sourcePeriod}`, { sourceTaskId: task.id });
-        created.push(mapTask(row.rows[0]));
+    const targetBounds = periodDateBounds(targetPeriod);
+    try {
+        await client.query('BEGIN');
+        await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [`task-carry:${sourcePeriod}:${targetPeriod}`]);
+        const source = await client.query(`SELECT * FROM bim_ops_tasks WHERE ${filter} ORDER BY CASE WHEN task_kind='master' THEN 0 ELSE 1 END,created_at FOR UPDATE`, params);
+        for (const task of source.rows) {
+            const id = newId('task');
+            const taskKind = task.task_kind || 'standalone';
+            const isMaster = taskKind === 'master';
+            const carriedStart = isMaster || task.is_routine ? targetBounds.start : null;
+            const carriedDue = isMaster || task.is_routine ? targetBounds.end : null;
+            const carriedStatus = isMaster || task.status === 'approved_done' ? 'planned' : task.status;
+            const carriedProgress = isMaster || task.status === 'approved_done' ? 0 : task.progress_percent;
+            const row = await client.query(
+                `INSERT INTO bim_ops_tasks
+                  (id,period_month,title,description,project_name,task_type,task_kind,parent_task_id,task_category,is_critical,critical_reason,
+                   pic_user_id,pic_name_snapshot,start_date,due_date,baseline_start_date,baseline_due_date,adjusted_due_date,
+                   priority,intake_status,status,progress_percent,is_routine,routine_weekday,carried_from_task_id,source_type,source_id,evidence_link,
+                   kpi_division_indicator_id,kpi_assignment_id,created_by_user_id,created_by_name_snapshot)
+                  VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10,$11,$12,$13,$14,$13,$14,$14,$15,'approved',$16,$17,$18,$19,$20,'carry_forward',$20,$21,$22,$23,$24,$25)
+                 RETURNING *`,
+                [id,targetPeriod,task.title,task.description,task.project_name,task.task_type,taskKind,
+                 task.task_category || (task.is_routine ? 'routine' : 'regular'),task.is_critical,task.critical_reason,
+                 isMaster ? null : task.pic_user_id,isMaster ? null : task.pic_name_snapshot,carriedStart,carriedDue,task.priority,
+                 carriedStatus,carriedProgress,isMaster ? false : task.is_routine,
+                 isMaster ? null : normalizeRoutineWeekday(task.routine_weekday, carriedStart || task.start_date, task.is_routine),
+                 task.id,task.evidence_link,
+                 preserveKpiMapping && !isMaster ? task.kpi_division_indicator_id : null,
+                 preserveKpiMapping && !isMaster ? task.kpi_assignment_id : null,
+                 actorId(req),actorName(req)]
+            );
+            created.push(mapTask(row.rows[0]));
+        }
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+    for (const task of created) {
+        try {
+            await logActivity(
+                req,
+                'task',
+                task.id,
+                'carried_forward',
+                `${task.taskKind === 'master' ? 'Master Task' : 'Task'} dibawa dari ${sourcePeriod}`,
+                { sourceTaskId: task.carriedFromTaskId, taskKind: task.taskKind, sourcePeriod, targetPeriod }
+            );
+        } catch (error) {
+            console.warn(`WARN: Carry activity log failed for task/${task.id}:`, error.message);
+        }
     }
     res.status(201).json(created);
 });

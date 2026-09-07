@@ -40,9 +40,24 @@
         return data.videos;
     }
 
-    function getNews() {
-        data.news ||= fetchJson('/api/news/all-news');
-        return data.news;
+    async function getNews() {
+        if (!data.news) {
+            data.news = (async () => {
+                try {
+                    return await fetchJson('/api/news/all-news', 8000);
+                } catch (aggregateError) {
+                    console.warn('News aggregation unavailable; using local news.', aggregateError);
+                    return fetchJson('/api/news/local-news', 6000);
+                }
+            })();
+        }
+
+        try {
+            return await data.news;
+        } catch (error) {
+            data.news = null;
+            throw error;
+        }
     }
 
     function getActivity() {
@@ -420,10 +435,11 @@
         initContactDialog();
         initBackToTop();
         initFaq();
-        loadCourses();
         loadFeaturedVideo();
-        loadNews();
-        loadMetrics();
+        loadNews().finally(() => {
+            loadCourses();
+            loadMetrics();
+        });
     }
 
     if (document.readyState === 'loading') {

@@ -759,6 +759,81 @@ body.bcl-home-page {
     background: var(--bcl-white);
 }
 
+.bcl-updates--hero {
+    position: relative;
+    min-height: calc(100svh - var(--home-nav-height));
+    padding: clamp(42px, 5vw, 68px) 0 clamp(34px, 4vw, 54px);
+    overflow: hidden;
+    background:
+        linear-gradient(90deg, var(--bcl-orange) 0 88px, transparent 88px) top left / 100% 4px no-repeat,
+        var(--bcl-white);
+}
+
+.bcl-updates--hero .bcl-updates__header {
+    display: block;
+    max-width: 860px;
+    margin-bottom: 20px;
+}
+
+.bcl-updates--hero .bcl-updates__header .bcl-eyebrow {
+    margin-bottom: 12px;
+}
+
+.bcl-updates--hero .bcl-updates__header h1 {
+    max-width: 800px;
+    margin: 0;
+    color: var(--bcl-ink);
+    font-family: "Nunito", sans-serif;
+    font-size: clamp(2.15rem, 4.7vw, 4.6rem);
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    line-height: 0.98;
+    text-wrap: balance;
+}
+
+.bcl-updates--hero .bcl-updates__header > p:last-child {
+    max-width: 620px;
+    margin: 18px 0 0;
+    color: var(--bcl-muted);
+    font-size: 1.04rem;
+}
+
+.bcl-updates--hero > .bcl-shell:first-child > .bcl-inline-link {
+    margin-bottom: 28px;
+}
+
+.bcl-updates--hero .bcl-news-list {
+    animation-delay: 120ms;
+}
+
+.bcl-updates__quick-actions {
+    display: flex;
+    margin-top: 22px;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+    animation-delay: 220ms;
+}
+
+.bcl-updates__quick-actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--bcl-ink-soft);
+    font-family: "Nunito", sans-serif;
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.bcl-updates__quick-actions i {
+    color: var(--bcl-orange-deep);
+    transition: transform 180ms ease;
+}
+
+.bcl-updates__quick-actions a:hover i {
+    transform: translateX(4px);
+}
+
 .bcl-updates__header {
     display: flex;
     margin-bottom: clamp(38px, 5vw, 64px);
@@ -1160,6 +1235,15 @@ html.bcl-motion-ready .bcl-reveal.is-visible {
     .bcl-updates__header {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .bcl-updates--hero {
+        min-height: auto;
+        padding-top: 38px;
+    }
+
+    .bcl-updates--hero .bcl-updates__header h1 {
+        font-size: clamp(2rem, 10vw, 3.4rem);
     }
 
     .bcl-hero {

@@ -268,6 +268,20 @@ router.get("/summary", requireAuth, async (req, res) => {
             [userId, userEmail]
         );
 
+        const completedResult = await pgPool.query(
+            `
+                SELECT DISTINCT module_id
+                FROM learning_activity_events
+                WHERE event_type = 'completed'
+                  AND (
+                        ($1::text IS NOT NULL AND user_id = $1)
+                     OR ($2::text IS NOT NULL AND lower(user_email) = lower($2))
+                  )
+                ORDER BY module_id
+            `,
+            [userId, userEmail]
+        );
+
         const row = summaryResult.rows[0] || {};
         const recentEvents = recentResult.rows.map((event) => ({
             moduleId: event.module_id,
@@ -291,6 +305,9 @@ router.get("/summary", requireAuth, async (req, res) => {
                 videosWatched: Number(row.videos_watched || 0),
                 completedModules: Number(row.completed_modules || 0)
             },
+            completedModuleIds: completedResult.rows
+                .map((item) => String(item.module_id || "").trim())
+                .filter(Boolean),
             recentEvents
         });
     } catch (error) {

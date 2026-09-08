@@ -3,7 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const router = express.Router();
-const { requireAuthenticated, requireAdmin } = require('../utils/auth');
+const {
+    requireAuthenticated,
+    requireAuthenticatedPreferBearer,
+    requireAdmin
+} = require('../utils/auth');
 const { createPgConfig } = require('../config/runtimeConfig');
 const {
     ensureAccessColumns,
@@ -79,7 +83,7 @@ async function requireUserDirectoryAccess(req, res, next) {
 }
 
 // GET /api/users/check-mapping-access - Check mapping kompetensi access
-router.get('/check-mapping-access', requireAuthenticated, async (req, res) => {
+router.get('/check-mapping-access', requireAuthenticatedPreferBearer, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
         const accessProfile = await resolveAccessProfile(authUser);
@@ -93,7 +97,7 @@ router.get('/check-mapping-access', requireAuthenticated, async (req, res) => {
     }
 });
 
-router.get('/check-dokumen-access', requireAuthenticated, async (req, res) => {
+router.get('/check-dokumen-access', requireAuthenticatedPreferBearer, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
         const accessProfile = await resolveAccessProfile(authUser);
@@ -107,7 +111,7 @@ router.get('/check-dokumen-access', requireAuthenticated, async (req, res) => {
     }
 });
 
-router.get('/check-audit-2026-access', requireAuthenticated, async (req, res) => {
+router.get('/check-audit-2026-access', requireAuthenticatedPreferBearer, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
         const accessProfile = await resolveAccessProfile(authUser);
@@ -121,7 +125,7 @@ router.get('/check-audit-2026-access', requireAuthenticated, async (req, res) =>
     }
 });
 
-router.get('/me/access', requireAuthenticated, async (req, res) => {
+router.get('/me/access', requireAuthenticatedPreferBearer, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
         const accessProfile = await resolveAccessProfile(authUser);

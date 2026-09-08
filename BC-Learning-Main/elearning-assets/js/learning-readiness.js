@@ -46,6 +46,17 @@
             coverageTarget: 1,
             recommendedPracticeMode: 'skill-drills'
         },
+        'revit-navisworks-essentials-2026-exam': {
+            examId: 'revit-navisworks-essentials-2026-exam',
+            title: 'Revit & Navisworks Essentials 2026 Exam',
+            shortTitle: 'Revit & Navisworks 2026',
+            requiredLevel: 'BIM Modeller',
+            targetCategories: ['revit-fundamentals', 'revit-modeling', 'clash-detection', 'quality-control'],
+            minAccuracy: 78,
+            minAttempts: 5,
+            coverageTarget: 1,
+            recommendedPracticeMode: 'skill-drills'
+        },
         'revit-architecture-exam': {
             examId: 'revit-architecture-exam',
             title: 'Revit Architecture Professional Exam',

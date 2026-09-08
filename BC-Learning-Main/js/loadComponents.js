@@ -17,7 +17,35 @@ const BCL_PROTECTED_PAGE_ACCESS = {
     '/pages/audit-2026.html': {
         key: 'audit2026Access',
         label: 'Audit 2026'
+    },
+    '/pages/divisi-bim-workspace.html': {
+        key: 'bimWorkspaceAccess',
+        label: 'Divisi BIM Workspace'
+    },
+    '/pages/sub/mapping-kompetensi.html': {
+        key: 'mappingKompetensiAccess',
+        label: 'Mapping Kompetensi'
     }
+};
+
+const BCL_ACCESS_CONTROL_SELECTORS = {
+    mappingKompetensiAccess: [
+        '#competency-link',
+        '.mapping-kompetensi-access-link',
+        '[data-bcl-access="mappingKompetensiAccess"]'
+    ],
+    dokumenAccess: [
+        '.dokumen-access-link',
+        '[data-bcl-access="dokumenAccess"]'
+    ],
+    audit2026Access: [
+        '.audit-2026-access-link',
+        '[data-bcl-access="audit2026Access"]'
+    ],
+    bimWorkspaceAccess: [
+        '.bim-workspace-access-link',
+        '[data-bcl-access="bimWorkspaceAccess"]'
+    ]
 };
 
 let bclPageTransitionInitialized = false;
@@ -225,15 +253,19 @@ function setAccessLinksVisibility(rootElement, selector, isVisible) {
 function applyNavbarAccessProfile(rootElement, accessProfile) {
     const profile = accessProfile || {};
     const root = rootElement || document;
-    const storedAuthState = readStoredNavbarAuthState();
-    const isAdmin = !!profile.isAdmin || isNavbarAdminRole(storedAuthState.role);
-    setAccessLinksVisibility(rootElement, '.dokumen-access-link', !!profile.dokumenAccess);
-    setAccessLinksVisibility(rootElement, '.audit-2026-access-link', !!profile.audit2026Access);
-    setAccessLinksVisibility(rootElement, '.bim-workspace-access-link', isAdmin || !!profile.bimWorkspaceAccess);
-    const competencyLink = root.querySelector('#competency-link');
-    if (competencyLink) {
-        competencyLink.hidden = !profile.mappingKompetensiAccess;
-    }
+    const isAdmin = !!profile.isAdmin;
+
+    Object.entries(BCL_ACCESS_CONTROL_SELECTORS).forEach(([accessKey, selectors]) => {
+        const isVisible = isAdmin || !!profile[accessKey];
+        selectors.forEach((selector) => setAccessLinksVisibility(root, selector, isVisible));
+    });
+
+    document.dispatchEvent(new CustomEvent('bclAccessProfileApplied', {
+        detail: {
+            ...profile,
+            isAdmin
+        }
+    }));
 }
 
 async function refreshNavbarAccessControls(rootElement = document) {
@@ -455,7 +487,7 @@ function loadNavbar() {
                 const updateUIWithRetry = () => {
                     if (typeof updateUserUI === 'function') {
                         updateUserUI();
-                        refreshNavbarAccessControls(container);
+                        refreshNavbarAccessControls(document);
                     } else if (retryCount < maxRetries) {
                         retryCount++;
                         setTimeout(updateUIWithRetry, 200);
@@ -471,7 +503,7 @@ function loadNavbar() {
                     if (typeof updateUserUI === 'function') {
                         updateUserUI();
                     }
-                    refreshNavbarAccessControls(container);
+                    refreshNavbarAccessControls(document);
                     refreshNavbarMessageIndicator();
                 }, 300);
 

@@ -15,7 +15,7 @@ const { exec, spawn } = require("child_process");
 const os = require("os");
 const { Pool } = require("pg");
 const { getPreferredServerIPv4 } = require("./utils/networkIdentity");
-const { getRequestUser } = require("./utils/auth");
+const { getRequestUser, getRequestUserPreferBearer } = require("./utils/auth");
 const { resolveAccessProfile } = require("./utils/userAccess");
 const {
     createPgConfig,
@@ -204,7 +204,7 @@ app.use(cors(corsOptions)); // CORS should be early
 async function requireUserFeatureAccess(req, res, next, accessKey) {
     try {
         const isApiRequest = String(req.originalUrl || req.path || '').startsWith('/api/');
-        const authUser = getRequestUser(req);
+        const authUser = getRequestUserPreferBearer(req);
         if (!authUser) {
             if (req.accepts('html') && !isApiRequest) {
                 return res.redirect(`/pages/login.html?redirect=${encodeURIComponent(req.originalUrl)}`);

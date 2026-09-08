@@ -78,11 +78,31 @@ function getRequestUser(req) {
     return getBearerRequestUser(req);
 }
 
+function getRequestUserPreferBearer(req) {
+    const authHeader = String(req.headers.authorization || '');
+    if (authHeader.startsWith('Bearer ')) {
+        return getBearerRequestUser(req);
+    }
+
+    return getRequestUser(req);
+}
+
 function requireAuthenticated(req, res, next) {
     const authUser = getRequestUser(req);
     if (!authUser) {
         return res.status(401).json({ error: 'Authentication required' });
     }
+    req.authUser = authUser;
+    req.user = authUser;
+    next();
+}
+
+function requireAuthenticatedPreferBearer(req, res, next) {
+    const authUser = getRequestUserPreferBearer(req);
+    if (!authUser) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
     req.authUser = authUser;
     req.user = authUser;
     next();
@@ -105,6 +125,8 @@ module.exports = {
     isAdminRole,
     getBearerRequestUser,
     getRequestUser,
+    getRequestUserPreferBearer,
     requireAuthenticated,
+    requireAuthenticatedPreferBearer,
     requireAdmin
 };

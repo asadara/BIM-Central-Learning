@@ -1,0 +1,122 @@
+[
+  {
+    "id": "rne-2026-001",
+    "question": "Ekstensi file proyek utama Autodesk Revit adalah ...",
+    "options": [".rfa", ".rvt", ".nwd", ".dwg"],
+    "answer_index": 1,
+    "category": "revit-fundamentals",
+    "explanation": ".rvt digunakan untuk file proyek Revit, sedangkan .rfa digunakan untuk family."
+  },
+  {
+    "id": "rne-2026-002",
+    "question": "Parameter dinding yang menghubungkan bagian atas dinding ke level tertentu adalah ...",
+    "options": ["Base Offset", "Top Constraint", "Room Bounding", "Location Line"],
+    "answer_index": 1,
+    "category": "revit-fundamentals",
+    "explanation": "Top Constraint mengendalikan batas atas dinding terhadap level yang dipilih."
+  },
+  {
+    "id": "rne-2026-003",
+    "question": "Langkah yang paling tepat sebelum mulai memodelkan sistem MEP adalah ...",
+    "options": ["Menghapus seluruh level", "Memastikan level, grid, dan model referensi terkoordinasi", "Membuat sheet final", "Langsung menempatkan fitting"],
+    "answer_index": 1,
+    "category": "revit-fundamentals",
+    "explanation": "Level, grid, dan referensi yang terkoordinasi menjadi dasar penempatan sistem MEP yang konsisten."
+  },
+  {
+    "id": "rne-2026-004",
+    "question": "Perbedaan utama Type Parameter dan Instance Parameter pada Revit adalah ...",
+    "options": ["Type Parameter hanya untuk material", "Instance Parameter selalu read-only", "Type Parameter memengaruhi semua elemen bertipe sama, Instance Parameter hanya elemen tertentu", "Keduanya selalu menghasilkan perubahan yang sama"],
+    "answer_index": 2,
+    "category": "revit-modeling",
+    "explanation": "Type Parameter berlaku pada seluruh instance dari tipe yang sama; Instance Parameter berlaku pada elemen individual."
+  },
+  {
+    "id": "rne-2026-005",
+    "question": "Urutan yang benar untuk membuat family parametrik yang stabil adalah ...",
+    "options": ["Geometry, template, parameter, test", "Template, reference plane, parameter, geometry, flex/test", "Import CAD, explode, save", "Copy project, purge, export"],
+    "answer_index": 1,
+    "category": "revit-modeling",
+    "explanation": "Family yang stabil dimulai dari template yang tepat, reference plane, parameter, geometry, lalu pengujian fleksibilitas."
+  },
+  {
+    "id": "rne-2026-006",
+    "question": "View yang paling tepat untuk menyusun denah pada Revit adalah ...",
+    "options": ["Floor Plan", "Legend", "Drafting View", "Schedule"],
+    "answer_index": 0,
+    "category": "revit-modeling",
+    "explanation": "Floor Plan menampilkan potongan horizontal model pada level tertentu untuk penyusunan denah."
+  },
+  {
+    "id": "rne-2026-007",
+    "question": "Agar anotasi pada gambar kerja tetap konsisten saat skala view berubah, gunakan ...",
+    "options": ["Model line untuk seluruh teks", "Annotation family dan text style yang terstandar", "Screenshot dari model", "Detail item tanpa skala"],
+    "answer_index": 1,
+    "category": "quality-control",
+    "explanation": "Annotation family dan text style menjaga ukuran cetak serta standar dokumentasi antar-view."
+  },
+  {
+    "id": "rne-2026-008",
+    "question": "Sebelum sheet diterbitkan, pemeriksaan yang paling lengkap adalah ...",
+    "options": ["Hanya nomor sheet", "Hanya warna viewport", "Nama/nomor sheet, revisi, skala, anotasi, dan status approval", "Hanya ukuran kertas"],
+    "answer_index": 2,
+    "category": "quality-control",
+    "explanation": "Kontrol keluaran harus mencakup identitas, revisi, skala, anotasi, dan status persetujuan."
+  },
+  {
+    "id": "rne-2026-009",
+    "question": "Tujuan utama View Template dalam proses produksi gambar adalah ...",
+    "options": ["Menggandakan file proyek", "Menyeragamkan pengaturan tampilan beberapa view", "Mengubah seluruh family menjadi in-place", "Menghapus warning model"],
+    "answer_index": 1,
+    "category": "quality-control",
+    "explanation": "View Template menerapkan pengaturan visibilitas dan grafis secara konsisten ke banyak view."
+  },
+  {
+    "id": "rne-2026-010",
+    "question": "Perbedaan hard clash dan soft clash pada Navisworks adalah ...",
+    "options": ["Hard clash hanya terjadi pada struktur", "Hard clash adalah interseksi fisik, soft clash adalah pelanggaran jarak bebas", "Soft clash boleh selalu diabaikan", "Hard clash hanya bisa dicari manual"],
+    "answer_index": 1,
+    "category": "clash-detection",
+    "explanation": "Hard clash menunjukkan objek saling menembus; soft clash menunjukkan jarak bebas yang disyaratkan tidak terpenuhi."
+  },
+  {
+    "id": "rne-2026-011",
+    "question": "Saat membuat clash test, pemilihan Selection Set yang baik berguna untuk ...",
+    "options": ["Mengubah warna antarmuka", "Membandingkan kelompok sistem secara konsisten dan dapat diulang", "Mengurangi ukuran monitor", "Menghapus source model"],
+    "answer_index": 1,
+    "category": "clash-detection",
+    "explanation": "Selection Set membuat cakupan clash test konsisten ketika model diperbarui dan pengujian dijalankan ulang."
+  },
+  {
+    "id": "rne-2026-012",
+    "question": "Prioritas penyelesaian clash sebaiknya ditentukan terutama berdasarkan ...",
+    "options": ["Urutan alfabet nama elemen", "Warna objek", "Dampak terhadap sistem utama, konstruktabilitas, dan jadwal", "Tanggal clash pertama kali terlihat saja"],
+    "answer_index": 2,
+    "category": "clash-detection",
+    "explanation": "Clash dengan dampak terbesar terhadap sistem kritis, konstruktabilitas, dan jadwal harus ditangani lebih dahulu."
+  },
+  {
+    "id": "rne-2026-013",
+    "question": "Setelah clash dinyatakan resolved, tindakan kontrol yang tepat adalah ...",
+    "options": ["Menghapus semua test", "Memperbarui model sumber, reload/append model, lalu menjalankan ulang test", "Mengubah status tanpa mengecek model", "Mengekspor screenshot saja"],
+    "answer_index": 1,
+    "category": "clash-detection",
+    "explanation": "Resolusi perlu diverifikasi pada model terbaru dengan menjalankan ulang clash test."
+  },
+  {
+    "id": "rne-2026-014",
+    "question": "Format Navisworks yang menyimpan model terpublikasi untuk dibagikan dan ditinjau adalah ...",
+    "options": ["NWD", "RFA", "RVT", "DWT"],
+    "answer_index": 0,
+    "category": "clash-detection",
+    "explanation": "NWD merupakan format terpublikasi Navisworks yang umum digunakan untuk distribusi dan review."
+  },
+  {
+    "id": "rne-2026-015",
+    "question": "Bukti terbaik bahwa workflow Revit–Navisworks sudah terkoordinasi adalah ...",
+    "options": ["Model terlihat menarik", "Seluruh objek memiliki warna sama", "Model referensi terbaru, clash test terdokumentasi, status isu jelas, dan output gambar konsisten", "File memiliki ukuran besar"],
+    "answer_index": 2,
+    "category": "quality-control",
+    "explanation": "Koordinasi harus dapat dibuktikan melalui versi model, hasil clash, status tindak lanjut, dan keluaran terdokumentasi."
+  }
+]

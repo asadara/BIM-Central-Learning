@@ -1,12 +1,78 @@
 // Practice Questions functionality
 document.addEventListener('DOMContentLoaded', function () {
     // Load enhanced practice system first
-    loadEnhancedPracticeSystem().then(() => {
+    loadEnhancedPracticeSystem().then(async () => {
+        const materialAccess = await checkTargetPracticeMaterialAccess();
+        if (!materialAccess.allowed) {
+            renderTargetPracticeMaterialGate(materialAccess);
+            return;
+        }
         loadPracticeSets();
         setupEventListeners();
         setupPracticeMenu();
     });
 });
+
+async function checkTargetPracticeMaterialAccess() {
+    const targetExamId = new URLSearchParams(window.location.search).get('targetExam');
+    if (!targetExamId) return { allowed: true };
+
+    try {
+        const pathsResponse = await fetch('/api/elearning/modules/learning-paths');
+        if (!pathsResponse.ok) return { allowed: true };
+        const payload = await pathsResponse.json();
+        const paths = Array.isArray(payload.data) ? payload.data : [];
+        const learningPath = paths.find((item) => item.exam?.id === targetExamId);
+        const required = Array.isArray(learningPath?.readiness?.requiredMaterialIds)
+            ? learningPath.readiness.requiredMaterialIds.map((value) => String(value || '').trim()).filter(Boolean)
+            : [];
+        if (!required.length) return { allowed: true };
+
+        const token = localStorage.getItem('token') || '';
+        if (!token) {
+            return { allowed: false, completed: 0, required: required.length, courseTitle: learningPath.title };
+        }
+
+        const completionResponse = await fetch('/api/elearning/activity/summary', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!completionResponse.ok) {
+            return { allowed: false, completed: 0, required: required.length, courseTitle: learningPath.title };
+        }
+        const completionPayload = await completionResponse.json();
+        const completedSet = new Set(
+            (Array.isArray(completionPayload.completedModuleIds) ? completionPayload.completedModuleIds : [])
+                .map((value) => String(value || '').trim())
+                .filter(Boolean)
+        );
+        const completed = required.filter((id) => completedSet.has(id)).length;
+        return {
+            allowed: completed === required.length,
+            completed,
+            required: required.length,
+            courseTitle: learningPath.title
+        };
+    } catch (error) {
+        console.warn('Pemeriksaan materi wajib practice gagal:', error.message);
+        return { allowed: false, completed: 0, required: 0, courseTitle: 'course wajib' };
+    }
+}
+
+function renderTargetPracticeMaterialGate(access) {
+    const shell = document.querySelector('.practice-shell');
+    if (!shell) return;
+    shell.innerHTML = `
+        <div class="practice-panel" style="max-width:760px;margin:3rem auto;padding:3rem;text-align:center;">
+            <div style="font-size:4rem;color:#be123c;margin-bottom:1rem;"><i class="fas fa-lock"></i></div>
+            <h2 style="font-size:2.2rem;margin-bottom:1rem;">Practice masih terkunci</h2>
+            <p style="font-size:1.4rem;line-height:1.7;color:#64748b;margin-bottom:1.5rem;">
+                Selesaikan seluruh video wajib pada <strong>${access.courseTitle || 'course wajib'}</strong> terlebih dahulu.
+                Progres tersimpan: <strong>${Number(access.completed || 0)}/${Number(access.required || 0)} video</strong>.
+            </p>
+            <a class="practice-link-btn" href="courses.html#official-paths-section"><i class="fas fa-circle-play"></i> Kembali ke course wajib</a>
+        </div>
+    `;
+}
 
 // Load enhanced practice system
 function loadEnhancedPracticeSystem() {

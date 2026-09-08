@@ -139,6 +139,23 @@ const enhancedPracticeQuestions = {
             "timeToComplete": 120,
             "practicalTip": "Always test family flexibility by changing parameter values before using in projects",
             "imageUrl": "/elearning-assets/images/questions/SOAL BASIC, INTERMEDIATE, ADVANCE PERMODELAN.docx_1766118198626_aat19zz1x.png"
+          },
+          {
+            "id": "revit-mod-003",
+            "question": "Apa manfaat utama menggunakan View Template pada produksi gambar Revit?",
+            "type": "multiple-choice",
+            "options": [
+              "Mengurangi jumlah level pada model",
+              "Menyeragamkan visibility dan graphic settings pada beberapa view",
+              "Mengubah seluruh family menjadi model in-place",
+              "Membuat file NWD secara otomatis"
+            ],
+            "correctAnswer": 1,
+            "explanation": "View Template menjaga pengaturan tampilan dan grafis konsisten pada seluruh view yang menggunakan standar yang sama.",
+            "learningObjective": "Menerapkan standardisasi view untuk produksi gambar",
+            "relatedTopics": ["View Templates", "Documentation", "Graphic Standards"],
+            "difficulty": "Intermediate",
+            "timeToComplete": 60
           }
         ]
       },
@@ -169,6 +186,98 @@ const enhancedPracticeQuestions = {
             "timeToComplete": 75,
             "practicalTip": "Develop a quality checklist specific to your organization's standards",
             "imageUrl": "/elearning-assets/images/questions/SOAL BASIC, INTERMEDIATE, ADVANCE PERMODELAN.docx_1766118198627_p0v8kdx25.png"
+          },
+          {
+            "id": "qc-002",
+            "question": "Sebelum sheet Revit diterbitkan, kombinasi pemeriksaan yang paling tepat adalah ...",
+            "type": "multiple-choice",
+            "options": [
+              "Nomor sheet dan ukuran kertas saja",
+              "Nama/nomor sheet, revisi, skala, anotasi, dan status approval",
+              "Warna viewport dan ketebalan border saja",
+              "Jumlah family yang dimuat"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Kontrol dokumen perlu memastikan identitas, revisi, skala, anotasi, dan status persetujuan sudah benar sebelum terbit.",
+            "learningObjective": "Menjalankan pemeriksaan keluaran gambar sebelum penerbitan",
+            "relatedTopics": ["Sheet Review", "Revision Control", "Approval Status"],
+            "difficulty": "Intermediate",
+            "timeToComplete": 60
+          },
+          {
+            "id": "qc-003",
+            "question": "Tindakan terbaik saat ditemukan warning model yang berulang adalah ...",
+            "type": "multiple-choice",
+            "options": [
+              "Mengabaikannya karena tidak selalu terlihat pada sheet",
+              "Mendokumentasikan, mengelompokkan penyebab, memperbaiki, lalu memeriksa ulang",
+              "Menghapus seluruh view terkait",
+              "Mengubah nama file proyek"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Warning harus ditangani secara sistematis agar kualitas dan performa model tetap terjaga.",
+            "learningObjective": "Menangani temuan quality control secara terlacak",
+            "relatedTopics": ["Warnings", "Model Health", "Quality Review"],
+            "difficulty": "Intermediate",
+            "timeToComplete": 60
+          }
+        ]
+      },
+      "clash-detection": {
+        "title": "Navisworks Clash Detection",
+        "description": "Dasar clash detection dan tindak lanjut koordinasi model untuk BIM Modeller",
+        "difficulty": "Intermediate",
+        "questions": [
+          {
+            "id": "modeller-clash-001",
+            "question": "Apa perbedaan hard clash dan soft clash di Navisworks?",
+            "type": "multiple-choice",
+            "options": [
+              "Hard clash hanya untuk struktur, soft clash hanya untuk MEP",
+              "Hard clash adalah interseksi fisik, soft clash adalah pelanggaran jarak bebas",
+              "Hard clash otomatis selesai, soft clash harus dihapus",
+              "Tidak ada perbedaan"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Hard clash menunjukkan dua objek saling menembus; soft clash menunjukkan clearance yang disyaratkan tidak terpenuhi.",
+            "learningObjective": "Membedakan jenis konflik model",
+            "relatedTopics": ["Navisworks", "Hard Clash", "Clearance"],
+            "difficulty": "Intermediate",
+            "timeToComplete": 60
+          },
+          {
+            "id": "modeller-clash-002",
+            "question": "Mengapa Selection Set digunakan dalam clash test?",
+            "type": "multiple-choice",
+            "options": [
+              "Untuk mengubah warna antarmuka",
+              "Agar kelompok sistem dapat dibandingkan secara konsisten saat model diperbarui",
+              "Untuk menghapus file sumber",
+              "Agar ukuran file selalu menjadi lebih kecil"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Selection Set membuat cakupan test konsisten dan mudah dijalankan ulang pada model versi terbaru.",
+            "learningObjective": "Menyiapkan clash test yang dapat diulang",
+            "relatedTopics": ["Selection Sets", "Clash Test", "Model Updates"],
+            "difficulty": "Intermediate",
+            "timeToComplete": 60
+          },
+          {
+            "id": "modeller-clash-003",
+            "question": "Apa langkah verifikasi setelah clash diperbaiki pada model sumber?",
+            "type": "multiple-choice",
+            "options": [
+              "Mengubah status clash tanpa membuka model",
+              "Reload model terbaru dan menjalankan ulang clash test",
+              "Menghapus clash test",
+              "Mengekspor screenshot lama"
+            ],
+            "correctAnswer": 1,
+            "explanation": "Perbaikan harus diverifikasi pada model terbaru dengan menjalankan kembali test yang sama.",
+            "learningObjective": "Memverifikasi penyelesaian clash",
+            "relatedTopics": ["Clash Resolution", "Verification", "Coordination"],
+            "difficulty": "Intermediate",
+            "timeToComplete": 60
           }
         ]
       },

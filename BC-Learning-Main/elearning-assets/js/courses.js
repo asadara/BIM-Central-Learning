@@ -2,6 +2,10 @@
 const courseIndex = new Map();
 const categoryVideoIndex = new Map();
 let tutorialCache = null;
+let officialLearningPathsCache = [];
+let officialCertificatesCache = [];
+let officialCompletedMaterialIds = new Set();
+let officialYouTubePlayer = null;
 const COURSE_DISPLAY_PRIORITY = new Map([
     ['revit', 10],
     ['navisworks', 20],
@@ -217,6 +221,64 @@ async function trackLearningActivity(payload) {
     }
 }
 
+async function fetchOfficialMaterialCompletions() {
+    const token = getLearningActivityAuthToken();
+    if (!token) return new Set();
+
+    try {
+        const response = await fetch('/api/elearning/activity/summary', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(`Completion summary failed (${response.status})`);
+        const data = await response.json();
+        return new Set(
+            (Array.isArray(data.completedModuleIds) ? data.completedModuleIds : [])
+                .map((value) => String(value || '').trim())
+                .filter(Boolean)
+        );
+    } catch (error) {
+        console.warn('Failed to load material completions:', error.message);
+        return new Set();
+    }
+}
+
+function getOfficialRequiredMaterials(learningPath) {
+    return getOfficialPathMaterials(learningPath)
+        .filter((material) => material.completionRequired === true && material.id);
+}
+
+function isOfficialMaterialComplete(material) {
+    return Boolean(material?.id && officialCompletedMaterialIds.has(String(material.id)));
+}
+
+function getOfficialMaterialProgress(learningPath) {
+    const required = getOfficialRequiredMaterials(learningPath);
+    const completed = required.filter(isOfficialMaterialComplete);
+    const buildStage = (stage) => {
+        const stageRequired = required.filter((material) => getOfficialMaterialStage(material) === stage);
+        const stageCompleted = stageRequired.filter(isOfficialMaterialComplete);
+        return {
+            required: stageRequired,
+            completed: stageCompleted,
+            total: stageRequired.length,
+            completedCount: stageCompleted.length,
+            remaining: stageRequired.filter((material) => !isOfficialMaterialComplete(material)),
+            complete: stageRequired.length === 0 || stageCompleted.length === stageRequired.length
+        };
+    };
+
+    return {
+        required,
+        completed,
+        total: required.length,
+        completedCount: completed.length,
+        remaining: required.filter((material) => !isOfficialMaterialComplete(material)),
+        complete: required.length === 0 || completed.length === required.length,
+        concept: buildStage('concept'),
+        demonstration: buildStage('demonstration')
+    };
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     setupCoursePageLearningHierarchy();
     loadOfficialLearningPaths();
@@ -224,16 +286,24 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function setupCoursePageLearningHierarchy() {
+    document.body.classList.add('course-learning-hub');
+    ensureCourseHubStylesheet();
     ensureOfficialLearningPathStyles();
+    ensureCoursePageOverview();
     ensureLearningGuideSection();
     ensureOfficialLearningPathSection();
-    relabelCourseSupportSections();
+    ensureResourceLibrarySection();
     applyDefaultCourseSectionState();
+}
 
-    setTimeout(applyDefaultCourseSectionState, 0);
-    setTimeout(applyDefaultCourseSectionState, 800);
-    setTimeout(applyDefaultCourseSectionState, 1800);
-    setTimeout(applyDefaultCourseSectionState, 3200);
+function ensureCourseHubStylesheet() {
+    if (document.getElementById('courses-learning-hub-styles')) return;
+
+    const link = document.createElement('link');
+    link.id = 'courses-learning-hub-styles';
+    link.rel = 'stylesheet';
+    link.href = 'css/courses-learning-hub.css?v=20260908c';
+    document.head.appendChild(link);
 }
 
 function ensureOfficialLearningPathStyles() {
@@ -356,6 +426,14 @@ function ensureOfficialLearningPathStyles() {
             font-weight: 700;
             padding: .6rem 1rem;
         }
+        .official-path-meta.required {
+            background: #fff1f2;
+            color: #be123c;
+        }
+        .official-path-card.is-required {
+            border-color: rgba(190, 18, 60, .35);
+            box-shadow: 0 8px 24px rgba(190, 18, 60, .08);
+        }
         .official-path-flow {
             display: grid;
             gap: .7rem;
@@ -418,6 +496,8 @@ function ensureOfficialLearningPathStyles() {
             padding: .85rem 1rem;
             text-decoration: none;
             transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+            width: 100%;
+            text-align: left;
         }
         .official-path-material-link:hover,
         .official-path-material-link:focus-visible {
@@ -457,6 +537,19 @@ function ensureOfficialLearningPathStyles() {
             color: #6b7280;
             font-size: 1.1rem;
         }
+        .official-path-material-link.completed {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+        .official-path-material-link.completed > i:first-child,
+        .official-path-material-link.completed > i:last-child {
+            color: #15803d;
+        }
+        .official-path-material-detail {
+            color: #64748b;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
         .official-path-material-empty {
             color: #777;
             font-size: 1.2rem;
@@ -489,6 +582,10 @@ function ensureOfficialLearningPathStyles() {
         .official-path-status.not-started {
             background: #eef2f7;
             color: #475569;
+        }
+        .official-path-status.materials-required {
+            background: #fff1f2;
+            color: #be123c;
         }
         .official-path-status.needs-practice {
             background: #fff4de;
@@ -543,6 +640,71 @@ function ensureOfficialLearningPathStyles() {
             justify-content: center;
             gap: .6rem;
         }
+        .official-path-actions .preview-btn[disabled],
+        .official-path-actions .preview-btn.is-locked {
+            background: #e5e7eb;
+            border-color: #d1d5db;
+            color: #64748b;
+            cursor: not-allowed;
+            opacity: .85;
+            transform: none;
+        }
+        .official-youtube-modal {
+            align-items: center;
+            background: rgba(15, 23, 42, .88);
+            display: none;
+            inset: 0;
+            justify-content: center;
+            padding: 2rem;
+            position: fixed;
+            z-index: 10050;
+        }
+        .official-youtube-modal.open { display: flex; }
+        .official-youtube-dialog {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+            max-width: 1040px;
+            overflow: hidden;
+            width: min(100%, 1040px);
+        }
+        .official-youtube-header {
+            align-items: flex-start;
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            padding: 1.4rem 1.6rem;
+        }
+        .official-youtube-header h2 {
+            color: var(--black);
+            font-size: 1.6rem;
+            margin: 0;
+        }
+        .official-youtube-close {
+            align-items: center;
+            background: #f1f5f9;
+            border: 0;
+            border-radius: 999px;
+            color: #334155;
+            display: inline-flex;
+            flex: 0 0 auto;
+            height: 3.6rem;
+            justify-content: center;
+            width: 3.6rem;
+        }
+        .official-youtube-frame {
+            aspect-ratio: 16 / 9;
+            background: #020617;
+            width: 100%;
+        }
+        .official-youtube-frame > div,
+        .official-youtube-frame iframe { height: 100%; width: 100%; }
+        .official-youtube-note {
+            color: #475569;
+            font-size: 1.2rem;
+            margin: 0;
+            padding: 1.2rem 1.6rem 1.5rem;
+        }
         @media (max-width: 575px) {
             .official-path-materials,
             .official-path-module-outcome,
@@ -555,6 +717,7 @@ function ensureOfficialLearningPathStyles() {
             .official-path-material-link > i:last-child {
                 display: none;
             }
+            .official-youtube-modal { padding: .8rem; }
         }
     `;
     document.head.appendChild(style);
@@ -574,54 +737,81 @@ function setCourseSectionExpanded(section, expanded) {
     }
 }
 
-function ensureLearningGuideSection() {
-    ensureOfficialLearningPathStyles();
+function getCourseDisplayName() {
+    const user = getCourseCurrentUser();
+    const rawName = user.fullName || user.name || user.username || user.email || 'Learner';
+    return String(rawName).trim().split('@')[0] || 'Learner';
+}
 
-    let section = document.getElementById('learning-guide-section');
+function ensureCoursePageOverview() {
+    let section = document.getElementById('course-learning-overview');
     if (section) return section;
 
-    const officialSection = ensureOfficialLearningPathSection();
-    const anchor = officialSection || document.querySelector('.pdf-courses') || document.querySelector('.courses');
+    const anchor = document.querySelector('.pdf-courses') || document.querySelector('.courses');
     if (!anchor || !anchor.parentNode) return null;
 
     section = document.createElement('section');
-    section.className = 'learning-guide-section collapsible-section expanded';
+    section.id = 'course-learning-overview';
+    section.className = 'learning-hub-overview';
+    section.innerHTML = `
+        <div class="learning-hub-hero">
+            <div class="learning-hub-hero-copy">
+                <span class="learning-hub-eyebrow">Learning Center</span>
+                <h1>Jalur belajar Anda</h1>
+                <p>Fokus pada course yang ditugaskan, selesaikan materi, lalu lanjutkan ke practice dan exam.</p>
+                <span class="learning-hub-level"><i class="fas fa-user-graduate"></i> Memuat level...</span>
+            </div>
+            <div class="learning-hub-hero-action">
+                <button class="learning-hub-continue" type="button" disabled>
+                    <i class="fas fa-spinner fa-spin"></i> Memuat aktivitas
+                </button>
+            </div>
+        </div>
+        <div class="learning-hub-status" aria-live="polite">
+            <div class="learning-hub-next">
+                <span class="learning-hub-next-label">Course aktif</span>
+                <strong>Menyiapkan jalur belajar...</strong>
+            </div>
+            <div>
+                <div class="learning-hub-progress-copy"><span>Progress jalur</span><strong>0%</strong></div>
+                <div class="learning-hub-progress-track" aria-hidden="true"><span style="width:0%"></span></div>
+            </div>
+            <button class="learning-hub-help-button" type="button" data-scroll-target="learning-guide-section">
+                <i class="far fa-circle-question"></i> Cara belajar
+            </button>
+        </div>
+    `;
+
+    anchor.parentNode.insertBefore(section, anchor);
+    section.querySelector('[data-scroll-target]')?.addEventListener('click', () => {
+        document.getElementById('learning-guide-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return section;
+}
+
+function ensureLearningGuideSection() {
+    let section = document.getElementById('learning-guide-section');
+    if (section) return section;
+
+    const overview = ensureCoursePageOverview();
+    const anchor = overview?.nextSibling || document.querySelector('.pdf-courses') || document.querySelector('.courses');
+    if (!anchor || !anchor.parentNode) return null;
+
+    section = document.createElement('section');
+    section.className = 'learning-guide-section';
     section.id = 'learning-guide-section';
     section.innerHTML = `
-        <div class="collapsible-header" onclick="toggleSection('learning-guide-section')">
-            <h1 class="heading">
-                <span class="section-label">Guidance</span>
-                <span><i class="fas fa-compass section-icon"></i> Mulai dari sini
-                    <span class="section-help">Gunakan halaman ini dari atas ke bawah: pahami alur, pilih path, lalu kerjakan task pendukung.</span>
-                </span>
-            </h1>
-            <i class="fas fa-chevron-down collapsible-arrow"></i>
-        </div>
-        <div class="collapsible-content expanded" style="display:block; padding:2rem;">
-            <div class="learning-guide-panel">
-                <div class="learning-guide-steps">
-                    <div class="learning-guide-step">
-                        <i class="fas fa-route"></i>
-                        <div>
-                            <h3>1. Pilih path</h3>
-                            <p>Mulai dari Jalur Belajar Resmi. Path menentukan urutan course, module, practice, exam, dan certificate.</p>
-                        </div>
-                    </div>
-                    <div class="learning-guide-step">
-                        <i class="fas fa-book-open"></i>
-                        <div>
-                            <h3>2. Pelajari materi</h3>
-                            <p>Buka materi teori, halaman, PDF, atau video yang tertaut langsung pada setiap module.</p>
-                        </div>
-                    </div>
-                    <div class="learning-guide-step">
-                        <i class="fas fa-certificate"></i>
-                        <div>
-                            <h3>3. Practice & exam</h3>
-                            <p>Kerjakan practice sampai readiness cukup, lalu ambil exam untuk membuka sertifikat.</p>
-                        </div>
-                    </div>
-                </div>
+        <div class="learning-guide-compact">
+            <i class="fas fa-compass" aria-hidden="true"></i>
+            <div>
+                <strong>Mulai dari course yang ditugaskan</strong>
+                <p>Materi pada setiap modul sudah disusun dalam urutan yang perlu dikerjakan.</p>
+            </div>
+            <div class="learning-guide-steps-inline" aria-label="Urutan belajar">
+                <span>Pahami konsep</span><i class="fas fa-chevron-right"></i>
+                <span>Lihat penerapan</span><i class="fas fa-chevron-right"></i>
+                <span>Coba sendiri</span><i class="fas fa-chevron-right"></i>
+                <span>Buktikan kompetensi</span>
             </div>
         </div>
     `;
@@ -631,8 +821,6 @@ function ensureLearningGuideSection() {
 }
 
 function ensureOfficialLearningPathSection() {
-    ensureOfficialLearningPathStyles();
-
     let section = document.getElementById('official-paths-section');
     if (section) return section;
 
@@ -640,24 +828,20 @@ function ensureOfficialLearningPathSection() {
     if (!pdfSection || !pdfSection.parentNode) return null;
 
     section = document.createElement('section');
-    section.className = 'official-learning-paths collapsible-section expanded';
+    section.className = 'official-learning-paths';
     section.id = 'official-paths-section';
     section.innerHTML = `
-        <div class="collapsible-header" onclick="toggleSection('official-paths-section')">
-            <h1 class="heading">
-                <span class="section-label">Path</span>
-                <span><i class="fas fa-route section-icon"></i> Jalur Belajar Resmi
-                    <span class="section-help">Prioritas utama: pilih salah satu path untuk melihat urutan belajar resmi sampai sertifikat.</span>
-                </span>
-            </h1>
-            <i class="fas fa-chevron-down collapsible-arrow"></i>
+        <div class="learning-hub-section-head">
+            <div>
+                <span class="learning-hub-section-kicker">Prioritas Anda</span>
+                <h2>Jalur belajar saya</h2>
+                <p>Course wajib ditampilkan terlebih dahulu berdasarkan level akun.</p>
+            </div>
         </div>
-        <div class="collapsible-content expanded" style="display:block; padding:2rem;">
-            <div class="official-paths-grid" id="official-paths-container">
-                <div class="loading-courses" style="text-align:center; padding:2rem;">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
-                    <p>Memuat jalur belajar resmi...</p>
-                </div>
+        <div id="official-paths-container">
+            <div class="loading-courses" style="text-align:center; padding:2rem;">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                <p>Memuat jalur belajar resmi...</p>
             </div>
         </div>
     `;
@@ -666,37 +850,83 @@ function ensureOfficialLearningPathSection() {
     return section;
 }
 
-function relabelCourseSupportSections() {
+function ensureResourceLibrarySection() {
     const pdfSection = document.getElementById('pdf-section');
     const videoSection = document.getElementById('video-section');
+    if (!pdfSection || !videoSection) return null;
 
-    const pdfHeading = pdfSection?.querySelector('.collapsible-header h1');
-    if (pdfHeading) {
-        pdfHeading.innerHTML = `
-            <span class="section-label">Task Library</span>
-            <span><i class="fas fa-file-pdf section-icon"></i> Materi PDF
-                <span class="section-help">Buka saat path meminta referensi bacaan atau dokumen pendukung.</span>
-            </span>
+    let section = document.getElementById('learning-resource-library');
+    if (!section) {
+        section = document.createElement('section');
+        section.id = 'learning-resource-library';
+        section.className = 'learning-resource-library';
+        section.innerHTML = `
+            <div class="learning-hub-section-head">
+                <div>
+                    <span class="learning-hub-section-kicker">Referensi pendukung</span>
+                    <h2>Resource Library</h2>
+                    <p>Cari PDF atau video tambahan saat modul meminta referensi pendukung.</p>
+                </div>
+                <div class="resource-library-tabs" aria-label="Jenis resource">
+                    <button class="resource-library-tab" type="button" aria-expanded="false" aria-controls="pdf-section" data-resource-tab="pdf">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button class="resource-library-tab" type="button" aria-expanded="false" aria-controls="video-section" data-resource-tab="video">
+                        <i class="fas fa-circle-play"></i> Video
+                    </button>
+                </div>
+            </div>
+            <div class="resource-library-panels"></div>
         `;
+        pdfSection.parentNode.insertBefore(section, pdfSection);
     }
 
-    const videoHeading = videoSection?.querySelector('.collapsible-header h1');
-    if (videoHeading) {
-        videoHeading.innerHTML = `
-            <span class="section-label">Task Library</span>
-            <span><i class="fas fa-play-circle section-icon"></i> Materi Video
-                <span class="section-help">Buka saat perlu tutorial software atau demonstrasi langkah kerja.</span>
-            </span>
-        `;
-    }
+    const panels = section.querySelector('.resource-library-panels');
+    pdfSection.classList.add('resource-panel');
+    videoSection.classList.add('resource-panel');
+    panels.append(pdfSection, videoSection);
+
+    const pdfFilters = pdfSection.querySelector('.pdf-filter');
+    const pdfContent = pdfSection.querySelector('.collapsible-content');
+    if (pdfFilters && pdfContent && pdfFilters.parentNode !== pdfContent) pdfContent.prepend(pdfFilters);
+
+    const videoFilters = videoSection.querySelector('.video-filter');
+    const videoContent = videoSection.querySelector('.collapsible-content');
+    if (videoFilters && videoContent && videoFilters.parentNode !== videoContent) videoContent.prepend(videoFilters);
+
+    section.querySelectorAll('[data-resource-tab]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextTab = section.dataset.activeTab === button.dataset.resourceTab ? '' : button.dataset.resourceTab;
+            setResourceLibraryTab(nextTab);
+        });
+    });
+    setResourceLibraryTab('');
+    return section;
+}
+
+function setResourceLibraryTab(tabName) {
+    const section = document.getElementById('learning-resource-library');
+    if (!section) return;
+
+    const activeTab = tabName === 'video' || tabName === 'pdf' ? tabName : '';
+    section.dataset.activeTab = activeTab;
+    section.querySelectorAll('[data-resource-tab]').forEach((button) => {
+        const selected = button.dataset.resourceTab === activeTab;
+        button.classList.toggle('active', selected);
+        button.setAttribute('aria-expanded', String(selected));
+        button.tabIndex = 0;
+    });
+
+    const pdfSection = document.getElementById('pdf-section');
+    const videoSection = document.getElementById('video-section');
+    if (pdfSection) pdfSection.hidden = activeTab !== 'pdf';
+    if (videoSection) videoSection.hidden = activeTab !== 'video';
 }
 
 function applyDefaultCourseSectionState() {
     hideLegacyCourseGuides();
-    setCourseSectionExpanded(document.getElementById('learning-guide-section'), true);
-    setCourseSectionExpanded(document.getElementById('official-paths-section'), true);
-    setCourseSectionExpanded(document.getElementById('pdf-section'), false);
-    setCourseSectionExpanded(document.getElementById('video-section'), false);
+    setCourseSectionExpanded(document.getElementById('pdf-section'), true);
+    setCourseSectionExpanded(document.getElementById('video-section'), true);
 }
 
 function hideLegacyCourseGuides() {
@@ -914,12 +1144,30 @@ function buildPathPracticeSummary(learningPath) {
     };
 }
 
+function calculateOfficialPathProgress(materials, practice, examPassed) {
+    const completionRatio = (stage) => stage.total > 0 ? stage.completedCount / stage.total : 1;
+    const conceptRatio = completionRatio({
+        total: materials.concept?.total || 0,
+        completedCount: materials.concept?.completedCount || 0
+    });
+    const demonstrationRatio = completionRatio({
+        total: materials.demonstration?.total || 0,
+        completedCount: materials.demonstration?.completedCount || 0
+    });
+    const practiceRatio = practice.totalRequirements > 0 ? Math.min(1, practice.coverage / 100) : 1;
+    const examRatio = examPassed ? 1 : 0;
+
+    return Math.round(((conceptRatio + demonstrationRatio + practiceRatio + examRatio) / 4) * 100);
+}
+
 function buildOfficialPathProgress(learningPath, certificates) {
     const certificate = findCertificateForPath(learningPath, certificates);
     const readiness = getReadinessForPath(learningPath);
     const practice = buildPathPracticeSummary(learningPath);
+    const materials = getOfficialMaterialProgress(learningPath);
     const examPassed = hasExamPassedForPath(learningPath);
-    const started = practice.totalAttempts > 0 || examPassed;
+    const started = materials.completedCount > 0 || practice.totalAttempts > 0 || examPassed;
+    const pathProgress = calculateOfficialPathProgress(materials, practice, examPassed);
 
     if (certificate) {
         return {
@@ -929,7 +1177,40 @@ function buildOfficialPathProgress(learningPath, certificates) {
             note: `Sertifikat sudah terbit: ${certificate.title || learningPath.certificate?.title || 'Sertifikat'}.`,
             readiness,
             practice,
+            materials,
             certificate
+        };
+    }
+
+    if (!materials.complete) {
+        const remainingConcept = materials.concept?.remaining?.length || 0;
+        const remainingDemonstration = materials.demonstration?.remaining?.length || 0;
+        const remainingText = [
+            remainingConcept ? `${remainingConcept} PDF` : '',
+            remainingDemonstration ? `${remainingDemonstration} video` : ''
+        ].filter(Boolean).join(' dan ');
+        return {
+            status: 'materials-required',
+            label: `Materi ${materials.completedCount}/${materials.total}`,
+            progress: pathProgress,
+            note: `Selesaikan ${remainingText || `${materials.total - materials.completedCount} materi`} wajib untuk membuka practice dan exam.`,
+            readiness,
+            practice,
+            materials,
+            certificate: null
+        };
+    }
+
+    if (examPassed) {
+        return {
+            status: 'exam-passed',
+            label: 'Exam lulus',
+            progress: pathProgress,
+            note: 'Kompetensi sudah terbukti. Sertifikat akan ditampilkan setelah proses penerbitan selesai.',
+            readiness,
+            practice,
+            materials,
+            certificate: null
         };
     }
 
@@ -937,10 +1218,11 @@ function buildOfficialPathProgress(learningPath, certificates) {
         return {
             status: 'ready',
             label: 'Ready for exam',
-            progress: Math.max(85, toNonNegativeInt(readiness.readinessScore, 0)),
+            progress: pathProgress,
             note: 'Syarat readiness sudah cukup. Lanjutkan ke exam formal untuk membuka sertifikat.',
             readiness,
             practice,
+            materials,
             certificate: null
         };
     }
@@ -950,10 +1232,11 @@ function buildOfficialPathProgress(learningPath, certificates) {
         return {
             status: 'needs-practice',
             label: 'Practice kurang',
-            progress: readiness ? toNonNegativeInt(readiness.readinessScore, 0) : Math.min(75, practice.coverage),
+            progress: pathProgress,
             note: translateCourseReadinessRecommendation(readiness?.recommendation) || `Tambahkan ${missingAttempts} attempt terukur dan capai skor minimum practice.`,
             readiness,
             practice,
+            materials,
             certificate: null
         };
     }
@@ -965,6 +1248,7 @@ function buildOfficialPathProgress(learningPath, certificates) {
         note: 'Buka materi pertama, lalu lanjutkan ke practice agar readiness Anda dapat diukur.',
         readiness,
         practice,
+        materials,
         certificate: null
     };
 }
@@ -982,7 +1266,13 @@ async function loadOfficialLearningPaths() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         const paths = Array.isArray(data.data) ? data.data : [];
-        const certificates = await fetchCourseCertificates();
+        const [certificates, completedMaterialIds] = await Promise.all([
+            fetchCourseCertificates(),
+            fetchOfficialMaterialCompletions()
+        ]);
+        officialLearningPathsCache = paths;
+        officialCertificatesCache = certificates;
+        officialCompletedMaterialIds = completedMaterialIds;
         renderOfficialLearningPaths(paths, container, certificates);
     } catch (error) {
         console.warn('Failed to load official learning paths:', error.message);
@@ -1003,11 +1293,50 @@ const OFFICIAL_MATERIAL_TYPE_META = Object.freeze({
     html: { label: 'Halaman materi', action: 'Buka Materi', icon: 'fas fa-file-lines' },
     pdf: { label: 'PDF', action: 'Baca PDF', icon: 'fas fa-file-pdf' },
     video: { label: 'Video', action: 'Tonton Video', icon: 'fas fa-circle-play' },
+    youtube: { label: 'Video YouTube', action: 'Tonton Video', icon: 'fab fa-youtube' },
     quiz: { label: 'Quiz', action: 'Mulai Quiz', icon: 'fas fa-clipboard-question' },
     exam: { label: 'Exam', action: 'Mulai Exam', icon: 'fas fa-clipboard-check' },
     link: { label: 'Tautan materi', action: 'Buka Materi', icon: 'fas fa-link' },
     url: { label: 'Tautan materi', action: 'Buka Materi', icon: 'fas fa-link' }
 });
+
+const OFFICIAL_LEARNING_STAGE_META = Object.freeze({
+    concept: { label: 'Pahami konsep', eyebrow: '01 · PDF / Modul resmi', icon: 'fas fa-book-open' },
+    demonstration: { label: 'Lihat penerapan', eyebrow: '02 · Video / YouTube', icon: 'fas fa-circle-play' },
+    practice: { label: 'Coba sendiri', eyebrow: '03 · Practice', icon: 'fas fa-dumbbell' },
+    exam: { label: 'Buktikan kompetensi', eyebrow: '04 · Exam', icon: 'fas fa-clipboard-check' }
+});
+
+function getOfficialMaterialStage(material) {
+    const configuredStage = String(material?.stage || '').trim().toLowerCase();
+    if (configuredStage === 'concept' || configuredStage === 'demonstration') return configuredStage;
+
+    const type = String(material?.type || '').trim().toLowerCase();
+    return type === 'video' || type === 'youtube' ? 'demonstration' : 'concept';
+}
+
+function getOfficialMaterialRequirement(material) {
+    const configured = String(material?.requirementType || '').trim().toLowerCase();
+    if (configured === 'required' || configured === 'elective' || configured === 'reference') return configured;
+    return material?.completionRequired === true ? 'required' : 'reference';
+}
+
+function isOfficialMaterialAvailable(material) {
+    const availability = String(material?.availability || 'available').trim().toLowerCase();
+    return availability !== 'planned' && availability !== 'under-review' && availability !== 'unavailable';
+}
+
+function getOfficialMaterialRequirementLabel(material) {
+    if (!isOfficialMaterialAvailable(material)) return material?.note || 'Sedang ditinjau sebelum dipublikasikan.';
+    if (isOfficialMaterialComplete(material)) return 'Selesai';
+
+    const requirementType = getOfficialMaterialRequirement(material);
+    if (requirementType === 'elective') return 'Pilihan sesuai disiplin';
+    if (requirementType === 'reference') return 'Referensi pendukung';
+    return String(material?.type || '').toLowerCase() === 'pdf'
+        ? 'Wajib · selesai setelah membaca 95% halaman'
+        : 'Wajib · selesaikan sampai akhir';
+}
 
 function getOfficialMaterialTypeMeta(material) {
     const type = String(material?.type || 'material').trim().toLowerCase();
@@ -1040,7 +1369,7 @@ function getOfficialPathMaterials(learningPath) {
                 moduleId: module.id || '',
                 moduleTitle: module.title || ''
             }))
-            .filter((material) => resolveOfficialMaterialSource(material))
+            .filter((material) => isOfficialMaterialAvailable(material) && resolveOfficialMaterialSource(material))
     );
 }
 
@@ -1050,66 +1379,398 @@ function renderOfficialMaterialLink(material, learningPath, compact = false) {
 
     const meta = getOfficialMaterialTypeMeta(material);
     const title = String(material.title || meta.label || 'Materi pembelajaran').trim();
+    const materialId = String(material.id || material.moduleId || source || title).trim();
+    const completed = isOfficialMaterialComplete(material);
+    const available = isOfficialMaterialAvailable(material) && Boolean(source);
+    const isYouTube = meta.type === 'youtube';
+    const videoId = isYouTube ? extractYouTubeVideoId(source) : '';
     const isExternal = /^https?:\/\//i.test(source) && !source.startsWith(window.location.origin);
     const externalAttributes = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
-
-    if (compact) {
-        return `
-            <a class="preview-btn official-path-primary-material"
-               href="${sanitizeHTML(source)}"
-               data-official-material-source="${sanitizeHTML(source)}"
+    const sharedAttributes = `data-official-material-source="${sanitizeHTML(source)}"
+               data-official-material-id="${sanitizeHTML(materialId)}"
                data-official-material-type="${sanitizeHTML(meta.type)}"
                data-official-material-title="${sanitizeHTML(title)}"
                data-official-module-id="${sanitizeHTML(material.moduleId || '')}"
-               data-official-path-id="${sanitizeHTML(learningPath.id || '')}"${externalAttributes}>
+               data-official-path-id="${sanitizeHTML(learningPath.id || '')}"`;
+
+    if (!available) {
+        return `
+            <div class="official-path-material-link unavailable" aria-disabled="true">
+                <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                <span class="official-path-material-copy">
+                    <span class="official-path-material-type">${sanitizeHTML(meta.label)} · Ditinjau</span>
+                    <span class="official-path-material-title">${sanitizeHTML(title)}</span>
+                    <span class="official-path-material-detail">${sanitizeHTML(getOfficialMaterialRequirementLabel(material))}</span>
+                </span>
+                <i class="fas fa-lock" aria-hidden="true"></i>
+            </div>
+        `;
+    }
+
+    if (compact) {
+        if (isYouTube && videoId) {
+            return `
+                <button class="preview-btn official-path-primary-material${completed ? ' completed' : ''}"
+                   type="button" ${sharedAttributes} data-youtube-video-id="${sanitizeHTML(videoId)}">
+                    <i class="${completed ? 'fas fa-circle-check' : meta.icon}"></i> ${completed ? 'Tonton Ulang' : meta.action}
+                </button>
+            `;
+        }
+        return `
+            <a class="preview-btn official-path-primary-material${completed ? ' completed' : ''}"
+               href="${sanitizeHTML(source)}" ${sharedAttributes}${externalAttributes}>
                 <i class="${meta.icon}"></i> ${sanitizeHTML(meta.action)}
             </a>
         `;
     }
 
+    const inner = `
+        <i class="${completed ? 'fas fa-circle-check' : meta.icon}" aria-hidden="true"></i>
+        <span class="official-path-material-copy">
+            <span class="official-path-material-type">${sanitizeHTML(meta.label)}</span>
+            <span class="official-path-material-title">${sanitizeHTML(title)}</span>
+            <span class="official-path-material-detail">${sanitizeHTML(material.duration || '')}${material.duration ? ' · ' : ''}${sanitizeHTML(getOfficialMaterialRequirementLabel(material))}</span>
+        </span>
+        <i class="${completed ? 'fas fa-check' : 'fas fa-arrow-up-right-from-square'}" aria-hidden="true"></i>
+    `;
+
+    if (isYouTube && videoId) {
+        return `
+            <button class="official-path-material-link${completed ? ' completed' : ''}"
+               type="button" ${sharedAttributes} data-youtube-video-id="${sanitizeHTML(videoId)}">
+                ${inner}
+            </button>
+        `;
+    }
+
     return `
-        <a class="official-path-material-link"
-           href="${sanitizeHTML(source)}"
-           data-official-material-source="${sanitizeHTML(source)}"
-           data-official-material-type="${sanitizeHTML(meta.type)}"
-           data-official-material-title="${sanitizeHTML(title)}"
-           data-official-module-id="${sanitizeHTML(material.moduleId || '')}"
-           data-official-path-id="${sanitizeHTML(learningPath.id || '')}"${externalAttributes}>
-            <i class="${meta.icon}" aria-hidden="true"></i>
-            <span class="official-path-material-copy">
-                <span class="official-path-material-type">${sanitizeHTML(meta.label)}</span>
-                <span class="official-path-material-title">${sanitizeHTML(title)}</span>
-            </span>
-            <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+        <a class="official-path-material-link${completed ? ' completed' : ''}"
+           href="${sanitizeHTML(source)}" ${sharedAttributes}${externalAttributes}>
+            ${inner}
         </a>
     `;
 }
 
-function renderOfficialPathModules(learningPath) {
+function extractYouTubeVideoId(source) {
+    const match = String(source || '').match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|shorts\/|watch\?v=))([A-Za-z0-9_-]{11})/i);
+    return match ? match[1] : '';
+}
+
+function ensureYouTubePlayerApi() {
+    if (window.YT?.Player) return Promise.resolve(window.YT);
+    if (window.__bclYouTubeApiPromise) return window.__bclYouTubeApiPromise;
+
+    window.__bclYouTubeApiPromise = new Promise((resolve, reject) => {
+        if (!document.querySelector('script[data-bcl-youtube-api]')) {
+            const script = document.createElement('script');
+            script.src = 'https://www.youtube.com/iframe_api';
+            script.dataset.bclYoutubeApi = 'true';
+            script.onerror = () => reject(new Error('YouTube Player API gagal dimuat'));
+            document.head.appendChild(script);
+        }
+
+        const startedAt = Date.now();
+        const waitForApi = window.setInterval(() => {
+            if (window.YT?.Player) {
+                window.clearInterval(waitForApi);
+                resolve(window.YT);
+            } else if (Date.now() - startedAt > 15000) {
+                window.clearInterval(waitForApi);
+                reject(new Error('YouTube Player API timeout'));
+            }
+        }, 100);
+    });
+
+    return window.__bclYouTubeApiPromise;
+}
+
+function ensureOfficialYouTubeModal() {
+    let modal = document.getElementById('official-youtube-modal');
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'official-youtube-modal';
+    modal.className = 'official-youtube-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'official-youtube-title');
+    modal.innerHTML = `
+        <div class="official-youtube-dialog">
+            <div class="official-youtube-header">
+                <h2 id="official-youtube-title">Video pembelajaran</h2>
+                <button class="official-youtube-close" type="button" aria-label="Tutup video"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="official-youtube-frame"><div id="official-youtube-player"></div></div>
+            <p class="official-youtube-note" id="official-youtube-note">Video akan dicatat selesai setelah pemutaran mencapai akhir.</p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('.official-youtube-close').addEventListener('click', closeOfficialYouTubeModal);
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeOfficialYouTubeModal();
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.classList.contains('open')) closeOfficialYouTubeModal();
+    });
+    return modal;
+}
+
+function closeOfficialYouTubeModal() {
+    const modal = document.getElementById('official-youtube-modal');
+    modal?.classList.remove('open');
+    if (officialYouTubePlayer?.destroy) officialYouTubePlayer.destroy();
+    officialYouTubePlayer = null;
+    const frame = document.querySelector('.official-youtube-frame');
+    if (frame) frame.innerHTML = '<div id="official-youtube-player"></div>';
+}
+
+async function completeOfficialYouTubeMaterial(material) {
+    const result = await trackLearningActivity({
+        moduleId: material.id,
+        moduleType: 'video',
+        eventType: 'completed',
+        title: material.title,
+        category: material.pathId,
+        source: 'youtube',
+        progressPercent: 100
+    });
+    if (!result?.success) return false;
+
+    officialCompletedMaterialIds.add(material.id);
+    rememberLearningMarker('bcl_video_completed_', material.id, {
+        pathId: material.pathId,
+        title: material.title,
+        source: material.source,
+        completedAt: new Date().toISOString()
+    });
+    const note = document.getElementById('official-youtube-note');
+    if (note) note.textContent = 'Selesai — progres video sudah tersimpan. Anda dapat menutup pemutar atau menonton ulang.';
+    const container = document.getElementById('official-paths-container');
+    if (container) renderOfficialLearningPaths(officialLearningPathsCache, container, officialCertificatesCache);
+    return true;
+}
+
+async function openOfficialYouTubeMaterial(trigger) {
+    if (!getLearningActivityAuthToken()) {
+        alert('Silakan login agar progres video wajib dapat disimpan.');
+        return;
+    }
+
+    const material = {
+        id: trigger.dataset.officialMaterialId,
+        title: trigger.dataset.officialMaterialTitle,
+        source: trigger.dataset.officialMaterialSource,
+        pathId: trigger.dataset.officialPathId,
+        videoId: trigger.dataset.youtubeVideoId
+    };
+    const modal = ensureOfficialYouTubeModal();
+    modal.querySelector('#official-youtube-title').textContent = material.title;
+    modal.querySelector('#official-youtube-note').textContent = isOfficialMaterialComplete(material)
+        ? 'Video ini sudah selesai dan tercatat. Anda dapat menontonnya kembali.'
+        : 'Video akan dicatat selesai setelah pemutaran mencapai akhir.';
+    modal.classList.add('open');
+
+    await trackLearningActivity({
+        moduleId: material.id,
+        moduleType: 'video',
+        eventType: 'opened',
+        title: material.title,
+        category: material.pathId,
+        source: 'youtube',
+        progressPercent: 0
+    });
+
+    try {
+        await ensureYouTubePlayerApi();
+        officialYouTubePlayer = new window.YT.Player('official-youtube-player', {
+            videoId: material.videoId,
+            playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+            events: {
+                onStateChange: (event) => {
+                    if (event.data === window.YT.PlayerState.ENDED) {
+                        completeOfficialYouTubeMaterial(material);
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        modal.querySelector('#official-youtube-note').innerHTML = `Pemutar gagal dimuat. <a href="${sanitizeHTML(material.source)}" target="_blank" rel="noopener noreferrer">Buka video di YouTube</a>.`;
+    }
+}
+
+function getOfficialModuleStageState(module, learningPath, pathProgress) {
+    const materials = Array.isArray(module.materials) ? module.materials : [];
+    const materialState = (stageId) => {
+        const stageMaterials = materials.filter((material) => getOfficialMaterialStage(material) === stageId);
+        const required = stageMaterials.filter((material) => material.completionRequired === true && isOfficialMaterialAvailable(material));
+        const completed = required.filter(isOfficialMaterialComplete);
+        return {
+            materials: stageMaterials,
+            required,
+            completed,
+            complete: required.length > 0 && completed.length === required.length,
+            gateComplete: required.length === 0 || completed.length === required.length
+        };
+    };
+
+    const concept = materialState('concept');
+    const demonstration = materialState('demonstration');
+    const practiceRow = pathProgress?.practice?.rows?.find((row) => row.moduleId === module.id) || null;
+    const practiceAvailable = Boolean(module.practice?.category);
+    const practiceComplete = practiceAvailable && Boolean(practiceRow?.completed);
+    const examAvailable = Boolean(learningPath.exam?.id);
+    const examComplete = examAvailable && hasExamPassedForPath(learningPath);
+
+    return {
+        concept,
+        demonstration,
+        practiceRow,
+        practiceAvailable,
+        practiceComplete,
+        practiceUnlocked: concept.gateComplete && demonstration.gateComplete,
+        examAvailable,
+        examComplete,
+        examUnlocked: pathProgress?.status === 'ready' || examComplete,
+        completedStages: [concept.complete, demonstration.complete, practiceComplete, examComplete].filter(Boolean).length,
+        workComplete: concept.gateComplete && demonstration.gateComplete && (!practiceAvailable || practiceComplete)
+    };
+}
+
+function renderOfficialMaterialStage(stageId, stageState, module, learningPath) {
+    const stageMeta = OFFICIAL_LEARNING_STAGE_META[stageId];
+    const availableCount = stageState.materials.filter(isOfficialMaterialAvailable).length;
+    const unavailableCount = stageState.materials.length - availableCount;
+    let statusLabel = 'Belum tersedia';
+    let statusClass = 'planned';
+
+    if (stageState.required.length) {
+        statusLabel = stageState.complete ? 'Selesai' : `${stageState.completed.length}/${stageState.required.length} wajib`;
+        statusClass = stageState.complete ? 'complete' : 'current';
+    } else if (availableCount) {
+        statusLabel = 'Pilihan / referensi';
+        statusClass = 'optional';
+    } else if (unavailableCount) {
+        statusLabel = 'Sedang ditinjau';
+        statusClass = 'review';
+    }
+
+    return `
+        <section class="module-learning-stage ${statusClass}" data-stage="${stageId}">
+            <div class="module-learning-stage-head">
+                <span class="module-learning-stage-icon"><i class="${stageMeta.icon}"></i></span>
+                <div><small>${stageMeta.eyebrow}</small><h4>${stageMeta.label}</h4></div>
+                <span class="module-learning-stage-status ${statusClass}">${sanitizeHTML(statusLabel)}</span>
+            </div>
+            <div class="module-learning-stage-content">
+                ${stageState.materials.length
+                    ? stageState.materials.map((material) => renderOfficialMaterialLink({ ...material, moduleId: module.id || '' }, learningPath)).join('')
+                    : '<p class="module-learning-stage-empty">Konten belum tersedia dan tidak menghambat tahap berikutnya.</p>'}
+            </div>
+        </section>
+    `;
+}
+
+function renderOfficialPracticeStage(module, learningPath, stageState) {
+    const stageMeta = OFFICIAL_LEARNING_STAGE_META.practice;
+    const practiceHref = `practice.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}&view=skill-drills&category=${encodeURIComponent(module.practice?.category || '')}`;
+    const row = stageState.practiceRow;
+    const statusLabel = !stageState.practiceAvailable
+        ? 'Belum tersedia'
+        : stageState.practiceComplete ? 'Selesai' : stageState.practiceUnlocked ? 'Siap dikerjakan' : 'Terkunci';
+    const statusClass = stageState.practiceComplete
+        ? 'complete'
+        : stageState.practiceUnlocked && stageState.practiceAvailable ? 'current' : 'planned';
+
+    let content = '<p class="module-learning-stage-empty">Practice belum tersedia dan tidak menghambat progres materi.</p>';
+    if (stageState.practiceAvailable) {
+        content = `
+            <div class="module-stage-action-copy">
+                <strong>${sanitizeHTML(module.practice.category)}</strong>
+                <span>${Number(row?.attempts || 0)}/${Number(module.practice.minimumAttempts || 0)} attempt · rata-rata ${Number(row?.averageScore || 0)}% · target ${Number(module.practice.minimumAverageScore || 0)}%</span>
+            </div>
+            ${stageState.practiceUnlocked
+                ? `<a class="module-stage-action" href="${practiceHref}"><i class="fas fa-dumbbell"></i> ${stageState.practiceComplete ? 'Latihan ulang' : 'Mulai practice'}</a>`
+                : '<button class="module-stage-action locked" type="button" disabled><i class="fas fa-lock"></i> Selesaikan PDF dan video wajib</button>'}
+        `;
+    }
+
+    return `
+        <section class="module-learning-stage ${statusClass}" data-stage="practice">
+            <div class="module-learning-stage-head">
+                <span class="module-learning-stage-icon"><i class="${stageMeta.icon}"></i></span>
+                <div><small>${stageMeta.eyebrow}</small><h4>${stageMeta.label}</h4></div>
+                <span class="module-learning-stage-status ${statusClass}">${sanitizeHTML(statusLabel)}</span>
+            </div>
+            <div class="module-learning-stage-content module-stage-action-row">${content}</div>
+        </section>
+    `;
+}
+
+function renderOfficialExamStage(module, learningPath, stageState) {
+    const stageMeta = OFFICIAL_LEARNING_STAGE_META.exam;
+    const examHref = `exams.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}`;
+    const statusLabel = !stageState.examAvailable
+        ? 'Belum tersedia'
+        : stageState.examComplete ? 'Lulus' : stageState.examUnlocked ? 'Siap diambil' : 'Terkunci';
+    const statusClass = stageState.examComplete ? 'complete' : stageState.examUnlocked ? 'current' : 'planned';
+
+    return `
+        <section class="module-learning-stage ${statusClass}" data-stage="exam">
+            <div class="module-learning-stage-head">
+                <span class="module-learning-stage-icon"><i class="${stageMeta.icon}"></i></span>
+                <div><small>${stageMeta.eyebrow}</small><h4>${stageMeta.label}</h4></div>
+                <span class="module-learning-stage-status ${statusClass}">${sanitizeHTML(statusLabel)}</span>
+            </div>
+            <div class="module-learning-stage-content module-stage-action-row">
+                ${stageState.examAvailable ? `
+                    <div class="module-stage-action-copy">
+                        <strong>${sanitizeHTML(learningPath.exam.title || 'Exam akhir jalur')}</strong>
+                        <span>Kompetensi modul “${sanitizeHTML(module.title || '')}” dinilai dalam exam akhir jalur · nilai lulus ${Number(learningPath.exam.passingScore || 0)}%.</span>
+                    </div>
+                    ${stageState.examUnlocked
+                        ? `<a class="module-stage-action" href="${examHref}"><i class="fas fa-clipboard-check"></i> ${stageState.examComplete ? 'Lihat hasil exam' : 'Ambil exam'}</a>`
+                        : '<button class="module-stage-action locked" type="button" disabled><i class="fas fa-lock"></i> Selesaikan seluruh practice</button>'}
+                ` : '<p class="module-learning-stage-empty">Assessment belum tersedia dan tidak menghambat progres materi.</p>'}
+            </div>
+        </section>
+    `;
+}
+
+function renderOfficialPathModules(learningPath, options = {}) {
     const modules = Array.isArray(learningPath.modules) ? learningPath.modules : [];
     if (!modules.length) return '';
+
+    const pathProgress = options.progress || buildOfficialPathProgress(learningPath, officialCertificatesCache);
+    let firstIncompleteOpened = false;
 
     return `
         <div class="official-path-modules">
             ${modules.map((module, index) => {
-                const materials = Array.isArray(module.materials) ? module.materials : [];
+                const stageState = getOfficialModuleStageState(module, learningPath, pathProgress);
+                const shouldOpen = Boolean(options.openFirstIncomplete && !stageState.workComplete && !firstIncompleteOpened);
+                if (shouldOpen) firstIncompleteOpened = true;
                 return `
-                    <section class="official-path-module">
-                        <div class="official-path-module-heading">
-                            <span>${index + 1}</span>
-                            <strong>${sanitizeHTML(module.title || `Module ${index + 1}`)}</strong>
-                        </div>
-                        ${module.outcome ? `<p class="official-path-module-outcome">${sanitizeHTML(module.outcome)}</p>` : ''}
-                        ${materials.length
-                            ? `<div class="official-path-materials">${materials.map((material) => renderOfficialMaterialLink({ ...material, moduleId: module.id || '' }, learningPath)).join('')}</div>`
-                            : '<span class="official-path-material-empty">Materi untuk module ini belum ditautkan.</span>'}
-                        ${module.practice?.category ? `
-                            <div class="official-path-step">
-                                <i class="fas fa-dumbbell"></i>
-                                <span><strong>Practice:</strong> ${sanitizeHTML(module.practice.category)} (${Number(module.practice.minimumAttempts || 0)} attempt, ${Number(module.practice.minimumAverageScore || 0)}% avg)</span>
+                    <details class="official-path-module"${shouldOpen ? ' open' : ''}>
+                        <summary>
+                            <span class="official-path-module-number">${stageState.completedStages === 4 ? '<i class="fas fa-check"></i>' : index + 1}</span>
+                            <span class="official-path-module-title">
+                                <strong>${sanitizeHTML(module.title || `Modul ${index + 1}`)}</strong>
+                                <small>${stageState.workComplete ? 'Materi dan practice selesai' : 'Ikuti empat tahap secara berurutan'}</small>
+                            </span>
+                            <span class="official-path-module-count">${stageState.completedStages}/4 tahap</span>
+                            <i class="fas fa-chevron-down official-path-module-chevron" aria-hidden="true"></i>
+                        </summary>
+                        <div class="official-path-module-body">
+                            ${module.outcome ? `<p class="official-path-module-outcome"><strong>Target:</strong> ${sanitizeHTML(module.outcome)}</p>` : ''}
+                            <div class="module-learning-sequence">
+                                ${renderOfficialMaterialStage('concept', stageState.concept, module, learningPath)}
+                                ${renderOfficialMaterialStage('demonstration', stageState.demonstration, module, learningPath)}
+                                ${renderOfficialPracticeStage(module, learningPath, stageState)}
+                                ${renderOfficialExamStage(module, learningPath, stageState)}
                             </div>
-                        ` : ''}
-                    </section>
+                        </div>
+                    </details>
                 `;
             }).join('')}
         </div>
@@ -1118,11 +1779,17 @@ function renderOfficialPathModules(learningPath) {
 
 function bindOfficialMaterialTracking(container) {
     container.querySelectorAll('[data-official-material-source]').forEach((link) => {
-        link.addEventListener('click', () => {
+        link.addEventListener('click', (event) => {
             const source = link.dataset.officialMaterialSource || '';
             const title = link.dataset.officialMaterialTitle || 'Materi pembelajaran';
             const type = link.dataset.officialMaterialType || 'material';
-            const moduleId = link.dataset.officialModuleId || source || title;
+            const moduleId = link.dataset.officialMaterialId || link.dataset.officialModuleId || source || title;
+
+            if (link.dataset.youtubeVideoId) {
+                event.preventDefault();
+                openOfficialYouTubeMaterial(link);
+                return;
+            }
 
             rememberLearningMarker('bcl_path_material_opened_', `${link.dataset.officialPathId || 'path'}:${moduleId}`, {
                 pathId: link.dataset.officialPathId || '',
@@ -1146,6 +1813,182 @@ function bindOfficialMaterialTracking(container) {
     });
 }
 
+function buildOfficialPathActions(learningPath, progress) {
+    const practiceHref = `practice.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}&view=skill-drills`;
+    const examHref = `exams.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}`;
+    const pathMaterials = getOfficialPathMaterials(learningPath);
+    const nextMaterial = progress.materials?.remaining?.[0] || pathMaterials[0];
+    const materialAction = nextMaterial ? renderOfficialMaterialLink(nextMaterial, learningPath, true) : '';
+    const certificateHref = progress.certificate
+        ? `certification.html?cert=${encodeURIComponent(progress.certificate.id || '')}`
+        : 'certification.html';
+
+    if (progress.status === 'certified') {
+        return {
+            nextTitle: 'Sertifikat sudah tersedia',
+            primary: `<a class="preview-btn" href="${certificateHref}"><i class="fas fa-certificate"></i> Lihat Sertifikat</a>`,
+            secondary: ''
+        };
+    }
+
+    if (progress.status === 'materials-required' && materialAction) {
+        return {
+            nextTitle: nextMaterial?.title || 'Lanjutkan materi wajib',
+            primary: materialAction,
+            secondary: `<button class="preview-btn is-locked" type="button" disabled><i class="fas fa-lock"></i> Practice terkunci</button>`
+        };
+    }
+
+    if (progress.status === 'ready') {
+        return {
+            nextTitle: learningPath.exam?.title || 'Exam akhir',
+            primary: `<a class="preview-btn" href="${examHref}"><i class="fas fa-clipboard-check"></i> Ambil Exam</a>`,
+            secondary: ''
+        };
+    }
+
+    if (progress.status === 'exam-passed') {
+        return {
+            nextTitle: 'Exam sudah lulus',
+            primary: `<a class="preview-btn" href="${examHref}"><i class="fas fa-circle-check"></i> Lihat Hasil Exam</a>`,
+            secondary: ''
+        };
+    }
+
+    return {
+        nextTitle: 'Practice untuk mengukur kesiapan',
+        primary: `<a class="preview-btn" href="${practiceHref}"><i class="fas fa-dumbbell"></i> Mulai Practice</a>`,
+        secondary: materialAction
+    };
+}
+
+function renderLearningStageFlow(learningPath, progress) {
+    const conceptComplete = Boolean(progress.materials?.concept?.complete);
+    const demonstrationComplete = Boolean(progress.materials?.demonstration?.complete);
+    const practiceComplete = Number(progress.practice?.coverage || 0) >= 100 || ['ready', 'certified'].includes(progress.status);
+    const examComplete = Boolean(progress.certificate) || hasExamPassedForPath(learningPath);
+    const completed = [conceptComplete, demonstrationComplete, practiceComplete, examComplete];
+    const currentIndex = completed.findIndex((value) => !value);
+    const stages = [
+        { label: 'Pahami konsep', detail: progress.materials?.concept?.total ? `${progress.materials.concept.completedCount}/${progress.materials.concept.total} PDF wajib` : 'Tidak ada prasyarat', icon: 'fas fa-book-open' },
+        { label: 'Lihat penerapan', detail: progress.materials?.demonstration?.total ? `${progress.materials.demonstration.completedCount}/${progress.materials.demonstration.total} video wajib` : 'Tidak ada prasyarat', icon: 'fas fa-circle-play' },
+        { label: 'Coba sendiri', detail: `${progress.practice?.coverage || 0}% terpenuhi`, icon: 'fas fa-dumbbell' },
+        { label: 'Buktikan kompetensi', detail: examComplete ? (progress.certificate ? 'Lulus · sertifikat terbit' : 'Lulus') : 'Exam akhir', icon: 'fas fa-clipboard-check' }
+    ];
+
+    return `
+        <div class="learning-stage-flow" aria-label="Tahapan jalur belajar">
+            ${stages.map((stage, index) => {
+                const state = completed[index] ? 'complete' : index === currentIndex ? 'current' : 'locked';
+                const stateIcon = completed[index] ? 'fas fa-check' : stage.icon;
+                return `
+                    <div class="learning-stage ${state}"${state === 'current' ? ' aria-current="step"' : ''}>
+                        <span class="learning-stage-icon"><i class="${stateIcon}"></i></span>
+                        <span>${stage.label}</span>
+                        <small>${sanitizeHTML(stage.detail)}</small>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function renderAssignedLearningPath(learningPath, certificates) {
+    const progress = buildOfficialPathProgress(learningPath, certificates);
+    const actions = buildOfficialPathActions(learningPath, progress);
+    const isRequired = String(learningPath.requirementType || '').toLowerCase() === 'required';
+
+    return `
+        <article class="official-path-card assigned-path-card${isRequired ? ' is-required' : ''}" data-learning-path-id="${sanitizeHTML(learningPath.id)}">
+            <div class="assigned-path-header">
+                <div>
+                    <div class="official-path-meta-row">
+                        <span class="official-path-meta">${sanitizeHTML(learningPath.level || 'BIM')}</span>
+                        ${isRequired ? '<span class="official-path-meta required"><i class="fas fa-asterisk"></i> Wajib</span>' : '<span class="official-path-meta">Direkomendasikan</span>'}
+                        <span class="official-path-meta">${Number(learningPath.modules?.length || 0)} modul</span>
+                    </div>
+                    <h3>${sanitizeHTML(learningPath.title)}</h3>
+                    <p>${sanitizeHTML(learningPath.description || '')}</p>
+                </div>
+                <div class="assigned-path-actions">
+                    ${actions.primary}
+                    ${actions.secondary}
+                </div>
+            </div>
+            ${renderLearningStageFlow(learningPath, progress)}
+            <div class="assigned-path-progress">
+                <div class="official-path-progress">
+                    <div class="official-path-progress-header">
+                        <span class="official-path-status ${progress.status}">${sanitizeHTML(progress.label)}</span>
+                        <span class="official-path-progress-metric"><strong>${Number(progress.progress || 0)}%</strong> siap</span>
+                    </div>
+                    <div class="official-path-progress-bar" aria-label="Progress ${Number(progress.progress || 0)} persen">
+                        <div class="official-path-progress-fill" style="width:${Number(progress.progress || 0)}%;"></div>
+                    </div>
+                    <div class="official-path-progress-note">${sanitizeHTML(progress.note)}</div>
+                </div>
+                <div class="path-metric"><strong>${Number(progress.materials?.completedCount || 0)}/${Number(progress.materials?.total || 0)}</strong><span>materi wajib</span></div>
+                <div class="path-metric"><strong>${Number(progress.practice?.totalAttempts || 0)}/${Number(progress.practice?.totalRequiredAttempts || 0)}</strong><span>practice attempt</span></div>
+                <div class="path-metric"><strong>${Number(progress.practice?.averageScore || 0)}%</strong><span>rata-rata practice</span></div>
+            </div>
+            ${renderOfficialPathModules(learningPath, { openFirstIncomplete: true, progress })}
+        </article>
+    `;
+}
+
+function renderOptionalLearningPath(learningPath, certificates) {
+    const progress = buildOfficialPathProgress(learningPath, certificates);
+    const actions = buildOfficialPathActions(learningPath, progress);
+
+    return `
+        <details class="official-path-card optional-path-card" data-learning-path-id="${sanitizeHTML(learningPath.id)}">
+            <summary class="optional-path-summary">
+                <div>
+                    <div class="official-path-meta-row">
+                        <span class="official-path-meta">${sanitizeHTML(learningPath.level || 'BIM')}</span>
+                        <span class="official-path-meta">${Number(learningPath.modules?.length || 0)} modul</span>
+                    </div>
+                    <h4>${sanitizeHTML(learningPath.title)}</h4>
+                    <p>${sanitizeHTML(learningPath.description || '')}</p>
+                </div>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </summary>
+            <div class="optional-path-details">
+                <div class="official-path-progress">
+                    <div class="official-path-progress-header">
+                        <span class="official-path-status ${progress.status}">${sanitizeHTML(progress.label)}</span>
+                        <span class="official-path-progress-metric"><strong>${Number(progress.progress || 0)}%</strong> siap</span>
+                    </div>
+                    <div class="official-path-progress-bar" aria-hidden="true">
+                        <div class="official-path-progress-fill" style="width:${Number(progress.progress || 0)}%;"></div>
+                    </div>
+                    <div class="official-path-progress-note">${sanitizeHTML(progress.note)}</div>
+                </div>
+                ${renderOfficialPathModules(learningPath, { progress })}
+                <div class="optional-path-actions">${actions.primary}${actions.secondary}</div>
+            </div>
+        </details>
+    `;
+}
+
+function updateCoursePageOverview(learningPath, progress) {
+    const overview = ensureCoursePageOverview();
+    if (!overview || !learningPath || !progress) return;
+
+    const user = getCourseCurrentUser();
+    const level = String(user.level || user.bimLevel || 'BIM Modeller').trim();
+    const actions = buildOfficialPathActions(learningPath, progress);
+    const name = getCourseDisplayName();
+
+    overview.querySelector('.learning-hub-eyebrow').textContent = `${name} · Learning Center`;
+    overview.querySelector('.learning-hub-level').innerHTML = `<i class="fas fa-user-graduate"></i> ${sanitizeHTML(level)}`;
+    overview.querySelector('.learning-hub-hero-action').innerHTML = actions.primary.replace('preview-btn', 'learning-hub-continue');
+    overview.querySelector('.learning-hub-next strong').textContent = learningPath.title || 'Course aktif';
+    overview.querySelector('.learning-hub-progress-copy strong').textContent = `${Number(progress.progress || 0)}%`;
+    overview.querySelector('.learning-hub-progress-track span').style.width = `${Number(progress.progress || 0)}%`;
+    bindOfficialMaterialTracking(overview);
+}
+
 function renderOfficialLearningPaths(paths, container, certificates = []) {
     if (!paths.length) {
         container.innerHTML = `
@@ -1157,70 +2000,53 @@ function renderOfficialLearningPaths(paths, container, certificates = []) {
         return;
     }
 
-    container.innerHTML = paths.map((learningPath) => {
-        const practiceHref = `practice.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}&view=skill-drills`;
-        const examHref = `exams.html?targetExam=${encodeURIComponent(learningPath.exam?.id || '')}`;
-        const progress = buildOfficialPathProgress(learningPath, certificates);
-        const pathMaterials = getOfficialPathMaterials(learningPath);
-        const firstMaterialAction = pathMaterials.length
-            ? renderOfficialMaterialLink(pathMaterials[0], learningPath, true)
-            : '';
-        const certificateHref = progress.certificate
-            ? `certification.html?cert=${encodeURIComponent(progress.certificate.id || '')}`
-            : 'certification.html';
-        const primaryAction = progress.status === 'certified'
-            ? `<a class="preview-btn" href="${certificateHref}"><i class="fas fa-certificate"></i> Lihat Sertifikat</a>`
-            : progress.status === 'ready'
-                ? `<a class="preview-btn" href="${examHref}"><i class="fas fa-clipboard-check"></i> Ambil Exam</a>`
-                : `<a class="preview-btn" href="${practiceHref}"><i class="fas fa-route"></i> Mulai Practice</a>`;
+    const currentLevel = String(getCourseCurrentUser().level || getCourseCurrentUser().bimLevel || 'BIM Modeller').trim();
+    const normalizedCurrentLevel = currentLevel.toLowerCase();
+    const sortedPaths = [...paths].sort((left, right) => {
+        const priority = (item) => {
+            const requiredForCurrentLevel = String(item.requirementType || '').toLowerCase() === 'required' && String(item.level || '').toLowerCase() === normalizedCurrentLevel;
+            if (requiredForCurrentLevel) return 0;
+            if (String(item.level || '').toLowerCase() === normalizedCurrentLevel) return 1;
+            return 2;
+        };
+        return priority(left) - priority(right) || Number(left.order || 0) - Number(right.order || 0);
+    });
 
-        return `
-            <article class="official-path-card" data-learning-path-id="${sanitizeHTML(learningPath.id)}">
-                <div class="official-path-meta-row">
-                    <span class="official-path-meta">${sanitizeHTML(learningPath.level || 'BIM')}</span>
-                    <span class="official-path-meta">${Number(learningPath.modules?.length || 0)} module</span>
+    let assignedPaths = sortedPaths.filter((item) =>
+        String(item.requirementType || '').toLowerCase() === 'required' &&
+        String(item.level || '').toLowerCase() === normalizedCurrentLevel
+    );
+    if (!assignedPaths.length) {
+        assignedPaths = sortedPaths.filter((item) => String(item.level || '').toLowerCase() === normalizedCurrentLevel).slice(0, 1);
+    }
+    if (!assignedPaths.length && sortedPaths.length) assignedPaths = [sortedPaths[0]];
+
+    const assignedIds = new Set(assignedPaths.map((item) => String(item.id || '')));
+    const optionalPaths = sortedPaths.filter((item) => !assignedIds.has(String(item.id || '')));
+
+    container.innerHTML = `
+        <div class="assigned-path-list">
+            ${assignedPaths.map((learningPath) => renderAssignedLearningPath(learningPath, certificates)).join('')}
+        </div>
+        ${optionalPaths.length ? `
+            <div class="optional-paths-block">
+                <div class="optional-paths-title-row">
+                    <div>
+                        <h3>Course lainnya</h3>
+                        <p>Course rekomendasi dan jalur untuk level berikutnya.</p>
+                    </div>
+                    <span class="official-path-meta">${optionalPaths.length} course</span>
                 </div>
-                <h3>${sanitizeHTML(learningPath.title)}</h3>
-                <p>${sanitizeHTML(learningPath.description || '')}</p>
-                <div class="official-path-progress">
-                    <div class="official-path-progress-header">
-                        <span class="official-path-status ${progress.status}">${sanitizeHTML(progress.label)}</span>
-                        <span class="official-path-progress-metric"><strong>${Number(progress.progress || 0)}%</strong> path readiness</span>
-                    </div>
-                    <div class="official-path-progress-bar" aria-hidden="true">
-                        <div class="official-path-progress-fill" style="width:${Number(progress.progress || 0)}%;"></div>
-                    </div>
-                    <div class="official-path-progress-metrics">
-                        <span class="official-path-progress-metric"><strong>${Number(progress.practice.totalAttempts || 0)}/${Number(progress.practice.totalRequiredAttempts || 0)}</strong> attempts</span>
-                        <span class="official-path-progress-metric"><strong>${Number(progress.practice.averageScore || 0)}%</strong> avg practice</span>
-                        <span class="official-path-progress-metric"><strong>${Number(progress.practice.coverage || 0)}%</strong> requirements</span>
-                    </div>
-                    <div class="official-path-progress-note">${sanitizeHTML(progress.note)}</div>
+                <div class="optional-paths-grid">
+                    ${optionalPaths.map((learningPath) => renderOptionalLearningPath(learningPath, certificates)).join('')}
                 </div>
-                <div class="official-path-flow">
-                    <div class="official-path-step">
-                        <i class="fas fa-book-open"></i>
-                        <span><strong>Course:</strong> ${sanitizeHTML(learningPath.title)}</span>
-                    </div>
-                    ${renderOfficialPathModules(learningPath)}
-                    <div class="official-path-step">
-                        <i class="fas fa-clipboard-check"></i>
-                        <span><strong>Exam:</strong> ${sanitizeHTML(learningPath.exam?.title || '-')}</span>
-                    </div>
-                    <div class="official-path-step">
-                        <i class="fas fa-certificate"></i>
-                        <span><strong>Certificate:</strong> ${sanitizeHTML(learningPath.certificate?.title || '-')}</span>
-                    </div>
-                </div>
-                <div class="official-path-actions">
-                    ${firstMaterialAction}
-                    ${primaryAction}
-                </div>
-            </article>
-        `;
-    }).join('');
+            </div>
+        ` : ''}
+    `;
 
     bindOfficialMaterialTracking(container);
+    const primaryPath = assignedPaths[0];
+    if (primaryPath) updateCoursePageOverview(primaryPath, buildOfficialPathProgress(primaryPath, certificates));
 }
 
 function fetchCourses() {

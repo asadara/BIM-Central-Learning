@@ -122,6 +122,22 @@ function ensureTables() {
                 ON user_certificates(user_id, is_verified, issued_at DESC);
             `);
 
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS learning_activity_events (
+                    id BIGSERIAL PRIMARY KEY,
+                    user_id TEXT,
+                    user_email TEXT,
+                    module_id TEXT NOT NULL,
+                    module_type TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    title TEXT,
+                    category TEXT,
+                    source TEXT,
+                    progress_percent INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+
             await backfillVerifiableQuizAttempts();
         })().catch((error) => {
             ensureTablesPromise = null;
@@ -444,8 +460,43 @@ async function validateExamCertificateReadiness(userContext, quizId) {
         ? requirements.targetCategories.filter(Boolean)
         : [];
 
+    const requiredMaterialIds = Array.isArray(requirements.requiredMaterialIds)
+        ? requirements.requiredMaterialIds.map((value) => trimText(value, 160)).filter(Boolean)
+        : [];
+
+    let completedMaterialIds = [];
+    if (requiredMaterialIds.length > 0) {
+        const materialResult = await pool.query(
+            `SELECT DISTINCT module_id
+             FROM learning_activity_events
+             WHERE event_type = 'completed'
+               AND module_id = ANY($1::text[])
+               AND (
+                    ($2::text <> '' AND user_id = $2)
+                    OR ($3::text <> '' AND lower(COALESCE(user_email, '')) = $3)
+               )`,
+            [
+                requiredMaterialIds,
+                userContext?.userId == null ? '' : String(userContext.userId),
+                trimText(userContext?.userEmail, 255).toLowerCase()
+            ]
+        );
+        completedMaterialIds = materialResult.rows
+            .map((row) => trimText(row.module_id, 160))
+            .filter(Boolean);
+    }
+
+    const completedMaterialSet = new Set(completedMaterialIds);
+    const missingMaterialIds = requiredMaterialIds.filter((id) => !completedMaterialSet.has(id));
+
     if (targetCategories.length === 0) {
-        return { eligible: true };
+        return {
+            eligible: missingMaterialIds.length === 0,
+            reason: missingMaterialIds.length === 0 ? null : 'materials',
+            requiredMaterialIds,
+            completedMaterialIds,
+            missingMaterialIds
+        };
     }
 
     const identifier = trimText(userContext?.userIdentifier, 255).toLowerCase();
@@ -484,16 +535,20 @@ async function validateExamCertificateReadiness(userContext, quizId) {
         : 0;
     const coverage = coveredCategories.length / targetCategories.length;
 
-    const eligible = accuracy >= requirements.minAccuracy &&
+    const eligible = missingMaterialIds.length === 0 &&
+        accuracy >= requirements.minAccuracy &&
         attempts >= requirements.minAttempts &&
         coverage >= requirements.coverageTarget;
 
     return {
         eligible,
-        reason: eligible ? null : 'readiness',
+        reason: eligible ? null : (missingMaterialIds.length > 0 ? 'materials' : 'readiness'),
         accuracy,
         attempts,
         coverage,
+        requiredMaterialIds,
+        completedMaterialIds,
+        missingMaterialIds,
         requirements
     };
 }
@@ -671,6 +726,22 @@ exports.submitQuiz = async (req, res) => {
             detectCategory(quizId);
 
         const userContext = await resolveUserContext(req, payload);
+        const examRequirements = getExamCertificateRequirements()[quizId];
+        if (verification.verified && verification.sourceType === 'exam' &&
+            Array.isArray(examRequirements?.requiredMaterialIds) && examRequirements.requiredMaterialIds.length > 0) {
+            const readiness = await validateExamCertificateReadiness(userContext, quizId);
+            if (!readiness.eligible) {
+                return res.status(403).json({
+                    error: readiness.reason === 'materials'
+                        ? 'Required course materials are not complete'
+                        : 'Exam readiness requirements are not complete',
+                    code: readiness.reason === 'materials'
+                        ? 'REQUIRED_MATERIALS_INCOMPLETE'
+                        : 'EXAM_READINESS_INCOMPLETE',
+                    readiness
+                });
+            }
+        }
         const timeTaken = toNonNegativeInt(payload.timeTaken ?? payload.timeSpent, 0);
         const submittedMetadata = payload && typeof payload.metadata === 'object' && payload.metadata !== null
             ? payload.metadata

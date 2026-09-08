@@ -1,4 +1,8 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+    await Promise.all([
+        loadRegisteredExamQuestionBanks(),
+        loadExamMaterialGates()
+    ]);
     hydrateExamStateFromHistory();
     loadAvailableExams();
     setupEventListeners();
@@ -114,6 +118,34 @@ const examData = [
         lastAttempt: null,
         certification: {
             title: 'AutoCAD Certified User',
+            issuer: 'BC Learning Academy',
+            validFor: 24
+        }
+    },
+    {
+        id: 'revit-navisworks-essentials-2026-exam',
+        title: 'Revit & Navisworks Essentials 2026 Exam',
+        category: 'revit-navisworks-essentials',
+        level: 'beginner',
+        requiredLevel: 'BIM Modeller',
+        duration: 45,
+        questionCount: 15,
+        passingScore: 80,
+        prerequisites: [],
+        description: 'Ujian wajib BIM Modeller setelah menyelesaikan pelatihan Revit dan Navisworks 2026 serta seluruh target practice.',
+        syllabus: [
+            'Revit MEP fundamentals',
+            'Revit architectural modeling',
+            'BIM documentation and drawing production',
+            'Navisworks clash detection',
+            'Model coordination and quality control'
+        ],
+        attempts: 0,
+        maxAttempts: 3,
+        retakePeriod: 7,
+        lastAttempt: null,
+        certification: {
+            title: 'Revit & Navisworks Essentials 2026',
             issuer: 'BC Learning Academy',
             validFor: 24
         }
@@ -683,11 +715,75 @@ let currentModalExamId = null;
 let isExamReviewMode = false;
 let proctoringListenersAttached = false;
 let markedForReview = new Set();
+const registeredExamQuestionBanks = {};
+const examMaterialGates = new Map();
+const EXAM_QUESTION_BANK_SOURCES = Object.freeze({
+    'revit-navisworks-essentials-2026-exam': '/elearning-assets/js/revit-navisworks-essentials-exam-bank.json'
+});
 let proctoring = {
     cameraActive: false,
     microphoneActive: false,
     violations: []
 };
+
+async function loadRegisteredExamQuestionBanks() {
+    await Promise.all(Object.entries(EXAM_QUESTION_BANK_SOURCES).map(async ([examId, source]) => {
+        try {
+            const response = await fetch(source);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const questions = await response.json();
+            registeredExamQuestionBanks[examId] = (Array.isArray(questions) ? questions : []).map((question) => ({
+                ...question,
+                type: question.type || 'multiple-choice',
+                correct: Number(question.answer_index ?? question.correct),
+                difficulty: question.difficulty || 'intermediate'
+            }));
+        } catch (error) {
+            console.warn(`Bank soal ${examId} gagal dimuat:`, error.message);
+            registeredExamQuestionBanks[examId] = [];
+        }
+    }));
+}
+
+async function loadExamMaterialGates() {
+    try {
+        const pathsResponse = await fetch('/api/elearning/modules/learning-paths');
+        if (!pathsResponse.ok) throw new Error(`Learning paths HTTP ${pathsResponse.status}`);
+        const pathsPayload = await pathsResponse.json();
+        const paths = Array.isArray(pathsPayload.data) ? pathsPayload.data : [];
+        const token = getAuthToken();
+        let completed = [];
+
+        if (token) {
+            const completionResponse = await fetch('/api/elearning/activity/summary', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (completionResponse.ok) {
+                const completionPayload = await completionResponse.json();
+                completed = Array.isArray(completionPayload.completedModuleIds)
+                    ? completionPayload.completedModuleIds
+                    : [];
+            }
+        }
+
+        const completedSet = new Set(completed.map((value) => String(value || '').trim()).filter(Boolean));
+        paths.forEach((learningPath) => {
+            const examId = learningPath.exam?.id;
+            const required = Array.isArray(learningPath.readiness?.requiredMaterialIds)
+                ? learningPath.readiness.requiredMaterialIds.map((value) => String(value || '').trim()).filter(Boolean)
+                : [];
+            if (!examId || !required.length) return;
+            examMaterialGates.set(examId, {
+                required,
+                completed: required.filter((id) => completedSet.has(id)),
+                missing: required.filter((id) => !completedSet.has(id)),
+                courseTitle: learningPath.title || 'course wajib'
+            });
+        });
+    } catch (error) {
+        console.warn('Gate materi ujian gagal dimuat:', error.message);
+    }
+}
 
 function shuffleArray(array) {
     const shuffled = [...array];
@@ -890,6 +986,11 @@ function buildSyllabusFallbackQuestions(exam) {
 }
 
 function getExamQuestionPool(exam) {
+    const registeredQuestions = registeredExamQuestionBanks[exam.id];
+    if (Array.isArray(registeredQuestions) && registeredQuestions.length) {
+        return registeredQuestions;
+    }
+
     const directQuestions = examQuestions[exam.id];
     if (Array.isArray(directQuestions) && directQuestions.length) {
         return directQuestions;
@@ -988,6 +1089,17 @@ function checkExamEligibility(exam, userData) {
 
     if (userLevelIndex < requiredLevelIndex) {
         return { eligible: false, reason: 'level', required: exam.requiredLevel };
+    }
+
+    const materialGate = examMaterialGates.get(exam.id);
+    if (materialGate?.missing?.length) {
+        return {
+            eligible: false,
+            reason: 'materials',
+            completed: materialGate.completed.length,
+            required: materialGate.required.length,
+            courseTitle: materialGate.courseTitle
+        };
     }
 
     if (exam.attempts >= exam.maxAttempts) {
@@ -1326,6 +1438,8 @@ function getIneligibilityMessage(eligibility) {
             return `Ujian ulang tersedia dalam ${eligibility.daysRemaining} hari.`;
         case 'prerequisites':
             return 'Item persiapan yang diwajibkan belum lengkap.';
+        case 'materials':
+            return `Selesaikan video wajib ${eligibility.completed}/${eligibility.required} pada ${eligibility.courseTitle}.`;
         default:
             return 'Jalur ujian ini belum tersedia.';
     }
@@ -1378,6 +1492,8 @@ function showPrerequisites(examId, reason) {
         blockers.push(`Anda telah mencapai batas maksimal ${eligibility.maxAttempts} percobaan.`);
     } else if (eligibility.reason === 'retake') {
         blockers.push(`Tunggu ${eligibility.daysRemaining} hari lagi sebelum mengulang ujian ini.`);
+    } else if (eligibility.reason === 'materials') {
+        blockers.push(`Tonton seluruh video wajib pada ${eligibility.courseTitle}. Progres saat ini ${eligibility.completed}/${eligibility.required}.`);
     }
 
     if (readiness) {

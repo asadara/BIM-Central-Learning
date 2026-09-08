@@ -168,6 +168,95 @@
     }
   },
   {
+    "id": "revit-navisworks-essentials-2026",
+    "order": 5,
+    "title": "Revit & Navisworks Essentials 2026",
+    "level": "BIM Modeller",
+    "requirementType": "required",
+    "description": "Pelatihan wajib BIM Modeller untuk pemodelan Revit MEP dan arsitektur, produksi dokumen, serta koordinasi model dan clash detection di Navisworks.",
+    "courseCategory": "revit",
+    "playlistUrl": "https://www.youtube.com/playlist?list=PLMMWQQO-7NcA",
+    "estimatedDurationSeconds": 33564,
+    "modules": [
+      {
+        "id": "revit-2026-basic-mep",
+        "order": 1,
+        "title": "Revit 2026 — Basic MEP",
+        "outcome": "Peserta memahami alur dasar pemodelan sistem MEP dan penggunaan elemen Revit secara benar.",
+        "materials": [
+          { "id": "manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4-memproduksi-data-model-bim-pdf", "type": "pdf", "stage": "concept", "requirementType": "required", "title": "Modul Inti — Produksi Model BIM MEP", "source": "/public/reader.html?material=manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4-memproduksi-data-model-bim-pdf&return=/elearning-assets/courses.html", "completionRequired": true },
+          { "id": "manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4a-memproduksi-data-model-bim-displin-hvac-pdf", "type": "pdf", "stage": "concept", "requirementType": "elective", "title": "Pilihan Disiplin — Produksi Model BIM HVAC", "source": "/public/reader.html?material=manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4a-memproduksi-data-model-bim-displin-hvac-pdf&return=/elearning-assets/courses.html", "completionRequired": false },
+          { "id": "manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4b-memproduksi-data-model-bim-displin-pemadam-kebakaran-pdf", "type": "pdf", "stage": "concept", "requirementType": "elective", "title": "Pilihan Disiplin — Produksi Model BIM Pemadam Kebakaran", "source": "/public/reader.html?material=manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4b-memproduksi-data-model-bim-displin-pemadam-kebakaran-pdf&return=/elearning-assets/courses.html", "completionRequired": false },
+          { "id": "manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4c-memproduksi-data-model-bim-displin-elektrikal-pdf", "type": "pdf", "stage": "concept", "requirementType": "elective", "title": "Pilihan Disiplin — Produksi Model BIM Elektrikal", "source": "/public/reader.html?material=manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4c-memproduksi-data-model-bim-displin-elektrikal-pdf&return=/elearning-assets/courses.html", "completionRequired": false },
+          { "id": "manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4d-memproduksi-data-model-bim-displin-plumbing-pdf", "type": "pdf", "stage": "concept", "requirementType": "elective", "title": "Pilihan Disiplin — Produksi Model BIM Plumbing", "source": "/public/reader.html?material=manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4d-memproduksi-data-model-bim-displin-plumbing-pdf&return=/elearning-assets/courses.html", "completionRequired": false },
+          { "id": "yt-myILfmyDAOQ", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 1 Part 1 — Basic MEP: Pemodelan Sistem MEP", "source": "https://www.youtube.com/watch?v=myILfmyDAOQ", "duration": "1:03:04", "completionRequired": true },
+          { "id": "yt-AoIe9HvijmQ", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 1 Part 2 — Basic MEP: Pemodelan Sistem MEP", "source": "https://www.youtube.com/watch?v=AoIe9HvijmQ", "duration": "54:05", "completionRequired": true },
+          { "id": "yt-CeItmJXb6qw", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 1 Part 3 — Basic MEP: Pemodelan Sistem MEP", "source": "https://www.youtube.com/watch?v=CeItmJXb6qw", "duration": "44:18", "completionRequired": true },
+          { "id": "yt-riaC8q97Bvk", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 2 Part 1 — Basic MEP: Pemodelan Sistem MEP", "source": "https://www.youtube.com/watch?v=riaC8q97Bvk", "duration": "1:03:51", "completionRequired": true }
+        ],
+        "practice": { "category": "revit-fundamentals", "minimumAttempts": 2, "minimumAverageScore": 78 }
+      },
+      {
+        "id": "revit-2026-architecture",
+        "order": 2,
+        "title": "Revit 2026 — Basic Architecture",
+        "outcome": "Peserta mampu membangun model arsitektural dasar dengan struktur elemen dan parameter yang konsisten.",
+        "materials": [
+          { "id": "manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-4-memproduksi-data-model-bim-pdf", "type": "pdf", "stage": "concept", "requirementType": "required", "title": "Modul Inti — Produksi Model BIM Struktur dan Arsitektur", "source": "/public/reader.html?material=manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-4-memproduksi-data-model-bim-pdf&return=/elearning-assets/courses.html", "completionRequired": true },
+          { "id": "manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-1-bim-execution-plan-bep-pdf", "type": "pdf", "stage": "concept", "requirementType": "reference", "title": "Referensi — BIM Execution Plan (BEP)", "source": "/public/reader.html?material=manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-1-bim-execution-plan-bep-pdf&return=/elearning-assets/courses.html", "completionRequired": false },
+          { "id": "manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-2-exchange-information-schedule-eis-pdf", "type": "pdf", "stage": "concept", "requirementType": "reference", "title": "Referensi — Exchange Information Schedule (EIS)", "source": "/public/reader.html?material=manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-2-exchange-information-schedule-eis-pdf&return=/elearning-assets/courses.html", "completionRequired": false },
+          { "id": "yt-yGJ7m6miafM", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 2 — Basic Architecture: Pemodelan Arsitektural", "source": "https://www.youtube.com/watch?v=yGJ7m6miafM", "duration": "1:07:52", "completionRequired": true }
+        ],
+        "practice": { "category": "revit-modeling", "minimumAttempts": 1, "minimumAverageScore": 78 }
+      },
+      {
+        "id": "navisworks-2026-coordination",
+        "order": 3,
+        "title": "Navisworks 2026 — Clash Detection & Model Coordination",
+        "outcome": "Peserta mampu menjalankan clash test, membaca hasil konflik, dan menyiapkan tindak lanjut koordinasi model.",
+        "materials": [
+          { "id": "manual-book-bim-modeller-3-manajemen-data-kolaboratif-2-prosedur-awal-penyiapan-data-model-untuk-koordinasi-pdf", "type": "pdf", "stage": "concept", "requirementType": "required", "title": "Prosedur Awal Penyiapan Model untuk Koordinasi", "source": "/public/reader.html?material=manual-book-bim-modeller-3-manajemen-data-kolaboratif-2-prosedur-awal-penyiapan-data-model-untuk-koordinasi-pdf&return=/elearning-assets/courses.html", "completionRequired": true },
+          { "id": "manual-book-bim-modeller-3-manajemen-data-kolaboratif-3-memasukkan-data-model-ke-dalam-common-data-environment-pdf", "type": "pdf", "stage": "concept", "requirementType": "required", "title": "Memasukkan Model ke Common Data Environment", "source": "/public/reader.html?material=manual-book-bim-modeller-3-manajemen-data-kolaboratif-3-memasukkan-data-model-ke-dalam-common-data-environment-pdf&return=/elearning-assets/courses.html", "completionRequired": true },
+          { "id": "manual-book-bim-modeller-3-manajemen-data-kolaboratif-1-kolaborasi-dan-pengelolaan-data-dalam-cde-pdf", "type": "pdf", "stage": "concept", "requirementType": "reference", "title": "Referensi — Kolaborasi dan Pengelolaan Data dalam CDE", "source": "/public/reader.html?material=manual-book-bim-modeller-3-manajemen-data-kolaboratif-1-kolaborasi-dan-pengelolaan-data-dalam-cde-pdf&return=/elearning-assets/courses.html", "completionRequired": false },
+          { "id": "yt-36C4jhRqILA", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 4 Part 1 — Clash Detection & Model Coordination", "source": "https://www.youtube.com/watch?v=36C4jhRqILA", "duration": "1:01:40", "completionRequired": true },
+          { "id": "yt-xi05rQZyCk8", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 4 Part 2 — Clash Detection & Model Coordination", "source": "https://www.youtube.com/watch?v=xi05rQZyCk8", "duration": "1:10:24", "completionRequired": true }
+        ],
+        "practice": { "category": "clash-detection", "minimumAttempts": 1, "minimumAverageScore": 78 }
+      },
+      {
+        "id": "revit-2026-documentation",
+        "order": 4,
+        "title": "Revit 2026 — BIM Documentation & Drawing Production",
+        "outcome": "Peserta mampu menyusun view, sheet, anotasi, dan keluaran gambar yang siap diperiksa.",
+        "materials": [
+          { "id": "manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-5-dokumentasi-gambar-teknis-dari-model-bim-pdf", "type": "pdf", "stage": "concept", "requirementType": "required", "title": "Dokumentasi Gambar Teknis dari Model BIM", "source": "/public/reader.html?material=manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-5-dokumentasi-gambar-teknis-dari-model-bim-pdf&return=/elearning-assets/courses.html", "completionRequired": true },
+          { "id": "manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-5-dokumentasi-gambar-teknis-dari-model-bim-mep-pdf", "type": "pdf", "stage": "concept", "requirementType": "reference", "availability": "under-review", "title": "Dokumentasi Gambar Teknis BIM MEP", "source": "/public/reader.html?material=manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-5-dokumentasi-gambar-teknis-dari-model-bim-mep-pdf&return=/elearning-assets/courses.html", "completionRequired": false, "note": "Sedang diverifikasi sebelum dipakai sebagai modul resmi." },
+          { "id": "yt-HlEiZhqaLYw", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 5 Part 1 — BIM Documentation & Drawing Production", "source": "https://www.youtube.com/watch?v=HlEiZhqaLYw", "duration": "1:08:55", "completionRequired": true },
+          { "id": "yt-skF-RpYy6oI", "type": "youtube", "stage": "demonstration", "requirementType": "required", "title": "Sesi 5 Part 2 — BIM Documentation & Drawing Production", "source": "https://www.youtube.com/watch?v=skF-RpYy6oI", "duration": "1:05:15", "completionRequired": true }
+        ],
+        "practice": { "category": "quality-control", "minimumAttempts": 1, "minimumAverageScore": 78 }
+      }
+    ],
+    "exam": {
+      "id": "revit-navisworks-essentials-2026-exam",
+      "title": "Revit & Navisworks Essentials 2026 Exam",
+      "passingScore": 80
+    },
+    "readiness": {
+      "requiredLevel": "BIM Modeller",
+      "targetCategories": ["revit-fundamentals", "revit-modeling", "clash-detection", "quality-control"],
+      "minAccuracy": 78,
+      "minAttempts": 5,
+      "coverageTarget": 1,
+      "recommendedPracticeMode": "skill-drills",
+      "requiredMaterialIds": ["manual-book-bim-modeller-6-pemodelan-dan-produksi-data-bim-mep-4-memproduksi-data-model-bim-pdf", "yt-myILfmyDAOQ", "yt-AoIe9HvijmQ", "yt-CeItmJXb6qw", "yt-riaC8q97Bvk", "manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-4-memproduksi-data-model-bim-pdf", "yt-yGJ7m6miafM", "manual-book-bim-modeller-3-manajemen-data-kolaboratif-2-prosedur-awal-penyiapan-data-model-untuk-koordinasi-pdf", "manual-book-bim-modeller-3-manajemen-data-kolaboratif-3-memasukkan-data-model-ke-dalam-common-data-environment-pdf", "yt-36C4jhRqILA", "yt-xi05rQZyCk8", "manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-5-dokumentasi-gambar-teknis-dari-model-bim-pdf", "yt-HlEiZhqaLYw", "yt-skF-RpYy6oI"]
+    },
+    "certificate": {
+      "title": "Revit & Navisworks Essentials 2026",
+      "validForMonths": 24
+    }
+  },
+  {
     "id": "revit-architecture-professional",
     "order": 50,
     "title": "Revit Architecture Professional",

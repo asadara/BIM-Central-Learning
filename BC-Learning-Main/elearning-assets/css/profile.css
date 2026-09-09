@@ -105,6 +105,12 @@
     padding: 0.6rem 1.2rem;
 }
 
+.user-profile .profile-verified-mark {
+    color: #1687d9;
+    font-size: .9em;
+    margin-left: .3rem;
+}
+
 .user-profile .profile-bio {
     font-size: 1.7rem;
     max-width: 720px;

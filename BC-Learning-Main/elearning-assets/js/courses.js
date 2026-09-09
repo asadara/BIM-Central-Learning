@@ -135,8 +135,8 @@ function buildLearningProgressSnapshot() {
             storedUser.level ||
             storedUser.bimLevel ||
             localStorage.getItem('level') ||
-            'BIM Modeller'
-        ).trim(),
+            ''
+        ).trim() || null,
         toNextLevel: toNonNegativeInt(
             userProgress.toNextLevel ?? storedUser?.progress?.toNextLevel ?? userData.toNextLevel ?? 0,
             0
@@ -971,6 +971,63 @@ function getCourseCurrentUser() {
     return authUser || localUser || {};
 }
 
+const COURSE_BIM_COMPETENCY_LEVELS = new Set([
+    'BIM Modeller',
+    'BIM Coordinator',
+    'BIM Specialist',
+    'BIM Manager'
+]);
+
+function normalizeCourseCompetencyLevel(value) {
+    const raw = String(value || '').trim();
+    return [...COURSE_BIM_COMPETENCY_LEVELS].find((level) => level.toLowerCase() === raw.toLowerCase()) || null;
+}
+
+function getCourseLearnerContext() {
+    const user = getCourseCurrentUser();
+    const identity = String(user.id || user.userId || user.email || user.username || user.name || '').trim();
+    const token = getLearningActivityAuthToken();
+    const competencyLevel = normalizeCourseCompetencyLevel(user.bimLevel || user.level || user.bim_level);
+    const targetCompetencyLevel = normalizeCourseCompetencyLevel(user.targetBimLevel || user.target_bim_level);
+    return {
+        user,
+        authenticated: Boolean(identity && token),
+        isGuest: !identity || !token,
+        competencyLevel,
+        competencyStatus: String(user.competencyStatus || user.competency_status || (competencyLevel ? 'self_declared' : 'not_assessed')),
+        targetCompetencyLevel,
+        routingLevel: targetCompetencyLevel || competencyLevel
+    };
+}
+
+async function refreshCourseUserProfile() {
+    const token = getLearningActivityAuthToken();
+    if (!token) return null;
+    try {
+        const response = await fetch('/api/profile', {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
+            cache: 'no-store'
+        });
+        if (!response.ok) return null;
+        const profile = await response.json();
+        const existing = parseLearningJsonSafe(localStorage.getItem('user'), {});
+        const merged = {
+            ...existing,
+            ...profile,
+            level: profile.bimLevel || null,
+            token: existing.token || token
+        };
+        localStorage.setItem('user', JSON.stringify(merged));
+        if (profile.bimLevel) localStorage.setItem('level', profile.bimLevel);
+        else localStorage.removeItem('level');
+        return merged;
+    } catch (error) {
+        console.warn('Failed to refresh learner profile:', error.message);
+        return null;
+    }
+}
+
 function getCourseUserIdentity() {
     const user = getCourseCurrentUser();
     return String(user.id || user.userId || user.email || user.username || user.name || '').trim();
@@ -1261,6 +1318,16 @@ async function loadOfficialLearningPaths() {
     if (!container) return;
 
     try {
+        await refreshCourseUserProfile();
+        const learner = getCourseLearnerContext();
+        if (!learner.authenticated) {
+            renderCourseAccessState(container, 'guest');
+            return;
+        }
+        if (!learner.competencyLevel) {
+            renderCourseAccessState(container, 'unassessed');
+            return;
+        }
         await ensureCourseReadinessScript();
         const response = await fetch('/api/elearning/modules/learning-paths');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1283,6 +1350,36 @@ async function loadOfficialLearningPaths() {
             </div>
         `;
     }
+}
+
+function renderCourseAccessState(container, state) {
+    const overview = ensureCoursePageOverview();
+    const isGuest = state === 'guest';
+    const title = isGuest ? 'Masuk untuk memulai jalur belajar' : 'Mulai dari orientasi dan assessment awal';
+    const detail = isGuest
+        ? 'Anda tetap dapat menjelajahi katalog. Progress, assessment, dan sertifikat memerlukan akun.'
+        : 'Kompetensi BIM belum dinilai. Materi umum tetap dapat dipelajari tanpa menetapkan level BIM Modeller.';
+    const actionHref = isGuest
+        ? `/pages/login.html?redirect=${encodeURIComponent(location.pathname + location.search)}`
+        : '/elearning-assets/profile.html';
+    const actionLabel = isGuest ? 'Masuk untuk mulai belajar' : 'Lengkapi profil';
+
+    container.innerHTML = `
+        <div class="no-courses learning-access-state">
+            <i class="fas ${isGuest ? 'fa-lock' : 'fa-compass'}"></i>
+            <div><strong>${title}</strong><p>${detail}</p></div>
+            <a class="preview-btn" href="${actionHref}">${actionLabel}</a>
+        </div>
+    `;
+
+    if (!overview) return;
+    overview.querySelector('.learning-hub-eyebrow').textContent = isGuest ? 'BCL · Learning Center' : `${getCourseDisplayName()} · Learning Center`;
+    overview.querySelector('.learning-hub-level').innerHTML = `<i class="fas ${isGuest ? 'fa-user' : 'fa-user-graduate'}"></i> ${isGuest ? 'Mode tamu' : 'Kompetensi: Belum dinilai'}`;
+    overview.querySelector('.learning-hub-hero-action').innerHTML = `<a class="preview-btn learning-hub-continue" href="${actionHref}">${actionLabel}</a>`;
+    overview.querySelector('.learning-hub-next-label').textContent = isGuest ? 'Akses belajar' : 'Jalur awal';
+    overview.querySelector('.learning-hub-next strong').textContent = title;
+    overview.querySelector('.learning-hub-progress-copy strong').textContent = '—';
+    overview.querySelector('.learning-hub-progress-track span').style.width = '0%';
 }
 
 const OFFICIAL_MATERIAL_TYPE_META = Object.freeze({
@@ -1975,13 +2072,19 @@ function updateCoursePageOverview(learningPath, progress) {
     const overview = ensureCoursePageOverview();
     if (!overview || !learningPath || !progress) return;
 
-    const user = getCourseCurrentUser();
-    const level = String(user.level || user.bimLevel || 'BIM Modeller').trim();
+    const learner = getCourseLearnerContext();
+    const level = learner.competencyLevel || 'Belum dinilai';
     const actions = buildOfficialPathActions(learningPath, progress);
     const name = getCourseDisplayName();
 
     overview.querySelector('.learning-hub-eyebrow').textContent = `${name} · Learning Center`;
-    overview.querySelector('.learning-hub-level').innerHTML = `<i class="fas fa-user-graduate"></i> ${sanitizeHTML(level)}`;
+    const target = learner.targetCompetencyLevel && learner.targetCompetencyLevel !== learner.competencyLevel
+        ? ` · Target: ${learner.targetCompetencyLevel}`
+        : '';
+    const verified = learner.competencyStatus === 'verified'
+        ? ' <i class="fas fa-circle-check" title="Verified" aria-label="Verified"></i>'
+        : '';
+    overview.querySelector('.learning-hub-level').innerHTML = `<i class="fas fa-user-graduate"></i> Kompetensi: ${sanitizeHTML(level)}${verified}${sanitizeHTML(target)}`;
     overview.querySelector('.learning-hub-hero-action').innerHTML = actions.primary.replace('preview-btn', 'learning-hub-continue');
     overview.querySelector('.learning-hub-next strong').textContent = learningPath.title || 'Course aktif';
     overview.querySelector('.learning-hub-progress-copy strong').textContent = `${Number(progress.progress || 0)}%`;
@@ -2000,8 +2103,13 @@ function renderOfficialLearningPaths(paths, container, certificates = []) {
         return;
     }
 
-    const currentLevel = String(getCourseCurrentUser().level || getCourseCurrentUser().bimLevel || 'BIM Modeller').trim();
-    const normalizedCurrentLevel = currentLevel.toLowerCase();
+    const learner = getCourseLearnerContext();
+    const routingLevel = learner.routingLevel;
+    if (!routingLevel) {
+        renderCourseAccessState(container, learner.authenticated ? 'unassessed' : 'guest');
+        return;
+    }
+    const normalizedCurrentLevel = routingLevel.toLowerCase();
     const sortedPaths = [...paths].sort((left, right) => {
         const priority = (item) => {
             const requiredForCurrentLevel = String(item.requirementType || '').toLowerCase() === 'required' && String(item.level || '').toLowerCase() === normalizedCurrentLevel;
@@ -2012,21 +2120,19 @@ function renderOfficialLearningPaths(paths, container, certificates = []) {
         return priority(left) - priority(right) || Number(left.order || 0) - Number(right.order || 0);
     });
 
-    let assignedPaths = sortedPaths.filter((item) =>
+    const assignedPaths = sortedPaths.filter((item) =>
         String(item.requirementType || '').toLowerCase() === 'required' &&
         String(item.level || '').toLowerCase() === normalizedCurrentLevel
     );
-    if (!assignedPaths.length) {
-        assignedPaths = sortedPaths.filter((item) => String(item.level || '').toLowerCase() === normalizedCurrentLevel).slice(0, 1);
-    }
-    if (!assignedPaths.length && sortedPaths.length) assignedPaths = [sortedPaths[0]];
 
     const assignedIds = new Set(assignedPaths.map((item) => String(item.id || '')));
     const optionalPaths = sortedPaths.filter((item) => !assignedIds.has(String(item.id || '')));
 
     container.innerHTML = `
         <div class="assigned-path-list">
-            ${assignedPaths.map((learningPath) => renderAssignedLearningPath(learningPath, certificates)).join('')}
+            ${assignedPaths.length
+                ? assignedPaths.map((learningPath) => renderAssignedLearningPath(learningPath, certificates)).join('')
+                : `<div class="no-courses"><i class="fas fa-route"></i><p>Belum ada jalur wajib untuk ${sanitizeHTML(routingLevel)}. Course lain tetap tersedia sebagai pilihan mandiri.</p></div>`}
         </div>
         ${optionalPaths.length ? `
             <div class="optional-paths-block">
@@ -2047,6 +2153,20 @@ function renderOfficialLearningPaths(paths, container, certificates = []) {
     bindOfficialMaterialTracking(container);
     const primaryPath = assignedPaths[0];
     if (primaryPath) updateCoursePageOverview(primaryPath, buildOfficialPathProgress(primaryPath, certificates));
+    else renderCourseNoAssignmentOverview(learner);
+}
+
+function renderCourseNoAssignmentOverview(learner) {
+    const overview = ensureCoursePageOverview();
+    if (!overview) return;
+    const level = learner.competencyLevel || 'Belum dinilai';
+    const target = learner.targetCompetencyLevel ? ` · Target: ${learner.targetCompetencyLevel}` : '';
+    overview.querySelector('.learning-hub-level').innerHTML = `<i class="fas fa-user-graduate"></i> Kompetensi: ${sanitizeHTML(level + target)}`;
+    overview.querySelector('.learning-hub-hero-action').innerHTML = '<a class="preview-btn learning-hub-continue" href="#official-paths-section">Lihat course tersedia</a>';
+    overview.querySelector('.learning-hub-next-label').textContent = 'Jalur resmi';
+    overview.querySelector('.learning-hub-next strong').textContent = 'Belum ada assignment aktif';
+    overview.querySelector('.learning-hub-progress-copy strong').textContent = '—';
+    overview.querySelector('.learning-hub-progress-track span').style.width = '0%';
 }
 
 function fetchCourses() {
@@ -2294,6 +2414,13 @@ function createCourseCard(course, courseIdOverride = '') {
 }
 
 function startLearning(categoryId, categoryTitle) {
+    const learner = getCourseLearnerContext();
+    if (learner.isGuest) {
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        window.location.href = `/pages/login.html?redirect=${encodeURIComponent(returnTo)}`;
+        return;
+    }
+
     const course = getCourseFromCache(categoryId);
     const resolvedTitle = categoryTitle || (course ? course.title : '') || 'Video Tutorials';
     console.log('ðŸŽ“ Starting learning for category:', categoryId, categoryTitle);

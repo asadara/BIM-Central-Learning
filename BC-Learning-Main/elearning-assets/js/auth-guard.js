@@ -340,7 +340,14 @@ class AuthGuard {
                 const userData = {
                     name: result.name || result.username,
                     email: result.email,
-                    role: result.role || 'Student',
+                    role: result.positionLabel || result.role || '',
+                    positionLabel: result.positionLabel || result.role || '',
+                    positionVerificationStatus: result.positionVerificationStatus || 'unverified',
+                    bimLevel: result.bimLevel || null,
+                    competencyStatus: result.competencyStatus || (result.bimLevel ? 'self_declared' : 'not_assessed'),
+                    targetBimLevel: result.targetBimLevel || null,
+                    systemRole: result.systemRole || 'employee',
+                    isAdmin: result.isAdmin === true,
                     photo: result.photo || '/img/user-default.svg',
                     token: result.token
                 };
@@ -380,11 +387,11 @@ class AuthGuard {
         const username = document.getElementById('signup-username').value.trim();
         const email = document.getElementById('signup-email').value.trim();
         const password = document.getElementById('signup-password').value.trim();
-        const bimLevel = document.getElementById('signup-bim-level').value;
-        const jobRole = document.getElementById('signup-job-role').value.trim();
+        const bimLevel = document.getElementById('signup-bim-level')?.value || '';
+        const jobRole = document.getElementById('signup-job-role')?.value.trim() || '';
         const organization = document.getElementById('signup-organization').value.trim();
 
-        if (!username || !email || !password || !bimLevel) {
+        if (!username || !email || !password) {
             this.showError('Lengkapi semua kolom wajib.');
             return;
         }
@@ -399,8 +406,8 @@ class AuthGuard {
                     username,
                     email,
                     password,
-                    bimLevel,
-                    jobRole,
+                    bimLevel: bimLevel || null,
+                    positionLabel: jobRole || null,
                     organization,
                     registrationDate: new Date().toISOString()
                 })

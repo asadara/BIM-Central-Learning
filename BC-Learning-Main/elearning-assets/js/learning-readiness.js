@@ -1,5 +1,5 @@
 (function () {
-    const LEVEL_ORDER = ['BIM Modeller', 'BIM Coordinator', 'BIM Manager'];
+    const LEVEL_ORDER = ['BIM Modeller', 'BIM Coordinator', 'BIM Specialist', 'BIM Manager'];
 
     const EXAM_BLUEPRINTS = {
         'bim-mindset-theory-exam': {
@@ -104,12 +104,12 @@
     }
 
     function getUserLevel() {
-        return getCurrentUser().level || 'BIM Modeller';
+        return getCurrentUser().level || null;
     }
 
     function getLevelIndex(level) {
         const index = LEVEL_ORDER.indexOf(level);
-        return index === -1 ? 0 : index;
+        return index;
     }
 
     function getPracticeHistory() {

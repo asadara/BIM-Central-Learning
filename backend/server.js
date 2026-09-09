@@ -17,6 +17,7 @@ const { Pool } = require("pg");
 const { getPreferredServerIPv4 } = require("./utils/networkIdentity");
 const { getRequestUser, getRequestUserPreferBearer } = require("./utils/auth");
 const { resolveAccessProfile } = require("./utils/userAccess");
+const { ensureUserProfileColumns } = require("./utils/userProfileSchema");
 const {
     createPgConfig,
     getBooleanEnv,
@@ -362,6 +363,7 @@ async function createDefaultAdminUser() {
 
         // Try PostgreSQL first
         try {
+            await ensureUserProfileColumns(pgPool);
             const existingAdmin = await pgPool.query(
                 `SELECT id
                  FROM users
@@ -374,15 +376,17 @@ async function createDefaultAdminUser() {
                 const hashedPassword = await hashPassword(adminPassword);
                 await pgPool.query(
                     `INSERT INTO users (
-                        username, email, password, bim_level, job_role, organization,
+                        username, email, password, bim_level, job_role, position_label,
+                        position_verification_status, competency_status, system_role, organization,
                         registration_date, login_count, last_login, is_active,
                         created_at, updated_at, mapping_kompetensi_access
                     ) VALUES (
-                        $1, $2, $3, $4, $5, $6,
+                        $1, $2, $3, NULL, $4, $4,
+                        'unverified', 'not_assessed', 'system_admin', $5,
                         CURRENT_TIMESTAMP, 0, NULL, true,
                         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, true
                     )`,
-                    [adminUsername, adminEmail, hashedPassword, 'Expert', 'System Administrator', 'BCL Enterprise']
+                    [adminUsername, adminEmail, hashedPassword, 'System Administrator', 'BCL Enterprise']
                 );
                 console.log('✅ Default admin user created in PostgreSQL');
             } else {
@@ -403,8 +407,12 @@ async function createDefaultAdminUser() {
                     username: adminUsername,
                     email: adminEmail,
                     password: hashedPassword,
-                    bimLevel: 'Expert',
+                    bimLevel: null,
+                    competencyStatus: 'not_assessed',
                     jobRole: 'System Administrator',
+                    positionLabel: 'System Administrator',
+                    positionVerificationStatus: 'unverified',
+                    systemRole: 'system_admin',
                     organization: 'BCL Enterprise',
                     registrationDate: new Date().toISOString(),
                     lastLogin: null,
@@ -415,7 +423,7 @@ async function createDefaultAdminUser() {
                         practiceAttempts: 0,
                         examsPassed: 0,
                         certificatesEarned: 0,
-                        currentLevel: 'Expert',
+                        currentLevel: null,
                         toNextLevel: 0,
                         badges: ['Administrator'],
                         achievements: ['System Admin'],

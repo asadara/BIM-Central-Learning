@@ -61,7 +61,6 @@ async function fetchJson(url, options) {
 }
 
 async function loadProfilePage() {
-    setProfileStatus('Memuat identitas dan evidence belajar dari server...', false, true);
     try {
         const [profile, stats, achievements] = await Promise.all([
             fetchJson('/api/profile'),
@@ -76,21 +75,27 @@ async function loadProfilePage() {
         renderProfile(profile, stats);
         renderAchievements(profileState.achievements, document.getElementById('recent-achievements'), true);
         cacheAuthenticatedProfile(profile);
-        setProfileStatus('Data identitas dan aktivitas berasal dari sesi serta evidence server.', false);
     } catch (error) {
         if (error.message === 'AUTH_REQUIRED') return;
         console.error('Failed to load profile:', error);
         renderUnavailableProfile();
-        setProfileStatus('Data profil tidak dapat dimuat. Tidak ada data contoh yang digunakan.', true);
     }
 }
 
 function renderProfile(profile, stats) {
     setText('profile-name', profile.name || profile.username || 'Nama belum tersedia');
-    setText('user-level', profile.bimLevel || 'Belum ditetapkan');
+    setText('user-level', profile.bimLevel || 'Belum dinilai');
+    renderVerifiedMark('competency-badge', profile.competencyStatus === 'verified', 'Kompetensi verified');
 
-    const context = [profile.role, profile.organization].filter(Boolean);
-    setText('profile-bio', context.length ? context.join(' · ') : 'Jabatan dan organisasi belum ditetapkan.');
+    const position = profile.positionLabel || profile.role || '';
+    const context = [position, profile.organization].filter(Boolean);
+    const profileBio = document.getElementById('profile-bio');
+    if (profileBio) {
+        profileBio.textContent = context.length ? context.join(' · ') : 'Jabatan dan organisasi belum ditetapkan.';
+        if (position && profile.positionVerificationStatus === 'verified') {
+            profileBio.insertAdjacentHTML('beforeend', ' <i class="fas fa-circle-check profile-verified-mark" title="Verified" aria-label="Verified"></i>');
+        }
+    }
     setText('join-date', profile.joinDate || '—');
     setText('verified-attempts', formatCount(stats.verifiedAttempts));
     setText('verified-certificates', formatCount(stats.certifications));
@@ -134,7 +139,11 @@ function cacheAuthenticatedProfile(profile) {
             name: profile.name || profile.username || existing.name,
             email: profile.email || existing.email,
             role: profile.role || existing.role,
+            positionLabel: profile.positionLabel ?? existing.positionLabel,
+            positionVerificationStatus: profile.positionVerificationStatus || existing.positionVerificationStatus,
             bimLevel: profile.bimLevel || existing.bimLevel,
+            competencyStatus: profile.competencyStatus || existing.competencyStatus,
+            targetBimLevel: profile.targetBimLevel ?? existing.targetBimLevel,
             organization: profile.organization || existing.organization,
             photo: profile.photo || existing.photo,
             profileImage: profile.profileImage || existing.profileImage
@@ -143,16 +152,6 @@ function cacheAuthenticatedProfile(profile) {
     } catch (error) {
         console.warn('Unable to refresh local session profile:', error.message);
     }
-}
-
-function setProfileStatus(message, isError = false, isLoading = false) {
-    const element = document.getElementById('profile-data-status');
-    if (!element) return;
-    element.classList.toggle('is-error', isError);
-    const icon = element.querySelector('i');
-    const text = element.querySelector('span');
-    if (icon) icon.className = isLoading ? 'fas fa-spinner fa-spin' : isError ? 'fas fa-triangle-exclamation' : 'fas fa-shield-halved';
-    if (text) text.textContent = message;
 }
 
 function initializeTabs() {
@@ -279,6 +278,7 @@ function openEditProfileModal() {
     }
     document.getElementById('edit-name').value = profile.name || profile.username || '';
     document.getElementById('edit-email').value = profile.email || '';
+    document.getElementById('edit-position').value = profile.positionLabel || profile.role || '';
     const modal = document.getElementById('edit-profile-modal');
     modal?.classList.add('show');
     modal?.setAttribute('aria-hidden', 'false');
@@ -293,9 +293,11 @@ function closeEditProfileModal() {
 async function saveProfile() {
     const nameInput = document.getElementById('edit-name');
     const emailInput = document.getElementById('edit-email');
+    const positionInput = document.getElementById('edit-position');
     const button = document.getElementById('save-profile');
     const name = String(nameInput?.value || '').trim();
     const email = String(emailInput?.value || '').trim().toLowerCase();
+    const positionLabel = String(positionInput?.value || '').trim();
 
     if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showNotification('Nama dan email valid wajib diisi.', 'error');
@@ -308,7 +310,7 @@ async function saveProfile() {
         const result = await fetchJson('/api/update-profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, current_email: profileState.profile?.email || email })
+            body: JSON.stringify({ name, email, positionLabel, current_email: profileState.profile?.email || email })
         });
 
         if (result.token) localStorage.setItem('token', result.token);
@@ -391,6 +393,17 @@ function formatDate(value, includeTime = false) {
 function setText(id, value) {
     const element = document.getElementById(id);
     if (element) element.textContent = value;
+}
+
+function renderVerifiedMark(containerId, verified, label) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelector('.profile-verified-mark')?.remove();
+    if (!verified) return;
+    container.insertAdjacentHTML(
+        'beforeend',
+        ` <i class="fas fa-circle-check profile-verified-mark" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"></i>`
+    );
 }
 
 function escapeHtml(value) {

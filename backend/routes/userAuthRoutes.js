@@ -2,6 +2,11 @@ const crypto = require("crypto");
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const {
+    ensureUserProfileColumns,
+    mapUserProfileState,
+    normalizeBimCompetencyLevel
+} = require("../utils/userProfileSchema");
 
 function createUserAuthRoutes({
     authLimiter,
@@ -199,14 +204,21 @@ function createUserAuthRoutes({
             return res.status(404).json({ success: false, error: "Profile not found" });
         }
 
+        const profileState = mapUserProfileState(user);
         return res.json({
             success: true,
             id: user.id,
             name: user.username || user.name || "",
             username: user.username || user.name || "",
             email: user.email || "",
-            role: user.jobRole || user.job_role || "",
-            bimLevel: user.bimLevel || user.bim_level || "",
+            role: profileState.positionLabel,
+            positionLabel: profileState.positionLabel,
+            positionVerificationStatus: profileState.positionVerificationStatus,
+            systemRole: profileState.systemRole,
+            isAdmin: profileState.systemRole === 'system_admin',
+            bimLevel: profileState.competencyLevel,
+            competencyStatus: profileState.competencyStatus,
+            targetBimLevel: profileState.targetCompetencyLevel,
             organization: user.organization || "",
             photo: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.svg"),
             profileImage: normalizeProfileImageUrl(user.profileImage || user.profile_image || "/img/user-default.svg"),
@@ -459,8 +471,8 @@ function createUserAuthRoutes({
 
             if (!user) {
                 const bimLevel = normalizeBimLevelInput(req.body?.bimLevel);
-                const jobRole = sanitizeOptionalText(req.body?.jobRole, 80) || "BIM Specialist";
-                const organization = sanitizeOptionalText(req.body?.organization, 120) || "Google User";
+                const positionLabel = sanitizeOptionalText(req.body?.positionLabel || req.body?.jobRole, 80);
+                const organization = sanitizeOptionalText(req.body?.organization, 120) || null;
                 const usernameSeed = buildGoogleUsernameSeed(googleProfile);
                 const generatedPasswordHash = await hashPassword(crypto.randomBytes(24).toString("hex"));
 
@@ -469,21 +481,26 @@ function createUserAuthRoutes({
                         const username = await findAvailableUsernameInPostgres(usernameSeed);
                         const insertResult = await pgPool.query(
                             `INSERT INTO users (
-                                username, email, password, bim_level, job_role, organization,
+                                username, email, password, bim_level, job_role, position_label,
+                                position_verification_status, competency_status, system_role, organization,
                                 registration_date, login_count, last_login, is_active, profile_image,
                                 created_at, updated_at
                             ) VALUES (
-                                $1, $2, $3, $4, $5, $6,
-                                $7, 0, NULL, true, $8,
+                                $1, $2, $3, $4, $5, $5,
+                                'unverified', $6, 'employee', $7,
+                                $8, 0, NULL, true, $9,
                                 CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                             )
-                            RETURNING id, username, email, bim_level, job_role, organization, profile_image, login_count, is_active`,
+                            RETURNING id, username, email, bim_level, job_role, position_label,
+                                      position_verification_status, competency_status, system_role,
+                                      organization, profile_image, login_count, is_active`,
                             [
                                 username,
                                 email,
                                 generatedPasswordHash,
                                 bimLevel,
-                                jobRole,
+                                positionLabel || null,
+                                bimLevel ? 'self_declared' : 'not_assessed',
                                 organization,
                                 new Date().toISOString(),
                                 googleProfile.picture || null
@@ -530,7 +547,11 @@ function createUserAuthRoutes({
                             email,
                             password: generatedPasswordHash,
                             bimLevel,
-                            jobRole,
+                            jobRole: positionLabel || null,
+                            positionLabel: positionLabel || null,
+                            positionVerificationStatus: "unverified",
+                            competencyStatus: bimLevel ? "self_declared" : "not_assessed",
+                            systemRole: "employee",
                             organization,
                             registrationDate: new Date().toISOString(),
                             lastLogin: null,
@@ -560,7 +581,8 @@ function createUserAuthRoutes({
                 });
             }
 
-            const bimLevel = user.bimLevel || user.bim_level || normalizeBimLevelInput(req.body?.bimLevel);
+            const userProfileState = mapUserProfileState(user);
+            const bimLevel = userProfileState.competencyLevel || normalizeBimLevelInput(req.body?.bimLevel);
 
             if (storageType === "postgresql" && user.id) {
                 await ensureUserProgressInPostgres(user.id, bimLevel);
@@ -569,12 +591,12 @@ function createUserAuthRoutes({
                 incrementUserLoginInJson(user.id);
             }
 
-            const role = user.jobRole || user.job_role || "BIM Specialist";
+            const systemRole = userProfileState.systemRole || "employee";
             const token = jwt.sign(
                 {
                     userId: user.id,
                     email: user.email,
-                    role
+                    role: systemRole
                 },
                 secretKey,
                 { expiresIn: "7d" }
@@ -600,8 +622,14 @@ function createUserAuthRoutes({
                 name: user.username,
                 username: user.username,
                 email: user.email,
-                role,
+                role: userProfileState.positionLabel,
+                positionLabel: userProfileState.positionLabel,
+                positionVerificationStatus: userProfileState.positionVerificationStatus,
+                systemRole,
+                isAdmin: systemRole === 'system_admin',
                 bimLevel,
+                competencyStatus: userProfileState.competencyStatus,
+                targetBimLevel: userProfileState.targetCompetencyLevel,
                 organization: user.organization || sanitizeOptionalText(req.body?.organization, 120) || null,
                 photo: finalProfileImage,
                 profileImage: finalProfileImage,
@@ -643,17 +671,21 @@ function createUserAuthRoutes({
                 password,
                 bimLevel,
                 jobRole,
+                positionLabel,
                 organization,
                 registrationDate,
                 progress
             } = req.body;
 
-            if (!username || !email || !password || !bimLevel) {
+            if (!username || !email || !password) {
                 return res.status(400).json({
                     success: false,
-                    error: "Username, email, password, and BIM level are required"
+                    error: "Username, email, and password are required"
                 });
             }
+
+            const normalizedBimLevel = normalizeBimCompetencyLevel(bimLevel);
+            const normalizedPositionLabel = sanitizeOptionalText(positionLabel || jobRole, 80);
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
@@ -675,6 +707,7 @@ function createUserAuthRoutes({
             let userId = null;
 
             try {
+                await ensureUserProfileColumns(pgPool);
                 const existingUser = await pgPool.query(
                     `SELECT id
                      FROM users
@@ -693,12 +726,14 @@ function createUserAuthRoutes({
 
                 const insertResult = await pgPool.query(
                     `INSERT INTO users (
-                        username, email, password, bim_level, job_role, organization,
+                        username, email, password, bim_level, job_role, position_label,
+                        position_verification_status, competency_status, system_role, organization,
                         registration_date, login_count, last_login, is_active,
                         created_at, updated_at
                     ) VALUES (
-                        $1, $2, $3, $4, $5, $6,
-                        $7, 0, NULL, true,
+                        $1, $2, $3, $4, $5, $5,
+                        'unverified', $6, 'employee', $7,
+                        $8, 0, NULL, true,
                         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                     )
                     RETURNING id`,
@@ -706,15 +741,16 @@ function createUserAuthRoutes({
                         username.trim(),
                         email.trim(),
                         hashedPassword,
-                        bimLevel,
-                        jobRole || null,
+                        normalizedBimLevel,
+                        normalizedPositionLabel || null,
+                        normalizedBimLevel ? 'self_declared' : 'not_assessed',
                         organization || null,
                         registrationDate || new Date().toISOString()
                     ]
                 );
 
                 userId = insertResult.rows[0].id;
-                await ensureUserProgressInPostgres(userId, bimLevel);
+                await ensureUserProgressInPostgres(userId, normalizedBimLevel);
                 console.log(`✅ User registered in PostgreSQL: ${email} (ID: ${userId})`);
             } catch (dbError) {
                 if (dbError && dbError.code === "23505") {
@@ -750,8 +786,12 @@ function createUserAuthRoutes({
                     username: username.trim(),
                     email: email.trim(),
                     password: hashedPassword,
-                    bimLevel,
-                    jobRole: jobRole || null,
+                    bimLevel: normalizedBimLevel,
+                    jobRole: normalizedPositionLabel || null,
+                    positionLabel: normalizedPositionLabel || null,
+                    positionVerificationStatus: 'unverified',
+                    competencyStatus: normalizedBimLevel ? 'self_declared' : 'not_assessed',
+                    systemRole: 'employee',
                     organization: organization || null,
                     registrationDate: registrationDate || new Date().toISOString(),
                     lastLogin: null,
@@ -761,26 +801,26 @@ function createUserAuthRoutes({
                         practiceAttempts: 0,
                         examsPassed: 0,
                         certificatesEarned: 0,
-                        currentLevel: bimLevel,
+                        currentLevel: normalizedBimLevel,
                         levelProgress: {
-                            toCoordinator: bimLevel === "BIM Modeller" ? 0 : null,
-                            toManager: bimLevel === "BIM Coordinator" ? null : null
+                            toCoordinator: normalizedBimLevel === "BIM Modeller" ? 0 : null,
+                            toManager: normalizedBimLevel === "BIM Coordinator" ? null : null
                         },
                         badges: [],
                         achievements: [],
                         learningPath: {
                             completed: [],
-                            current: bimLevel === "BIM Modeller" ? "autocad-basics"
-                                : bimLevel === "BIM Coordinator" ? "bim-coordination"
-                                    : "bim-management",
-                            available: bimLevel === "BIM Modeller"
+                            current: normalizedBimLevel === "BIM Modeller" ? "autocad-basics"
+                                : normalizedBimLevel === "BIM Coordinator" ? "bim-coordination"
+                                    : null,
+                            available: normalizedBimLevel === "BIM Modeller"
                                 ? ["autocad-basics", "revit-introduction", "sketchup-basics"]
-                                : bimLevel === "BIM Coordinator"
+                                : normalizedBimLevel === "BIM Coordinator"
                                     ? ["bim-coordination", "advanced-modeling"]
-                                    : ["bim-management", "project-leadership"],
-                            locked: bimLevel === "BIM Modeller"
+                                    : [],
+                            locked: normalizedBimLevel === "BIM Modeller"
                                 ? ["bim-coordination", "advanced-modeling", "bim-management"]
-                                : bimLevel === "BIM Coordinator"
+                                : normalizedBimLevel === "BIM Coordinator"
                                     ? ["bim-management"]
                                     : []
                         }
@@ -806,8 +846,13 @@ function createUserAuthRoutes({
                     id: userId,
                     username: username.trim(),
                     email: email.trim(),
-                    bimLevel,
-                    role: jobRole || "BIM Specialist"
+                    bimLevel: normalizedBimLevel,
+                    competencyStatus: normalizedBimLevel ? 'self_declared' : 'not_assessed',
+                    role: normalizedPositionLabel,
+                    positionLabel: normalizedPositionLabel,
+                    positionVerificationStatus: 'unverified',
+                    systemRole: 'employee',
+                    isAdmin: false
                 },
                 storage: storageType
             });
@@ -873,7 +918,8 @@ function createUserAuthRoutes({
                 });
             }
 
-            const bimLevel = user.bimLevel || user.bim_level || "BIM Modeller";
+            const userProfileState = mapUserProfileState(user);
+            const bimLevel = userProfileState.competencyLevel;
 
             if (storageType === "postgresql") {
                 await ensureUserProgressInPostgres(user.id, bimLevel);
@@ -886,7 +932,7 @@ function createUserAuthRoutes({
                 {
                     userId: user.id,
                     email: user.email,
-                    role: user.jobRole || user.job_role || "Student"
+                    role: userProfileState.systemRole || "employee"
                 },
                 secretKey,
                 { expiresIn: "7d" }
@@ -909,8 +955,14 @@ function createUserAuthRoutes({
                 username: user.username,
                 name: user.username,
                 email: user.email,
-                role: user.jobRole || user.job_role || "BIM Specialist",
+                role: userProfileState.positionLabel,
+                positionLabel: userProfileState.positionLabel,
+                positionVerificationStatus: userProfileState.positionVerificationStatus,
+                systemRole: userProfileState.systemRole,
+                isAdmin: userProfileState.systemRole === 'system_admin',
                 bimLevel,
+                competencyStatus: userProfileState.competencyStatus,
+                targetBimLevel: userProfileState.targetCompetencyLevel,
                 organization: user.organization,
                 loginCount: loginCount + 1,
                 photo: storedProfileImage || "/img/user-default.svg",
@@ -992,6 +1044,11 @@ function createUserAuthRoutes({
                     req.body?.name || req.body?.username,
                     80
                 );
+                const hasPositionUpdate = Object.prototype.hasOwnProperty.call(req.body || {}, "positionLabel") ||
+                    Object.prototype.hasOwnProperty.call(req.body || {}, "position_label");
+                const requestedPositionLabel = hasPositionUpdate
+                    ? sanitizeOptionalText(req.body?.positionLabel || req.body?.position_label, 100)
+                    : null;
                 const oldPassword = String(req.body?.old_pass || req.body?.oldPassword || "").trim();
                 const newPassword = String(req.body?.new_pass || req.body?.newPassword || "").trim();
                 const confirmPassword = String(req.body?.c_pass || req.body?.confirmPassword || "").trim();
@@ -1080,6 +1137,7 @@ function createUserAuthRoutes({
                     passwordHash: newPassword ? await hashPassword(newPassword) : null,
                     profileImage: uploadedImage ? `/uploads/profile-images/${uploadedImage.filename}` : null
                 };
+                if (hasPositionUpdate) updates.positionLabel = requestedPositionLabel;
 
                 let updatedUser = null;
                 let storage = "postgresql";
@@ -1118,11 +1176,12 @@ function createUserAuthRoutes({
                     });
                 }
 
+                const refreshedProfileState = mapUserProfileState(updatedUser);
                 const refreshedToken = jwt.sign(
                     {
                         userId: updatedUser.id,
                         email: updatedUser.email,
-                        role: updatedUser.job_role || "Student"
+                        role: refreshedProfileState.systemRole || "employee"
                     },
                     secretKey,
                     { expiresIn: "7d" }
@@ -1137,6 +1196,14 @@ function createUserAuthRoutes({
                         username: updatedUser.username,
                         name: updatedUser.username,
                         email: updatedUser.email,
+                        role: refreshedProfileState.positionLabel,
+                        positionLabel: refreshedProfileState.positionLabel,
+                        positionVerificationStatus: refreshedProfileState.positionVerificationStatus,
+                        systemRole: refreshedProfileState.systemRole,
+                        isAdmin: refreshedProfileState.systemRole === 'system_admin',
+                        bimLevel: refreshedProfileState.competencyLevel,
+                        competencyStatus: refreshedProfileState.competencyStatus,
+                        targetBimLevel: refreshedProfileState.targetCompetencyLevel,
                         profileImage: normalizeProfileImageUrl(
                             updates.profileImage || updatedUser.profile_image || null
                         ),

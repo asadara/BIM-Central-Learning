@@ -8,7 +8,7 @@ const { RUBRIC } = require('../../services/competencyScoringService');
 
 const quizzesPath = path.join(__dirname, '../data/quizzes.json');
 
-const LEVEL_ORDER = ['BIM Modeller', 'BIM Coordinator', 'BIM Manager'];
+const LEVEL_ORDER = ['BIM Modeller', 'BIM Coordinator', 'BIM Specialist', 'BIM Manager'];
 
 const pool = new Pool(createPgConfig({
     max: 10,
@@ -375,7 +375,7 @@ async function resolveUserContext(req, payload = {}) {
         userIdentifier,
         userName: userName || null,
         userEmail: userEmail || null,
-        currentLevel: trimText(userRecord && userRecord.bim_level, 64) || 'BIM Modeller'
+        currentLevel: trimText(userRecord && userRecord.bim_level, 64) || null
     };
 }
 
@@ -433,7 +433,7 @@ async function refreshUserProgress(userContext) {
             practiceAttempts,
             examsPassed,
             certificatesEarned,
-            userContext.currentLevel || 'BIM Modeller'
+            userContext.currentLevel || null
         ]
     );
 

@@ -183,28 +183,28 @@
                                 </div>
                             </div>
 
-                            <!-- BIM Level Selection -->
+                            <!-- Optional competency self-declaration -->
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <select class="form-select" id="bim-level" required>
-                                        <option value="">Choose your BIM level</option>
-                                        <option value="BIM Modeller">BIM Modeller (Beginner)</option>
-                                        <option value="BIM Coordinator">BIM Coordinator (Intermediate)</option>
-                                        <option value="BIM Manager">BIM Manager (Advanced)</option>
+                                    <select class="form-select" id="bim-level">
+                                        <option value="">Belum dinilai</option>
+                                        <option value="BIM Modeller">BIM Modeller</option>
+                                        <option value="BIM Coordinator">BIM Coordinator</option>
+                                        <option value="BIM Specialist">BIM Specialist</option>
+                                        <option value="BIM Manager">BIM Manager</option>
                                     </select>
-                                    <label for="bim-level">BIM Experience Level</label>
+                                    <label for="bim-level">Klaim Kompetensi BIM (Opsional)</label>
                                 </div>
                                 <div class="level-description mt-2" id="level-description">
-                                    <small class="text-muted">Select your current BIM experience level to get
-                                        personalized learning content.</small>
+                                    <small class="text-muted">Boleh dikosongkan. Klaim awal akan dinilai melalui proses kompetensi BCL.</small>
                                 </div>
                             </div>
 
-                            <!-- Job Role (Optional) -->
+                            <!-- Corporate position label (Optional) -->
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <input type="text" class="form-control" id="job-role" placeholder="Job Role">
-                                    <label for="job-role">Job Role (Optional)</label>
+                                    <input type="text" class="form-control" id="job-role" placeholder="Contoh: Site Engineer">
+                                    <label for="job-role">Label Jabatan (Opsional)</label>
                                 </div>
                             </div>
 
@@ -271,9 +271,10 @@
     <script>
         // BIM Level descriptions
         const levelDescriptions = {
-            'BIM Modeller': 'Perfect for beginners! Start with basic BIM modeling tools and fundamental concepts.',
-            'BIM Coordinator': 'For intermediate users who want to learn coordination workflows and clash detection.',
-            'BIM Manager': 'Advanced level for project leaders focused on BIM strategy and implementation.'
+            'BIM Modeller': 'Kompetensi pemodelan dan produksi informasi BIM.',
+            'BIM Coordinator': 'Kompetensi koordinasi model dan integrasi lintas disiplin.',
+            'BIM Specialist': 'Kompetensi spesialis dengan penguasaan teknis dan penerapan mendalam.',
+            'BIM Manager': 'Kompetensi pengelolaan strategi, standar, dan implementasi BIM.'
         };
         let googleSignupInitialized = false;
 
@@ -303,7 +304,7 @@
             if (selectedLevel && levelDescriptions[selectedLevel]) {
                 descriptionDiv.innerHTML = `<small class="text-info"><i class="fas fa-info-circle"></i> ${levelDescriptions[selectedLevel]}</small>`;
             } else {
-                descriptionDiv.innerHTML = '<small class="text-muted">Select your current BIM experience level to get personalized learning content.</small>';
+                descriptionDiv.innerHTML = '<small class="text-muted">Boleh dikosongkan. Klaim awal akan dinilai melalui proses kompetensi BCL.</small>';
             }
         });
 
@@ -318,8 +319,8 @@
             const organization = document.getElementById('organization').value.trim();
 
             // Validation
-            if (!username || !email || !password || !bimLevel) {
-                alert('Please fill in all required fields including BIM level.');
+            if (!username || !email || !password) {
+                alert('Please fill in all required fields.');
                 return;
             }
 
@@ -342,8 +343,8 @@
                         username,
                         email,
                         password,
-                        bimLevel,
-                        jobRole: jobRole || null,
+                        bimLevel: bimLevel || null,
+                        positionLabel: jobRole || null,
                         organization: organization || null,
                         registrationDate: new Date().toISOString(),
                         progress: {
@@ -351,7 +352,7 @@
                             practiceAttempts: 0,
                             examsPassed: 0,
                             certificatesEarned: 0,
-                            currentLevel: bimLevel,
+                            currentLevel: bimLevel || null,
                             toNextLevel: bimLevel === 'BIM Modeller' ? 0 : null
                         }
                     })
@@ -362,55 +363,8 @@
                 if (res.ok) {
                     alert(data.message || 'Account created successfully! Welcome to BC Learning.');
 
-                    // Store user state consistently (shared between pages & e-learning)
-                    const userData = {
-                        name: username,
-                        email: email,
-                        level: bimLevel,
-                        role: jobRole || 'BIM Specialist',
-                        organization: organization || '',
-                        progress: {
-                            coursesCompleted: 0,
-                            practiceAttempts: 0,
-                            examsPassed: 0,
-                            certificatesEarned: 0
-                        }
-                    };
-                    localStorage.setItem('userData', JSON.stringify(userData));
-
-                    const normalizedUser = {
-                        name: username,
-                        email: email,
-                        role: jobRole || 'BIM Specialist',
-                        photo: '/img/user-default.svg',
-                        token: data.token || ''
-                    };
-
-                    if (typeof setUserData === 'function') {
-                        setUserData(normalizedUser);
-                    } else {
-                        localStorage.setItem('user', JSON.stringify(normalizedUser));
-                        localStorage.setItem('username', normalizedUser.name);
-                        localStorage.setItem('email', normalizedUser.email);
-                        localStorage.setItem('role', normalizedUser.role);
-                        localStorage.setItem('userimg', normalizedUser.photo);
-                        localStorage.setItem('token', normalizedUser.token);
-                    }
-
-                    // Redirect to appropriate starting page based on level
-               const nextPage = typeof getPostLoginDestination === 'function'
-                   ? getPostLoginDestination('')
-                   : '';
-
-               if (nextPage) {
-                  window.location.href = nextPage;
-               } else if (bimLevel === 'BIM Modeller') {
-                  window.location.href = '/elearning-assets/courses.html?level=beginner';
-               } else if (bimLevel === 'BIM Coordinator') {
-                  window.location.href = '/elearning-assets/courses.html?level=intermediate';
-               } else {
-                  window.location.href = '/elearning-assets/dashboard.html';
-                    }
+                    // Signup does not create an authenticated session; login performs that step.
+                    window.location.href = '/pages/login.html';
                 } else {
                     alert(data.error || 'Signup failed! Please try again.');
                 }
@@ -481,11 +435,6 @@
             const jobRole = document.getElementById('job-role').value.trim();
             const organization = document.getElementById('organization').value.trim();
 
-            if (!bimLevel) {
-                alert('Pilih BIM Experience Level terlebih dahulu sebelum Sign up with Google.');
-                return;
-            }
-
             try {
                 const res = await fetch('/api/auth/google', {
                     method: 'POST',
@@ -495,8 +444,8 @@
                     body: JSON.stringify({
                         action: 'signup',
                         idToken: credential,
-                        bimLevel,
-                        jobRole: jobRole || null,
+                        bimLevel: bimLevel || null,
+                        positionLabel: jobRole || null,
                         organization: organization || null
                     })
                 });
@@ -511,7 +460,11 @@
                 const normalizedUser = {
                     name: data.name || data.username || 'Google User',
                     email: data.email || '',
-                    role: data.role || 'BIM Specialist',
+                    role: data.positionLabel || data.role || '',
+                    positionLabel: data.positionLabel || data.role || '',
+                    positionVerificationStatus: data.positionVerificationStatus || 'unverified',
+                    level: data.bimLevel || bimLevel || null,
+                    competencyStatus: data.competencyStatus || (bimLevel ? 'self_declared' : 'not_assessed'),
                     photo: data.photo || data.profileImage || '/img/user-default.svg',
                     token: data.token
                 };
@@ -530,7 +483,9 @@
                 localStorage.setItem('userData', JSON.stringify({
                     name: normalizedUser.name,
                     email: normalizedUser.email,
-                    level: data.bimLevel || bimLevel,
+                    level: data.bimLevel || bimLevel || null,
+                    competencyStatus: data.competencyStatus || (bimLevel ? 'self_declared' : 'not_assessed'),
+                    positionLabel: normalizedUser.positionLabel,
                     role: normalizedUser.role,
                     organization: data.organization || organization || ''
                 }));

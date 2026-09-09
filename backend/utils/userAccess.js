@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const { createPgConfig } = require('../config/runtimeConfig');
+const { ensureUserProfileColumns } = require('./userProfileSchema');
 
 const USERS_FILE = path.join(__dirname, '..', 'users.json');
 
@@ -89,6 +90,7 @@ function readUsers() {
 async function ensureAccessColumns(targetPool = pool) {
     if (!ensureColumnsPromise) {
         ensureColumnsPromise = (async () => {
+            await ensureUserProfileColumns(targetPool);
             const staffRoleColumn = await targetPool.query(`
                 SELECT 1 FROM information_schema.columns
                 WHERE table_schema=current_schema()

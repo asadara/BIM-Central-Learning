@@ -1,6 +1,11 @@
 const axios = require("axios");
 const multer = require("multer");
 const path = require("path");
+const {
+    ensureUserProfileColumns,
+    mapUserProfileState,
+    normalizeBimCompetencyLevel
+} = require("../utils/userProfileSchema");
 
 function createUserAuthService({
     backendDir,
@@ -16,9 +21,7 @@ function createUserAuthService({
     }
 
     function normalizeBimLevelInput(value) {
-        const allowed = new Set(["BIM Modeller", "BIM Coordinator", "BIM Manager"]);
-        const normalized = String(value || "").trim();
-        return allowed.has(normalized) ? normalized : "BIM Modeller";
+        return normalizeBimCompetencyLevel(value);
     }
 
     function sanitizeOptionalText(value, maxLength = 120) {
@@ -240,6 +243,7 @@ function createUserAuthService({
 
         const role = user.job_role || user.jobRole || "";
         const metadata = user.metadata && typeof user.metadata === "object" ? user.metadata : null;
+        const profileState = mapUserProfileState(user);
 
         return {
             ...user,
@@ -249,13 +253,18 @@ function createUserAuthService({
             password: user.password || null,
             bim_level: user.bim_level || user.bimLevel || null,
             job_role: role || null,
+            position_label: profileState.positionLabel || null,
+            position_verification_status: profileState.positionVerificationStatus,
+            competency_status: profileState.competencyStatus,
+            target_bim_level: profileState.targetCompetencyLevel,
+            system_role: profileState.systemRole,
             organization: user.organization || null,
             login_count: user.login_count ?? user.loginCount ?? 0,
             last_login: user.last_login || user.lastLogin || null,
             is_active: user.is_active !== undefined ? !!user.is_active : (user.isActive !== undefined ? !!user.isActive : true),
             is_admin: user.is_admin !== undefined
                 ? !!user.is_admin
-                : !!(user.isAdmin || String(role).toLowerCase().includes("admin") || String(metadata?.isAdmin || "").toLowerCase() === "true"),
+                : !!(user.isAdmin || profileState.systemRole === "system_admin" || String(metadata?.isAdmin || "").toLowerCase() === "true"),
             profile_image: user.profile_image || user.profileImage || null
         };
     }
@@ -303,13 +312,15 @@ function createUserAuthService({
 
     async function findUserInPostgresByEmail(emailOrUsername, requireActive = true) {
         if (!emailOrUsername) return null;
+        await ensureUserProfileColumns(pgPool);
 
         const query = `
-            SELECT id, username, email, password, bim_level, job_role, organization,
+            SELECT id, username, email, password, bim_level, job_role, position_label,
+                   position_verification_status, competency_status, target_bim_level, system_role, organization,
                    login_count, last_login, is_active, profile_image, metadata,
                    registration_date, created_at, updated_at,
                    CASE
-                       WHEN lower(coalesce(job_role, '')) LIKE '%admin%' THEN true
+                       WHEN system_role = 'system_admin' THEN true
                        WHEN lower(coalesce(metadata->>'isAdmin', 'false')) = 'true' THEN true
                        ELSE false
                    END AS is_admin
@@ -326,13 +337,15 @@ function createUserAuthService({
 
     async function findUserInPostgresByIdentity(email, userId, requireActive = true) {
         if (!email && !userId) return null;
+        await ensureUserProfileColumns(pgPool);
 
         const query = `
-            SELECT id, username, email, password, bim_level, job_role, organization,
+            SELECT id, username, email, password, bim_level, job_role, position_label,
+                   position_verification_status, competency_status, target_bim_level, system_role, organization,
                    login_count, last_login, is_active, profile_image, metadata,
                    registration_date, created_at, updated_at,
                    CASE
-                       WHEN lower(coalesce(job_role, '')) LIKE '%admin%' THEN true
+                       WHEN system_role = 'system_admin' THEN true
                        WHEN lower(coalesce(metadata->>'isAdmin', 'false')) = 'true' THEN true
                        ELSE false
                    END AS is_admin
@@ -459,6 +472,7 @@ function createUserAuthService({
 
     async function updateUserProfileInPostgres(currentUser, updates) {
         if (!pgPool || !currentUser) return null;
+        await ensureUserProfileColumns(pgPool);
 
         const sets = [];
         const values = [];
@@ -483,6 +497,15 @@ function createUserAuthService({
             sets.push(`profile_image = $${values.length}`);
         }
 
+        if (Object.prototype.hasOwnProperty.call(updates, "positionLabel")) {
+            values.push(updates.positionLabel || null);
+            sets.push(`position_label = $${values.length}`);
+            sets.push(`job_role = $${values.length}`);
+            sets.push(`position_verification_status = 'unverified'`);
+            sets.push(`position_verified_at = NULL`);
+            sets.push(`position_verified_by = NULL`);
+        }
+
         if (sets.length === 0) {
             return currentUser;
         }
@@ -499,11 +522,12 @@ function createUserAuthService({
              SET ${sets.join(", ")}
              WHERE ($${idIndex}::text IS NOT NULL AND id::text = $${idIndex}::text)
                 OR ($${emailIndex}::text IS NOT NULL AND lower(email) = lower($${emailIndex}))
-             RETURNING id, username, email, password, bim_level, job_role, organization,
+             RETURNING id, username, email, password, bim_level, job_role, position_label,
+                       position_verification_status, competency_status, target_bim_level, system_role, organization,
                        login_count, last_login, is_active, profile_image, metadata,
                        registration_date, created_at, updated_at,
                        CASE
-                           WHEN lower(coalesce(job_role, '')) LIKE '%admin%' THEN true
+                           WHEN system_role = 'system_admin' THEN true
                            WHEN lower(coalesce(metadata->>'isAdmin', 'false')) = 'true' THEN true
                            ELSE false
                        END AS is_admin`,
@@ -548,6 +572,13 @@ function createUserAuthService({
             users[userIndex].profile_image = updates.profileImage;
         }
 
+        if (Object.prototype.hasOwnProperty.call(updates, "positionLabel")) {
+            users[userIndex].positionLabel = updates.positionLabel || null;
+            users[userIndex].position_label = updates.positionLabel || null;
+            users[userIndex].positionVerificationStatus = "unverified";
+            users[userIndex].position_verification_status = "unverified";
+        }
+
         users[userIndex].updatedAt = new Date().toISOString();
         writeUsers(users);
         return normalizeUserRecord(users[userIndex]);
@@ -583,9 +614,7 @@ function createUserAuthService({
     }
 
     function normalizeProgressLevel(level) {
-        const value = String(level || "").trim();
-        const allowed = new Set(["BIM Modeller", "BIM Coordinator", "BIM Manager", "Expert"]);
-        return allowed.has(value) ? value : "BIM Modeller";
+        return normalizeBimCompetencyLevel(level);
     }
 
     function defaultToNextLevelByLevel(level) {
@@ -598,6 +627,7 @@ function createUserAuthService({
         if (!userId) return;
 
         const currentLevel = normalizeProgressLevel(levelHint);
+        if (!currentLevel) return;
         const toNextLevel = defaultToNextLevelByLevel(currentLevel);
 
         try {

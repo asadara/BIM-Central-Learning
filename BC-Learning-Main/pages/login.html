@@ -272,10 +272,16 @@
                 const user = {
                     name: data.name || data.username || 'Google User',
                     email: data.email || '',
-                    role: data.role || 'BIM Specialist',
+                    role: data.positionLabel || data.role || '',
+                    positionLabel: data.positionLabel || data.role || '',
+                    positionVerificationStatus: data.positionVerificationStatus || 'unverified',
                     photo: data.photo || data.profileImage || '/img/user-default.svg',
                     token: data.token,
-                    bimLevel: data.bimLevel,
+                    bimLevel: data.bimLevel || null,
+                    competencyStatus: data.competencyStatus || (data.bimLevel ? 'self_declared' : 'not_assessed'),
+                    targetBimLevel: data.targetBimLevel || null,
+                    systemRole: data.systemRole || 'employee',
+                    isAdmin: data.isAdmin === true,
                     organization: data.organization
                 };
 

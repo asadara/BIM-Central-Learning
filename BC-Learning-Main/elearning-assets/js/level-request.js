@@ -56,14 +56,14 @@ document.addEventListener('DOMContentLoaded', function () {
 async function loadUserData() {
     try {
         // Get current user from localStorage (set by login)
-        const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const userData = JSON.parse(localStorage.getItem('user') || localStorage.getItem('currentUser') || '{}');
         currentUser = userData;
 
         if (userData.name) {
             document.getElementById('user-name').textContent = userData.name;
             document.getElementById('user-role').textContent = userData.role || 'Student';
-            document.getElementById('user-level').textContent = userData.level || 'BIM Modeller';
-            document.getElementById('current-level').textContent = userData.level || 'BIM Modeller';
+            document.getElementById('user-level').textContent = userData.level || userData.bimLevel || 'Belum dinilai';
+            document.getElementById('current-level').textContent = userData.level || userData.bimLevel || 'Belum dinilai';
 
             if (userData.profileImage) {
                 document.getElementById('user-img').src = userData.profileImage;
@@ -81,7 +81,7 @@ async function loadUserData() {
 
 async function loadUserProgress() {
     try {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
         if (!token) {
             console.warn('No auth token found');
             return;
@@ -167,6 +167,14 @@ function setupUpgradeCards() {
         // Check if upgrade is available
         const allCompleted = requirements.every(req => req.completed);
         const upgradeBtn = card.querySelector('.request-upgrade-btn');
+
+        if (!(currentUser.level || currentUser.bimLevel)) {
+            if (upgradeBtn) {
+                upgradeBtn.disabled = true;
+                upgradeBtn.title = 'Kompetensi awal perlu dinilai oleh BCL terlebih dahulu.';
+            }
+            return;
+        }
 
         if (allCompleted && !card.classList.contains('locked')) {
             upgradeBtn.disabled = false;

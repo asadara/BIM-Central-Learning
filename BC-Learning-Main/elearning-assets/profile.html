@@ -36,7 +36,7 @@
                     <div class="profile-info">
                         <div class="name-section">
                             <h1 id="profile-name">Memuat profil...</h1>
-                            <div class="level-badge"><i class="fas fa-layer-group"></i><span id="user-level">—</span></div>
+                            <div class="level-badge" id="competency-badge"><i class="fas fa-layer-group"></i><span id="user-level">—</span></div>
                         </div>
                         <p class="profile-bio" id="profile-bio">Memeriksa data akun dari server.</p>
                         <div class="profile-stats">
@@ -52,11 +52,6 @@
                     <button class="btn-secondary" id="share-profile-btn" type="button"><i class="fas fa-share"></i>Bagikan Profil</button>
                 </div>
             </div>
-        </div>
-
-        <div class="profile-data-status" id="profile-data-status" role="status">
-            <i class="fas fa-shield-check"></i>
-            <span>Data identitas dan aktivitas diambil dari sesi serta evidence server.</span>
         </div>
 
         <div class="profile-tabs" aria-label="Navigasi profil">
@@ -131,10 +126,13 @@
                     <form class="profile-edit-form" id="profile-edit-form">
                         <div class="form-section">
                             <h4><i class="fas fa-user"></i>Data Akun</h4>
-                            <p class="profile-form-note">Perubahan nama dan email disimpan ke akun server. Level BIM, jabatan, dan organisasi dikelola oleh administrator.</p>
+                            <p class="profile-form-note">Label jabatan dapat diisi bebas. Centang verified hanya diberikan melalui proses validasi internal.</p>
                             <div class="form-row">
                                 <div class="form-group"><label for="edit-name">Nama pengguna</label><input type="text" id="edit-name" name="name" maxlength="80" required></div>
                                 <div class="form-group"><label for="edit-email">Email</label><input type="email" id="edit-email" name="email" maxlength="120" required></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label for="edit-position">Label jabatan</label><input type="text" id="edit-position" name="positionLabel" maxlength="100" placeholder="Contoh: Site Engineer"></div>
                             </div>
                         </div>
                     </form>

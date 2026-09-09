@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 const { requireAuthenticated } = require('../utils/auth');
+const { normalizeBimCompetencyLevel } = require('../utils/userProfileSchema');
 
 const router = express.Router();
 const LEVEL_REQUESTS_FILE = path.join(__dirname, "../level-requests.json");
@@ -167,12 +168,20 @@ router.post("/", upload.array('evidenceFiles', 5), (req, res) => {
             });
         }
 
+        const normalizedTargetLevel = normalizeBimCompetencyLevel(targetLevel);
+        if (!normalizedTargetLevel) {
+            return res.status(400).json({
+                success: false,
+                error: 'Target competency level is not valid'
+            });
+        }
+
         // Check if user already has a pending request for this level
         initializeLevelRequestsFile();
         const data = JSON.parse(fs.readFileSync(LEVEL_REQUESTS_FILE, "utf8"));
         const existingRequest = data.requests.find(r =>
             String(r.userId) === userId &&
-            r.targetLevel === targetLevel &&
+            r.targetLevel === normalizedTargetLevel &&
             ['pending', 'under_review'].includes(r.status)
         );
 
@@ -199,7 +208,7 @@ router.post("/", upload.array('evidenceFiles', 5), (req, res) => {
         const newRequest = {
             id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             userId,
-            targetLevel,
+            targetLevel: normalizedTargetLevel,
             reason,
             workExperience: workExperience || '',
             projectExamples: projectExamples || '',
@@ -481,7 +490,7 @@ router.get("/user/progress", (req, res) => {
         const userRequests = data.requests.filter(r => String(r.userId) === userId);
 
         // Calculate progress info
-        const currentLevel = user.bimLevel || user.bim_level || 'BIM Modeller';
+        const currentLevel = user.bimLevel || user.bim_level || null;
         const progressInfo = {
             currentLevel,
             levelProgress: calculateLevelProgress(user, userRequests),
@@ -505,7 +514,7 @@ router.get("/user/progress", (req, res) => {
 
 // Helper functions
 function calculateLevelProgress(user, requests) {
-    const currentLevel = user.bimLevel || user.bim_level || 'BIM Modeller';
+    const currentLevel = user.bimLevel || user.bim_level || null;
     let progress = 0;
 
     // Basic progress calculation based on completed requirements
@@ -543,6 +552,22 @@ function getAvailableUpgrades(currentLevel, user) {
                 progress: progress
             });
         }
+    }
+
+    if (currentLevel === 'BIM Coordinator') {
+        upgrades.push({
+            level: 'BIM Specialist',
+            requirements: ['Complete the BIM Coordinator competency path', 'Pass BCL competency assessment'],
+            progress: calculateLevelProgress(user, [])
+        });
+    }
+
+    if (currentLevel === 'BIM Specialist') {
+        upgrades.push({
+            level: 'BIM Manager',
+            requirements: ['Complete the BIM Specialist competency path', 'Pass BCL competency assessment'],
+            progress: calculateLevelProgress(user, [])
+        });
     }
 
     return upgrades;

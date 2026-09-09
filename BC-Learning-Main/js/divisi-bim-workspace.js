@@ -474,7 +474,7 @@
             state.access = access;
             state.users = users;
             document.getElementById('bimws-user-name').textContent = access.user.name;
-            document.getElementById('bimws-user-role').textContent = roleLabel(access.role, access.staffRole);
+            document.getElementById('bimws-user-role').textContent = roleLabel(access.role);
             document.querySelector('.bimws-settings-nav').hidden = !access.permissions.canConfigure;
             document.getElementById('bimws-access-state').hidden = true;
             document.getElementById('bimws-content').hidden = false;
@@ -489,13 +489,14 @@
         }
     }
 
-    function staffRoleLabel(role) {
-        return ({ bim_modeller: 'BIM Modeller', bim_specialist: 'BIM Specialist', bim_coordinator: 'BIM Coordinator' })[role] || 'BIM Specialist';
+    function roleLabel(role) {
+        if (role === 'staff_bim') return 'Staff BIM';
+        return ({ division_head: 'KaDiv BIM', system_admin: 'System Administrator' })[role] || role;
     }
 
-    function roleLabel(role, staffRole = '') {
-        if (role === 'staff_bim') return `Staff BIM / ${staffRoleLabel(staffRole)}`;
-        return ({ division_head: 'KaDiv BIM', system_admin: 'System Administrator' })[role] || role;
+    function competencyLabel(user) {
+        const level = String(user?.competencyLevel || '').trim();
+        return level ? `Kompetensi: ${level}` : 'Kompetensi: Belum dinilai';
     }
 
     function renderAccessError(error) {
@@ -1485,14 +1486,14 @@
     }
 
     function userOptions(selected = '') {
-        return [{ value: '', label: 'Belum ditentukan' }, ...state.users.map((user) => ({ value: user.id, label: `${user.username}${user.workspaceRole === 'staff_bim' ? ` / ${staffRoleLabel(user.workspaceStaffRole)}` : ` / ${roleLabel(user.workspaceRole)}`}` }))]
+        return [{ value: '', label: 'Belum ditentukan' }, ...state.users.map((user) => ({ value: user.id, label: `${user.username} / ${roleLabel(user.workspaceRole)} / ${competencyLabel(user)}` }))]
             .map((item) => `<option value="${escapeHtml(item.value)}" ${String(item.value) === String(selected) ? 'selected' : ''}>${escapeHtml(item.label)}</option>`).join('');
     }
 
     function staffUserOptions(selected = '') {
         const staff = state.users.filter((user) => user.workspaceRole === 'staff_bim');
         if (!staff.length) return '<option value="" disabled selected>Belum ada user Staff BIM aktif</option>';
-        return staff.map((user) => `<option value="${escapeHtml(user.id)}" ${String(user.id) === String(selected) ? 'selected' : ''}>${escapeHtml(`${user.username} / ${staffRoleLabel(user.workspaceStaffRole)}`)}</option>`).join('');
+        return staff.map((user) => `<option value="${escapeHtml(user.id)}" ${String(user.id) === String(selected) ? 'selected' : ''}>${escapeHtml(`${user.username} / ${competencyLabel(user)}`)}</option>`).join('');
     }
 
     function taskTypeItems() {

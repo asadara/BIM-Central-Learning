@@ -50,7 +50,7 @@ function toNonNegativeInt(value, fallback = 0) {
 function normalizeLevel(level) {
     const value = String(level || '').trim();
     if (!value) return null;
-    const allowed = new Set(['BIM Modeller', 'BIM Coordinator', 'BIM Manager', 'Expert']);
+    const allowed = new Set(['BIM Modeller', 'BIM Coordinator', 'BIM Specialist', 'BIM Manager']);
     return allowed.has(value) ? value : null;
 }
 
@@ -96,7 +96,7 @@ async function deriveAuthoritativeProgress(userId) {
         if (error.code !== '42P01') throw error;
     }
 
-    const currentLevel = normalizeLevel(userResult.rows[0].bim_level) || 'BIM Modeller';
+    const currentLevel = normalizeLevel(userResult.rows[0].bim_level);
     const attempts = attemptsResult.rows[0] || {};
     const certificates = certificatesResult.rows[0] || {};
 
@@ -161,7 +161,7 @@ function mapProgressRow(row) {
         practiceAttempts: toNonNegativeInt(row?.practice_attempts, 0),
         examsPassed: toNonNegativeInt(row?.exams_passed, 0),
         certificatesEarned: toNonNegativeInt(row?.certificates_earned, 0),
-        currentLevel: normalizeLevel(row?.current_level) || normalizeLevel(row?.user_bim_level) || 'BIM Modeller',
+        currentLevel: normalizeLevel(row?.current_level) || normalizeLevel(row?.user_bim_level),
         toNextLevel: toNonNegativeInt(row?.to_next_level, 0),
         updatedAt: row?.updated_at || null
     };

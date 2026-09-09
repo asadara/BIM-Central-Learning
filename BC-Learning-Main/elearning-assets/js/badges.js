@@ -144,7 +144,7 @@ function loadUserData() {
     if (userData.name) {
         document.getElementById('user-name').textContent = userData.name;
         document.getElementById('user-role').textContent = userData.role || 'Student';
-        document.getElementById('user-level').textContent = userData.level || 'BIM Modeller';
+        document.getElementById('user-level').textContent = userData.level || 'Belum dinilai';
 
         if (userData.profileImage) {
             document.getElementById('user-img').src = userData.profileImage;

@@ -115,14 +115,14 @@ class PersonalizedRecommendations {
 
     // Generate course recommendations based on user profile and goals
     generateCourseRecommendations() {
-        const userLevel = this.userProfile.level || 'BIM Modeller';
+        const userLevel = this.userProfile.level || null;
         const interests = this.preferences.topicInterests || [];
         const completedCourses = this.getCompletedCourses();
         const learningGoals = this.userProfile.learningGoals || [];
 
         // Get available courses from enhanced learning paths
         let availableCourses = [];
-        if (typeof window.EnhancedLearningPaths !== 'undefined') {
+        if (userLevel && typeof window.EnhancedLearningPaths !== 'undefined') {
             const learningPaths = window.EnhancedLearningPaths.getAllLearningPaths();
             learningPaths.forEach(level => {
                 if (level.name === userLevel || this.isAccessibleLevel(level.name)) {
@@ -540,7 +540,7 @@ class PersonalizedRecommendations {
     createDefaultProfile(userData) {
         return {
             userId: userData.userId || 'user_' + Date.now(),
-            level: userData.level || 'BIM Modeller',
+            level: userData.level || null,
             learningGoals: userData.learningGoals || ['Improve BIM skills', 'Get certified'],
             careerGoals: userData.careerGoals || ['Advance to BIM Coordinator'],
             currentLearningPath: userData.currentLearningPath || [],

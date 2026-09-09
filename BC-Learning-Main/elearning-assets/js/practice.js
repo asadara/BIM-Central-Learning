@@ -205,7 +205,8 @@ function generateRandomQuiz() {
 function getPracticeQuestions() {
     if (typeof window.enhancedPracticeQuestions !== 'undefined') {
         const userData = getCurrentLearningUser();
-        const userLevel = userData?.level || 'BIM Modeller';
+        const userLevel = userData?.level || null;
+        if (!userLevel) return [];
 
         // Get questions for user's level
         const levelQuestions = window.enhancedPracticeQuestions[userLevel] || {};

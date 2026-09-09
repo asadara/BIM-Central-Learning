@@ -16,6 +16,12 @@ const {
     normalizeAccessProfile,
     resolveAccessProfile
 } = require('../utils/userAccess');
+const {
+    mapUserProfileState,
+    normalizeBimCompetencyLevel,
+    normalizeCompetencyStatus,
+    normalizePositionVerificationStatus
+} = require('../utils/userProfileSchema');
 
 // PostgreSQL connection configuration
 const dbConfig = createPgConfig({
@@ -150,7 +156,8 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
         try {
             await ensureAccessColumns(pool);
             const query = `
-                SELECT id, username, email, bim_level, job_role, organization,
+                SELECT id, username, email, bim_level, job_role, position_label,
+                       position_verification_status, competency_status, target_bim_level, system_role, organization,
                        registration_date, last_login, login_count, is_active,
                        mapping_kompetensi_access, dokumen_access, audit_2026_access,
                        library_download_access,
@@ -164,12 +171,18 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
             console.log(`✅ Retrieved ${result.rows.length} users from PostgreSQL`);
 
             // Map database fields to frontend expected format
-            const safeUsers = result.rows.map(user => ({
+            const safeUsers = result.rows.map(user => {
+                const profileState = mapUserProfileState(user);
+                return ({
                 id: user.id, // This will be numeric from PostgreSQL
                 username: user.username,
                 email: user.email,
-                bimLevel: user.bim_level,
-                jobRole: user.job_role,
+                bimLevel: profileState.competencyLevel,
+                competencyStatus: profileState.competencyStatus,
+                targetBimLevel: profileState.targetCompetencyLevel,
+                jobRole: profileState.positionLabel,
+                positionLabel: profileState.positionLabel,
+                positionVerificationStatus: profileState.positionVerificationStatus,
                 organization: user.organization,
                 registrationDate: user.registration_date,
                 lastLogin: user.last_login,
@@ -182,8 +195,9 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 watermarkFreeDownloadAccess: user.watermark_free_download_access || false,
                 bimWorkspaceAccess: user.bim_workspace_access || false,
                 bimWorkspaceRole: user.bim_workspace_role || 'staff_bim',
-                bimWorkspaceStaffRole: user.bim_workspace_staff_role || 'bim_specialist'
-            }));
+                bimWorkspaceStaffRole: user.bim_workspace_staff_role || null
+            });
+            });
 
             return res.json(safeUsers);
 
@@ -193,12 +207,18 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
             // Fallback to JSON
             const users = readUsers();
 
-            const safeUsers = users.map(user => ({
+            const safeUsers = users.map(user => {
+                const profileState = mapUserProfileState(user);
+                return ({
                 id: user.id || user.username, // JSON fallback uses string IDs
                 username: user.username,
                 email: user.email,
-                bimLevel: user.bimLevel || user.bim_level,
-                jobRole: user.jobRole || user.job_role,
+                bimLevel: profileState.competencyLevel,
+                competencyStatus: profileState.competencyStatus,
+                targetBimLevel: profileState.targetCompetencyLevel,
+                jobRole: profileState.positionLabel,
+                positionLabel: profileState.positionLabel,
+                positionVerificationStatus: profileState.positionVerificationStatus,
                 organization: user.organization,
                 registrationDate: user.registrationDate || user.registration_date,
                 lastLogin: user.lastLogin || user.last_login,
@@ -211,8 +231,9 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false,
                 bimWorkspaceAccess: user.bimWorkspaceAccess || user.bim_workspace_access || false,
                 bimWorkspaceRole: user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim',
-                bimWorkspaceStaffRole: user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || 'bim_specialist'
-            }));
+                bimWorkspaceStaffRole: user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || null
+            });
+            });
 
             console.log(`📄 Returned ${safeUsers.length} users from JSON fallback`);
             return res.json(safeUsers);
@@ -376,11 +397,13 @@ function getStatsFromJSON(res) {
 // POST /api/users/create - Create new user (admin only)
 router.post('/create', requireAdmin, async (req, res) => {
     try {
-        const { username, email, password, bimLevel, jobRole, organization } = req.body;
+        const { username, email, password, bimLevel, jobRole, positionLabel, organization } = req.body;
+        const normalizedBimLevel = normalizeBimCompetencyLevel(bimLevel);
+        const normalizedPositionLabel = String(positionLabel || jobRole || '').trim().slice(0, 100);
 
-        if (!username || !email || !password || !bimLevel) {
+        if (!username || !email || !password) {
             return res.status(400).json({
-                error: 'Username, email, password, and BIM level are required'
+                error: 'Username, email, and password are required'
             });
         }
 
@@ -402,17 +425,23 @@ router.post('/create', requireAdmin, async (req, res) => {
 
             // Create new user
             const insertQuery = `
-                INSERT INTO users (username, email, password, bim_level, job_role, organization, is_active)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id, username, email, bim_level, job_role, organization, registration_date, is_active
+                INSERT INTO users (
+                    username, email, password, bim_level, job_role, position_label,
+                    position_verification_status, competency_status, system_role, organization, is_active
+                )
+                VALUES ($1, $2, $3, $4, $5, $5, 'unverified', $6, 'employee', $7, $8)
+                RETURNING id, username, email, bim_level, job_role, position_label,
+                          position_verification_status, competency_status, target_bim_level,
+                          organization, registration_date, is_active
             `;
 
             const result = await pool.query(insertQuery, [
                 username,
                 email,
                 hashedPassword,
-                bimLevel,
-                jobRole || 'BIM Specialist',
+                normalizedBimLevel,
+                normalizedPositionLabel || null,
+                normalizedBimLevel ? 'self_declared' : 'not_assessed',
                 organization || '',
                 true
             ]);
@@ -421,12 +450,17 @@ router.post('/create', requireAdmin, async (req, res) => {
 
             // Map to frontend format
             const newUser = result.rows[0];
+            const profileState = mapUserProfileState(newUser);
             const safeUser = {
                 id: newUser.id,
                 username: newUser.username,
                 email: newUser.email,
-                bimLevel: newUser.bim_level,
-                jobRole: newUser.job_role,
+                bimLevel: profileState.competencyLevel,
+                competencyStatus: profileState.competencyStatus,
+                targetBimLevel: profileState.targetCompetencyLevel,
+                jobRole: profileState.positionLabel,
+                positionLabel: profileState.positionLabel,
+                positionVerificationStatus: profileState.positionVerificationStatus,
                 organization: newUser.organization,
                 registrationDate: newUser.registration_date,
                 isActive: newUser.is_active,
@@ -437,7 +471,7 @@ router.post('/create', requireAdmin, async (req, res) => {
                 watermarkFreeDownloadAccess: false,
                 bimWorkspaceAccess: false,
                 bimWorkspaceRole: 'staff_bim',
-                bimWorkspaceStaffRole: 'bim_specialist'
+                bimWorkspaceStaffRole: null
             };
 
             return res.status(201).json({
@@ -468,8 +502,13 @@ router.post('/create', requireAdmin, async (req, res) => {
                 username,
                 email,
                 password: hashedPassword,
-                bimLevel,
-                jobRole: jobRole || 'BIM Specialist',
+                bimLevel: normalizedBimLevel,
+                competencyStatus: normalizedBimLevel ? 'self_declared' : 'not_assessed',
+                targetBimLevel: null,
+                jobRole: normalizedPositionLabel || null,
+                positionLabel: normalizedPositionLabel || null,
+                positionVerificationStatus: 'unverified',
+                systemRole: 'employee',
                 organization: organization || '',
                 registrationDate: new Date().toISOString(),
                 lastLogin: null,
@@ -537,7 +576,15 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 username: 'username',
                 email: 'email',
                 bimLevel: 'bim_level',
-                jobRole: 'job_role',
+                jobRole: 'position_label',
+                positionLabel: 'position_label',
+                position_label: 'position_label',
+                positionVerificationStatus: 'position_verification_status',
+                position_verification_status: 'position_verification_status',
+                competencyStatus: 'competency_status',
+                competency_status: 'competency_status',
+                targetBimLevel: 'target_bim_level',
+                target_bim_level: 'target_bim_level',
                 organization: 'organization',
                 isActive: 'is_active',
                 mappingKompetensiAccess: 'mapping_kompetensi_access',
@@ -566,13 +613,63 @@ router.put('/:id', requireAdmin, async (req, res) => {
                         ? normalizeAccessProfile({ bimWorkspaceRole: updates[key] }).bimWorkspaceRole
                         : columnName === 'bim_workspace_staff_role'
                             ? normalizeAccessProfile({ bimWorkspaceStaffRole: updates[key] }).bimWorkspaceStaffRole
-                            : updates[key];
+                            : columnName === 'bim_level' || columnName === 'target_bim_level'
+                                ? normalizeBimCompetencyLevel(updates[key])
+                                : columnName === 'competency_status'
+                                    ? normalizeCompetencyStatus(updates[key], updates.bimLevel || updates.bim_level)
+                                    : columnName === 'position_verification_status'
+                                        ? normalizePositionVerificationStatus(updates[key])
+                                        : columnName === 'position_label'
+                                            ? String(updates[key] || '').trim().slice(0, 100) || null
+                                            : updates[key];
                     seenUpdateColumns.add(columnName);
                     updateFields.push(`${columnName} = $${paramIndex}`);
                     values.push(normalizedValue);
                     paramIndex++;
                 }
             });
+
+            if (seenUpdateColumns.has('position_label')) {
+                const positionValue = String(
+                    updates.positionLabel ?? updates.position_label ?? updates.jobRole ?? ''
+                ).trim().slice(0, 100) || null;
+                updateFields.push(`job_role = $${paramIndex}`);
+                values.push(positionValue);
+                paramIndex++;
+            }
+
+            const verifier = String(
+                req.authUser?.username || req.authUser?.email || req.authUser?.userId || req.user?.username || 'admin'
+            ).slice(0, 120);
+
+            if (seenUpdateColumns.has('position_verification_status')) {
+                if (normalizePositionVerificationStatus(
+                    updates.positionVerificationStatus ?? updates.position_verification_status
+                ) === 'verified') {
+                    updateFields.push('position_verified_at = CURRENT_TIMESTAMP');
+                    updateFields.push(`position_verified_by = $${paramIndex}`);
+                    values.push(verifier);
+                    paramIndex++;
+                } else {
+                    updateFields.push('position_verified_at = NULL');
+                    updateFields.push('position_verified_by = NULL');
+                }
+            }
+
+            if (seenUpdateColumns.has('competency_status')) {
+                if (normalizeCompetencyStatus(
+                    updates.competencyStatus ?? updates.competency_status,
+                    updates.bimLevel ?? updates.bim_level
+                ) === 'verified') {
+                    updateFields.push('competency_verified_at = CURRENT_TIMESTAMP');
+                    updateFields.push(`competency_verified_by = $${paramIndex}`);
+                    values.push(verifier);
+                    paramIndex++;
+                } else {
+                    updateFields.push('competency_verified_at = NULL');
+                    updateFields.push('competency_verified_by = NULL');
+                }
+            }
 
             if (updateFields.length === 0) {
                 return res.status(400).json({ error: 'No valid fields to update' });
@@ -588,7 +685,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 WHERE id::text = $${paramIndex}
                    OR username = $${paramIndex}
                    OR lower(email) = lower($${paramIndex})
-                RETURNING id, username, email, bim_level, job_role, organization,
+                RETURNING id, username, email, bim_level, job_role, position_label,
+                         position_verification_status, competency_status, target_bim_level, system_role, organization,
                          registration_date, last_login, login_count, is_active,
                          mapping_kompetensi_access, dokumen_access, audit_2026_access,
                          library_download_access,
@@ -606,12 +704,17 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
             // Map to frontend format
             const updatedUser = result.rows[0];
+            const profileState = mapUserProfileState(updatedUser);
             const safeUser = {
                 id: updatedUser.id,
                 username: updatedUser.username,
                 email: updatedUser.email,
-                bimLevel: updatedUser.bim_level,
-                jobRole: updatedUser.job_role,
+                bimLevel: profileState.competencyLevel,
+                competencyStatus: profileState.competencyStatus,
+                targetBimLevel: profileState.targetCompetencyLevel,
+                jobRole: profileState.positionLabel,
+                positionLabel: profileState.positionLabel,
+                positionVerificationStatus: profileState.positionVerificationStatus,
                 organization: updatedUser.organization,
                 registrationDate: updatedUser.registration_date,
                 lastLogin: updatedUser.last_login,
@@ -624,7 +727,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 watermarkFreeDownloadAccess: updatedUser.watermark_free_download_access || false,
                 bimWorkspaceAccess: updatedUser.bim_workspace_access || false,
                 bimWorkspaceRole: updatedUser.bim_workspace_role || 'staff_bim',
-                bimWorkspaceStaffRole: updatedUser.bim_workspace_staff_role || 'bim_specialist'
+                bimWorkspaceStaffRole: updatedUser.bim_workspace_staff_role || null
             };
 
             return res.json({
@@ -684,6 +787,52 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_staff_role');
 
             users[userIndex] = { ...users[userIndex], ...safeUpdates };
+
+            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'positionLabel') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'position_label')) {
+                const value = String(safeUpdates.positionLabel ?? safeUpdates.position_label ?? '').trim().slice(0, 100) || null;
+                users[userIndex].positionLabel = value;
+                users[userIndex].position_label = value;
+                users[userIndex].jobRole = value;
+                users[userIndex].job_role = value;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'positionVerificationStatus') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'position_verification_status')) {
+                const value = normalizePositionVerificationStatus(
+                    safeUpdates.positionVerificationStatus ?? safeUpdates.position_verification_status
+                );
+                users[userIndex].positionVerificationStatus = value;
+                users[userIndex].position_verification_status = value;
+                users[userIndex].positionVerifiedAt = value === 'verified' ? new Date().toISOString() : null;
+                users[userIndex].positionVerifiedBy = value === 'verified' ? 'admin' : null;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'bimLevel') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_level')) {
+                const value = normalizeBimCompetencyLevel(safeUpdates.bimLevel ?? safeUpdates.bim_level);
+                users[userIndex].bimLevel = value;
+                users[userIndex].bim_level = value;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'competencyStatus') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'competency_status')) {
+                const value = normalizeCompetencyStatus(
+                    safeUpdates.competencyStatus ?? safeUpdates.competency_status,
+                    users[userIndex].bimLevel
+                );
+                users[userIndex].competencyStatus = value;
+                users[userIndex].competency_status = value;
+                users[userIndex].competencyVerifiedAt = value === 'verified' ? new Date().toISOString() : null;
+                users[userIndex].competencyVerifiedBy = value === 'verified' ? 'admin' : null;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'targetBimLevel') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'target_bim_level')) {
+                const value = normalizeBimCompetencyLevel(safeUpdates.targetBimLevel ?? safeUpdates.target_bim_level);
+                users[userIndex].targetBimLevel = value;
+                users[userIndex].target_bim_level = value;
+            }
 
             if (hasMappingUpdate) {
                 users[userIndex].mappingKompetensiAccess = accessUpdates.mappingKompetensiAccess;

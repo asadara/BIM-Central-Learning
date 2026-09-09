@@ -17,6 +17,9 @@
     "seed:learning-mapping-queue:dry-run": "node backend/scripts/seed-learning-mapping-queue.js",
     "seed:learning-mapping-queue": "node backend/scripts/seed-learning-mapping-queue.js --apply",
     "smoke:learning-mapping-queue": "node scripts/smoke-learning-mapping-queue.js",
+    "smoke:user-profile-schema": "node scripts/smoke-user-profile-schema.js",
+    "migrate:user-profile:dry-run": "node backend/scripts/run-user-profile-schema-migration.js",
+    "migrate:user-profile": "node backend/scripts/run-user-profile-schema-migration.js --apply",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

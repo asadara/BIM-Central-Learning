@@ -66,7 +66,7 @@ class UsersModule {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="18" class="text-center py-4">
+                <td colspan="17" class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                         <div class="spinner-border text-primary mb-2" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -127,7 +127,7 @@ class UsersModule {
                 console.error('❌ Users API failed:', response.status, errorText);
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="18" class="text-center py-4">
+                        <td colspan="17" class="text-center py-4">
                             <div class="alert alert-danger mb-0">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 Failed to load users: ${response.status} ${response.statusText}
@@ -139,7 +139,7 @@ class UsersModule {
             console.error('❌ Error loading users:', error);
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="18" class="text-center py-4">
+                    <td colspan="17" class="text-center py-4">
                         <div class="alert alert-danger mb-0">
                             <i class="fas fa-exclamation-circle me-2"></i>
                             Error loading users: ${error.message}
@@ -158,7 +158,7 @@ class UsersModule {
         if (users.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="18" class="text-center py-4">
+                    <td colspan="17" class="text-center py-4">
                         <div class="d-flex flex-column align-items-center">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                             <p class="text-muted mb-2">No users found</p>
@@ -205,8 +205,11 @@ class UsersModule {
 
             const username = user.username || user.name || 'N/A';
             const email = user.email || 'N/A';
-            const bimLevel = user.bimLevel || user.bim_level || 'N/A';
-            const jobRole = user.jobRole || user.job_role || 'N/A';
+            const bimLevel = user.bimLevel || user.bim_level || 'Belum dinilai';
+            const competencyStatus = user.competencyStatus || user.competency_status || (user.bimLevel || user.bim_level ? 'self_declared' : 'not_assessed');
+            const targetBimLevel = user.targetBimLevel || user.target_bim_level || '';
+            const jobRole = user.positionLabel || user.position_label || user.jobRole || user.job_role || 'Belum diisi';
+            const positionVerificationStatus = user.positionVerificationStatus || user.position_verification_status || 'unverified';
             const organization = user.organization || 'N/A';
             const isActive = user.is_active !== undefined ? user.is_active : (user.isActive !== undefined ? user.isActive : true);
             const mappingAccess = !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
@@ -214,7 +217,9 @@ class UsersModule {
             const audit2026Access = !!(user.audit2026Access || user.audit_2026_access);
             const bimWorkspaceAccess = !!(user.bimWorkspaceAccess || user.bim_workspace_access);
             const bimWorkspaceRole = user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim';
-            const bimWorkspaceStaffRole = user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || 'bim_specialist';
+            const verifiedIcon = (status, label) => status === 'verified'
+                ? `<i class="fas fa-circle-check text-primary ms-1" title="${label} verified" aria-label="${label} verified"></i>`
+                : '';
             const libraryDownloadAccess = !!(user.libraryDownloadAccess || user.library_download_access);
             const watermarkFreeDownloadAccess = !!(user.watermarkFreeDownloadAccess || user.watermark_free_download_access);
             const statusBadge = isActive ?
@@ -251,9 +256,10 @@ class UsersModule {
                         <span class="text-muted">${email}</span>
                     </td>
                     <td>
-                        <span class="badge bg-info">${bimLevel}</span>
+                        <span class="badge bg-info">${bimLevel}</span>${verifiedIcon(competencyStatus, 'Kompetensi')}
+                        ${targetBimLevel ? `<small class="d-block text-muted mt-1">Target: ${targetBimLevel}</small>` : ''}
                     </td>
-                    <td>${jobRole}</td>
+                    <td>${jobRole}${verifiedIcon(positionVerificationStatus, 'Jabatan')}</td>
                     <td>${organization}</td>
                     <td>
                         <span class="text-muted font-monospace" title="Password is securely hashed">
@@ -302,18 +308,11 @@ class UsersModule {
                             <label class="form-check-label" for="bimWorkspaceAccess_${userId}"></label>
                         </div>
                     </td>
-                    <td class="access-check-cell" title="Kategori dan role internal Divisi BIM">
-                        <select class="form-select form-select-sm mb-1" aria-label="Kategori pengguna Workspace"
-                                onchange="window.adminPanel.modules.get('users').instance.updateBimWorkspaceRole('${userId}', this.value, this)">
-                            <option value="staff_bim" ${bimWorkspaceRole === 'staff_bim' ? 'selected' : ''}>Staff BIM</option>
-                            <option value="division_head" ${bimWorkspaceRole === 'division_head' ? 'selected' : ''}>KaDiv BIM</option>
-                        </select>
-                        <select class="form-select form-select-sm workspace-staff-role-select" aria-label="Role kerja Staff BIM"
-                                ${bimWorkspaceRole === 'division_head' ? 'disabled hidden' : ''}
-                                onchange="window.adminPanel.modules.get('users').instance.updateBimWorkspaceStaffRole('${userId}', this.value, this)">
-                            <option value="bim_modeller" ${bimWorkspaceStaffRole === 'bim_modeller' ? 'selected' : ''}>BIM Modeller</option>
-                            <option value="bim_specialist" ${bimWorkspaceStaffRole === 'bim_specialist' ? 'selected' : ''}>BIM Specialist</option>
-                            <option value="bim_coordinator" ${bimWorkspaceStaffRole === 'bim_coordinator' ? 'selected' : ''}>BIM Coordinator</option>
+                    <td class="access-check-cell" title="Kewenangan operasional khusus Divisi BIM Workspace">
+                        <select class="form-select form-select-sm" aria-label="Kewenangan Workspace"
+                                 onchange="window.adminPanel.modules.get('users').instance.updateBimWorkspaceRole('${userId}', this.value, this)">
+                            <option value="staff_bim" ${bimWorkspaceRole === 'staff_bim' ? 'selected' : ''}>Kontributor (Staff BIM)</option>
+                            <option value="division_head" ${bimWorkspaceRole === 'division_head' ? 'selected' : ''}>Approver (KaDiv BIM)</option>
                         </select>
                     </td>
                     <td class="text-center access-check-cell" title="Pustaka Download">
@@ -376,7 +375,8 @@ class UsersModule {
                 email.includes(searchTerm);
 
             // BIM Level filter
-            const matchesBimLevel = !bimLevelFilter || bimLevel === bimLevelFilter;
+            const matchesBimLevel = !bimLevelFilter ||
+                (bimLevelFilter === '__unassessed__' ? !bimLevel : bimLevel === bimLevelFilter);
 
             // Status filter
             let matchesStatus = true;
@@ -454,18 +454,18 @@ class UsersModule {
                                         <input type="password" class="form-control" id="userPassword" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">BIM Level *</label>
-                                        <select class="form-select" id="userBimLevel" required>
-                                            <option value="">Select BIM Level</option>
+                                        <label class="form-label">Kompetensi BIM</label>
+                                        <select class="form-select" id="userBimLevel">
+                                            <option value="">Belum dinilai</option>
                                             <option value="BIM Modeller">BIM Modeller</option>
                                             <option value="BIM Coordinator">BIM Coordinator</option>
+                                            <option value="BIM Specialist">BIM Specialist</option>
                                             <option value="BIM Manager">BIM Manager</option>
-                                            <option value="Expert">Expert</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Job Role</label>
-                                        <input type="text" class="form-control" id="userJobRole" placeholder="e.g., BIM Specialist">
+                                        <label class="form-label">Label Jabatan</label>
+                                        <input type="text" class="form-control" id="userJobRole" placeholder="Contoh: Site Engineer">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Organization</label>
@@ -510,7 +510,8 @@ class UsersModule {
             email: document.getElementById('userEmail').value.trim(),
             password: document.getElementById('userPassword').value,
             bimLevel: document.getElementById('userBimLevel').value,
-            jobRole: document.getElementById('userJobRole').value.trim(),
+            positionLabel: document.getElementById('userJobRole').value.trim(),
+            competencyStatus: document.getElementById('userBimLevel').value ? 'self_declared' : 'not_assessed',
             organization: document.getElementById('userOrganization').value.trim()
         };
 
@@ -554,11 +555,17 @@ class UsersModule {
      */
     editUser(userId) {
         // Find user data
-        const user = this.allUsers.find(u => (u.id || u.user_id) === userId);
+        const user = this.allUsers.find(u => String(u.id || u.user_id) === String(userId));
         if (!user) {
             alert('User not found');
             return;
         }
+
+        const currentBimLevel = user.bimLevel || user.bim_level || '';
+        const currentCompetencyStatus = user.competencyStatus || user.competency_status || (currentBimLevel ? 'self_declared' : 'not_assessed');
+        const currentTargetLevel = user.targetBimLevel || user.target_bim_level || '';
+        const currentPositionLabel = user.positionLabel || user.position_label || user.jobRole || user.job_role || '';
+        const currentPositionStatus = user.positionVerificationStatus || user.position_verification_status || 'unverified';
 
         // Create edit modal with pre-filled data
         const modalHtml = `
@@ -583,13 +590,33 @@ class UsersModule {
                                         <input type="email" class="form-control" id="userEmail" value="${user.email || ''}" required>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">BIM Level *</label>
-                                        <select class="form-select" id="userBimLevel" required>
-                                            <option value="">Select BIM Level</option>
-                                            <option value="BIM Modeller" ${user.bimLevel === 'BIM Modeller' ? 'selected' : ''}>BIM Modeller</option>
-                                            <option value="BIM Coordinator" ${user.bimLevel === 'BIM Coordinator' ? 'selected' : ''}>BIM Coordinator</option>
-                                            <option value="BIM Manager" ${user.bimLevel === 'BIM Manager' ? 'selected' : ''}>BIM Manager</option>
-                                            <option value="Expert" ${user.bimLevel === 'Expert' ? 'selected' : ''}>Expert</option>
+                                        <label class="form-label">Kompetensi BIM Saat Ini</label>
+                                        <select class="form-select" id="userBimLevel">
+                                            <option value="" ${!currentBimLevel ? 'selected' : ''}>Belum dinilai</option>
+                                            <option value="BIM Modeller" ${currentBimLevel === 'BIM Modeller' ? 'selected' : ''}>BIM Modeller</option>
+                                            <option value="BIM Coordinator" ${currentBimLevel === 'BIM Coordinator' ? 'selected' : ''}>BIM Coordinator</option>
+                                            <option value="BIM Specialist" ${currentBimLevel === 'BIM Specialist' ? 'selected' : ''}>BIM Specialist</option>
+                                            <option value="BIM Manager" ${currentBimLevel === 'BIM Manager' ? 'selected' : ''}>BIM Manager</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Status Kompetensi</label>
+                                        <select class="form-select" id="userCompetencyStatus">
+                                            <option value="not_assessed" ${currentCompetencyStatus === 'not_assessed' ? 'selected' : ''}>Belum Dinilai</option>
+                                            <option value="self_declared" ${currentCompetencyStatus === 'self_declared' ? 'selected' : ''}>Deklarasi Awal</option>
+                                            <option value="assessment_in_progress" ${currentCompetencyStatus === 'assessment_in_progress' ? 'selected' : ''}>Assessment Berjalan</option>
+                                            <option value="verified" ${currentCompetencyStatus === 'verified' ? 'selected' : ''}>Verified</option>
+                                            <option value="reassessment_required" ${currentCompetencyStatus === 'reassessment_required' ? 'selected' : ''}>Perlu Assessment Ulang</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Target Kompetensi</label>
+                                        <select class="form-select" id="userTargetBimLevel">
+                                            <option value="" ${!currentTargetLevel ? 'selected' : ''}>Belum ditetapkan</option>
+                                            <option value="BIM Modeller" ${currentTargetLevel === 'BIM Modeller' ? 'selected' : ''}>BIM Modeller</option>
+                                            <option value="BIM Coordinator" ${currentTargetLevel === 'BIM Coordinator' ? 'selected' : ''}>BIM Coordinator</option>
+                                            <option value="BIM Specialist" ${currentTargetLevel === 'BIM Specialist' ? 'selected' : ''}>BIM Specialist</option>
+                                            <option value="BIM Manager" ${currentTargetLevel === 'BIM Manager' ? 'selected' : ''}>BIM Manager</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
@@ -600,8 +627,18 @@ class UsersModule {
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Job Role</label>
-                                        <input type="text" class="form-control" id="userJobRole" value="${user.jobRole || user.job_role || ''}" placeholder="e.g., BIM Specialist">
+                                        <label class="form-label">Label Jabatan</label>
+                                        <input type="text" class="form-control" id="userJobRole" value="${currentPositionLabel}" placeholder="Contoh: Site Engineer">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Status Jabatan</label>
+                                        <select class="form-select" id="userPositionStatus">
+                                            <option value="unverified" ${currentPositionStatus === 'unverified' ? 'selected' : ''}>Belum Verified</option>
+                                            <option value="pending" ${currentPositionStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                            <option value="verified" ${currentPositionStatus === 'verified' ? 'selected' : ''}>Verified</option>
+                                            <option value="rejected" ${currentPositionStatus === 'rejected' ? 'selected' : ''}>Ditolak</option>
+                                            <option value="superseded" ${currentPositionStatus === 'superseded' ? 'selected' : ''}>Tidak Berlaku</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Organization</label>
@@ -645,7 +682,10 @@ class UsersModule {
             username: document.getElementById('userUsername').value.trim(),
             email: document.getElementById('userEmail').value.trim(),
             bimLevel: document.getElementById('userBimLevel').value,
-            jobRole: document.getElementById('userJobRole').value.trim(),
+            competencyStatus: document.getElementById('userCompetencyStatus').value,
+            targetBimLevel: document.getElementById('userTargetBimLevel').value,
+            positionLabel: document.getElementById('userJobRole').value.trim(),
+            positionVerificationStatus: document.getElementById('userPositionStatus').value,
             organization: document.getElementById('userOrganization').value.trim(),
             isActive: document.getElementById('userStatus').value === 'true'
         };
@@ -1058,7 +1098,6 @@ class UsersModule {
         if (!allowed.includes(role)) return;
         const previous = this.allUsers.find((user) => String(user.id || user.user_id) === String(userId));
         const previousRole = previous?.bimWorkspaceRole || previous?.bim_workspace_role || 'staff_bim';
-        const staffRoleSelect = selectElement.parentElement?.querySelector('.workspace-staff-role-select');
         selectElement.disabled = true;
         try {
             const response = await fetch(`/api/users/${encodeURIComponent(userId)}`, {
@@ -1070,10 +1109,6 @@ class UsersModule {
             if (previous) {
                 previous.bimWorkspaceRole = role;
                 previous.bim_workspace_role = role;
-            }
-            if (staffRoleSelect) {
-                staffRoleSelect.disabled = role === 'division_head';
-                staffRoleSelect.hidden = role === 'division_head';
             }
         } catch (error) {
             selectElement.value = previousRole;
@@ -1165,7 +1200,7 @@ class UsersModule {
         }
 
         // Create CSV content
-        const headers = ['ID', 'Username', 'Email', 'BIM Level Training', 'Job Role', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Divisi BIM Workspace Access', 'Kategori Workspace', 'Role Staff BIM', 'Library Download Access', 'Watermark-Free Download Access'];
+        const headers = ['ID', 'Username', 'Email', 'Kompetensi BIM', 'Status Kompetensi', 'Target Kompetensi', 'Label Jabatan', 'Status Jabatan', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Divisi BIM Workspace Access', 'Kewenangan Workspace', 'Library Download Access', 'Watermark-Free Download Access'];
         const csvContent = [
             headers.join(','),
             ...this.allUsers.map(user => [
@@ -1173,7 +1208,10 @@ class UsersModule {
                 user.username || user.name,
                 user.email,
                 user.bimLevel || user.bim_level,
-                user.jobRole || user.job_role,
+                user.competencyStatus || user.competency_status,
+                user.targetBimLevel || user.target_bim_level,
+                user.positionLabel || user.position_label || user.jobRole || user.job_role,
+                user.positionVerificationStatus || user.position_verification_status,
                 user.organization,
                 (user.is_active !== undefined ? user.is_active : user.isActive !== undefined ? user.isActive : true) ? 'Active' : 'Inactive',
                 user.registrationDate || user.registration_date || user.created_at,
@@ -1182,7 +1220,6 @@ class UsersModule {
                 (user.audit2026Access || user.audit_2026_access) ? 'Yes' : 'No',
                 (user.bimWorkspaceAccess || user.bim_workspace_access) ? 'Yes' : 'No',
                 user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim',
-                user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || 'bim_specialist',
                 (user.libraryDownloadAccess || user.library_download_access) ? 'Yes' : 'No',
                 (user.watermarkFreeDownloadAccess || user.watermark_free_download_access) ? 'Yes' : 'No'
             ].map(field => `"${field || ''}"`).join(','))

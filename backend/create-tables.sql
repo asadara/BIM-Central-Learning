@@ -23,8 +23,17 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    bim_level VARCHAR(50) DEFAULT 'BIM Modeller',
+    bim_level VARCHAR(50),
     job_role VARCHAR(100),
+    position_label TEXT,
+    position_verification_status TEXT DEFAULT 'unverified',
+    position_verified_at TIMESTAMPTZ,
+    position_verified_by TEXT,
+    competency_status TEXT DEFAULT 'not_assessed',
+    competency_verified_at TIMESTAMPTZ,
+    competency_verified_by TEXT,
+    target_bim_level VARCHAR(50),
+    system_role TEXT DEFAULT 'employee',
     organization VARCHAR(255),
     registration_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     login_count INTEGER DEFAULT 0,
@@ -53,6 +62,16 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS library_download_access BOOLEAN DEFAU
 ALTER TABLE users ADD COLUMN IF NOT EXISTS watermark_free_download_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_role TEXT DEFAULT 'viewer';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS position_label TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS position_verification_status TEXT DEFAULT 'unverified';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS position_verified_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS position_verified_by TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS competency_status TEXT DEFAULT 'not_assessed';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS competency_verified_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS competency_verified_by TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS target_bim_level VARCHAR(50);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS system_role TEXT DEFAULT 'employee';
+ALTER TABLE users ALTER COLUMN bim_level DROP DEFAULT;
 
 CREATE TABLE IF NOT EXISTS access_requests (
     id TEXT PRIMARY KEY,

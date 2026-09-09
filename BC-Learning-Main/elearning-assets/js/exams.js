@@ -829,7 +829,7 @@ function getReadinessDashboard() {
     }
 
     return {
-        userLevel: getUserData()?.level || 'BIM Modeller',
+        userLevel: getUserData()?.level || null,
         exams: [],
         practiceHistory: [],
         overallReadiness: 0,
@@ -1082,8 +1082,8 @@ function checkPrerequisiteCompleted(prerequisite, userData) {
 }
 
 function checkExamEligibility(exam, userData) {
-    const userLevel = userData?.level || 'BIM Modeller';
-    const levelOrder = ['BIM Modeller', 'BIM Coordinator', 'BIM Manager'];
+    const userLevel = userData?.level || null;
+    const levelOrder = ['BIM Modeller', 'BIM Coordinator', 'BIM Specialist', 'BIM Manager'];
     const requiredLevelIndex = levelOrder.indexOf(exam.requiredLevel);
     const userLevelIndex = levelOrder.indexOf(userLevel);
 

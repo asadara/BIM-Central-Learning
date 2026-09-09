@@ -134,7 +134,7 @@ function loadUserData() {
     const userData = getUserData();
     if (!userData) return;
 
-    const level = userData.level || userData.bimLevel || 'BIM Modeller';
+    const level = userData.level || userData.bimLevel || 'Belum dinilai';
     const levelElement = document.getElementById('dashboard-user-level');
     if (levelElement) {
         levelElement.textContent = level;
@@ -148,7 +148,7 @@ function updateLevelProgress(userData, progressData) {
         (progressData && progressData.currentLevel) ||
         userData?.level ||
         userData?.bimLevel ||
-        'BIM Modeller';
+        null;
 
     const progressFill = document.getElementById('level-progress-fill');
     const progressText = document.getElementById('level-progress-text');
@@ -163,6 +163,9 @@ function updateLevelProgress(userData, progressData) {
                 break;
             case 'BIM Coordinator':
                 percent = 60;
+                break;
+            case 'BIM Specialist':
+                percent = 80;
                 break;
             case 'BIM Manager':
             case 'Expert':
@@ -736,14 +739,18 @@ function loadEnhancedCourses() {
 
 function updateCourseRecommendations(courses) {
     const userData = getUserData();
-    const userLevel = userData?.level || userData?.bimLevel || 'BIM Modeller';
+    const userLevel = userData?.level || userData?.bimLevel || null;
+
+    const courseContainer = document.querySelector('.course-recommendations');
+    if (!courseContainer) return;
+    if (!userLevel) {
+        courseContainer.innerHTML = '<div class="no-courses"><i class="fas fa-compass"></i><p>Ikuti orientasi dan assessment awal untuk mendapatkan rekomendasi kompetensi.</p></div>';
+        return;
+    }
 
     const recommendedCourses = courses.filter((course) =>
         course.level === userLevel && !course.enrolled
     ).slice(0, 4);
-
-    const courseContainer = document.querySelector('.course-recommendations');
-    if (!courseContainer) return;
 
     courseContainer.innerHTML = recommendedCourses.map((course) => `
         <div class="course-card">

@@ -29,7 +29,11 @@ function loadEnhancedExamSystem() {
 function getExamData() {
     if (typeof window.EnhancedExamDatabase !== 'undefined') {
         const userData = getUserData();
-        const userLevel = userData?.level || 'BIM Modeller';
+        const userLevel = userData?.level || null;
+
+        if (!userLevel) {
+            return [];
+        }
 
         // Get exams for user's level
         const levelExams = window.EnhancedExamDatabase.getExamsByLevel(userLevel);

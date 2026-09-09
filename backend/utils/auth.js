@@ -11,7 +11,7 @@ const LEGACY_ADMIN_BEARER = getLegacyAdminBearerSecret();
 
 function isAdminRole(roleValue) {
     const normalizedRole = String(roleValue || '').toLowerCase();
-    return normalizedRole.includes('admin') || normalizedRole.includes('administrator');
+    return normalizedRole === 'system_admin';
 }
 
 function buildAdminUser(overrides = {}) {

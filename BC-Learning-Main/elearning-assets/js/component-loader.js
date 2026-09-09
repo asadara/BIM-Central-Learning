@@ -57,6 +57,53 @@ function normalizeProfileImageUrl(value) {
     return image;
 }
 
+function renderSidebarIdentityBlock(element, state = {}) {
+    if (!element) return;
+    element.replaceChildren();
+
+    if (state.isGuest) {
+        element.textContent = 'Silakan login untuk membuka seluruh fitur belajar';
+        element.classList.add('is-guest');
+        return;
+    }
+
+    element.classList.remove('is-guest');
+    const position = document.createElement('span');
+    position.className = 'sidebar-position-text';
+    position.textContent = state.positionLabel || 'Jabatan belum diisi';
+    position.title = `Jabatan: ${position.textContent}`;
+
+    if (state.positionVerified) {
+        const verified = document.createElement('i');
+        verified.className = 'fas fa-circle-check sidebar-verified-mark';
+        verified.title = 'Verified';
+        verified.setAttribute('aria-label', 'Verified');
+        position.append(' ', verified);
+    }
+
+    const competency = document.createElement('span');
+    competency.className = 'sidebar-competency-pill';
+    competency.title = `Kompetensi BIM: ${state.competencyLevel || 'Belum dinilai'}`;
+    const competencyIcon = document.createElement('i');
+    competencyIcon.className = 'fas fa-layer-group';
+    competencyIcon.setAttribute('aria-hidden', 'true');
+    const competencyValue = document.createElement('span');
+    competencyValue.textContent = state.competencyLevel || 'Belum dinilai';
+    competency.append(competencyIcon, competencyValue);
+
+    if (state.competencyVerified) {
+        const verified = document.createElement('i');
+        verified.className = 'fas fa-circle-check sidebar-verified-mark';
+        verified.title = 'Verified';
+        verified.setAttribute('aria-label', 'Verified');
+        competency.append(verified);
+    }
+
+    element.append(position, competency);
+}
+
+window.renderSidebarIdentityBlock = renderSidebarIdentityBlock;
+
 class ComponentLoader {
 
     constructor() {
@@ -879,15 +926,16 @@ class ComponentLoader {
 
     getSidebarUserState() {
         const username = localStorage.getItem('username') || '';
-        const role = localStorage.getItem('role') || 'student';
+        const role = localStorage.getItem('role') || '';
         const level = localStorage.getItem('level') || '';
         const userimg = localStorage.getItem('userimg') || '';
         const userData = JSON.parse(localStorage.getItem('userData') || '{}');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
 
         const finalUsername = username || user.username || userData.name || '';
-        const finalRole = role || user.role || userData.role || 'student';
-        const finalLevel = level || user.level || userData.level || '';
+        const finalRole = user.positionLabel || user.position_label || role || userData.positionLabel || userData.role || '';
+        const finalCompetency = user.bimLevel || user.level || user.bim_level || userData.bimLevel || userData.level || '';
+        const finalLevel = level || finalCompetency;
         const finalImage = normalizeProfileImageUrl(
             userimg || user.userimg || userData.image || '/elearning-assets/images/pic-1.jpg'
         );
@@ -897,7 +945,15 @@ class ComponentLoader {
             username: isGuest ? 'Guest User' : finalUsername,
             roleLevel: isGuest
                 ? 'Silakan login untuk membuka seluruh fitur belajar'
-                : (finalLevel ? `${finalRole} - ${finalLevel}` : finalRole),
+                : [finalRole && finalRole !== 'student' ? finalRole : '', finalLevel ? `Kompetensi: ${finalLevel}` : 'Kompetensi: Belum dinilai']
+                    .filter(Boolean)
+                    .join(' · '),
+            isGuest,
+            positionLabel: finalRole,
+            competencyLevel: finalLevel,
+            positionVerified: (user.positionVerificationStatus || user.position_verification_status) === 'verified',
+            competencyVerified: (user.competencyStatus || user.competency_status) === 'verified',
+            isAdmin: user.isAdmin === true || user.systemRole === 'system_admin' || user.system_role === 'system_admin',
             image: finalImage,
             profileHref: isGuest ? '/pages/login.html' : '/elearning-assets/profile.html',
             profileText: isGuest ? 'Login to Start Learning' : 'View Profile',
@@ -919,7 +975,7 @@ class ComponentLoader {
         }
 
         if (sidebarUserRoleLevel) {
-            sidebarUserRoleLevel.textContent = state.roleLevel;
+            renderSidebarIdentityBlock(sidebarUserRoleLevel, state);
         }
 
         if (sidebarUserImg) {
@@ -933,8 +989,7 @@ class ComponentLoader {
 
         const adminContentSection = query('.admin-content-section');
         if (adminContentSection) {
-            const isAdmin = state.finalUsername === 'adminBCL' ||
-                state.finalRole === 'System Administrator';
+            const isAdmin = state.isAdmin === true;
 
             adminContentSection.classList.toggle('show', isAdmin);
         }
@@ -950,6 +1005,7 @@ class ComponentLoader {
         }
 
         const state = this.applySidebarUserState(document);
+        return state;
 
         // Ambil data user dari localStorage (support both formats)
         const username = localStorage.getItem('username');
@@ -986,41 +1042,17 @@ class ComponentLoader {
 
             // Update combined role and level
             if (sidebarUserRoleLevel) {
-                let userLevel = 'BIM Learner'; // Default
-
-                // Map roles to levels
-                const roleLevelMap = {
-                    'System Administrator': 'System Admin',
-                    'Administrator': 'Administrator',
-                    'Instructor': 'BIM Instructor',
-                    'Coordinator': 'BIM Coordinator',
-                    'Manager': 'BIM Manager',
-                    'Expert': 'BIM Expert',
-                    'Advanced': 'BIM Advanced',
-                    'Intermediate': 'BIM Intermediate',
-                    'Beginner': 'BIM Beginner',
-                    'Student': 'BIM Student',
-                    'Learner': 'BIM Learner'
-                };
-
-                // Check if role maps to a specific level
-                if (finalRole && roleLevelMap[finalRole]) {
-                    userLevel = roleLevelMap[finalRole];
-                } else if (finalRole) {
-                    // If role doesn't map exactly, format it
-                    userLevel = finalRole.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-                }
-
-                // Also check userData for specific level field
-                if (userData.level) {
-                    userLevel = userData.level;
-                } else if (user.level) {
-                    userLevel = user.level;
-                }
+                const userLevel = finalCompetency || 'Belum dinilai';
 
                 // Combine role and level in single element
                 const roleDisplay = finalRole || 'visitor';
                 sidebarUserRoleLevel.textContent = `${roleDisplay} • ${userLevel}`;
+            }
+
+            if (sidebarUserRoleLevel) {
+                const positionDisplay = finalRole || 'Jabatan belum diisi';
+                const competencyDisplay = finalCompetency || 'Belum dinilai';
+                sidebarUserRoleLevel.textContent = `${positionDisplay} • Kompetensi: ${competencyDisplay}`;
             }
 
             // Update profile button for logged-in user
@@ -1050,8 +1082,7 @@ class ComponentLoader {
         const adminContentSection = document.querySelector('.admin-content-section');
         if (adminContentSection) {
             // Check if user is adminBCL
-            const isAdmin = finalUsername === 'adminBCL' ||
-                finalRole === 'System Administrator';
+            const isAdmin = user.isAdmin === true || user.systemRole === 'system_admin' || user.system_role === 'system_admin';
 
             // Use CSS class instead of inline style for smoother transitions
             if (isAdmin) {

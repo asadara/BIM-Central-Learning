@@ -6,6 +6,7 @@ const { Pool } = require('pg');
 const { createPgConfig } = require('../config/runtimeConfig');
 const { getBearerRequestUser, getRequestUser } = require('../utils/auth');
 const { normalizeAccessProfile, resolveAccessProfile } = require('../utils/userAccess');
+const { ensureUserProfileColumns, mapUserProfileState } = require('../utils/userProfileSchema');
 const { scorecards: KPI_SCORECARDS, programs: KPI_PROGRAMS, MAX_ACHIEVEMENT } = require('../services/bimKpiCatalog');
 
 const router = express.Router();
@@ -508,6 +509,7 @@ async function seedKpiCatalog() {
 }
 
 async function ensureTables() {
+    await ensureUserProfileColumns(pool);
     if (!ensureTablesPromise) {
         ensureTablesPromise = (async () => {
             const staffRoleColumn = await pool.query(`
@@ -1289,20 +1291,27 @@ route('get', '/access/me', (req, res) => {
 route('get', '/users', async (req, res) => {
     if (!canWrite(req)) return res.json([]);
     const result = await pool.query(
-        `SELECT id::text, username, email, job_role, bim_workspace_role, bim_workspace_staff_role
+        `SELECT id::text, username, email, job_role, position_label,
+                position_verification_status, bim_level, competency_status, target_bim_level,
+                bim_workspace_role, bim_workspace_staff_role
          FROM users WHERE is_active = true AND bim_workspace_access = true
          ORDER BY username`
     );
-    res.json(result.rows.map((row) => ({
-        id: row.id,
-        username: row.username,
-        email: row.email,
-        jobRole: row.job_role || '',
-        workspaceRole: row.bim_workspace_role || 'staff_bim',
-        workspaceStaffRole: row.bim_workspace_role === 'staff_bim'
-            ? normalizeWorkspaceStaffRole(row.bim_workspace_staff_role)
-            : ''
-    })));
+    res.json(result.rows.map((row) => {
+        const profileState = mapUserProfileState(row);
+        return {
+            id: row.id,
+            username: row.username,
+            email: row.email,
+            jobRole: profileState.positionLabel,
+            positionLabel: profileState.positionLabel,
+            positionVerificationStatus: profileState.positionVerificationStatus,
+            competencyLevel: profileState.competencyLevel,
+            competencyStatus: profileState.competencyStatus,
+            targetCompetencyLevel: profileState.targetCompetencyLevel,
+            workspaceRole: row.bim_workspace_role || 'staff_bim'
+        };
+    }));
 });
 
 function versionSignature(row) {

@@ -181,8 +181,14 @@ function updateSidebarActiveState() {
 
 function syncSidebarUserInfo() {
     const username = localStorage.getItem('username') || '';
-    const role = localStorage.getItem('role') || 'student';
-    const level = localStorage.getItem('level') || '';
+    let storedUser = {};
+    try {
+        storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    } catch (error) {
+        storedUser = {};
+    }
+    const role = storedUser.positionLabel || storedUser.position_label || localStorage.getItem('role') || '';
+    const level = storedUser.bimLevel || storedUser.level || storedUser.bim_level || localStorage.getItem('level') || '';
     const img = localStorage.getItem('userimg') || '/elearning-assets/images/pic-1.jpg';
     const isGuest = !username || username === 'Account' || username === 'Guest User';
     const profileHref = isGuest ? '/pages/login.html' : '/elearning-assets/profile.html';
@@ -207,7 +213,18 @@ function syncSidebarUserInfo() {
 
     sidebarRoleLevel.textContent = isGuest
         ? 'Silakan login untuk membuka seluruh fitur belajar'
-        : (level ? `${role} - ${level}` : role);
+        : [role && role !== 'student' ? role : '', level ? `Kompetensi: ${level}` : 'Kompetensi: Belum dinilai']
+            .filter(Boolean)
+            .join(' · ');
+    if (typeof window.renderSidebarIdentityBlock === 'function') {
+        window.renderSidebarIdentityBlock(sidebarRoleLevel, {
+            isGuest,
+            positionLabel: role,
+            competencyLevel: level,
+            positionVerified: (storedUser.positionVerificationStatus || storedUser.position_verification_status) === 'verified',
+            competencyVerified: (storedUser.competencyStatus || storedUser.competency_status) === 'verified'
+        });
+    }
     sidebarRoleLevel.style.opacity = '1';
     sidebarRoleLevel.style.display = 'block';
 

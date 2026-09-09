@@ -29,7 +29,8 @@ function getUserData() {
          localStorage.removeItem("user");
          localStorage.removeItem("username");
          localStorage.removeItem("email");
-         localStorage.removeItem("role");
+          localStorage.removeItem("role");
+          localStorage.removeItem("level");
          localStorage.removeItem("userimg");
          localStorage.removeItem("token");
          return null;
@@ -56,9 +57,15 @@ function setUserData(data) {
          username: data.username || data.name || '',
          name: data.name || data.username || '',
          email: data.email || '',
-         role: data.role || 'Student',
-         level: data.level || data.bimLevel || data.bim_level || 'BIM Modeller',
-         bimLevel: data.bimLevel || data.level || data.bim_level || 'BIM Modeller',
+          role: data.positionLabel || data.role || '',
+          positionLabel: data.positionLabel || data.role || '',
+          positionVerificationStatus: data.positionVerificationStatus || 'unverified',
+          level: data.level || data.bimLevel || data.bim_level || null,
+          bimLevel: data.bimLevel || data.level || data.bim_level || null,
+          competencyStatus: data.competencyStatus || (data.bimLevel || data.level || data.bim_level ? 'self_declared' : 'not_assessed'),
+          targetBimLevel: data.targetBimLevel || data.target_bim_level || null,
+          systemRole: data.systemRole || data.system_role || 'employee',
+          isAdmin: data.isAdmin === true || data.systemRole === 'system_admin' || data.system_role === 'system_admin',
          organization: data.organization || '',
          photo: data.photo || data.image || data.img || '/img/user-default.svg',
          token: data.token || ""
@@ -74,6 +81,8 @@ function setUserData(data) {
       localStorage.setItem("username", normalizedData.name);
       localStorage.setItem("email", normalizedData.email);
       localStorage.setItem("role", normalizedData.role);
+      if (normalizedData.level) localStorage.setItem("level", normalizedData.level);
+      else localStorage.removeItem("level");
       localStorage.setItem("userimg", normalizedData.photo);
       localStorage.setItem("token", normalizedData.token);
       localStorage.removeItem("bcl_progress_sync_disabled");
@@ -88,6 +97,7 @@ function clearStoredUserAuth() {
    localStorage.removeItem("username");
    localStorage.removeItem("email");
    localStorage.removeItem("role");
+   localStorage.removeItem("level");
    localStorage.removeItem("userimg");
    localStorage.removeItem("token");
    localStorage.removeItem("bcl_progress_sync_hash");
@@ -188,7 +198,7 @@ async function updateUserUI() {
       if (registerLink) registerLink.hidden = true;
       if (dashboardLink) dashboardLink.hidden = false;
       if (messagesLink) {
-         const isAdminUser = user.isAdmin || (user.role && user.role.toLowerCase().includes("admin"));
+         const isAdminUser = user.isAdmin || user.systemRole === 'system_admin';
          messagesLink.hidden = isAdminUser;
       }
       if (profileLink) profileLink.hidden = false;
@@ -263,7 +273,7 @@ function setupLogoutHandler(user) {
    const adminLink = document.getElementById("admin-link");
    const competencyLink = document.getElementById("competency-link");
    const adminToolsDivider = document.getElementById("admin-tools-divider");
-   const isAdminUser = user.isAdmin || (user.role && user.role.toLowerCase() === "admin");
+   const isAdminUser = user.isAdmin || user.systemRole === 'system_admin';
 
    if (isAdminUser) {
       if (adminToolsDivider) adminToolsDivider.hidden = false;
@@ -357,10 +367,16 @@ function setupLoginForm() {
             const user = {
                name: result.name || result.username,
                email: result.email || email,
-               role: result.role || result.bimLevel || "Student",
+               role: result.positionLabel || result.role || '',
+               positionLabel: result.positionLabel || result.role || '',
+               positionVerificationStatus: result.positionVerificationStatus || 'unverified',
                photo: result.photo || "/img/user-default.svg",
                token: result.token,
-               bimLevel: result.bimLevel,
+               bimLevel: result.bimLevel || null,
+               competencyStatus: result.competencyStatus || (result.bimLevel ? 'self_declared' : 'not_assessed'),
+               targetBimLevel: result.targetBimLevel || null,
+               systemRole: result.systemRole || 'employee',
+               isAdmin: result.isAdmin === true,
                organization: result.organization
             };
             setUserData(user);
@@ -511,8 +527,8 @@ function bclMainCollectProgressSnapshot() {
       userProgress.currentLevel ||
       userData.level ||
       localStorage.getItem("level") ||
-      "BIM Modeller"
-   ).trim();
+      ""
+   ).trim() || null;
 
    const toNextLevel = bclMainToNonNegativeInt(
       userProgress.toNextLevel ?? userData.toNextLevel ?? 0,
@@ -541,7 +557,7 @@ function bclMainHasAnyProgress(snapshot) {
 
 function bclMainGetProgressSyncToken() {
    const user = getUserData();
-   if (!user || user.isAdmin) return null;
+   if (!user || user.isAdmin || user.systemRole === 'system_admin') return null;
 
    const token = String(user.token || localStorage.getItem("token") || "").trim();
    if (!token) return null;

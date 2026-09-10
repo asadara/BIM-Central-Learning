@@ -20,6 +20,9 @@
     "smoke:user-profile-schema": "node scripts/smoke-user-profile-schema.js",
     "migrate:user-profile:dry-run": "node backend/scripts/run-user-profile-schema-migration.js",
     "migrate:user-profile": "node backend/scripts/run-user-profile-schema-migration.js --apply",
+    "migrate:search-perimeter:dry-run": "node backend/scripts/run-search-content-perimeter-migration.js",
+    "migrate:search-perimeter": "node backend/scripts/run-search-content-perimeter-migration.js --apply",
+    "smoke:search-perimeter": "node scripts/smoke-search-content-perimeter.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

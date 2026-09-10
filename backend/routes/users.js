@@ -131,6 +131,20 @@ router.get('/check-audit-2026-access', requireAuthenticatedPreferBearer, async (
     }
 });
 
+router.get('/check-project-document-access', requireAuthenticatedPreferBearer, async (req, res) => {
+    try {
+        const authUser = req.authUser || req.user;
+        const accessProfile = await resolveAccessProfile(authUser);
+        return res.json({ hasAccess: !!accessProfile.projectDocumentAccess });
+    } catch (error) {
+        console.error('ERROR: Error checking project document access:', error);
+        res.status(500).json({
+            hasAccess: false,
+            error: 'Failed to check project document access'
+        });
+    }
+});
+
 router.get('/me/access', requireAuthenticatedPreferBearer, async (req, res) => {
     try {
         const authUser = req.authUser || req.user;
@@ -159,7 +173,7 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 SELECT id, username, email, bim_level, job_role, position_label,
                        position_verification_status, competency_status, target_bim_level, system_role, organization,
                        registration_date, last_login, login_count, is_active,
-                       mapping_kompetensi_access, dokumen_access, audit_2026_access,
+                       mapping_kompetensi_access, dokumen_access, audit_2026_access, project_document_access,
                        library_download_access,
                        watermark_free_download_access,
                        bim_workspace_access, bim_workspace_role, bim_workspace_staff_role
@@ -191,6 +205,7 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 mappingKompetensiAccess: user.mapping_kompetensi_access || false,
                 dokumenAccess: user.dokumen_access || false,
                 audit2026Access: user.audit_2026_access || false,
+                projectDocumentAccess: user.project_document_access || false,
                 libraryDownloadAccess: user.library_download_access || false,
                 watermarkFreeDownloadAccess: user.watermark_free_download_access || false,
                 bimWorkspaceAccess: user.bim_workspace_access || false,
@@ -227,6 +242,7 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 mappingKompetensiAccess: user.mappingKompetensiAccess || false,
                 dokumenAccess: user.dokumenAccess || user.dokumen_access || false,
                 audit2026Access: user.audit2026Access || user.audit_2026_access || false,
+                projectDocumentAccess: user.projectDocumentAccess || user.project_document_access || false,
                 libraryDownloadAccess: user.libraryDownloadAccess || user.library_download_access || false,
                 watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false,
                 bimWorkspaceAccess: user.bimWorkspaceAccess || user.bim_workspace_access || false,
@@ -467,6 +483,7 @@ router.post('/create', requireAdmin, async (req, res) => {
                 mappingKompetensiAccess: false,
                 dokumenAccess: false,
                 audit2026Access: false,
+                projectDocumentAccess: false,
                 libraryDownloadAccess: false,
                 watermarkFreeDownloadAccess: false,
                 bimWorkspaceAccess: false,
@@ -520,6 +537,8 @@ router.post('/create', requireAdmin, async (req, res) => {
                 dokumen_access: false,
                 audit2026Access: false,
                 audit_2026_access: false,
+                projectDocumentAccess: false,
+                project_document_access: false,
                 libraryDownloadAccess: false,
                 library_download_access: false,
                 watermarkFreeDownloadAccess: false,
@@ -593,6 +612,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 dokumen_access: 'dokumen_access',
                 audit2026Access: 'audit_2026_access',
                 audit_2026_access: 'audit_2026_access',
+                projectDocumentAccess: 'project_document_access',
+                project_document_access: 'project_document_access',
                 libraryDownloadAccess: 'library_download_access',
                 library_download_access: 'library_download_access',
                 watermarkFreeDownloadAccess: 'watermark_free_download_access',
@@ -688,7 +709,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 RETURNING id, username, email, bim_level, job_role, position_label,
                          position_verification_status, competency_status, target_bim_level, system_role, organization,
                          registration_date, last_login, login_count, is_active,
-                         mapping_kompetensi_access, dokumen_access, audit_2026_access,
+                         mapping_kompetensi_access, dokumen_access, audit_2026_access, project_document_access,
                          library_download_access,
                          watermark_free_download_access,
                          bim_workspace_access, bim_workspace_role, bim_workspace_staff_role
@@ -723,6 +744,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
                 mappingKompetensiAccess: updatedUser.mapping_kompetensi_access || false,
                 dokumenAccess: updatedUser.dokumen_access || false,
                 audit2026Access: updatedUser.audit_2026_access || false,
+                projectDocumentAccess: updatedUser.project_document_access || false,
                 libraryDownloadAccess: updatedUser.library_download_access || false,
                 watermarkFreeDownloadAccess: updatedUser.watermark_free_download_access || false,
                 bimWorkspaceAccess: updatedUser.bim_workspace_access || false,
@@ -770,6 +792,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
             const hasAudit2026Update =
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'audit2026Access') ||
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'audit_2026_access');
+            const hasProjectDocumentUpdate =
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'projectDocumentAccess') ||
+                Object.prototype.hasOwnProperty.call(safeUpdates, 'project_document_access');
             const hasLibraryUpdate =
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'libraryDownloadAccess') ||
                 Object.prototype.hasOwnProperty.call(safeUpdates, 'library_download_access');
@@ -847,6 +872,11 @@ router.put('/:id', requireAdmin, async (req, res) => {
             if (hasAudit2026Update) {
                 users[userIndex].audit2026Access = accessUpdates.audit2026Access;
                 users[userIndex].audit_2026_access = accessUpdates.audit2026Access;
+            }
+
+            if (hasProjectDocumentUpdate) {
+                users[userIndex].projectDocumentAccess = accessUpdates.projectDocumentAccess;
+                users[userIndex].project_document_access = accessUpdates.projectDocumentAccess;
             }
 
             if (hasLibraryUpdate) {

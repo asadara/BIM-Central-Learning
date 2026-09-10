@@ -215,6 +215,7 @@ class UsersModule {
             const mappingAccess = !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
             const dokumenAccess = !!(user.dokumenAccess || user.dokumen_access);
             const audit2026Access = !!(user.audit2026Access || user.audit_2026_access);
+            const projectDocumentAccess = !!(user.projectDocumentAccess || user.project_document_access);
             const bimWorkspaceAccess = !!(user.bimWorkspaceAccess || user.bim_workspace_access);
             const bimWorkspaceRole = user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim';
             const verifiedIcon = (status, label) => status === 'verified'
@@ -297,6 +298,15 @@ class UsersModule {
                                    ${audit2026Access ? 'checked' : ''}
                                    onchange="window.adminPanel.modules.get('users').instance.toggleAudit2026Access('${userId}', this.checked, this)">
                             <label class="form-check-label" for="audit2026Access_${userId}"></label>
+                        </div>
+                    </td>
+                    <td class="text-center access-check-cell" title="Dokumen Proyek">
+                        <div class="form-check access-checkbox-wrap">
+                            <input class="form-check-input mapping-access-checkbox" type="checkbox"
+                                   id="projectDocumentAccess_${userId}"
+                                   ${projectDocumentAccess ? 'checked' : ''}
+                                   onchange="window.adminPanel.modules.get('users').instance.toggleProjectDocumentAccess('${userId}', this.checked, this)">
+                            <label class="form-check-label" for="projectDocumentAccess_${userId}"></label>
                         </div>
                     </td>
                     <td class="text-center access-check-cell" title="Divisi BIM Workspace">
@@ -1089,6 +1099,10 @@ class UsersModule {
         return this.updateBooleanAccess(userId, 'audit2026Access', isChecked, checkboxElement, 'Audit 2026 access', 'audit_2026_access');
     }
 
+    async toggleProjectDocumentAccess(userId, isChecked, checkboxElement) {
+        return this.updateBooleanAccess(userId, 'projectDocumentAccess', isChecked, checkboxElement, 'Project document access', 'project_document_access');
+    }
+
     async toggleBimWorkspaceAccess(userId, isChecked, checkboxElement) {
         return this.updateBooleanAccess(userId, 'bimWorkspaceAccess', isChecked, checkboxElement, 'Divisi BIM Workspace access', 'bim_workspace_access');
     }
@@ -1200,7 +1214,7 @@ class UsersModule {
         }
 
         // Create CSV content
-        const headers = ['ID', 'Username', 'Email', 'Kompetensi BIM', 'Status Kompetensi', 'Target Kompetensi', 'Label Jabatan', 'Status Jabatan', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Divisi BIM Workspace Access', 'Kewenangan Workspace', 'Library Download Access', 'Watermark-Free Download Access'];
+        const headers = ['ID', 'Username', 'Email', 'Kompetensi BIM', 'Status Kompetensi', 'Target Kompetensi', 'Label Jabatan', 'Status Jabatan', 'Organization', 'Status', 'Registration Date', 'Mapping Kompetensi Access', 'Dokumen Access', 'Audit 2026 Access', 'Dokumen Proyek Access', 'Divisi BIM Workspace Access', 'Kewenangan Workspace', 'Library Download Access', 'Watermark-Free Download Access'];
         const csvContent = [
             headers.join(','),
             ...this.allUsers.map(user => [
@@ -1218,6 +1232,7 @@ class UsersModule {
                 (user.mappingKompetensiAccess || user.mapping_kompetensi_access) ? 'Yes' : 'No',
                 (user.dokumenAccess || user.dokumen_access) ? 'Yes' : 'No',
                 (user.audit2026Access || user.audit_2026_access) ? 'Yes' : 'No',
+                (user.projectDocumentAccess || user.project_document_access) ? 'Yes' : 'No',
                 (user.bimWorkspaceAccess || user.bim_workspace_access) ? 'Yes' : 'No',
                 user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim',
                 (user.libraryDownloadAccess || user.library_download_access) ? 'Yes' : 'No',

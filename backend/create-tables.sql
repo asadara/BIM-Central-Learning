@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS users (
     mapping_kompetensi_access BOOLEAN DEFAULT false,
     dokumen_access BOOLEAN DEFAULT false,
     audit_2026_access BOOLEAN DEFAULT false,
+    project_document_access BOOLEAN DEFAULT false,
     library_download_access BOOLEAN DEFAULT false,
     watermark_free_download_access BOOLEAN DEFAULT false,
     bim_workspace_access BOOLEAN DEFAULT false,
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS mapping_kompetensi_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS dokumen_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS audit_2026_access BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_document_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS library_download_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS watermark_free_download_access BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS bim_workspace_access BOOLEAN DEFAULT false;
@@ -69,6 +71,22 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS position_verified_by TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS competency_status TEXT DEFAULT 'not_assessed';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS competency_verified_at TIMESTAMPTZ;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS competency_verified_by TEXT;
+
+CREATE TABLE IF NOT EXISTS search_file_access_events (
+    id BIGSERIAL PRIMARY KEY,
+    user_id TEXT,
+    relative_path TEXT NOT NULL,
+    access_rule TEXT NOT NULL,
+    request_route TEXT,
+    client_ip TEXT,
+    user_agent TEXT,
+    http_status INTEGER,
+    accessed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_search_file_access_events_accessed_at
+    ON search_file_access_events(accessed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_search_file_access_events_user_id
+    ON search_file_access_events(user_id);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS target_bim_level VARCHAR(50);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS system_role TEXT DEFAULT 'employee';
 ALTER TABLE users ALTER COLUMN bim_level DROP DEFAULT;

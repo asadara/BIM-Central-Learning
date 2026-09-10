@@ -5,6 +5,12 @@ const { Pool } = require('pg');
 const { createPgConfig } = require('../config/runtimeConfig');
 const { getRequestUser } = require('../utils/auth');
 const { resolveAccessProfile } = require('../utils/userAccess');
+const {
+    SEARCHABLE_FILE_EXTENSIONS,
+    buildSearchFileUrl,
+    canAccessSearchContent,
+    classifySearchContentPath
+} = require('../utils/searchContentPolicy');
 
 const router = express.Router();
 const CONTENT_ROOT = path.join(__dirname, '..', '..', 'BC-Learning-Main');
@@ -25,13 +31,6 @@ pool.on('error', (error) => {
     console.warn('WARN: Search news pool error:', error.message);
 });
 
-const VALID_EXTENSIONS = new Set([
-    '.pdf', '.doc', '.docx', '.txt', '.rtf', '.rvt', '.rfa', '.dwg', '.dxf',
-    '.ifc', '.skp', '.pln', '.tm', '.mp4', '.mov', '.avi', '.webm', '.mkv',
-    '.wmv', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.xls', '.xlsx',
-    '.ppt', '.pptx', '.zip'
-]);
-
 const FILTER_MAP = {
     all: null,
     pdf: new Set(['.pdf']),
@@ -44,12 +43,6 @@ const FILTER_MAP = {
     skp: new Set(['.skp']),
     tm: new Set(['.tm'])
 };
-
-const EXCLUDED_FOLDERS = new Set([
-    'node_modules', '.git', '__pycache__', 'temp', 'tmp', 'incoming data',
-    'incoming', 'data', 'tender', 'clash', 'clash detection',
-    'texture image marbel'
-]);
 
 const EXCLUDED_PAGE_PARTS = [
     '/components/', '/pages/login.html', '/pages/signup.html',
@@ -250,19 +243,6 @@ async function searchLocalNews(rawQuery) {
     }
 }
 
-function isExcludedDirectory(name) {
-    return EXCLUDED_FOLDERS.has(String(name || '').toLowerCase());
-}
-
-function fileAccessRule(relativePath) {
-    const normalized = String(relativePath || '').replace(/\\/g, '/').toLowerCase();
-    if (normalized.includes('manual book')) return 'dokumenAccess';
-    if (normalized.includes('audit 2026') || normalized.includes('audit-2026')) return 'audit2026Access';
-    if (normalized.includes('mapping kompetensi')) return 'mappingKompetensiAccess';
-    if (normalized.includes('divisi bim workspace')) return 'bimWorkspaceAccess';
-    return 'public';
-}
-
 function searchFiles(directory, rawQuery, extensions, authUser, profile, currentDepth = 0, results = []) {
     if (currentDepth >= MAX_DEPTH || results.length >= MAX_FILE_RESULTS || !fs.existsSync(directory)) return results;
     let items;
@@ -277,16 +257,19 @@ function searchFiles(directory, rawQuery, extensions, authUser, profile, current
         if (results.length >= MAX_FILE_RESULTS) break;
         const fullPath = path.join(directory, item.name);
         if (item.isDirectory()) {
-            if (!isExcludedDirectory(item.name)) {
+            const relativeDirectory = path.relative(BASE_DIR, fullPath).replace(/\\/g, '/');
+            const directoryPolicy = classifySearchContentPath(relativeDirectory, { isDirectory: true });
+            if (directoryPolicy.searchable) {
                 searchFiles(fullPath, rawQuery, extensions, authUser, profile, currentDepth + 1, results);
             }
             continue;
         }
         const extension = path.extname(item.name).toLowerCase();
-        if (!VALID_EXTENSIONS.has(extension) || (extensions && !extensions.has(extension))) continue;
+        if (!SEARCHABLE_FILE_EXTENSIONS.has(extension) || (extensions && !extensions.has(extension))) continue;
         if (!normalizeText(item.name).includes(query)) continue;
         const relativePath = path.relative(BASE_DIR, fullPath).replace(/\\/g, '/');
-        if (!canAccess(fileAccessRule(relativePath), authUser, profile)) continue;
+        const contentPolicy = classifySearchContentPath(relativePath);
+        if (!contentPolicy.searchable || !canAccessSearchContent(contentPolicy.accessRule, authUser, profile)) continue;
         try {
             const stats = fs.statSync(fullPath);
             results.push({
@@ -297,13 +280,13 @@ function searchFiles(directory, rawQuery, extensions, authUser, profile, current
                 name: item.name,
                 description: `File ${extension.slice(1).toUpperCase()} · ${path.basename(path.dirname(fullPath))}`,
                 content: relativePath,
-                path: `/files/${relativePath.split('/').map(encodeURIComponent).join('/')}`,
+                path: buildSearchFileUrl(relativePath, authUser),
                 location: path.basename(path.dirname(fullPath)) || 'BCL',
                 extension: extension.slice(1),
                 size: stats.size,
                 sizeFormatted: formatFileSize(stats.size),
                 modified: stats.mtime.toISOString(),
-                accessRule: fileAccessRule(relativePath)
+                accessRule: contentPolicy.accessRule
             });
         } catch (error) {
             continue;

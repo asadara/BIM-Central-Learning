@@ -13,8 +13,17 @@ function startSearch() {
     document.getElementById("searchResults").innerHTML = ""; // Kosongkan tabel
     document.getElementById("fileCount").innerText = ""; // Kosongkan jumlah file
 
-    fetch(`${baseURL}/api/search?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
+    fetch(`${baseURL}/api/search?q=${encodeURIComponent(query)}&scope=files&filter=${encodeURIComponent(filter)}`, {
+        headers: getSearchAuthorizationHeaders()
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.status === 401
+                    ? 'Silakan masuk terlebih dahulu untuk mencari file internal.'
+                    : `Pencarian gagal (${response.status})`);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Search API Response:', data); // Debug log
             displaySearchResults(data.files || [], filter);
@@ -64,16 +73,12 @@ function displaySearchResults(files, filter) {
     }
 
     filteredFiles.forEach((file, index) => {
-        let isRevitFile = file.name.endsWith(".rvt");
-        let fileUrl = `${baseURL}${file.path}`;
+        let isRevitFile = file.name.toLowerCase().endsWith(".rvt");
+        let fileUrl = new URL(file.path, baseURL).href;
         let fileSize = file.size ? (file.size / (1024 * 1024)).toFixed(2) + " MB" : "-"; // Konversi ke MB
         let fileUpdated = file.modified ? new Date(file.modified).toLocaleString("id-ID") : "-"; // Format tanggal
 
         let row = document.createElement("tr");
-
-        // Ubah path agar sesuai dengan struktur lokal di G:/BIM CENTRAL LEARNING/
-        let localFilePath = file.path.replace("/files/", ""); // Menghapus /files/ agar path sesuai
-        let localPath = `file:///G:/BIM%20CENTRAL%20LEARNING/${encodeURIComponent(localFilePath)}`;
 
         let openLink = isRevitFile
             ? `<button class="btn btn-warning open-revit" data-path="${file.path}">Buka di Revit</button>`
@@ -84,8 +89,8 @@ function displaySearchResults(files, filter) {
         row.innerHTML = `
         <td>${index + 1}</td> <!-- No -->
         <td style="text-align: left;">${file.name}</td> <!-- Nama File -->
-        <td>${file.type ? file.type.toUpperCase() : "-"}</td> <!-- Jenis -->
-        <td style="text-align: left">${file.path ? file.path.split('/').slice(-2, -1)[0] : '-'}</td> <!-- Lokasi -->
+        <td>${file.extension ? file.extension.toUpperCase() : (file.type ? file.type.toUpperCase() : "-")}</td> <!-- Jenis -->
+        <td style="text-align: left">${file.location || '-'}</td> <!-- Lokasi -->
         <td style="text-align: right">${fileSize}</td> <!-- Ukuran -->
         <td>${fileUpdated}</td> <!-- Updated -->
         <td>${openLink}</td> <!-- Tombol Buka -->
@@ -106,4 +111,15 @@ function showErrorMessage(message) {
     if (searchResults) {
         searchResults.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${message}</td></tr>`;
     }
+}
+
+function getSearchAuthorizationHeaders() {
+    let storedUserToken = '';
+    try {
+        storedUserToken = JSON.parse(localStorage.getItem('user') || '{}').token || '';
+    } catch (error) {
+        storedUserToken = '';
+    }
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || storedUserToken;
+    return token ? { Authorization: `Bearer ${token}` } : {};
 }

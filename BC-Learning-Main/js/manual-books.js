@@ -669,6 +669,10 @@
     }
 
     function buildManualBookFileUrl(file) {
+        if (file && typeof file.accessUrl === 'string' && file.accessUrl.startsWith('/api/file?')) {
+            return `${window.location.origin}${file.accessUrl}`;
+        }
+
         const relativePath = safeDecodePath(String(file && file.relativePath ? file.relativePath : ''))
             .replace(/\\/g, '/')
             .replace(/^\/+/, '');

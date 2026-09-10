@@ -9,14 +9,28 @@
     const loading = document.getElementById('search-loading');
     const empty = document.getElementById('search-empty');
     const filters = document.getElementById('search-filters');
+    const documentFilter = document.getElementById('search-document-filter');
+    const documentFilters = document.getElementById('search-document-filters');
     const summary = document.getElementById('search-summary');
     const title = document.getElementById('results-title');
 
-    if (!form || !input || !list) return;
+    if (!form || !input || !list || !documentFilter || !documentFilters) return;
 
     let requestController = null;
     let allResults = [];
     let activeCategory = 'Semua';
+    let activeDocumentType = 'Semua dokumen';
+
+    const DOCUMENT_TYPE_GROUPS = [
+        { label: 'PDF', extensions: ['pdf'] },
+        { label: 'Word', extensions: ['doc', 'docx', 'rtf', 'txt'] },
+        { label: 'Excel', extensions: ['xls', 'xlsx'] },
+        { label: 'PowerPoint', extensions: ['ppt', 'pptx'] },
+        { label: 'Video', extensions: ['mp4', 'mov', 'avi', 'webm', 'mkv', 'wmv'] },
+        { label: 'Gambar', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] },
+        { label: 'Model BIM', extensions: ['rvt', 'rfa', 'dwg', 'dxf', 'ifc', 'skp', 'pln', 'tm'] },
+        { label: 'Arsip', extensions: ['zip'] }
+    ];
 
     function readToken() {
         try {
@@ -34,6 +48,7 @@
             list.hidden = true;
             empty.hidden = true;
             filters.hidden = true;
+            documentFilter.hidden = true;
         }
     }
 
@@ -62,10 +77,34 @@
         return parts.join(' · ');
     }
 
+    function resolveResultHref(result) {
+        const rawPath = String((result && result.path) || '').trim();
+        if (!rawPath) return '#';
+
+        const isFileResult = result.type === 'file' || result.category === 'File';
+        if (!isFileResult || !/^\/?files\//i.test(rawPath)) return rawPath;
+
+        const encodedFilePath = rawPath.replace(/^\/?files\//i, '');
+        let filePath = encodedFilePath;
+        try {
+            filePath = decodeURIComponent(encodedFilePath);
+        } catch (error) {
+            // Keep the original value when a legacy result has malformed encoding.
+        }
+        return `/api/file?path=${encodeURIComponent(filePath)}`;
+    }
+
+    function getDocumentType(result) {
+        if (!result || (result.type !== 'file' && result.category !== 'File')) return '';
+        const extension = String(result.extension || '').trim().toLowerCase().replace(/^\./, '');
+        const group = DOCUMENT_TYPE_GROUPS.find((entry) => entry.extensions.includes(extension));
+        return group ? group.label : (extension ? extension.toUpperCase() : 'Lainnya');
+    }
+
     function createResult(result) {
         const link = document.createElement('a');
         link.className = 'global-search-result';
-        link.href = result.path || '#';
+        link.href = resolveResultHref(result);
 
         try {
             const target = new URL(link.href, window.location.origin);
@@ -104,14 +143,51 @@
     }
 
     function renderResults() {
-        const visible = activeCategory === 'Semua'
-            ? allResults
-            : allResults.filter((result) => result.category === activeCategory);
+        const visible = allResults.filter((result) => {
+            const categoryMatches = activeCategory === 'Semua' || result.category === activeCategory;
+            const documentMatches = activeDocumentType === 'Semua dokumen' ||
+                getDocumentType(result) === activeDocumentType;
+            return categoryMatches && documentMatches;
+        });
 
         list.replaceChildren(...visible.map(createResult));
         list.hidden = visible.length === 0;
         empty.hidden = visible.length !== 0;
-        summary.textContent = `${visible.length} hasil${activeCategory === 'Semua' ? '' : ` · ${activeCategory}`}`;
+        const summaryParts = [activeCategory, activeDocumentType]
+            .filter((value) => value !== 'Semua' && value !== 'Semua dokumen');
+        summary.textContent = `${visible.length} hasil${summaryParts.length ? ` · ${summaryParts.join(' · ')}` : ''}`;
+    }
+
+    function renderDocumentFilters() {
+        const counts = allResults.reduce((resultCounts, result) => {
+            const type = getDocumentType(result);
+            if (type) resultCounts[type] = (resultCounts[type] || 0) + 1;
+            return resultCounts;
+        }, {});
+        const entries = Object.entries(counts);
+        const categoryAllowsDocuments = activeCategory === 'Semua' || activeCategory === 'File';
+
+        documentFilters.replaceChildren();
+        if (!entries.length || !categoryAllowsDocuments) {
+            documentFilter.hidden = true;
+            return;
+        }
+
+        const total = entries.reduce((count, [, amount]) => count + amount, 0);
+        [['Semua dokumen', total], ...entries].forEach(([type, count]) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `global-search-filter${type === activeDocumentType ? ' is-active' : ''}`;
+            button.textContent = `${type} ${count}`;
+            button.setAttribute('aria-pressed', type === activeDocumentType ? 'true' : 'false');
+            button.addEventListener('click', () => {
+                activeDocumentType = type;
+                renderDocumentFilters();
+                renderResults();
+            });
+            documentFilters.append(button);
+        });
+        documentFilter.hidden = false;
     }
 
     function renderFilters(categories) {
@@ -131,11 +207,15 @@
             button.setAttribute('aria-pressed', category === activeCategory ? 'true' : 'false');
             button.addEventListener('click', () => {
                 activeCategory = category;
+                if (category !== 'Semua' && category !== 'File') {
+                    activeDocumentType = 'Semua dokumen';
+                }
                 filters.querySelectorAll('button').forEach((item) => {
                     const selected = item === button;
                     item.classList.toggle('is-active', selected);
                     item.setAttribute('aria-pressed', selected ? 'true' : 'false');
                 });
+                renderDocumentFilters();
                 renderResults();
             });
             filters.append(button);
@@ -148,6 +228,7 @@
         list.replaceChildren();
         list.hidden = true;
         filters.hidden = true;
+        documentFilter.hidden = true;
         empty.hidden = false;
         const emptyTitle = empty.querySelector('h3');
         const emptyCopy = empty.querySelector('p');
@@ -169,6 +250,7 @@
         if (requestController) requestController.abort();
         requestController = new AbortController();
         activeCategory = 'Semua';
+        activeDocumentType = 'Semua dokumen';
         setLoading(true);
         title.textContent = `Hasil untuk “${query}”`;
         summary.textContent = 'Mencari…';
@@ -188,6 +270,7 @@
 
             allResults = Array.isArray(payload.results) ? payload.results : [];
             renderFilters(payload.categories);
+            renderDocumentFilters();
             renderResults();
         } catch (error) {
             if (error.name !== 'AbortError') {

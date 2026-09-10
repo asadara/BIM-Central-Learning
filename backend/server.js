@@ -19,6 +19,12 @@ const { getRequestUser, getRequestUserPreferBearer } = require("./utils/auth");
 const { resolveAccessProfile } = require("./utils/userAccess");
 const { ensureUserProfileColumns } = require("./utils/userProfileSchema");
 const {
+    canAccessSearchContent,
+    classifySearchContentPath,
+    normalizeSearchRelativePath,
+    verifySearchFileTicket
+} = require("./utils/searchContentPolicy");
+const {
     createPgConfig,
     getBooleanEnv,
     getDefaultAdminPassword,
@@ -255,33 +261,139 @@ app.get(
     (req, res) => res.sendFile(path.join(LEARNING_ROOT_DIR, 'elearning-assets', 'phase4-dashboard.html'))
 );
 
-function normalizeAccessPath(value) {
+let searchFileAuditSchemaPromise = null;
+
+async function ensureSearchFileAuditSchema() {
+    if (!searchFileAuditSchemaPromise) {
+        searchFileAuditSchemaPromise = pgPool.query(`
+            CREATE TABLE IF NOT EXISTS search_file_access_events (
+                id BIGSERIAL PRIMARY KEY,
+                user_id TEXT,
+                relative_path TEXT NOT NULL,
+                access_rule TEXT NOT NULL,
+                request_route TEXT,
+                client_ip TEXT,
+                user_agent TEXT,
+                http_status INTEGER,
+                accessed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_search_file_access_events_accessed_at
+                ON search_file_access_events(accessed_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_search_file_access_events_user_id
+                ON search_file_access_events(user_id)
+        `).catch((error) => {
+            searchFileAuditSchemaPromise = null;
+            throw error;
+        });
+    }
+    return searchFileAuditSchemaPromise;
+}
+
+function recordSearchFileAccess(req, policy, userId, statusCode) {
+    ensureSearchFileAuditSchema()
+        .then(() => pgPool.query(
+            `INSERT INTO search_file_access_events
+                (user_id, relative_path, access_rule, request_route, client_ip, user_agent, http_status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+                userId || null,
+                policy.relativePath,
+                policy.accessRule,
+                String(req.originalUrl || req.path || '').split('?')[0].slice(0, 500),
+                String(req.ip || req.socket?.remoteAddress || '').slice(0, 100),
+                String(req.headers['user-agent'] || '').slice(0, 500),
+                Number(statusCode || 0)
+            ]
+        ))
+        .catch((error) => console.warn('WARN: Failed to record search file access:', error.message));
+}
+
+async function requireSearchFileAccess(req, res, next) {
     try {
-        return decodeURIComponent(String(value || ''))
-            .replace(/\\/g, '/')
-            .replace(/^\/+/, '')
-            .toLowerCase();
+        const requestedPath = req.searchFileRequestedPath || req.query.path || req.query.file || req.path;
+        const relativePath = normalizeSearchRelativePath(requestedPath, BASE_DIR);
+        const policy = classifySearchContentPath(relativePath);
+        const ticket = verifySearchFileTicket(req.query.ticket, policy.relativePath);
+        const authUser = ticket
+            ? { id: ticket.sub, username: ticket.sub, isAdmin: false }
+            : getRequestUserPreferBearer(req);
+
+        if (policy.relativePath) {
+            res.once('finish', () => {
+                recordSearchFileAccess(req, policy, authUser?.id, res.statusCode);
+            });
+        }
+
+        if (!policy.openable) {
+            return res.status(404).json({ error: 'File is outside the approved BCL content perimeter' });
+        }
+
+        const accessProfile = ticket ? {} : await resolveAccessProfile(authUser);
+        const hasAccess = Boolean(ticket) || canAccessSearchContent(policy.accessRule, authUser, accessProfile);
+
+        if (!hasAccess) {
+            const isApiRequest = String(req.originalUrl || req.path || '').startsWith('/api/');
+            if (!authUser) {
+                if (req.accepts('html') && !isApiRequest) {
+                    return res.redirect(`/pages/login.html?redirect=${encodeURIComponent(req.originalUrl)}`);
+                }
+                return res.status(401).json({ error: 'Authentication required' });
+            }
+            return res.status(403).json({ error: 'Access denied for this BCL content area' });
+        }
+
+        req.authUser = authUser;
+        req.user = authUser;
+        req.searchFilePolicy = policy;
+        req.searchFileRequestedPath = policy.relativePath;
+        return next();
     } catch (error) {
-        return String(value || '').replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+        console.error('ERROR: Failed to enforce search file perimeter:', error);
+        return res.status(500).json({ error: 'Failed to verify file access' });
     }
 }
 
-function isManualBookPath(value) {
-    const normalized = normalizeAccessPath(value).replace(/^files\//, '');
-    return normalized.startsWith('6. manual books/') ||
-        normalized.startsWith('bahan pembelajaran/manual book/') ||
-        normalized.startsWith('bim guidance & manual books/') ||
-        normalized.includes('/6. manual books/') ||
-        normalized.includes('/bahan pembelajaran/manual book/') ||
-        normalized.includes('/bim guidance & manual books/');
-}
-
-function requireDokumenForManualFile(req, res, next) {
-    const requestedPath = req.query.path || req.query.file || req.path;
-    if (!isManualBookPath(requestedPath)) {
+function protectDirectBaseFile(req, res, next) {
+    if (!['GET', 'HEAD'].includes(req.method)) return next();
+    const relativePath = normalizeSearchRelativePath(req.path, BASE_DIR);
+    if (!relativePath) return next();
+    const resolvedPath = path.resolve(BASE_DIR, relativePath);
+    try {
+        if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) return next();
+    } catch (error) {
         return next();
     }
-    return requireUserFeatureAccess(req, res, next, 'dokumenAccess');
+    req.searchFileRequestedPath = relativePath;
+    return requireSearchFileAccess(req, res, next);
+}
+
+function extractLegacyBaseMediaRelativePath(value) {
+    if (!value) return null;
+    let pathname = String(value).trim();
+    try {
+        pathname = new URL(pathname, 'http://bcl.local').pathname;
+    } catch (error) {
+        return null;
+    }
+    try {
+        pathname = decodeURIComponent(pathname);
+    } catch (error) {
+        return null;
+    }
+
+    const mediaPrefix = `/media/${path.basename(path.resolve(BASE_DIR))}`;
+    if (pathname.toLowerCase() === mediaPrefix.toLowerCase()) return null;
+    if (!pathname.toLowerCase().startsWith(`${mediaPrefix.toLowerCase()}/`)) return null;
+    return pathname.slice(mediaPrefix.length + 1);
+}
+
+function protectLegacyBaseMediaFile(req, res, next) {
+    if (!['GET', 'HEAD'].includes(req.method)) return next();
+    const relativePath = extractLegacyBaseMediaRelativePath(req.path)
+        || extractLegacyBaseMediaRelativePath(req.query.url);
+    if (!relativePath) return next();
+    req.searchFileRequestedPath = relativePath;
+    return requireSearchFileAccess(req, res, next);
 }
 
 app.get(
@@ -295,15 +407,11 @@ app.get(
 );
 
 app.use('/api/manual-books', requireFeatureAccess('dokumenAccess'));
-app.use('/api/file', requireDokumenForManualFile);
-app.use('/preview', requireDokumenForManualFile);
-app.use('/files', requireDokumenForManualFile);
-app.use((req, res, next) => {
-    if (!isManualBookPath(req.path)) {
-        return next();
-    }
-    return requireUserFeatureAccess(req, res, next, 'dokumenAccess');
-});
+app.use('/api/file', requireSearchFileAccess);
+app.use('/preview', requireSearchFileAccess);
+app.use('/files', requireSearchFileAccess);
+app.use('/videos', requireSearchFileAccess);
+app.use(protectLegacyBaseMediaFile);
 
 // âœ… SECURITY: JWT Authentication middleware for API endpoints
 function requireAuth(req, res, next) {
@@ -454,6 +562,7 @@ async function createDefaultAdminUser() {
 }
 
 // Serve project media files
+app.use(protectDirectBaseFile);
 app.use(express.static(BASE_DIR));
 
 // âœ… Fixed: Utility functions moved to top after constants

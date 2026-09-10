@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { buildSearchFileUrl } = require("../utils/searchContentPolicy");
 
 function createLegacyContentRoutes({
     baseDir,
@@ -563,7 +564,16 @@ function createLegacyContentRoutes({
                 });
             }
 
-            return res.json(payload);
+            return res.json({
+                ...payload,
+                groups: payload.groups.map((group) => ({
+                    ...group,
+                    files: group.files.map((file) => ({
+                        ...file,
+                        accessUrl: buildSearchFileUrl(file.relativePath, req.authUser || req.user)
+                    }))
+                }))
+            });
         } catch (error) {
             console.error("❌ Failed to build manual books payload:", error);
             return res.status(500).json({
@@ -652,7 +662,10 @@ function createLegacyContentRoutes({
             return res.status(400).json({ error: "file parameter is required" });
         }
 
-        return res.redirect(`/api/file?path=${encodeURIComponent(String(fileValue))}`);
+        const ticketQuery = req.query.ticket
+            ? `&ticket=${encodeURIComponent(String(req.query.ticket))}`
+            : '';
+        return res.redirect(`/api/file?path=${encodeURIComponent(String(fileValue))}${ticketQuery}`);
     });
 
     router.use("/uploads", express.static(path.join(backendDir, "public", "uploads")));

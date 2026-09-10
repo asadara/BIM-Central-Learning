@@ -10,6 +10,7 @@ const ACCESS_COLUMN_DEFINITIONS = [
     ['mapping_kompetensi_access', 'BOOLEAN DEFAULT false'],
     ['dokumen_access', 'BOOLEAN DEFAULT false'],
     ['audit_2026_access', 'BOOLEAN DEFAULT false'],
+    ['project_document_access', 'BOOLEAN DEFAULT false'],
     ['library_download_access', 'BOOLEAN DEFAULT false'],
     ['watermark_free_download_access', 'BOOLEAN DEFAULT false'],
     ['bim_workspace_access', 'BOOLEAN DEFAULT false'],
@@ -59,6 +60,9 @@ function normalizeAccessProfile(source = {}) {
         ),
         audit2026Access: normalizeBoolean(
             source.audit2026Access ?? source.audit_2026_access
+        ),
+        projectDocumentAccess: normalizeBoolean(
+            source.projectDocumentAccess ?? source.project_document_access
         ),
         libraryDownloadAccess: normalizeBoolean(
             source.libraryDownloadAccess ?? source.library_download_access
@@ -138,6 +142,7 @@ async function fetchAccessProfileFromDb(userId, email) {
 
     const result = await pool.query(
         `SELECT mapping_kompetensi_access, dokumen_access, audit_2026_access,
+                project_document_access,
                 library_download_access, watermark_free_download_access,
                 bim_workspace_access, bim_workspace_role, bim_workspace_staff_role
          FROM users
@@ -178,6 +183,7 @@ async function resolveAccessProfile(authUser) {
             mappingKompetensiAccess: true,
             dokumenAccess: true,
             audit2026Access: true,
+            projectDocumentAccess: true,
             libraryDownloadAccess: true,
             watermarkFreeDownloadAccess: true,
             bimWorkspaceAccess: true,

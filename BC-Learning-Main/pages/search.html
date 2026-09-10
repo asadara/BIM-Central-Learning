@@ -15,7 +15,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
-    <link href="/css/global-search.css?v=20260902a" rel="stylesheet">
+    <link href="/css/global-search.css?v=20260909f" rel="stylesheet">
 </head>
 
 <body class="bcl-global-search-page">
@@ -24,26 +24,30 @@
 
     <main class="global-search-main">
         <header class="global-search-hero">
-            <div class="global-search-shell">
-                <p class="global-search-eyebrow">Pencarian global BCL</p>
-                <h1>Temukan pengetahuan.<br>Cepat dan tepat.</h1>
-                <p class="global-search-intro">Cari halaman, berita, materi, dan file dalam satu tempat. Hasil otomatis disesuaikan dengan hak akses akun Anda.</p>
+            <div class="global-search-shell global-search-hero__layout">
+                <div class="global-search-hero__copy">
+                    <p class="global-search-eyebrow">Pencarian global BCL</p>
+                    <h1>Temukan pengetahuan.<br>Cepat dan tepat.</h1>
+                    <p class="global-search-intro">Cari halaman, berita, materi, dan file dalam satu tempat. Hasil disesuaikan dengan hak akses akun Anda.</p>
+                </div>
 
-                <form class="global-search-form" id="global-search-form" role="search">
-                    <label class="global-search-field" for="searchInput">
-                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                        <span class="visually-hidden">Kata kunci</span>
-                        <input type="search" id="searchInput" name="q" minlength="2" maxlength="120"
-                            placeholder="Contoh: koordinasi, Navisworks, atau standar BIM" autocomplete="off" autofocus>
-                        <button class="global-search-clear" id="search-clear" type="button" aria-label="Hapus kata kunci" hidden>
-                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                <div class="global-search-hero__search">
+                    <form class="global-search-form" id="global-search-form" role="search">
+                        <label class="global-search-field" for="searchInput">
+                            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                            <span class="visually-hidden">Kata kunci</span>
+                            <input type="search" id="searchInput" name="q" minlength="2" maxlength="120"
+                                placeholder="Contoh: koordinasi, Navisworks, atau standar BIM" autocomplete="off" autofocus>
+                            <button class="global-search-clear" id="search-clear" type="button" aria-label="Hapus kata kunci" hidden>
+                                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            </button>
+                        </label>
+                        <button class="global-search-submit" id="searchButton" type="submit">
+                            Cari <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                         </button>
-                    </label>
-                    <button class="global-search-submit" id="searchButton" type="submit">
-                        Cari <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                    </button>
-                </form>
-                <p class="global-search-privacy"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Konten terbatas tidak akan muncul jika akun Anda tidak memiliki akses.</p>
+                    </form>
+                    <p class="global-search-privacy"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>Konten terbatas tidak muncul tanpa hak akses.</p>
+                </div>
             </div>
         </header>
 
@@ -51,13 +55,18 @@
             <div class="global-search-shell">
                 <div class="global-search-results-head">
                     <div>
-                        <p class="global-search-eyebrow">Hasil</p>
                         <h2 id="results-title">Mulai dengan kata kunci</h2>
                     </div>
                     <p id="search-summary" class="global-search-summary" aria-live="polite">Ketik minimal dua karakter.</p>
                 </div>
 
                 <div class="global-search-filters" id="search-filters" role="group" aria-label="Filter jenis hasil" hidden></div>
+
+                <div class="global-search-document-filter" id="search-document-filter" hidden>
+                    <span class="global-search-filter-label">Tipe dokumen</span>
+                    <div class="global-search-filters global-search-filters--document" id="search-document-filters"
+                        role="group" aria-label="Filter tipe dokumen"></div>
+                </div>
 
                 <div class="global-search-state" id="search-loading" role="status" hidden>
                     <span class="global-search-spinner" aria-hidden="true"></span>
@@ -80,7 +89,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/loadComponents.js?v=20260722b"></script>
     <script src="/js/user.js"></script>
-    <script src="/js/advancesearch.js?v=20260902a"></script>
+    <script src="/js/advancesearch.js?v=20260909b"></script>
 </body>
 
 </html>

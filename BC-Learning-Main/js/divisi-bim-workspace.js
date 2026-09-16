@@ -29,6 +29,7 @@
         kpiTab: 'overview',
         kpi: null,
         kpiYear: '',
+        kpiQueue: 'auto',
         report: null,
         updateVersions: {},
         latestVersions: {},
@@ -127,7 +128,7 @@
         kpi: {
             title: 'KPI',
             subtitle: 'Menghubungkan KPI Divisi ke program dan kontribusi individu.',
-            steps: ['Buka Langkah Berikutnya untuk melihat task selesai yang direkomendasikan ke salah satu dari 10 KPI Divisi.', 'Staff dapat mengajukan kontribusi atau claim actual beserta evidence; task yang sama tidak dapat diklaim ganda.', 'Kepala Divisi mereview mapping dan memverifikasi actual. Score individu dan Divisi BIM baru bertambah setelah approval tersebut.'],
+            steps: ['Kepala Divisi membuka Tindak Lanjut: setujui kontribusi dengan memeriksa program, PIC, target, satuan, dan bobot.', 'Staff membuka Langkah Berikutnya untuk mengklaim task selesai, lalu mengajukan realisasi beserta bukti. Jika belum ada pengajuan, Kepala Divisi dapat meninjau task belum diklaim per PIC.', 'Kepala Divisi membuka Periksa & verifikasi: cocokkan realisasi dengan bukti, periksa task pendukung dan perkiraan skor, lalu setujui atau kembalikan dengan catatan revisi. Skor individu dan Divisi dihitung setelah persetujuan realisasi.'],
             note: 'Rekomendasi hanya membantu pengajuan. Nilai actual, evidence, bobot, dan score tetap dikendalikan melalui approval Kepala Divisi.'
         },
         reports: {
@@ -709,6 +710,21 @@
         state.dashboard = dashboard;
         state.tasks = tasks;
         renderDashboard();
+        const notice = document.getElementById('dashboard-kpi-action');
+        if (notice && isDivisionHead()) {
+            notice.hidden = false;
+            notice.innerHTML = '<p>Memuat tindak lanjut KPI...</p>';
+            try {
+                const year = state.period.slice(0,4);
+                const data = await api(`/kpi?year=${year}`);
+                state.kpi = data;
+                state.kpiYear = year;
+                const workflow = data.guidance?.workflow;
+                notice.innerHTML = `<div><strong>Tindak lanjut KPI ${escapeHtml(year)}</strong><p>${workflow ? `${workflow.pendingVerificationCount} realisasi menunggu verifikasi Anda · ${workflow.pendingApprovalCount} usulan kontribusi · ${workflow.unclaimedTaskCount} task selesai belum diklaim` : 'Periksa usulan kontribusi dan realisasi yang menunggu verifikasi.'}</p></div><button type="button" class="bimws-btn bimws-btn-primary" data-action="kpi-open-workflow">Buka tindak lanjut KPI</button>`;
+            } catch (_) {
+                notice.innerHTML = '<p>Tindak lanjut KPI belum termuat.</p><button type="button" class="bimws-btn bimws-btn-secondary" data-action="kpi-open-workflow">Buka KPI dan coba lagi</button>';
+            }
+        }
     }
 
     function taskOverviewCharts(monthlyTasks, activeTasks, indicators) {
@@ -2623,7 +2639,7 @@
 
     async function loadKpi(force=false){
         const year=state.period.slice(0,4);
-        if(force||!state.kpi||state.kpiYear!==year){
+        if(force||isDivisionHead()||!state.kpi||state.kpiYear!==year){
             state.kpi=await api(`/kpi?year=${year}`);
             state.kpiYear=year;
         }
@@ -2665,13 +2681,13 @@
         return `<div class="bimws-kpi-summary bimws-kpi-summary-compact"><div><p>Score Divisi BIM</p><strong>${result.measuredIndicatorCount?kpiPercent(result.score):'-'}</strong><small>Maksimum 120%</small></div><div><p>Indikator Terukur</p><strong>${result.measuredIndicatorCount}/${result.indicatorCount}</strong><small>${result.completenessPercent}% bobot terukur</small></div><div><p>Boundary</p><strong>Divisi</strong><small>Tidak menghitung score Departemen</small></div></div><div class="bimws-table-wrap"><table class="bimws-table"><thead><tr><th>KPI Divisi / Induk Departemen</th><th>Measurement</th><th>Achievement</th><th>Task Factor</th><th>Bobot</th><th>Weighted Score</th></tr></thead><tbody>${rows.map((item)=>`<tr><td><span class="bimws-kpi-code">${escapeHtml(item.indicatorCode)} → ${escapeHtml(item.parentIndicatorCode||'-')}</span><span class="bimws-table-title">${escapeHtml(item.indicatorName)}</span><span class="bimws-table-sub">${escapeHtml(item.relationType)} / ${escapeHtml(item.aggregationMethod)}</span></td><td>${item.result.measurement==null?'-':kpiValue(item.result.measurement,item.targetUnit==='percent'?'ratio':item.targetUnit)}<span class="bimws-table-sub">${item.result.numerator??'-'} / ${item.result.denominator??'-'}</span></td><td>${item.result.adjustedAchievement==null?'-':kpiPercent(item.result.adjustedAchievement)}${item.result.rawAchievement==null?'':`<span class="bimws-table-sub">Raw ${kpiPercent(item.result.rawAchievement)}</span>`}</td><td>${item.result.measured?kpiPercent(item.result.taskPerformanceFactor):'-'}</td><td>${kpiPercent(item.weight)}</td><td><strong>${item.result.weightedScore==null?'-':kpiPercent(item.result.weightedScore)}</strong></td></tr>`).join('')}</tbody></table></div>`;
     }
 
-    function kpiValue(value,unit){return value==null?'-':`${Number(value).toLocaleString('id-ID',{maximumFractionDigits:2})} ${escapeHtml(unit||'')}`;}
+    function kpiValue(value,unit){return value==null?'-':`${Number(value).toLocaleString('id-ID',{maximumFractionDigits:4})} ${escapeHtml(unit||'')}`;}
     function kpiPercent(value){return `${Math.round(Number(value||0)*100)}%`;}
     function kpiMeasurementItems(){return [{value:'quantity',label:'Quantity'},{value:'milestone',label:'Milestone'},{value:'ratio',label:'Ratio'},{value:'quality_acceptance',label:'Quality Acceptance'},{value:'sla',label:'SLA'}];}
     function safeExternalLink(value){try{const url=new URL(value,location.origin);return ['http:','https:'].includes(url.protocol)?url.href:'#';}catch(_){return '#';}}
 
     function openKpiProgramForm(program){
-        showDialog({eyebrow:'KPI Program',title:program.name,body:`<div class="bimws-form-grid">${field('targetValue','Target Operasional',program.targetValue??'',{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',program.targetUnit,{required:true})}${field('availabilityStatus','Staff Claim',program.availabilityStatus,{type:'select',items:[{value:'open',label:'Open'},{value:'closed',label:'Closed'}]})}</div>`,submitLabel:'Simpan Target',onSubmit:async(formData)=>{await api(`/kpi/programs/${program.id}`,{method:'PUT',body:JSON.stringify(formJson(formData))});toast('Konfigurasi program disimpan.');await loadKpi(true);}});
+        showDialog({eyebrow:'KPI Program',title:program.name,body:`<div class="bimws-form-grid">${field('targetValue','Target Operasional',program.targetValue??'',{type:'number',min:0.0001,step:'0.0001',required:true})}${field('targetUnit','Unit',program.targetUnit,{required:true})}${field('availabilityStatus','Staff Claim',program.availabilityStatus,{type:'select',items:[{value:'open',label:'Open'},{value:'closed',label:'Closed'}]})}</div>`,submitLabel:'Simpan Target',onSubmit:async(formData)=>{await api(`/kpi/programs/${program.id}`,{method:'PUT',body:JSON.stringify(formJson(formData))});toast('Konfigurasi program disimpan.');await loadKpi(true);}});
     }
 
     function kpiClaimTaskPreview(recommendation){
@@ -2683,31 +2699,125 @@
     function openKpiAssignmentForm(program,recommendation=null){
         const manager=isKpiManager();
         const staffField=manager?`<div class="bimws-field"><label>Staff BIM</label><select name="staffUserId" required>${staffUserOptions()}</select></div>`:'';
-        const programTargetField=manager?field('programTargetValue','Target Program Divisi',program.targetValue??'',{type:'number',min:0.0001,step:'0.01',required:true}):'';
+        const programTargetField=manager?field('programTargetValue','Target Program Divisi',program.targetValue??'',{type:'number',min:0.0001,step:'0.0001',required:true}):'';
         const suggestedTarget=recommendation?.suggestedActual||'';
         const suggestedTitle=recommendation?`Kontribusi ${program.name}`:'';
-        showDialog({eyebrow:manager?'Delegasi KPI':recommendation?'Rekomendasi KPI':'Take Program',title:program.name,body:`<div class="bimws-form-grid">${staffField}${programTargetField}${field('title','Komitmen / Program Personal',suggestedTitle,{required:true,full:true})}${field('measurementType','Measurement',program.allocationMode==='milestone'?'milestone':'quantity',{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target Kontribusi Staff',suggestedTarget,{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',program.targetUnit,{required:true})}${field('proposedWeight','Bobot (%)',Math.round(program.indicatorWeight*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date','',{type:'date'})}${field('expectedEvidence','Expected Evidence',recommendation?'Lampirkan evidence task dan output yang mendukung klaim.':'',{type:'textarea',full:true})}${kpiClaimTaskPreview(recommendation)}</div>`,submitLabel:manager?'Delegasikan':'Ajukan untuk Approval',onSubmit:async(formData)=>{const payload=formJson(formData);if(manager){await api(`/kpi/programs/${program.id}`,{method:'PUT',body:JSON.stringify({targetValue:payload.programTargetValue,targetUnit:payload.targetUnit,availabilityStatus:program.availabilityStatus})});}delete payload.programTargetValue;payload.programId=program.id;payload.taskIds=recommendation?.taskIds||[];payload.proposedWeight=Number(payload.proposedWeight)/100;await api('/kpi/assignments',{method:'POST',body:JSON.stringify(payload)});toast(manager?'Kontribusi KPI didelegasikan.':'Kontribusi KPI diajukan dan menunggu approval Kepala Divisi.');await loadKpi(true);}});
+        showDialog({eyebrow:manager?'Delegasi KPI':recommendation?'Rekomendasi KPI':'Take Program',title:program.name,body:`<div class="bimws-form-grid">${staffField}${programTargetField}${field('title','Komitmen / Program Personal',suggestedTitle,{required:true,full:true})}${field('measurementType','Measurement',program.allocationMode==='milestone'?'milestone':'quantity',{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target Kontribusi Staff',suggestedTarget,{type:'number',min:0.0001,step:'0.0001',required:true})}${field('targetUnit','Unit',program.targetUnit,{required:true})}${field('proposedWeight','Bobot (%)',Math.round(program.indicatorWeight*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date','',{type:'date'})}${field('expectedEvidence','Expected Evidence',recommendation?'Lampirkan evidence task dan output yang mendukung klaim.':'',{type:'textarea',full:true})}${kpiClaimTaskPreview(recommendation)}</div>`,submitLabel:manager?'Delegasikan':'Ajukan untuk Approval',onSubmit:async(formData)=>{const payload=formJson(formData);if(manager){await api(`/kpi/programs/${program.id}`,{method:'PUT',body:JSON.stringify({targetValue:payload.programTargetValue,targetUnit:payload.targetUnit,availabilityStatus:program.availabilityStatus})});}delete payload.programTargetValue;payload.programId=program.id;payload.taskIds=recommendation?.taskIds||[];payload.proposedWeight=Number(payload.proposedWeight)/100;await api('/kpi/assignments',{method:'POST',body:JSON.stringify(payload)});toast(manager?'Kontribusi KPI didelegasikan.':'Kontribusi KPI diajukan dan menunggu approval Kepala Divisi.');await loadKpi(true);}});
     }
 
-    function openKpiRevisionForm(assignment){showDialog({eyebrow:'Revisi KPI Individu',title:assignment.programName,body:`<div class="bimws-form-grid">${field('title','Komitmen / Program Personal',assignment.title,{required:true,full:true})}${field('measurementType','Measurement',assignment.measurementType,{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target Kontribusi',assignment.targetValue,{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',assignment.targetUnit,{required:true})}${field('proposedWeight','Bobot (%)',Math.round(assignment.proposedWeight*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date',assignment.dueDate?String(assignment.dueDate).slice(0,10):'',{type:'date'})}${field('expectedEvidence','Expected Evidence',assignment.expectedEvidence,{type:'textarea',full:true})}${assignment.reviewNote?`<div class="bimws-field bimws-field-full"><label>Catatan Review</label><p>${escapeHtml(assignment.reviewNote)}</p></div>`:''}</div>`,submitLabel:'Ajukan Ulang',onSubmit:async(formData)=>{const payload=formJson(formData);payload.proposedWeight=Number(payload.proposedWeight)/100;await api(`/kpi/assignments/${assignment.id}`,{method:'PUT',body:JSON.stringify(payload)});toast('Revisi kontribusi diajukan ulang.');await loadKpi(true);}});}
+    function openKpiRevisionForm(assignment){showDialog({eyebrow:'Revisi KPI Individu',title:assignment.programName,body:`<div class="bimws-form-grid">${field('title','Komitmen / Program Personal',assignment.title,{required:true,full:true})}${field('measurementType','Measurement',assignment.measurementType,{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target Kontribusi',assignment.targetValue,{type:'number',min:0.0001,step:'0.0001',required:true})}${field('targetUnit','Unit',assignment.targetUnit,{required:true})}${field('proposedWeight','Bobot (%)',Math.round(assignment.proposedWeight*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date',assignment.dueDate?String(assignment.dueDate).slice(0,10):'',{type:'date'})}${field('expectedEvidence','Expected Evidence',assignment.expectedEvidence,{type:'textarea',full:true})}${assignment.reviewNote?`<div class="bimws-field bimws-field-full"><label>Catatan Review</label><p>${escapeHtml(assignment.reviewNote)}</p></div>`:''}</div>`,submitLabel:'Ajukan Ulang',onSubmit:async(formData)=>{const payload=formJson(formData);payload.proposedWeight=Number(payload.proposedWeight)/100;await api(`/kpi/assignments/${assignment.id}`,{method:'PUT',body:JSON.stringify(payload)});toast('Revisi kontribusi diajukan ulang.');await loadKpi(true);}});}
 
     function kpiReviewPayload(form){const payload=formJson(new FormData(form));payload.approvedWeight=Number(payload.approvedWeight)/100;return payload;}
     function openKpiReviewForm(assignment){
         const program=state.kpi?.programs?.find((item)=>item.id===assignment.programId);
         const programTargetField=program?.targetValue==null
-            ? field('programTargetValue',`Target Program Divisi (${program?.targetUnit||assignment.targetUnit})`,'',{type:'number',min:0.0001,step:'0.01',full:true,help:'Wajib diisi saat kontribusi akan disetujui.'})
+            ? field('programTargetValue',`Target Program Divisi (${program?.targetUnit||assignment.targetUnit})`,'',{type:'number',min:0.0001,step:'0.0001',full:true,help:'Wajib diisi saat kontribusi akan disetujui.'})
             : '';
         const submit=async(action,form)=>{if(!form.reportValidity())return;const payload=kpiReviewPayload(form);payload.action=action;await api(`/kpi/assignments/${assignment.id}/review`,{method:'POST',body:JSON.stringify(payload)});toast('Review kontribusi disimpan.');await loadKpi(true);};
-        showDialog({eyebrow:'Approval KPI Individu',title:assignment.staffName,body:`<div class="bimws-form-grid">${programTargetField}${field('title','Komitmen',assignment.title,{required:true,full:true})}${field('measurementType','Measurement',assignment.measurementType,{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target',assignment.targetValue,{type:'number',min:0.0001,step:'0.01',required:true})}${field('targetUnit','Unit',assignment.targetUnit,{required:true})}${field('approvedWeight','Bobot Approved (%)',Math.round((assignment.approvedWeight??assignment.proposedWeight)*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date',assignment.dueDate?String(assignment.dueDate).slice(0,10):'',{type:'date'})}${field('expectedEvidence','Expected Evidence',assignment.expectedEvidence,{type:'textarea',full:true})}${field('note','Catatan Review','',{type:'textarea',full:true})}</div>`,submitLabel:'Approve',onSubmit:async(data)=>{const payload=formJson(data);payload.approvedWeight=Number(payload.approvedWeight)/100;payload.action='approve';await api(`/kpi/assignments/${assignment.id}/review`,{method:'POST',body:JSON.stringify(payload)});toast('Kontribusi KPI approved.');await loadKpi(true);},secondary:[{action:'revision',label:'Kembalikan Revisi',handler:async(dialog,form)=>{try{await submit('revision',form);dialog.close();}catch(error){toast(error.message,true);} }},{action:'reject',label:'Reject',className:'bimws-btn-danger',handler:async(dialog,form)=>{try{await submit('reject',form);dialog.close();}catch(error){toast(error.message,true);} }}]});
+        showDialog({eyebrow:'Langkah 1 / Persetujuan kontribusi',title:assignment.staffName,body:`<p class="bimws-dialog-note">Anda menetapkan rencana kontribusi ${escapeHtml(assignment.programName)}. Periksa PIC, target, satuan, bobot, dan bukti yang diharapkan. Setelah disetujui, PIC masih perlu mengajukan realisasi sebelum skor dihitung.</p><div class="bimws-form-grid">${programTargetField}${field('title','Komitmen',assignment.title,{required:true,full:true})}${field('measurementType','Measurement',assignment.measurementType,{type:'select',items:kpiMeasurementItems()})}${field('targetValue','Target',assignment.targetValue,{type:'number',min:0.0001,step:'0.0001',required:true})}${field('targetUnit','Unit',assignment.targetUnit,{required:true})}${field('approvedWeight','Bobot Approved (%)',Math.round((assignment.approvedWeight??assignment.proposedWeight)*100),{type:'number',min:0.01,max:100,step:'0.01',required:true})}${field('dueDate','Due Date',assignment.dueDate?String(assignment.dueDate).slice(0,10):'',{type:'date'})}${field('expectedEvidence','Expected Evidence',assignment.expectedEvidence,{type:'textarea',full:true})}${field('note','Catatan Review','',{type:'textarea',full:true})}</div>`,submitLabel:'Setujui kontribusi',onSubmit:async(data)=>{const payload=formJson(data);payload.approvedWeight=Number(payload.approvedWeight)/100;payload.action='approve';await api(`/kpi/assignments/${assignment.id}/review`,{method:'POST',body:JSON.stringify(payload)});toast('Kontribusi KPI approved.');await loadKpi(true);},secondary:[{action:'revision',label:'Kembalikan Revisi',handler:async(dialog,form)=>{try{await submit('revision',form);dialog.close();}catch(error){toast(error.message,true);} }},{action:'reject',label:'Reject',className:'bimws-btn-danger',handler:async(dialog,form)=>{try{await submit('reject',form);dialog.close();}catch(error){toast(error.message,true);} }}]});
     }
 
     function openKpiActualForm(assignment,recommendation=null){showDialog({eyebrow:recommendation?'Claim Score KPI':'Realisasi KPI',title:assignment.title,body:`<div class="bimws-form-grid">${field('actualValue',`Actual (${assignment.targetUnit})`,recommendation?.suggestedActual??assignment.verifiedActual??'',{type:'number',min:0,step:'0.01',required:true,help:recommendation?'Nilai ini adalah rekomendasi awal dari task selesai. Periksa sesuai unit KPI.':''})}${field('evidenceLink','Evidence Link',recommendation?.evidenceLink||assignment.actualEvidenceLink,{type:'url',required:true})}${field('note','Catatan Actual',assignment.actualNote,{type:'textarea',full:true})}${kpiClaimTaskPreview(recommendation)}</div>`,submitLabel:'Ajukan ke Kepala Divisi',onSubmit:async(formData)=>{const payload=formJson(formData);payload.taskIds=recommendation?.taskIds||[];await api(`/kpi/assignments/${assignment.id}/submit-actual`,{method:'POST',body:JSON.stringify(payload)});toast('Claim score diajukan; score belum bertambah sebelum approval Kepala Divisi.');await loadKpi(true);}});}
 
-    function openKpiVerifyForm(assignment){showDialog({eyebrow:'Verifikasi Actual',title:assignment.title,body:`<div class="bimws-form-grid">${field('verifiedActual',`Actual Terverifikasi (${assignment.targetUnit})`,assignment.submittedActual,{type:'number',min:0,step:'0.01',required:true})}${field('note','Catatan Verifikasi','',{type:'textarea',full:true})}<div class="bimws-field bimws-field-full"><label>Evidence</label><a href="${escapeHtml(safeExternalLink(assignment.actualEvidenceLink))}" target="_blank" rel="noopener noreferrer">Buka evidence <i class="fas fa-arrow-up-right-from-square"></i></a></div></div>`,submitLabel:'Approve Actual',onSubmit:async(formData)=>{const payload=formJson(formData);payload.action='approve';await api(`/kpi/assignments/${assignment.id}/verify`,{method:'POST',body:JSON.stringify(payload)});toast('Actual KPI diverifikasi.');await loadKpi(true);},secondary:[{action:'revision',label:'Kembalikan Revisi',handler:async(dialog,form)=>{try{const payload=formJson(new FormData(form));payload.action='revision';await api(`/kpi/assignments/${assignment.id}/verify`,{method:'POST',body:JSON.stringify(payload)});dialog.close();toast('Actual dikembalikan.');await loadKpi(true);}catch(error){toast(error.message,true);}}}]});}
+    async function openKpiVerifyForm(assignment) {
+        if (!assignment) return;
+        const preview = await api(`/kpi/assignments/${encodeURIComponent(assignment.id)}/verification-preview`);
+        const item = { ...assignment, ...preview.assignment, programName: assignment.programName, indicatorCode: assignment.indicatorCode };
+        const performance = preview.performance;
+        const blocked = performance.incompleteTaskCount > 0;
+        const evidence = safeExternalLink(item.actualEvidenceLink);
+        const dialog = showDialog({
+            eyebrow: 'Langkah 3 / Verifikasi realisasi KPI', title: item.title,
+            body: `<section class="bimws-kpi-verification">
+                <dl class="bimws-detail-grid"><div><dt>PIC</dt><dd>${escapeHtml(item.staffName)}</dd></div><div><dt>KPI / Program</dt><dd>${escapeHtml(item.indicatorCode)} / ${escapeHtml(item.programName)}</dd></div><div><dt>Target disetujui</dt><dd>${kpiValue(item.targetValue,item.targetUnit)}</dd></div><div><dt>Realisasi diajukan</dt><dd>${kpiValue(item.submittedActual,item.targetUnit)}</dd></div></dl>
+                <section class="bimws-kpi-evidence"><h3>1. Cocokkan hasil dengan bukti</h3><p>Pastikan hasil sesuai program dan satuan target, serta belum dihitung dalam klaim lain.</p><dl><dt>Bukti yang diharapkan</dt><dd>${escapeHtml(item.expectedEvidence || 'Belum ditentukan pada kontribusi.')}</dd><dt>Catatan PIC</dt><dd>${escapeHtml(item.actualNote || 'Tidak ada catatan pengajuan.')}</dd></dl>${item.actualEvidenceLink && evidence !== '#' ? `<a class="bimws-btn bimws-btn-secondary" href="${escapeHtml(evidence)}" target="_blank" rel="noopener noreferrer">Buka bukti realisasi <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>` : '<p class="bimws-kpi-warning">Bukti realisasi belum tersedia atau tautannya tidak valid. Kembalikan pengajuan agar PIC melengkapinya.</p>'}</section>
+                <section><h3>2. Periksa task pendukung</h3><p>${performance.taskCount ? `${performance.taskCount} task tertaut / ${performance.incompleteTaskCount} belum selesai. Faktor performa ${kpiScoreText(performance.factor)}.` : 'Tidak ada task tertaut. Periksa bukti output secara langsung; faktor performa menggunakan nilai 100%.'}</p>${blocked ? '<p class="bimws-kpi-warning">Persetujuan belum dapat dilakukan. Task tertaut harus selesai disetujui atau dibatalkan terlebih dahulu.</p>' : ''}
+                ${performance.tasks.length ? `<ul class="bimws-kpi-evidence-tasks">${performance.tasks.map(task => `<li><div><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(statusLabels[task.status] || task.status)} / ${task.score == null ? 'Tidak memiliki skor performa' : `Performa ${task.score}/100`} / ${task.lateDays} hari terlambat / ${task.revisionCount} revisi / ${task.confirmedWorklogs} worklog</small></div>${task.evidenceLink && safeExternalLink(task.evidenceLink) !== '#' ? `<a href="${escapeHtml(safeExternalLink(task.evidenceLink))}" target="_blank" rel="noopener noreferrer">Bukti task</a>` : '<span>Bukti task belum diisi</span>'}</li>`).join('')}</ul>` : ''}</section>
+                <section><h3>3. Tentukan nilai yang disetujui</h3><div class="bimws-form-grid">${field('verifiedActual',`Realisasi yang disetujui (${item.targetUnit})`,item.submittedActual,{type:'number',min:0,step:'0.0001',required:true,help:'Isi hasil yang dapat dibuktikan. Nilai ini adalah total realisasi kontribusi, bukan tambahan dari nilai sebelumnya.'})}${field('note','Catatan keputusan','',{type:'textarea',full:true,help:'Jelaskan koreksi nilai atau hal yang perlu diperbaiki PIC.'})}</div><div class="bimws-kpi-score-preview" aria-live="polite"></div><p class="bimws-kpi-muted">Setelah disetujui, skor individu dan Divisi dihitung ulang. Skor Divisi mengikuti target program dan bobot indikator; skor Departemen dihitung di platform eksternal.</p></section>
+                </section>`,
+            submitLabel: 'Setujui realisasi & hitung skor',
+            onSubmit: async (formData) => {
+                if (blocked) throw new Error('Selesaikan task tertaut sebelum menyetujui realisasi.');
+                const payload = formJson(formData);
+                payload.action = 'approve';
+                await api(`/kpi/assignments/${item.id}/verify`,{method:'POST',body:JSON.stringify(payload)});
+                toast('Realisasi disetujui. Skor KPI individu dan Divisi telah dihitung ulang.');
+                await loadKpi(true);
+            },
+            secondary: [{ action:'revision', label:'Kembalikan untuk revisi', handler:async(dialog,form) => {
+                try {
+                    const note = form.elements.note.value.trim();
+                    if (!note) { toast('Isi catatan agar PIC mengetahui apa yang perlu diperbaiki.',true); form.elements.note.focus(); return; }
+                    await api(`/kpi/assignments/${item.id}/verify`,{method:'POST',body:JSON.stringify({action:'revision',note})});
+                    dialog.close();
+                    toast('Realisasi dikembalikan kepada PIC untuk diperbaiki.');
+                    await loadKpi(true);
+                } catch(error) { toast(error.message,true); }
+            }}]
+        });
+        const input = dialog.querySelector('[name="verifiedActual"]');
+        const updatePreview = () => {
+            const actual = Number(input.value);
+            const factor = Math.min(1,Math.max(0,Number(performance.factor)));
+            const raw = Math.min(1.2,Math.max(0,actual / Number(item.targetValue)));
+            const score = Math.min(1.2,raw * factor) * Number(item.approvedWeight || 0);
+            dialog.querySelector('.bimws-kpi-score-preview').innerHTML = input.value !== '' && input.validity.valid
+                ? `<strong>Perkiraan skor kontribusi individu: ${kpiScoreText(item.weightedScore)} → ${kpiScoreText(score)}</strong><span>Capaian ${kpiScoreText(raw)} × faktor task ${kpiScoreText(factor)} × bobot ${kpiScoreText(item.approvedWeight)}. ${blocked ? 'Belum dapat disetujui.' : 'Berlaku setelah Anda menyetujui.'}</span>`
+                : '<span>Isi realisasi yang valid untuk melihat perkiraan skor.</span>';
+        };
+        input.addEventListener('input',updatePreview);
+        dialog.querySelector('[type="submit"]').disabled = blocked;
+        updatePreview();
+    }
 
     function kpiAssignmentActions(item){const actions=[];if(isDivisionHead()&&['pending_approval','revision_required'].includes(item.status))actions.push(actionButton('fa-user-check','Review kontribusi','kpi-review',item.id));if(isOwn(item.staffUserId)&&item.status==='revision_required')actions.push(actionButton('fa-pen','Revisi kontribusi','kpi-revise',item.id));if(isOwn(item.staffUserId)&&['approved','achieved'].includes(item.status))actions.push(actionButton('fa-arrow-up-from-bracket','Ajukan actual','kpi-actual',item.id));if(isDivisionHead()&&item.status==='verification_pending')actions.push(actionButton('fa-clipboard-check','Verifikasi actual','kpi-verify',item.id));return actions.join('')||'-';}
 
+    function kpiScoreText(value) {
+        return `${(Number(value || 0) * 100).toLocaleString('id-ID',{maximumFractionDigits:2})}%`;
+    }
+
+    function renderHeadKpiWorkflow(data) {
+        const workflow = data.guidance?.workflow;
+        if (!workflow) return `<div class="bimws-kpi-gate"><div><strong>Ringkasan alur belum tersedia</strong><span>Muat ulang KPI untuk melihat task yang belum diklaim. Usulan dan realisasi tetap dapat ditinjau pada tab Individu.</span></div></div>`;
+        const assignments = data.individual?.assignments || [];
+        const selected = state.kpiQueue === 'auto'
+            ? workflow.pendingVerificationCount ? 'verification' : workflow.pendingApprovalCount ? 'approval' : 'preparation'
+            : state.kpiQueue;
+        const steps = [
+            ['approval', 'Setujui kontribusi', `${workflow.pendingApprovalCount} usulan`, 'Anda memeriksa KPI, target, PIC, dan bobot.'],
+            ['preparation', 'Staff ajukan realisasi', `${workflow.unclaimedTaskCount} task belum diklaim`, 'Staff mengisi hasil pekerjaan dan bukti.'],
+            ['verification', 'Verifikasi realisasi', `${workflow.pendingVerificationCount} menunggu Anda`, 'Anda memeriksa hasil, bukti, dan task.'],
+            ['verified', 'Skor terhitung', `${workflow.verifiedCount} kontribusi terverifikasi`, 'KPI individu dan Divisi diperbarui.']
+        ];
+        let content;
+        if (selected === 'preparation') {
+            const groups = new Map();
+            for (const task of workflow.unclaimedTasks || []) {
+                const key = task.staffUserId || task.staffName;
+                if (!groups.has(key)) groups.set(key, { staffName: task.staffName, tasks: [] });
+                groups.get(key).tasks.push(task);
+            }
+            content = `<div class="bimws-kpi-queue-intro"><div><h4>Task selesai belum diklaim ke KPI</h4><p>Task di bawah belum masuk pengajuan KPI. Tentukan kontribusinya, lalu minta PIC mengajukan realisasi dan bukti melalui KPI → Langkah Berikutnya. Task operasional dapat tetap non-KPI.</p></div><button type="button" class="bimws-btn bimws-btn-secondary" data-action="kpi-open-programs">Atur target & kontribusi</button></div>
+                ${groups.size ? `<div class="bimws-kpi-preparation">${[...groups.values()].map(group => `<details><summary><span><strong>${escapeHtml(group.staffName)}</strong><small>${group.tasks.filter(task => !task.indicatorCode).length} belum memilih KPI Divisi / ${group.tasks.filter(task => !task.hasEvidence).length} belum ada bukti pada task</small></span><span>${group.tasks.length} task <i class="fas fa-chevron-down" aria-hidden="true"></i></span></summary><ul>${group.tasks.map(task => `<li><div><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(task.period)} / ${task.indicatorCode ? `${escapeHtml(task.indicatorCode)} · ${escapeHtml(task.indicatorName)}` : 'KPI Divisi belum dipilih'}</small></div><span>${task.hasEvidence ? 'Bukti task tersedia' : 'Lengkapi bukti saat pengajuan'}</span></li>`).join('')}</ul></details>`).join('')}</div>` : '<p class="bimws-kpi-empty">Tidak ada task selesai yang belum diklaim pada tahun ini.</p>'}
+                <div class="bimws-kpi-followup"><p><strong>${workflow.awaitingSubmissionCount} kontribusi disetujui belum diajukan realisasinya.</strong> Persetujuan kontribusi menetapkan target; skor baru masuk setelah verifikasi realisasi.</p><button type="button" class="bimws-text-btn" data-action="kpi-open-individual">Lihat kontribusi individu</button></div>`;
+        } else if (selected === 'verified') {
+            content = `<div class="bimws-kpi-queue-intro"><div><h4>${workflow.verifiedCount} kontribusi sudah terverifikasi</h4><p>Lihat rincian hasil pada KPI Individu dan Divisi BIM. Skor Departemen dikonsolidasikan di platform eksternal.</p></div><button type="button" class="bimws-btn bimws-btn-secondary" data-action="kpi-open-individual">Lihat skor individu</button></div>`;
+        } else {
+            const verification = selected === 'verification';
+            const items = assignments.filter(item => item.status === (verification ? 'verification_pending' : 'pending_approval'));
+            content = `<div class="bimws-kpi-queue-intro"><div><h4>${verification ? 'Realisasi menunggu verifikasi Anda' : 'Usulan kontribusi menunggu persetujuan'}</h4><p>${verification ? 'Bandingkan hasil dengan target, buka bukti, lalu setujui nilai yang benar atau kembalikan untuk revisi.' : 'Periksa kesesuaian program, target, satuan, bobot, dan bukti yang diharapkan. Tahap ini belum menambah skor.'}</p></div></div>
+                ${items.length ? `<div class="bimws-kpi-review-list">${items.map(item => `<article><div><span class="bimws-kpi-code">${escapeHtml(item.indicatorCode)} / ${escapeHtml(item.staffName)}</span><strong>${escapeHtml(item.title)}</strong><p>${verification ? `Diajukan ${kpiValue(item.submittedActual,item.targetUnit)} / ` : ''}Target ${kpiValue(item.targetValue,item.targetUnit)} / Bobot ${kpiScoreText(item.approvedWeight ?? item.proposedWeight)}</p>${verification ? `<small>${item.actualEvidenceLink ? 'Bukti realisasi dilampirkan' : 'Bukti realisasi belum tersedia'}</small>` : ''}</div><button type="button" class="bimws-btn bimws-btn-primary" data-action="${verification ? 'kpi-verify' : 'kpi-review'}" data-id="${escapeHtml(item.id)}">${verification ? 'Periksa & verifikasi' : 'Tinjau kontribusi'}</button></article>`).join('')}</div>` : `<div class="bimws-kpi-empty"><strong>${verification ? 'Belum ada realisasi untuk diverifikasi.' : 'Tidak ada usulan kontribusi yang menunggu persetujuan.'}</strong><p>${verification ? 'Realisasi akan muncul setelah PIC mengajukan hasil pekerjaan dan bukti. Persetujuan task selesai belum merupakan pengajuan realisasi KPI.' : 'Periksa task yang belum diklaim untuk menentukan kontribusi yang perlu diajukan atau didelegasikan.'}</p><button type="button" class="bimws-text-btn" data-action="kpi-queue" data-id="preparation">Tinjau task belum diklaim (${workflow.unclaimedTaskCount})</button></div>`}`;
+        }
+        return `<section class="bimws-kpi-workflow" aria-label="Tindak lanjut Kepala Divisi">
+            <div class="bimws-kpi-workflow-heading"><div><span class="bimws-kpi-code">KEPALA DIVISI / JANUARI–DESEMBER ${escapeHtml(data.year)}</span><h4>${workflow.pendingVerificationCount ? `${workflow.pendingVerificationCount} realisasi perlu Anda verifikasi` : 'Belum ada realisasi untuk diverifikasi'}</h4><p>${workflow.pendingVerificationCount ? 'Buka pengajuan untuk menilai hasil dan bukti sebelum skor diperbarui.' : `${workflow.unclaimedTaskCount} task selesai belum diklaim. Skor menunggu pengajuan realisasi dan verifikasi Anda.`}</p></div></div>
+            <nav class="bimws-kpi-stages" aria-label="Tahapan KPI">${steps.map(([key,title,count,help],index) => `<button type="button" data-action="kpi-queue" data-id="${key}" aria-pressed="${selected === key}"><span class="bimws-kpi-step-number">${index+1}</span><strong>${title}</strong><b>${count}</b><small>${help}</small></button>`).join('')}</nav>
+            <div class="bimws-kpi-queue" aria-live="polite">${content}</div>
+            <details class="bimws-kpi-how"><summary>Apa yang saya periksa sebelum menyetujui realisasi?</summary><ol><li><strong>Kesesuaian:</strong> hasil pekerjaan sesuai program, PIC, dan periode KPI.</li><li><strong>Nilai dan satuan:</strong> actual adalah hasil yang benar-benar tercapai. Jumlah task tidak selalu sama dengan jumlah output KPI.</li><li><strong>Bukti:</strong> buka dokumen atau tautan, cocokkan dengan hasil yang diajukan, dan pastikan output tidak diklaim ganda.</li><li><strong>Task dan dampak skor:</strong> pastikan task tertaut selesai atau dibatalkan, lalu periksa faktor performa dan perkiraan skor.</li></ol><p>Pilih “Kembalikan untuk revisi” jika hasil atau bukti belum sesuai. Skor Departemen dihitung di platform eksternal.</p></details>
+        </section>`;
+    }
+
     function renderKpiGuidance(data){
+        if (isDivisionHead()) return state.kpiTab === 'overview' ? renderHeadKpiWorkflow(data) : `<div class="bimws-kpi-gate"><div><strong>Persetujuan & verifikasi KPI</strong><span>Periksa antrean dan penyebab skor belum bertambah pada Tindak Lanjut.</span></div><button type="button" class="bimws-text-btn" data-action="kpi-open-workflow">Buka tindak lanjut</button></div>`;
         const items=data.guidance?.items||[];
         if(!items.length)return `<div class="bimws-kpi-gate"><i class="fas fa-shield-check"></i><div><strong>Score terkunci approval</strong><span>Hanya actual yang disetujui Kepala Divisi yang menambah score KPI individu dan Divisi BIM.</span></div></div>`;
         return `<section class="bimws-kpi-next"><header><div><span>NOTIFIKASI KPI</span><h4>Langkah Berikutnya</h4></div><small><i class="fas fa-shield-halved"></i> Approval Kepala Divisi wajib</small></header><div class="bimws-kpi-next-list">${items.map((item)=>`<article data-tone="${escapeHtml(item.tone||'neutral')}"><i class="fas ${escapeHtml(item.icon||'fa-circle-info')}"></i><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></div>${item.action?`<button type="button" class="bimws-btn bimws-btn-secondary" data-action="${escapeHtml(item.action)}" data-id="${escapeHtml(item.actionId||'')}">${escapeHtml(item.actionLabel||'Buka')}</button>`:''}</article>`).join('')}</div></section>`;
@@ -2733,7 +2843,7 @@
         const year=state.period.slice(0,4);
         const data=state.kpi||{year,scorecards:{},individual:{status:'empty',indicators:[]}};
         const tabs={
-            overview:{title:'Overview KPI',help:`Kontrak scorecard tahun ${year}.`,content:()=>renderKpiOverview(data)},
+            overview:{title:isDivisionHead()?'Tindak Lanjut KPI':'Overview KPI',help:isDivisionHead()?`Persetujuan, pengajuan realisasi, dan verifikasi sepanjang tahun ${year}.`:`Kontrak scorecard tahun ${year}.`,content:()=>renderKpiOverview(data)},
             department:{title:'KPI Departemen',help:'Acuan resmi Departemen Engineering dari workbook referensi.',content:()=>kpiTable(data.scorecards?.department)},
             division:{title:'KPI Divisi BIM',help:'Score aktif Divisi BIM; KPI Departemen hanya menjadi lineage dan tujuan pelaporan eksternal.',content:()=>renderDivisionPerformance(data)+kpiTable(data.scorecards?.division,true)},
             individual:{title:'KPI Individu',help:'Komitmen, task, actual, dan score terverifikasi per staff.',content:()=>renderKpiIndividual(data)},
@@ -2741,6 +2851,7 @@
         };
         const active=tabs[state.kpiTab]||tabs.overview;
         document.querySelectorAll('[data-kpi-tab]').forEach((button)=>{
+            if(button.dataset.kpiTab==='overview')button.textContent=isDivisionHead()?'Tindak Lanjut':'Overview';
             const selected=button.dataset.kpiTab===state.kpiTab;
             button.classList.toggle('is-active',selected);
             button.setAttribute('aria-selected',String(selected));
@@ -2782,6 +2893,9 @@
         const button=event.target.closest('[data-action]');if(!button)return;
         const {action,id}=button.dataset;
         try{
+            if(action==='kpi-open-workflow'){state.kpiTab='overview';state.kpiQueue='auto';await loadView('kpi',true);}
+            if(action==='kpi-queue'){state.kpiQueue=id;renderKpi();document.querySelector(`.bimws-kpi-stages [data-id="${id}"]`)?.focus();}
+            if(action==='kpi-open-individual'){state.kpiTab='individual';renderKpi();}
             if(action==='kpi-program-config')openKpiProgramForm(state.kpi.programs.find((row)=>row.id===id));
             if(action==='kpi-program-assign')openKpiAssignmentForm(state.kpi.programs.find((row)=>row.id===id));
             if(action==='kpi-program-claim'){const recommendation=state.kpi.guidance?.items?.find((item)=>item.action===action&&item.actionId===id);openKpiAssignmentForm(state.kpi.programs.find((row)=>row.id===id),recommendation);}
@@ -2789,7 +2903,7 @@
             if(action==='kpi-revise')openKpiRevisionForm(state.kpi.individual.assignments.find((row)=>row.id===id));
             if(action==='kpi-actual')openKpiActualForm(state.kpi.individual.assignments.find((row)=>row.id===id));
             if(action==='kpi-claim-actual'){const recommendation=state.kpi.guidance?.items?.find((item)=>item.action===action&&item.actionId===id);openKpiActualForm(state.kpi.individual.assignments.find((row)=>row.id===id),recommendation);}
-            if(action==='kpi-verify')openKpiVerifyForm(state.kpi.individual.assignments.find((row)=>row.id===id));
+            if(action==='kpi-verify')await openKpiVerifyForm(state.kpi.individual.assignments.find((row)=>row.id===id));
             if(action==='kpi-open-programs'){state.kpiTab='programs';renderKpi();}
             if(action==='kpi-export-external-json')await exportKpiContribution('json');
             if(action==='kpi-export-external-csv')await exportKpiContribution('csv');

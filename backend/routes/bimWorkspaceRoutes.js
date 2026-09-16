@@ -1785,9 +1785,37 @@ async function loadKpiGuidance(req, year, operations) {
     if (isDivisionHead(req)) {
         const pendingAssignments = operations.assignments.filter((item) => item.status === 'pending_approval');
         const pendingActuals = operations.assignments.filter((item) => item.status === 'verification_pending');
+        const completed = await pool.query(
+            `SELECT task.id,task.title,task.pic_user_id,task.pic_name_snapshot,task.period_month,
+                    task.kpi_division_indicator_id,task.evidence_link,
+                    indicator.code AS indicator_code,indicator.indicator_name
+             FROM bim_ops_tasks task
+             LEFT JOIN bim_kpi_indicators indicator ON indicator.id=task.kpi_division_indicator_id
+             WHERE task.status='approved_done' AND task.intake_status='approved'
+               AND task.task_kind<>'master' AND task.period_month LIKE ($1::text || '-%')
+               AND task.kpi_assignment_id IS NULL
+               AND NOT EXISTS (
+                   SELECT 1 FROM bim_kpi_assignment_task_claims claim
+                   WHERE claim.task_id=task.id AND claim.status IN ('pending_approval','verification_pending','approved')
+               )
+             ORDER BY task.pic_name_snapshot,task.period_month DESC,task.title`, [year]
+        );
         return {
             role: 'division_head',
             approvalRequired: true,
+            workflow: {
+                pendingApprovalCount: pendingAssignments.length,
+                pendingVerificationCount: pendingActuals.length,
+                awaitingSubmissionCount: operations.assignments.filter((item) => item.status === 'approved').length,
+                verifiedCount: operations.assignments.filter((item) => ['achieved','closed'].includes(item.status) && item.verifiedActual != null).length,
+                unclaimedTaskCount: completed.rows.length,
+                unclaimedTasks: completed.rows.map((task) => ({
+                    id: task.id, title: task.title, staffUserId: task.pic_user_id || '',
+                    staffName: task.pic_name_snapshot || 'PIC belum ditetapkan', period: task.period_month,
+                    indicatorCode: task.indicator_code || '', indicatorName: task.indicator_name || '',
+                    hasEvidence: !!trimText(task.evidence_link)
+                }))
+            },
             items: [
                 ...pendingAssignments.map((item) => ({
                     id: `review-${item.id}`, type: 'approval', tone: 'warning', icon: 'fa-user-check',
@@ -2348,9 +2376,27 @@ async function loadKpiAssignmentTaskPerformance(assignmentId) {
         incompleteTaskCount: incomplete.length,
         incompleteTaskTitles: incomplete.slice(0, 5).map((item) => item.task.title),
         factor: scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length / 100 : 1,
-        averageScore: scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null
+        averageScore: scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null,
+        tasks: performances.map(({ task, performance }) => ({
+            id: task.id, title: task.title, status: task.status,
+            evidenceLink: task.evidence_link || '',
+            score: performance?.totalScore ?? null,
+            lateDays: performance?.lateDays ?? 0,
+            revisionCount: performance?.revisionCount ?? 0,
+            confirmedWorklogs: performance?.confirmedWorklogs ?? 0
+        }))
     };
 }
+
+route('get', '/kpi/assignments/:id/verification-preview', async (req, res) => {
+    if (!isDivisionHead(req)) return res.status(403).json({ error: 'Verifikasi hanya untuk Kepala Divisi BIM' });
+    const current = await pool.query(`SELECT * FROM bim_kpi_assignments WHERE id=$1`, [req.params.id]);
+    if (!current.rows.length) return res.status(404).json({ error: 'Kontribusi KPI tidak ditemukan' });
+    const assignment = current.rows[0];
+    if (assignment.status !== 'verification_pending') return res.status(409).json({ error: 'Realisasi sudah berubah. Muat ulang daftar KPI.' });
+    const performance = await loadKpiAssignmentTaskPerformance(assignment.id);
+    res.json({ assignment: mapKpiAssignment(assignment), performance });
+});
 
 route('post', '/kpi/assignments/:id/verify', async (req, res) => {
     if (!isDivisionHead(req)) return res.status(403).json({ error: 'Actual verification requires Kepala Divisi BIM' });

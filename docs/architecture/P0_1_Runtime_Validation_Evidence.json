@@ -1,0 +1,587 @@
+{
+  "phase": "p0_1_closed_after_review",
+  "startedAt": "2026-09-18T04:40:41.951Z",
+  "backend": "http://127.0.0.1:5052",
+  "checks": [
+    {
+      "name": "local_login_existing",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:35.764Z",
+      "userId": 9,
+      "httpStatus": 200
+    },
+    {
+      "name": "admin_login_existing",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:35.827Z",
+      "userId": 9,
+      "httpStatus": 200
+    },
+    {
+      "name": "admin_create_user",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:35.934Z",
+      "userId": 34,
+      "httpStatus": 201
+    },
+    {
+      "name": "admin_create_bcrypt_and_employee_role",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:35.990Z",
+      "userId": 34,
+      "bcryptCost": 10
+    },
+    {
+      "name": "new_user_login_and_raw_password_spaces",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:36.104Z",
+      "userId": 34
+    },
+    {
+      "name": "profile_no_admin_escalation_positionLabel",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:36.119Z",
+      "userId": 34,
+      "canonicalIdUnchanged": true
+    },
+    {
+      "name": "profile_no_admin_escalation_job_role",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:36.131Z",
+      "userId": 34,
+      "canonicalIdUnchanged": true
+    },
+    {
+      "name": "canonical_id_and_privilege_mass_assignment_rejected",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:36.138Z",
+      "userId": 34
+    },
+    {
+      "name": "temporary_test_user_cleanup",
+      "result": "PASS",
+      "at": "2026-09-18T07:06:36.203Z",
+      "userId": 34,
+      "sequenceReset": false
+    },
+    {
+      "name": "google_login_existing_after_restart",
+      "result": "PASS",
+      "at": "2026-09-18T07:32:03.924Z",
+      "operatorConfirmed": true,
+      "operatorReportedFailure": false,
+      "reason": "Existing Google login succeeds in normal browser. Incognito reached credential entry and was not completed; no password reset or application change performed.",
+      "evidenceBasis": "Latest operator confirmation plus corresponding post-restart Google HTTP 200 and read-only PostgreSQL integrity check",
+      "historicalHttpEvidence": {
+        "time": "18/Sep/2026:13:57:00 +0700",
+        "status": 200,
+        "log": "bcl_https_access.log"
+      },
+      "historicalAccountCorrelation": {
+        "userId": 31,
+        "method": "PostgreSQL last_login timestamp plus unchanged user count and sequence; provider token not collected",
+        "limit": "Timestamp correlation only; does not establish operator identity or successful browser sign-in."
+      },
+      "httpEvidence": {
+        "time": "18/Sep/2026:14:26:23 +0700",
+        "path": "/api/auth/google",
+        "status": 200,
+        "log": "bcl_https_access.log"
+      },
+      "accountCorrelation": {
+        "userId": 20,
+        "lastLogin": "2026-09-18T07:26:23.145Z",
+        "method": "Timestamp correlation with latest Google HTTP 200, one existing-user login increment, unchanged user count and sequence",
+        "limit": "Correlation does not collect the operator provider token or establish provider sub mapping"
+      }
+    },
+    {
+      "name": "existing_16_users_integrity",
+      "result": "PASS",
+      "at": "2026-09-18T07:14:05.967Z",
+      "allowedChanges": [
+        "login_count",
+        "last_login",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "user_sequence_expected_advance",
+      "result": "PASS",
+      "at": "2026-09-18T07:14:05.967Z",
+      "before": 33,
+      "after": 34,
+      "expectedAdminCreates": 1,
+      "sequenceReset": false
+    },
+    {
+      "name": "runtime_health_after_validation",
+      "result": "PASS",
+      "at": "2026-09-18T07:14:05.967Z"
+    },
+    {
+      "name": "startup_without_migration_schema_config_errors",
+      "result": "ACCEPTED_WITH_NON_BLOCKING_ISSUES",
+      "at": "2026-09-18T07:14:05.967Z",
+      "reason": "Existing content schema relation public.learning_materials is missing and runtime warning persists; P0-1 identity schema preflight passed.",
+      "previousResult": "FAIL",
+      "acceptedAt": "2026-09-18T07:44:24.794Z",
+      "acceptanceBasis": "User explicitly accepted the pre-existing Learning warning and transient recovered PDF timeout as non-blocking P0-1 issues"
+    }
+  ],
+  "expectedSequenceAdvance": 1,
+  "localPassed": true,
+  "googleOperatorConfirmed": true,
+  "baseline": {
+    "userCount": 16,
+    "capturedAt": "2026-09-18T04:40:42.066Z",
+    "sequence": {
+      "last_value": "33",
+      "is_called": true
+    }
+  },
+  "auditBaseline": [
+    {
+      "path": "C:\\BCL\\nginx\\nginx-1.28.0\\logs\\bcl_access.log",
+      "offset": 3989148
+    },
+    {
+      "path": "C:\\BCL\\nginx\\nginx-1.28.0\\logs\\bcl_https_access.log",
+      "offset": 103042907
+    }
+  ],
+  "googleHttpEvidence": [
+    {
+      "time": "18/Sep/2026:13:52:49 +0700",
+      "status": 200,
+      "log": "bcl_https_access.log"
+    },
+    {
+      "time": "18/Sep/2026:13:57:00 +0700",
+      "status": 200,
+      "log": "bcl_https_access.log"
+    },
+    {
+      "time": "18/Sep/2026:14:26:23 +0700",
+      "status": 200,
+      "log": "bcl_https_access.log"
+    }
+  ],
+  "integrity": {
+    "capturedAt": "2026-09-18T07:14:03.866Z",
+    "originalCount": 16,
+    "currentCount": 16,
+    "changedExisting": [
+      {
+        "id": 9,
+        "fields": [
+          "login_count",
+          "last_login",
+          "updated_at"
+        ],
+        "loginCountDelta": 5
+      },
+      {
+        "id": 30,
+        "fields": [
+          "login_count",
+          "last_login",
+          "updated_at"
+        ],
+        "loginCountDelta": 1
+      },
+      {
+        "id": 31,
+        "fields": [
+          "login_count",
+          "last_login",
+          "updated_at"
+        ],
+        "loginCountDelta": 1
+      }
+    ],
+    "missingExistingIds": [],
+    "addedIds": [],
+    "sequenceBefore": {
+      "last_value": "33",
+      "is_called": true
+    },
+    "sequenceAfter": {
+      "last_value": "34",
+      "is_called": true
+    },
+    "sequenceAdvance": 1,
+    "immutableAndProfileFieldsUnchanged": true,
+    "expectedLoginDeltas": {
+      "9": 4
+    }
+  },
+  "runtimeReady": true,
+  "previousAttempts": [
+    {
+      "phase": "local_failed",
+      "failure": "Cannot read properties of undefined (reading 'systemRole')",
+      "checks": [
+        {
+          "name": "local_login_existing",
+          "result": "PASS",
+          "at": "2026-09-18T07:03:28.826Z",
+          "userId": 9,
+          "httpStatus": 200
+        }
+      ],
+      "preservedAt": "2026-09-18T07:05:56.576Z"
+    },
+    {
+      "phase": "local_failed",
+      "failure": "Local login existing HTTP 401 before the successful final run; credentials were not recorded",
+      "source": "Validation helper process stdout observed on orderly shutdown",
+      "timestamp": "not separately retained",
+      "testUserCreated": false
+    }
+  ],
+  "testUserId": 34,
+  "testUserRemoved": true,
+  "activation": {
+    "oldBackendPid": 12992,
+    "backendPid": 23652,
+    "launcherAt": "2026-09-18T13:53:40.342+07:00",
+    "serverStartedAt": "2026-09-18T06:56:25.091Z",
+    "healthyAt": "2026-09-18T06:59:42.018Z",
+    "procedure": "start-backend-public.bat",
+    "backendHealth": 200,
+    "httpsGoogleConfig": {
+      "status": 200,
+      "tlsVerified": true,
+      "enabled": true
+    },
+    "startupWarnings": [
+      "learning_materials relation missing",
+      "PDF read counts connection timeout"
+    ],
+    "exitValidationComplete": true,
+    "allExitCriteriaPassed": true,
+    "knownNonBlockingWarningsRemain": true
+  },
+  "schemaValidation": {
+    "capturedAt": "2026-09-18T07:01:20.705Z",
+    "passwordConstraint": [
+      {
+        "conname": "users_password_bcrypt_check",
+        "convalidated": true,
+        "definition": "CHECK (((password)::text ~ '^\\$2[ab]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$'::text))"
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "users_pkey",
+        "indexdef": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)"
+      },
+      {
+        "indexname": "users_email_normalized_key",
+        "indexdef": "CREATE UNIQUE INDEX users_email_normalized_key ON public.users USING btree (lower(btrim((email)::text)))"
+      },
+      {
+        "indexname": "users_username_normalized_key",
+        "indexdef": "CREATE UNIQUE INDEX users_username_normalized_key ON public.users USING btree (lower(btrim((username)::text)))"
+      }
+    ],
+    "foreignKeys": [
+      {
+        "count": 14
+      }
+    ],
+    "pdfReadQuery": [
+      {
+        "read_rows": 31
+      }
+    ],
+    "protectedIds": [
+      {
+        "id": 15,
+        "system_role": "employee"
+      },
+      {
+        "id": 20,
+        "system_role": "employee"
+      }
+    ]
+  },
+  "authHttpEvidence": {
+    "capturedAt": "2026-09-18T07:13:04.589Z",
+    "requests": [
+      {
+        "time": "18/Sep/2026:13:52:49 +0700",
+        "path": "/api/auth/google",
+        "status": 200,
+        "log": "bcl_https_access.log"
+      },
+      {
+        "time": "18/Sep/2026:13:57:00 +0700",
+        "path": "/api/auth/google",
+        "status": 200,
+        "log": "bcl_https_access.log"
+      },
+      {
+        "time": "18/Sep/2026:14:07:10 +0700",
+        "path": "/api/login",
+        "status": 200,
+        "log": "bcl_https_access.log"
+      }
+    ]
+  },
+  "googleConfirmationSource": "Latest operator statement: Google login succeeds in normal browser; Incognito reaches Google sign-in but password is unavailable",
+  "googlePassed": true,
+  "helperStopped": true,
+  "closureStatus": "CLOSED",
+  "finalRuntimeHealth": {
+    "at": "2026-09-18T07:14:05.967Z",
+    "backendPingStatus": 200,
+    "httpsGoogleConfig": {
+      "status": 200,
+      "tlsVerified": true,
+      "enabled": true
+    }
+  },
+  "runtimeDiagnostics": {
+    "capturedAt": "2026-09-18T07:01:59.863Z",
+    "backendStdout": "logs/backend-public-5052-20260918-135340-661.log",
+    "backendStderr": "logs/backend-public-5052-20260918-135340-661.err.log",
+    "warningCounts": {
+      "Failed to load learning materials from PostgreSQL: relation \"learning_materials\" does not exist": 29,
+      "Failed to load PDF read counts from PostgreSQL: Connection terminated due to connection timeout": 1
+    },
+    "preexistingLearningMaterialsWarning": {
+      "log": "logs/kpi-ux-backend-20260916.err.log",
+      "firstLine": 3
+    },
+    "pdfRetest": {
+      "status": 200,
+      "count": 23,
+      "newTimeout": false,
+      "missingLearningMaterialsWarningPersists": true
+    },
+    "noNewMigrationApplied": true,
+    "finalCapturedAt": "2026-09-18T07:14:05.967Z"
+  },
+  "residualRisks": [
+    "Existing missing learning_materials relation requires separately reviewed remediation; not changed in identity validation",
+    "One PDF connection timeout at initial runtime window; later SQL and endpoint read succeeded, root cause not established",
+    "First helper attempt selected tracking cookie; initial admin session was not explicitly logged out and follows existing expiry. Successful retry session was logged out."
+  ],
+  "corrections": [
+    {
+      "at": "2026-09-18T07:17:47.549Z",
+      "source": "Operator correction in chat",
+      "statement": "Halaman pengujian login dengan akun Google belum berhasil masuk",
+      "supersedes": {
+        "googlePassed": true,
+        "googleOperatorConfirmed": true,
+        "googleConfirmedAt": "2026-09-18T07:14:05.966Z",
+        "googleConfirmationSource": "Explicit operator reply in chat: Google existing succeeded at 13:57 WIB after restart",
+        "check": {
+          "name": "google_login_existing_after_restart",
+          "result": "PASS",
+          "at": "2026-09-18T07:14:05.967Z",
+          "httpEvidence": {
+            "time": "18/Sep/2026:13:57:00 +0700",
+            "status": 200,
+            "log": "bcl_https_access.log"
+          },
+          "operatorConfirmed": true,
+          "accountCorrelation": {
+            "userId": 31,
+            "method": "PostgreSQL last_login timestamp plus unchanged user count and sequence; provider token not collected"
+          }
+        }
+      }
+    },
+    {
+      "at": "2026-09-18T07:28:53.344Z",
+      "source": "Latest operator clarification in chat",
+      "statement": "Google sign-in page opens in Incognito but authentication cannot continue because password is not remembered; normal browser login succeeds",
+      "supersedes": {
+        "googlePassed": false,
+        "googleOperatorConfirmed": false,
+        "check": {
+          "name": "google_login_existing_after_restart",
+          "result": "NOT_PASSED",
+          "at": "2026-09-18T07:14:05.967Z",
+          "httpEvidence": {
+            "time": "18/Sep/2026:13:57:00 +0700",
+            "status": 200,
+            "log": "bcl_https_access.log"
+          },
+          "operatorConfirmed": false,
+          "accountCorrelation": {
+            "userId": 31,
+            "method": "PostgreSQL last_login timestamp plus unchanged user count and sequence; provider token not collected",
+            "limit": "Timestamp correlation only; does not establish operator identity or successful browser sign-in."
+          },
+          "operatorReportedFailure": true,
+          "correctedAt": "2026-09-18T07:17:47.549Z",
+          "reason": "Operator retracted earlier success confirmation and reports not reaching logged-in state. HTTP 200 is retained as a server observation and cannot establish this operator browser outcome."
+        }
+      }
+    }
+  ],
+  "googleOperatorReportedFailure": false,
+  "googleVerificationStatus": "PASS_RUNTIME_EXISTING_NORMAL_BROWSER",
+  "priorValidationSnapshotCompletedAt": "2026-09-18T07:14:05.967Z",
+  "reopenedAt": "2026-09-18T07:17:47.549Z",
+  "googleFollowup": {
+    "capturedAt": "2026-09-18T07:19:05.898Z",
+    "operatorSymptom": "Klik tombol tidak menghasilkan respons yang terlihat",
+    "pageOrigin": "Operator confirmed https://bcl.nke.net/pages/login.html",
+    "readOnlyHttpInspection": {
+      "capturedAt": "2026-09-18T07:18:33.299Z",
+      "loginPageStatus": 200,
+      "googleSdkScriptDeclared": true,
+      "googleCallbackDeclared": true,
+      "googleConfigStatus": 200,
+      "googleEnabled": true,
+      "clientIdPresent": true
+    },
+    "observedGoogleHttpEvents": [
+      {
+        "time": "18/Sep/2026:13:52:49 +0700",
+        "path": "/api/auth/google",
+        "status": 200,
+        "log": "bcl_https_access.log"
+      },
+      {
+        "time": "18/Sep/2026:13:57:00 +0700",
+        "path": "/api/auth/google",
+        "status": 200,
+        "log": "bcl_https_access.log"
+      }
+    ],
+    "limitations": [
+      "No browser-side error or network trace from the operator is available",
+      "Nginx access log is buffered with up to five-minute flush",
+      "Declared SDK script and enabled config do not establish SDK execution or popup behavior",
+      "Stopped helper confirmation button does not initiate Google authentication"
+    ],
+    "rootCause": "unverified",
+    "pageConfirmedAt": "2026-09-18T07:20:08.028Z",
+    "isolatedBrowserDiagnostic": {
+      "capturedAt": "2026-09-18T07:22:42.266Z",
+      "tool": "Playwright CLI, Chrome headless, isolated in-memory profile",
+      "page": "https://bcl.nke.net/pages/login.html",
+      "googleSdkButtonVisible": true,
+      "clickOpenedGoogleSignIn": true,
+      "googleSignInOrigin": "https://accounts.google.com",
+      "googleScreen": "Sign in, to continue to nke.net, Email or phone field",
+      "credentialsEntered": false,
+      "googleAuthCompleted": false,
+      "existingGoogleLoginProven": false,
+      "browserClosed": true,
+      "limitation": "Operator no-response symptom was not reproduced in the isolated browser. This does not establish cause or success in the operator browser."
+    },
+    "operatorComparison": {
+      "at": "2026-09-18T07:28:53.344Z",
+      "page": "https://bcl.nke.net/pages/login.html",
+      "normalBrowser": "Operator reports Google login succeeds",
+      "incognito": "Google sign-in page opens; authentication not continued because password unavailable",
+      "incognitoAuthenticationCompleted": false,
+      "passwordResetPerformed": false,
+      "initialNoResponseRootCause": "unverified"
+    },
+    "latestIntegrity": {
+      "capturedAt": "2026-09-18T07:27:31.599Z",
+      "currentCount": 16,
+      "sequence": {
+        "last_value": "34",
+        "is_called": true
+      },
+      "changes": [
+        {
+          "id": 9,
+          "fields": [
+            "login_count",
+            "last_login",
+            "updated_at"
+          ],
+          "loginCountDelta": 5,
+          "lastLogin": "2026-09-18T07:07:10.939Z"
+        },
+        {
+          "id": 20,
+          "fields": [
+            "login_count",
+            "last_login",
+            "updated_at"
+          ],
+          "loginCountDelta": 1,
+          "lastLogin": "2026-09-18T07:26:23.145Z"
+        },
+        {
+          "id": 30,
+          "fields": [
+            "login_count",
+            "last_login",
+            "updated_at"
+          ],
+          "loginCountDelta": 1,
+          "lastLogin": "2026-09-18T06:52:49.925Z"
+        },
+        {
+          "id": 31,
+          "fields": [
+            "login_count",
+            "last_login",
+            "updated_at"
+          ],
+          "loginCountDelta": 1,
+          "lastLogin": "2026-09-18T06:57:00.427Z"
+        }
+      ],
+      "addedIds": [],
+      "immutableAndProfileFieldsUnchanged": true
+    },
+    "latestHttpEvidence": {
+      "capturedAt": "2026-09-18T07:30:58.742Z",
+      "events": [
+        {
+          "time": "18/Sep/2026:13:52:49 +0700",
+          "path": "/api/auth/google",
+          "status": 200,
+          "log": "bcl_https_access.log"
+        },
+        {
+          "time": "18/Sep/2026:13:57:00 +0700",
+          "path": "/api/auth/google",
+          "status": 200,
+          "log": "bcl_https_access.log"
+        },
+        {
+          "time": "18/Sep/2026:14:07:10 +0700",
+          "path": "/api/login",
+          "status": 200,
+          "log": "bcl_https_access.log"
+        },
+        {
+          "time": "18/Sep/2026:14:26:23 +0700",
+          "path": "/api/auth/google",
+          "status": 200,
+          "log": "bcl_https_access.log"
+        }
+      ]
+    },
+    "runtimeCorrelatedAt": "2026-09-18T07:32:03.924Z",
+    "initialNoResponseRootCause": "Not established; later normal browser login succeeded without application/config changes"
+  },
+  "googleConfirmedAt": "2026-09-18T07:28:53.344Z",
+  "completedAt": "2026-09-18T07:32:03.924Z",
+  "closureDecision": {
+    "at": "2026-09-18T07:44:24.794Z",
+    "authority": "Explicit user review decision",
+    "status": "CLOSED",
+    "scope": "P0-1 Security & Canonical Identity Foundation",
+    "acceptedNonBlockingIssues": [
+      "Existing missing learning_materials table",
+      "Transient PDF timeout; subsequent check succeeded"
+    ],
+    "followup": "Technical debt tracking; inspect Learning before/during P0-3"
+  }
+}

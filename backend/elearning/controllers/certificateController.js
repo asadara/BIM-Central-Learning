@@ -1,3 +1,4 @@
+const { canonicalUserId } = require('../../utils/canonicalIdentity');
 const { Pool } = require('pg');
 const { createPgConfig } = require('../../config/runtimeConfig');
 const { getRequestUser } = require('../../utils/auth');
@@ -83,7 +84,7 @@ function toNonNegativeInt(value, fallback = 0) {
 }
 
 async function resolveUserIdentity(identity) {
-    const normalized = trimText(identity, 255);
+    const normalized = canonicalUserId(identity);
     if (!normalized) {
         return {
             userId: null,
@@ -97,28 +98,17 @@ async function resolveUserIdentity(identity) {
     const row = await pool.query(
         `SELECT id, username, email
          FROM users
-         WHERE id::text = $1::text
-            OR lower(email) = lower($1)
-            OR lower(username) = lower($1)
+         WHERE id = $1 AND is_active = true
          LIMIT 1`,
         [normalized]
     );
 
     const user = row.rows[0] || null;
-    const matchValues = new Set([normalized.toLowerCase()]);
-
-    if (user) {
-        matchValues.add(String(user.id).toLowerCase());
-        if (user.email) matchValues.add(String(user.email).toLowerCase());
-        if (user.username) matchValues.add(String(user.username).toLowerCase());
-    }
-
     return {
-        userId: user ? toNonNegativeInt(user.id, null) : toNonNegativeInt(normalized, null),
-        userIdentifier: user ? String(user.id) : normalized,
+        userId: user ? Number(user.id) : null,
+        userIdentifier: user ? String(user.id) : '',
         userName: user ? user.username : null,
-        userEmail: user ? String(user.email || '').toLowerCase() : null,
-        matchValues: Array.from(matchValues).filter(Boolean)
+        userEmail: user ? String(user.email || '').toLowerCase() : null
     };
 }
 
@@ -149,7 +139,7 @@ function canReadCertificates(req, requestedIdentity) {
     if (!authUser) return false;
     if (authUser.isAdmin) return true;
     const requested = String(requestedIdentity || '').trim().toLowerCase();
-    return [authUser.id, authUser.email, authUser.username]
+    return [authUser.id]
         .map((value) => String(value || '').trim().toLowerCase())
         .filter(Boolean)
         .includes(requested);
@@ -185,13 +175,10 @@ exports.getUserCertificates = async (req, res) => {
              FROM user_certificates
              WHERE is_verified = true
                AND (
-                    ($1::int IS NOT NULL AND user_id = $1)
-                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+                    user_id = $1
                )
              ORDER BY issued_at DESC`,
-            [userRef.userId, userRef.matchValues]
+            [userRef.userId]
         );
 
         return res.json(query.rows.map(mapCertificateRow));
@@ -206,12 +193,13 @@ exports.issueCertificate = async (req, res) => {
         await ensureTables();
 
         const payload = req.body || {};
-        const identity = trimText(payload.userId || payload.userIdentifier || payload.email, 255);
+        const identity = canonicalUserId(payload.userId || payload.userIdentifier);
         if (!identity) {
-            return res.status(400).json({ error: 'userId or userIdentifier is required' });
+            return res.status(400).json({ error: 'Canonical user ID is required' });
         }
 
         const userRef = await resolveUserIdentity(identity);
+        if (!userRef.userId) return res.status(404).json({ error: 'Active canonical user not found' });
         const quizId = trimText(payload.quizId, 120) || null;
         if (!quizId || !getRubricContext().officialExamIds.includes(quizId)) {
             return res.status(400).json({ error: 'Official exam quizId is required' });

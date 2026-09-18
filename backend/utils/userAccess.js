@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { canonicalUserId } = require('./canonicalIdentity');
 const path = require('path');
 const { Pool } = require('pg');
 const { createPgConfig } = require('../config/runtimeConfig');
@@ -138,6 +139,8 @@ async function ensureAccessColumns(targetPool = pool) {
 }
 
 async function fetchAccessProfileFromDb(userId, email) {
+    const id = canonicalUserId(userId);
+    if (!id) return null;
     await ensureAccessColumns();
 
     const result = await pool.query(
@@ -146,10 +149,9 @@ async function fetchAccessProfileFromDb(userId, email) {
                 library_download_access, watermark_free_download_access,
                 bim_workspace_access, bim_workspace_role, bim_workspace_staff_role
          FROM users
-         WHERE ($1::text IS NOT NULL AND id::text = $1::text)
-            OR ($2::text IS NOT NULL AND lower(email) = lower($2))
+         WHERE id = $1 AND is_active = true
          LIMIT 1`,
-        [userId ? String(userId) : null, email || null]
+        [id]
     );
 
     if (result.rows.length === 0) {
@@ -159,18 +161,9 @@ async function fetchAccessProfileFromDb(userId, email) {
     return normalizeAccessProfile(result.rows[0]);
 }
 
-function fetchAccessProfileFromJson(userId, email) {
-    const users = readUsers();
-    const user = users.find((entry) =>
-        (userId && (entry.id === userId || entry.id == userId)) ||
-        (email && String(entry.email || '').toLowerCase() === String(email).toLowerCase())
-    );
-
-    if (!user) {
-        return null;
-    }
-
-    return normalizeAccessProfile(user);
+function fetchAccessProfileFromJson() {
+    // Keep the compatibility API, but never grant permissions from unmapped JSON.
+    return null;
 }
 
 async function resolveAccessProfile(authUser) {

@@ -137,6 +137,7 @@
                         <i class="fas fa-tachometer-alt"></i>
                         Dasbor
                     </a>
+                    <a class="nav-link-modern mb-2" href="/pages/sub/auth-link-review.html">Verifikasi Google</a>
                     <a class="nav-link-modern mb-2" href="#users" onclick="showSection('users')">
                         <i class="fas fa-users"></i>
                         Pengguna
@@ -1751,6 +1752,7 @@
 
                     // Reset form
                     resetChangePasswordForm();
+                    if (result.reauthenticationRequired) window.location.reload();
 
                 } else {
                     showAlert(result.error || 'Failed to change password', 'danger');

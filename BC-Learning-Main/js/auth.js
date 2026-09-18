@@ -1,3 +1,11 @@
+// Shared server-confirmed logout for legacy page entrypoints.
+window.bclAuthReady = window.bclAuthReady || new Promise((resolve, reject) => {
+    if (window.BclAuth) return resolve(window.BclAuth);
+    const script = document.createElement('script'); script.src = '/js/auth-lifecycle.js';
+    script.onload = () => resolve(window.BclAuth); script.onerror = () => reject(new Error('Authentication client unavailable'));
+    document.head.appendChild(script);
+});
+window.bclAuthReady.catch(() => {});
 // ✅ Fixed: JWT Token expiration check
 function isTokenExpired(token) {
     if (!token) return true;

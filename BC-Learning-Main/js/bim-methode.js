@@ -635,9 +635,9 @@ class BIMGallery {
                 } catch (e) {}
             }
 
-            if (localUser && localUser.role) {
-                const role = String(localUser.role).toLowerCase();
-                if (role.includes('admin') || role.includes('super')) {
+            if (localUser) {
+                const role = localUser.systemRole || localUser.system_role || '';
+                if (role === 'system_admin') {
                     isAdmin = true;
                 }
             }
@@ -1607,9 +1607,9 @@ class BIMGallery {
                 } catch (e) {}
             }
 
-            if (localUser && localUser.role) {
-                const role = String(localUser.role).toLowerCase();
-                if (role.includes('admin') || role.includes('super')) {
+            if (localUser) {
+                const role = localUser.systemRole || localUser.system_role || '';
+                if (role === 'system_admin') {
                     isAdmin = true;
                 }
             }

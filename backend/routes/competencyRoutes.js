@@ -1,5 +1,6 @@
 // Competency Mapping Routes
 const express = require('express');
+const { canonicalUserId, authenticatedUserId } = require('../utils/canonicalIdentity');
 const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
@@ -70,28 +71,22 @@ async function readUsersFile() {
 }
 
 async function fetchMappingAccessFromDb(userId, email) {
+    const id = canonicalUserId(userId);
+    if (!id) return null;
     const result = await pool.query(
         `SELECT mapping_kompetensi_access
          FROM users
-         WHERE ($1::text IS NOT NULL AND id::text = $1::text)
-            OR ($2::text IS NOT NULL AND email = $2)
+         WHERE id = $1 AND is_active = true
          LIMIT 1`,
-        [userId ? String(userId) : null, email || null]
+        [id]
     );
 
     if (result.rows.length === 0) return null;
     return !!result.rows[0].mapping_kompetensi_access;
 }
 
-async function fetchMappingAccessFromJson(userId, email) {
-    const users = await readUsersFile();
-    const user = users.find(u =>
-        (userId && (u.id === userId || u.id == userId)) ||
-        (email && u.email === email)
-    );
-
-    if (!user) return null;
-    return !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
+async function fetchMappingAccessFromJson() {
+    return null; // Unmapped legacy records cannot grant access.
 }
 
 async function ensureCompetencyEvidenceSchema() {
@@ -651,9 +646,9 @@ async function requireCompetencyAuthority(req, res, next) {
         }
 
         req.user = {
-            userId: authUser.id || authUser.email || authUser.username,
+            userId: authUser.id,
             username: authUser.username || authUser.email || 'user',
-            role: authUser.isAdmin ? 'admin' : String(authUser.role || 'user').toLowerCase()
+            role: authUser.isAdmin ? 'admin' : 'user'
         };
         next();
     } catch (error) {
@@ -1232,7 +1227,7 @@ function requireAdminSession(req, res, next) {
     if (authUser && authUser.isAdmin) {
         req.authUser = authUser;
         req.user = {
-            userId: authUser.id || authUser.email || 'admin',
+            userId: authUser.id,
             username: authUser.username || authUser.email || 'admin',
             role: 'admin'
         };

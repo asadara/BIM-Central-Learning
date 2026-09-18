@@ -469,64 +469,11 @@ router.get("/backups/:filename", requireAdmin, (req, res) => {
 
 // POST /api/admin/backups/:filename/restore - Restore from backup
 router.post("/backups/:filename/restore", requireAdmin, (req, res) => {
-    try {
-        const { filename } = req.params;
-
-        // Security check - only allow backup files
-        if (!filename.startsWith('users.json.backup.')) {
-            return res.status(403).json({
-                success: false,
-                error: "Access denied"
-            });
-        }
-
-        const backupPath = path.join(path.dirname(USERS_FILE), filename);
-
-        if (!fs.existsSync(backupPath)) {
-            return res.status(404).json({
-                success: false,
-                error: "Backup file not found"
-            });
-        }
-
-        // Read backup content
-        const backupContent = fs.readFileSync(backupPath, "utf8");
-
-        // Validate JSON
-        try {
-            JSON.parse(backupContent);
-        } catch (parseError) {
-            return res.status(400).json({
-                success: false,
-                error: "Backup file contains invalid JSON"
-            });
-        }
-
-        // Create a backup of current file before restoring
-        if (fs.existsSync(USERS_FILE)) {
-            const currentBackupName = `users.json.backup.before_restore.${Date.now()}`;
-            const currentBackupPath = path.join(path.dirname(USERS_FILE), currentBackupName);
-            const currentContent = fs.readFileSync(USERS_FILE, "utf8");
-            fs.writeFileSync(currentBackupPath, currentContent, "utf8");
-            console.log(`📦 Created safety backup: ${currentBackupName}`);
-        }
-
-        // Restore from backup
-        fs.writeFileSync(USERS_FILE, backupContent, "utf8");
-
-        console.log(`✅ Backup restored: ${filename}`);
-
-        res.json({
-            success: true,
-            message: "Backup restored successfully"
-        });
-    } catch (error) {
-        console.error("Error restoring backup:", error);
-        res.status(500).json({
-            success: false,
-            error: "Failed to restore backup"
-        });
-    }
+    // Preserve backup files for inspection; never activate unmapped legacy accounts.
+    return res.status(503).json({
+        success: false,
+        error: "Legacy user restore requires a reviewed canonical ID mapping; no user data was modified"
+    });
 });
 
 // DELETE /api/admin/backups/:filename - Delete backup file

@@ -1,3 +1,11 @@
+// Shared server-confirmed logout for legacy page entrypoints.
+window.bclAuthReady = window.bclAuthReady || new Promise((resolve, reject) => {
+    if (window.BclAuth) return resolve(window.BclAuth);
+    const script = document.createElement('script'); script.src = '/js/auth-lifecycle.js';
+    script.onload = () => resolve(window.BclAuth); script.onerror = () => reject(new Error('Authentication client unavailable'));
+    document.head.appendChild(script);
+});
+window.bclAuthReady.catch(() => {});
 // Enhanced Component Loader with Persistent Sidebar System
 (function suppressElearningDebugConsole() {
     if (window.BCL_ENABLE_DEBUG_LOGS === true || window.__bclElearningConsoleQuietApplied) {
@@ -534,16 +542,7 @@ class ComponentLoader {
     applyNavbarAccessProfile(rootElement, accessProfile) {
         const profile = accessProfile || {};
         const root = rootElement || document;
-        const storedUser = safeReadStoredJson('user');
-        const storedUserData = safeReadStoredJson('userData');
-        const role = String(
-            localStorage.getItem('role') ||
-            storedUser.role ||
-            storedUser.jobRole ||
-            storedUserData.role ||
-            ''
-        ).toLowerCase();
-        const isAdmin = !!profile.isAdmin || role.includes('admin');
+        const isAdmin = profile.isAdmin === true;
         this.setAccessLinksVisibility(rootElement, '.dokumen-access-link', !!profile.dokumenAccess);
         this.setAccessLinksVisibility(rootElement, '.audit-2026-access-link', !!profile.audit2026Access);
         this.setAccessLinksVisibility(rootElement, '.bim-workspace-access-link', isAdmin || !!profile.bimWorkspaceAccess);
@@ -732,7 +731,7 @@ class ComponentLoader {
             if (competencyLink) competencyLink.hidden = true;
             if (adminLink) adminLink.hidden = true;
 
-            const isAdminUser = finalRole && finalRole.toLowerCase() === 'admin';
+            const isAdminUser = (user.systemRole || user.system_role || userData.systemRole) === 'system_admin';
             if (isAdminUser) {
                 if (adminToolsDivider) adminToolsDivider.hidden = false;
                 if (competencyLink) competencyLink.hidden = false;

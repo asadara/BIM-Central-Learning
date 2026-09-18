@@ -985,7 +985,7 @@ function normalizeCourseCompetencyLevel(value) {
 
 function getCourseLearnerContext() {
     const user = getCourseCurrentUser();
-    const identity = String(user.id || user.userId || user.email || user.username || user.name || '').trim();
+    const identity = String(user.id || user.userId || '').trim();
     const token = getLearningActivityAuthToken();
     const competencyLevel = normalizeCourseCompetencyLevel(user.bimLevel || user.level || user.bim_level);
     const targetCompetencyLevel = normalizeCourseCompetencyLevel(user.targetBimLevel || user.target_bim_level);
@@ -1030,7 +1030,7 @@ async function refreshCourseUserProfile() {
 
 function getCourseUserIdentity() {
     const user = getCourseCurrentUser();
-    return String(user.id || user.userId || user.email || user.username || user.name || '').trim();
+    return String(user.id || user.userId || '').trim();
 }
 
 function getCoursePracticeHistory() {

@@ -1236,13 +1236,12 @@ async function requireWorkspace(req, res, next) {
             `SELECT id::text,username,email,job_role,mapping_kompetensi_access,dokumen_access,audit_2026_access,
                     library_download_access,watermark_free_download_access,bim_workspace_access,bim_workspace_role,bim_workspace_staff_role
              FROM users
-             WHERE ($1::text IS NOT NULL AND id::text=$1::text)
-                OR ($2::text IS NOT NULL AND lower(email)=lower($2::text))
-             ORDER BY CASE WHEN id::text=$1::text THEN 0 ELSE 1 END
+             WHERE id::text=$1::text AND is_active=true
              LIMIT 1`,
-            [authUser.id ? String(authUser.id) : null, authUser.email || null]
+            [String(authUser.id)]
         );
         const storedUser = identityResult.rows[0] || null;
+        if (!storedUser) return res.status(403).json({ error: 'Active canonical user required' });
         const storedProfile = storedUser ? normalizeAccessProfile(storedUser) : null;
         const profile = storedProfile?.bimWorkspaceAccess ? storedProfile : await resolveAccessProfile(authUser);
         if (!profile.bimWorkspaceAccess && !authUser.isAdmin) return res.status(403).json({ error: 'Divisi BIM Workspace access required' });

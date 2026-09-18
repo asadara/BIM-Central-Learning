@@ -105,18 +105,9 @@ async function ensureUserProfileColumns(targetPool) {
             `);
             await targetPool.query(`
                 UPDATE users
-                SET system_role = CASE
-                    WHEN lower(coalesce(job_role, '')) LIKE '%admin%'
-                      OR lower(coalesce(metadata->>'isAdmin', 'false')) = 'true'
-                    THEN 'system_admin'
-                    ELSE 'employee'
-                END
+                SET system_role = 'employee'
                 WHERE system_role IS NULL
                    OR system_role NOT IN ('employee','system_admin')
-                   OR (system_role = 'employee' AND (
-                        lower(coalesce(job_role, '')) LIKE '%admin%'
-                        OR lower(coalesce(metadata->>'isAdmin', 'false')) = 'true'
-                   ))
             `);
         })().catch((error) => {
             ensureProfileColumnsPromise = null;

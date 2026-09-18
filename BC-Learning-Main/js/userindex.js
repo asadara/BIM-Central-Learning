@@ -1,3 +1,11 @@
+// Shared server-confirmed logout for legacy page entrypoints.
+window.bclAuthReady = window.bclAuthReady || new Promise((resolve, reject) => {
+    if (window.BclAuth) return resolve(window.BclAuth);
+    const script = document.createElement('script'); script.src = '/js/auth-lifecycle.js';
+    script.onload = () => resolve(window.BclAuth); script.onerror = () => reject(new Error('Authentication client unavailable'));
+    document.head.appendChild(script);
+});
+window.bclAuthReady.catch(() => {});
 // ✅ Fixed: JWT Token expiration check
 function isTokenExpired(token) {
     if (!token) return true;
@@ -38,6 +46,7 @@ function setUserData(data) {
 
         // Normalize data structure
         const normalizedData = {
+            id: data.id || data.userId || data.sub || null,
             name: data.name || data.username || '',
             email: data.email || '',
             role: data.role || 'Student',
@@ -106,23 +115,7 @@ function setupLogoutHandler(user) {
 }
 
 function handleLogout() {
-    try {
-        console.log("🔴 Logging out...");
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
-        localStorage.removeItem("user");
-        localStorage.removeItem("email");
-        localStorage.removeItem("role");
-        localStorage.removeItem("userimg");
-        window.currentUser = null;
-
-        // Redirect to main page
-        window.location.href = "/index.html";
-    } catch (error) {
-        console.error('❌ Error during logout:', error);
-        // Force redirect even if there's an error
-        window.location.href = "/index.html";
-    }
+    return window.bclAuthReady.then(auth => auth.logout()).catch(() => alert("Logout belum tersedia. Muat ulang halaman dan coba lagi."));
 }
 
 //Mengatur user login dan logout - dengan retry untuk navbar async loading
@@ -200,41 +193,12 @@ async function initializeUserAuth() {
 
 // Admin logout function
 function handleAdminLogout() {
-    try {
-        console.log("🔴 Logging out admin...");
-        fetch('/api/admin/logout', { method: 'POST' })
-            .then(() => {
-                // Redirect to main page after logout
-                window.location.href = "/index.html";
-            })
-            .catch(error => {
-                console.error('Admin logout error:', error);
-                // Force redirect even if logout fails
-                window.location.href = "/index.html";
-            });
-    } catch (error) {
-        console.error('❌ Error during admin logout:', error);
-        // Force redirect even if there's an error
-        window.location.href = "/index.html";
-    }
+    return window.bclAuthReady.then(auth => auth.logout()).catch(() => alert("Logout belum tersedia. Muat ulang halaman dan coba lagi."));
 }
 
 // Regular user logout function
 function handleRegularLogout() {
-    try {
-        console.log("🔴 Logging out regular user...");
-        localStorage.removeItem("token"); // Pastikan token juga dihapus
-        localStorage.removeItem("username");
-        localStorage.removeItem("user");
-        localStorage.removeItem("email");
-        localStorage.removeItem("role");
-        localStorage.removeItem("userimg");
-        window.location.href = "/index.html";
-    } catch (error) {
-        console.error('❌ Error during regular logout:', error);
-        // Force redirect even if there's an error
-        window.location.href = "/index.html";
-    }
+    return window.bclAuthReady.then(auth => auth.logout()).catch(() => alert("Logout belum tersedia. Muat ulang halaman dan coba lagi."));
 }
 
 document.addEventListener("DOMContentLoaded", function () {

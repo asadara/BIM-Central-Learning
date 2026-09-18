@@ -100,8 +100,8 @@ function isAdminFromTokenPayload() {
         const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
         const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
         const decoded = JSON.parse(atob(padded));
-        const role = String(decoded?.role || decoded?.jobRole || '').toLowerCase();
-        return decoded?.isAdmin === true || role.includes('admin') || role.includes('administrator');
+        const role = String(decoded?.role || '');
+        return role === 'system_admin';
     } catch (error) {
         return false;
     }
@@ -1360,11 +1360,9 @@ function checkAdminAccess() {
         parsedUser = window.currentUser || null;
     }
 
-    const role = String(parsedUser?.role || '').toLowerCase();
+    const role = parsedUser?.systemRole || parsedUser?.system_role || '';
     hasTutorialAdminAccess =
-        role.includes('admin') ||
-        role.includes('administrator') ||
-        role.includes('super') ||
+        role === 'system_admin' ||
         isAdminFromTokenPayload();
 
     const btn = document.getElementById('refreshThumbsBtn');

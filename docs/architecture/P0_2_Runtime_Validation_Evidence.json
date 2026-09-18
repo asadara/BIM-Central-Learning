@@ -1,0 +1,128 @@
+{
+  "phase": "P0-2 — Authentication & Session Unification",
+  "status": "IMPLEMENTED_RUNTIME_VALIDATION_PENDING",
+  "p0_1_status": "CLOSED_BY_USER_REVIEW",
+  "migration": {
+    "key": "20260918_p0_2_auth",
+    "appliedAtApproximateWIB": "2026-09-18 15:29:29",
+    "existingUsers": 16,
+    "everyExistingUserColumnUnchangedAtApply": true,
+    "sequenceBefore": "34",
+    "sequenceAfter": "34",
+    "automaticProviderMapping": false,
+    "protectedCases": {
+      "15_20Merged": false,
+      "orphan23Assigned": false,
+      "legacyAliasImported": false
+    },
+    "backup": "Local ignored .tmp/p0-2-activation/pre-p0-2-identity.dump; credentials never copied into this evidence"
+  },
+  "automatedTests": {
+    "p0_1_regression": {
+      "passed": 26,
+      "failed": 0,
+      "database": "disposable PostgreSQL"
+    },
+    "p0_2_integration": {
+      "passed": 24,
+      "failed": 0,
+      "database": "disposable PostgreSQL",
+      "googleVerification": "production google-auth-library with test RSA certificate fixture"
+    },
+    "javascriptSyntax": {
+      "files": 57,
+      "passed": true
+    },
+    "inlineScriptSyntax": {
+      "scripts": 8,
+      "passed": true
+    },
+    "diffWhitespaceCheck": "PASS",
+    "frontend": {
+      "tool": "Playwright CLI",
+      "credentialSource": "fixtures only",
+      "realGoogleLoginClaimed": false,
+      "checks": [
+        "local raw-password submission",
+        "Google nonce and explicit login/register payload",
+        "link confirmation panel",
+        "canonical response ID",
+        "server-confirmed JWT and admin-cookie logout",
+        "password change UI",
+        "explicit admin approval and password clearing"
+      ],
+      "artifacts": "output/playwright/p0-2-ui/"
+    }
+  },
+  "runtime": {
+    "launcher": "start-backend-public.bat",
+    "postgresRestarted": false,
+    "nginxRestarted": false,
+    "firstActivation": {
+      "oldPid": 23652,
+      "pid": 25980,
+      "startedAt": "2026-09-18T08:31:43.604Z",
+      "health": "HTTP 200",
+      "googleConfigContract": "p0-2"
+    },
+    "followupActivations": [
+      {
+        "pid": 22736,
+        "reason": "session-bound search tickets and loopback-only proxy trust",
+        "startedAt": "2026-09-18T08:42:44.855Z"
+      },
+      {
+        "launcherPid": 14820,
+        "requestedAtWIB": "2026-09-18T15:43:45.9873171+07:00",
+        "reason": "ensure running process also includes fixed-origin recovery links",
+        "status": "SUPERSEDED_BY_EXISTING_WATCHDOG_RECOVERY"
+      }
+    ],
+    "existingLocalLogin": "PENDING_OPERATOR",
+    "existingAdminLogin": "PENDING_OPERATOR",
+    "existingGoogleLinkedLogin": "PENDING_OPERATOR",
+    "secondGoogleLoginUsingPersistentSubject": "PENDING_OPERATOR",
+    "observationAt": "2026-09-18T08:48:02.736Z",
+    "observation": "First verified Google proof created one request, which expired without approval/completion. No provider mappings or authenticated user sessions. All 16 user columns and sequence 34 remain unchanged; real existing local/admin/Google login validation is still pending.",
+    "active": {
+      "pid": 13436,
+      "startedAt": "2026-09-18T08:44:16.708Z",
+      "launcher": "existing watchdog invoked the same start-backend-public.bat recovery path",
+      "log": "logs/backend-public-5052-20260918-154204-239.log",
+      "errorLog": "logs/backend-public-5052-20260918-154204-239.err.log",
+      "health": "HTTP 200",
+      "googleConfigContract": "p0-2",
+      "startupSchemaConfigErrors": 0,
+      "includesFinalSource": true
+    },
+    "diagnostics": [
+      "Legacy 5051 proxy logged ECONNREFUSED against /ping during backend restart windows, then health succeeded.",
+      "Existing watchdog recovery overlapped manual launcher UNC wait; final listener is one backend PID13436.",
+      "No migration/schema/config error in final backend log."
+    ],
+    "integrity": {
+      "capturedAt": "2026-09-18T08:48:02.736Z",
+      "userCount": 16,
+      "baselineCount": 16,
+      "changes": [],
+      "addedIds": [],
+      "sequenceBefore": {
+        "last_value": "34",
+        "is_called": true
+      },
+      "sequenceAfter": {
+        "last_value": "34",
+        "is_called": true
+      },
+      "providerMappings": [],
+      "sessions": [],
+      "events": []
+    }
+  },
+  "knownP0_1NonBlockingIssues": [
+    "learning_materials table unavailable",
+    "previous transient PDF timeout succeeded on retest"
+  ],
+  "p0_3_started": false,
+  "g0_or_online_started": false
+}

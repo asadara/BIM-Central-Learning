@@ -1,3 +1,4 @@
+const { authenticatedUserId } = require('../../utils/canonicalIdentity');
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
@@ -18,27 +19,7 @@ pgPool.on("error", (err) => {
 
 let ensureActivityTablePromise = null;
 
-function requireAuth(req, res, next) {
-    const authHeader = String(req.headers.authorization || "");
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            error: "Access token required"
-        });
-    }
-
-    try {
-        req.user = jwt.verify(token, SECRET_KEY);
-        return next();
-    } catch (error) {
-        return res.status(403).json({
-            success: false,
-            error: "Invalid or expired token"
-        });
-    }
-}
+function requireAuth(req,res,next) { return require('../../utils/auth').requireAuthenticated(req,res,next); }
 
 function toSafeText(value, maxLength = 255) {
     const text = String(value || "").trim();
@@ -173,11 +154,10 @@ router.post("/track", requireAuth, async (req, res) => {
                       AND event_type = 'completed'
                       AND (
                             ($3::text IS NOT NULL AND user_id = $3)
-                         OR ($4::text IS NOT NULL AND lower(user_email) = lower($4))
                       )
                     LIMIT 1
                 `,
-                [moduleId, moduleType, userId, userEmail]
+                [moduleId, moduleType, userId]
             );
 
             if (existingResult.rows.length > 0) {
@@ -244,9 +224,8 @@ router.get("/summary", requireAuth, async (req, res) => {
                     END)::INT AS completed_modules
                 FROM learning_activity_events
                 WHERE ($1::text IS NOT NULL AND user_id = $1)
-                   OR ($2::text IS NOT NULL AND lower(user_email) = lower($2))
             `,
-            [userId, userEmail]
+            [userId]
         );
 
         const recentResult = await pgPool.query(
@@ -261,11 +240,10 @@ router.get("/summary", requireAuth, async (req, res) => {
                     created_at
                 FROM learning_activity_events
                 WHERE ($1::text IS NOT NULL AND user_id = $1)
-                   OR ($2::text IS NOT NULL AND lower(user_email) = lower($2))
                 ORDER BY created_at DESC
                 LIMIT 8
             `,
-            [userId, userEmail]
+            [userId]
         );
 
         const completedResult = await pgPool.query(
@@ -275,11 +253,10 @@ router.get("/summary", requireAuth, async (req, res) => {
                 WHERE event_type = 'completed'
                   AND (
                         ($1::text IS NOT NULL AND user_id = $1)
-                     OR ($2::text IS NOT NULL AND lower(user_email) = lower($2))
                   )
                 ORDER BY module_id
             `,
-            [userId, userEmail]
+            [userId]
         );
 
         const row = summaryResult.rows[0] || {};

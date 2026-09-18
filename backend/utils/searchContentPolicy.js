@@ -165,12 +165,14 @@ function signTicketPayload(encodedPayload) {
 
 function createSearchFileTicket(relativePath, authUser, ttlMs = FILE_TICKET_TTL_MS) {
     const normalizedPath = normalizeSearchRelativePath(relativePath);
-    if (!normalizedPath || !authUser) return '';
+    const sub = require('./canonicalIdentity').authenticatedUserId(authUser || {});
+    if (!normalizedPath || !sub || !authUser.sid || !Number.isInteger(authUser.sv) ||
+        !['jwt','admin'].includes(authUser.sessionType) || !Number.isFinite(authUser.exp)) return '';
     const payload = Buffer.from(JSON.stringify({
-        v: 1,
+        v: 2,
         p: normalizedPath,
-        sub: String(authUser.id || authUser.email || authUser.username || 'user'),
-        exp: Date.now() + Math.max(60_000, Number(ttlMs) || FILE_TICKET_TTL_MS)
+        sub, sid:authUser.sid, sv:authUser.sv, kind:authUser.sessionType,
+        exp: Math.min(authUser.exp*1000, Date.now() + Math.min(FILE_TICKET_TTL_MS, Math.max(60_000, Number(ttlMs) || FILE_TICKET_TTL_MS)))
     })).toString('base64url');
     return `${payload}.${signTicketPayload(payload)}`;
 }
@@ -186,7 +188,8 @@ function verifySearchFileTicket(ticket, expectedRelativePath) {
     try {
         const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
         const normalizedExpected = normalizeSearchRelativePath(expectedRelativePath);
-        if (decoded.v !== 1 || !decoded.p || decoded.p !== normalizedExpected || Number(decoded.exp) < Date.now()) return null;
+        if (decoded.v !== 2 || !decoded.p || decoded.p !== normalizedExpected || !Number.isFinite(decoded.exp) || decoded.exp <= Date.now() ||
+            !require('./canonicalIdentity').canonicalUserId(decoded.sub) || !decoded.sid || !Number.isInteger(decoded.sv) || !['jwt','admin'].includes(decoded.kind)) return null;
         return decoded;
     } catch (error) {
         return null;

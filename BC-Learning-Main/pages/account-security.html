@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Keamanan akun — BCL</title><link rel="stylesheet" href="/css/bootstrap.min.css"></head>
+<body><main class="container py-5" style="max-width:760px">
+<a href="/elearning-assets/dashboard.html">Kembali ke BCL</a><h1 class="mt-4">Keamanan akun</h1>
+<p id="account-state" role="status" aria-live="polite">Memeriksa sesi…</p>
+<section id="settings" hidden>
+<h2 class="h4 mt-4">Password BCL</h2><p>Gunakan sedikitnya 8 karakter, maksimal 72 byte UTF-8. Spasi di awal dan akhir merupakan bagian password.</p>
+<form id="password-form">
+<label class="d-block">Password saat ini<input id="current-password" class="form-control" type="password" autocomplete="current-password"></label>
+<label class="d-block mt-2">Password baru<input id="new-password" class="form-control" type="password" autocomplete="new-password" minlength="8" required></label>
+<label class="d-block mt-2">Ulangi password baru<input id="confirm-password" class="form-control" type="password" autocomplete="new-password" required></label>
+<button id="local-password" class="btn btn-primary mt-3" type="submit">Ubah dengan password saat ini</button>
+<button id="google-password" class="btn btn-outline-primary mt-3" type="button" hidden>Tetapkan dengan verifikasi Google</button>
+</form>
+<h2 class="h4 mt-4">Akun Google</h2><p id="provider-state"></p>
+<button id="link-google" class="btn btn-outline-primary" type="button">Hubungkan Google ke akun ini</button>
+<p class="small mt-2">Pelepasan hubungan Google belum tersedia.</p>
+<div id="google-controls"><div id="security-google-button" class="my-3"></div><p id="security-google-note" role="status" aria-live="polite"></p></div>
+<h2 class="h4 mt-4">Sesi</h2><p>Perubahan password mengakhiri sesi lama. Anda dapat mengakhiri seluruh sesi sekarang.</p>
+<button id="logout-all" class="btn btn-outline-danger">Keluar dari seluruh sesi</button>
+<button class="btn btn-outline-secondary" data-auth-logout>Keluar dari browser ini</button>
+</section></main>
+<script src="/js/auth-lifecycle.js"></script><script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="/js/google-auth.js"></script><script src="/js/account-security.js"></script></body></html>

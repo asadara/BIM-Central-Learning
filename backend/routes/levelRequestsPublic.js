@@ -5,15 +5,16 @@ const multer = require("multer");
 const { requireAuthenticated } = require('../utils/auth');
 const { normalizeBimCompetencyLevel } = require('../utils/userProfileSchema');
 
+function createLevelRequestsPublic({ backendDir = path.resolve(__dirname, '..') } = {}) {
 const router = express.Router();
-const LEVEL_REQUESTS_FILE = path.join(__dirname, "../level-requests.json");
-const USERS_FILE = path.join(__dirname, "../users.json");
+const LEVEL_REQUESTS_FILE = path.join(backendDir, "level-requests.json");
+const USERS_FILE = path.join(backendDir, "users.json");
 
 function resolveRequestUserId(req) {
     const authUser = req.authUser || req.user;
     if (!authUser) return null;
 
-    const userId = authUser.id || authUser.email || authUser.username;
+    const userId = authUser.id;
     return userId ? String(userId) : null;
 }
 
@@ -22,7 +23,7 @@ router.use(requireAuthenticated);
 // Multer configuration for file uploads (evidence/certificates)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, "../uploads/level-requests");
+        const uploadDir = path.join(backendDir, "uploads/level-requests");
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -246,7 +247,7 @@ router.post("/", upload.array('evidenceFiles', 5), (req, res) => {
         // Clean up uploaded files if request failed
         if (req.files && req.files.length > 0) {
             req.files.forEach(file => {
-                const filePath = path.join(__dirname, "../uploads/level-requests", file.filename);
+                const filePath = path.join(backendDir, "uploads/level-requests", file.filename);
                 if (fs.existsSync(filePath)) {
                     fs.unlinkSync(filePath);
                 }
@@ -356,10 +357,22 @@ router.put("/:id(req_[^/]+)", upload.array('evidenceFiles', 5), (req, res) => {
             evidenceFiles = [...evidenceFiles, ...newFiles];
         }
 
-        // Update request
+        // User edits cannot change ownership, request identity or administrative approval.
+        const editableFields = new Set(['targetLevel', 'reason', 'workExperience', 'projectExamples', 'additionalCertifications', 'supervisorEmail']);
+        const updates = {};
+        for (const [field, value] of Object.entries(req.body || {})) {
+            if (!editableFields.has(field) || typeof value !== 'string') {
+                return res.status(400).json({ success: false, error: `Field cannot be updated: ${field}` });
+            }
+            updates[field] = value;
+        }
+        if (Object.prototype.hasOwnProperty.call(updates, 'targetLevel')) {
+            updates.targetLevel = normalizeBimCompetencyLevel(updates.targetLevel);
+            if (!updates.targetLevel) return res.status(400).json({ success: false, error: 'Invalid target competency level' });
+        }
         const updatedRequest = {
             ...request,
-            ...req.body,
+            ...updates,
             evidenceFiles,
             updatedAt: new Date().toISOString()
         };
@@ -430,7 +443,7 @@ router.delete("/:id(req_[^/]+)", (req, res) => {
         // Delete associated files
         if (request.evidenceFiles && request.evidenceFiles.length > 0) {
             request.evidenceFiles.forEach(file => {
-                const filePath = path.join(__dirname, "../uploads/level-requests", file.filename);
+                const filePath = path.join(backendDir, "uploads/level-requests", file.filename);
                 if (fs.existsSync(filePath)) {
                     fs.unlinkSync(filePath);
                 }
@@ -573,4 +586,8 @@ function getAvailableUpgrades(currentLevel, user) {
     return upgrades;
 }
 
-module.exports = router;
+return router;
+}
+
+module.exports = createLevelRequestsPublic();
+module.exports.createLevelRequestsPublic = createLevelRequestsPublic;

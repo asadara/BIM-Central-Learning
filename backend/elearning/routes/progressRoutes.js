@@ -1,3 +1,4 @@
+const { authenticatedUserId } = require('../../utils/canonicalIdentity');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
@@ -17,28 +18,7 @@ pgPool.on('error', (err) => {
     console.warn('Progress routes PostgreSQL pool error:', err.message);
 });
 
-function requireAuth(req, res, next) {
-    const authHeader = String(req.headers.authorization || '');
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            error: 'Access token required'
-        });
-    }
-
-    try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        req.user = decoded;
-        return next();
-    } catch (error) {
-        return res.status(403).json({
-            success: false,
-            error: 'Invalid or expired token'
-        });
-    }
-}
+function requireAuth(req,res,next) { return require('../../utils/auth').requireAuthenticated(req,res,next); }
 
 function toNonNegativeInt(value, fallback = 0) {
     const parsed = Number(value);
@@ -169,7 +149,7 @@ function mapProgressRow(row) {
 
 router.get('/me', requireAuth, async (req, res) => {
     try {
-        const userId = Number(req.user && req.user.userId);
+        const userId = Number(authenticatedUserId(req.user));
         if (!Number.isFinite(userId)) {
             return res.status(401).json({
                 success: false,
@@ -203,7 +183,7 @@ router.get('/me', requireAuth, async (req, res) => {
 
 async function upsertProgress(req, res) {
     try {
-        const userId = Number(req.user && req.user.userId);
+        const userId = Number(authenticatedUserId(req.user));
         if (!Number.isFinite(userId)) {
             return res.status(401).json({
                 success: false,

@@ -182,8 +182,8 @@ function getStoredAdminToken() {
         const storedUser = localStorage.getItem('user');
         const parsedUser = storedUser ? JSON.parse(storedUser) : null;
         const token = parsedUser?.token || localStorage.getItem('token');
-        const role = (parsedUser?.role || localStorage.getItem('role') || '').toLowerCase();
-        const isAdminRole = role.includes('admin') || role.includes('administrator');
+        const role = parsedUser?.systemRole || parsedUser?.system_role || '';
+        const isAdminRole = role === 'system_admin';
         if (!token || !isAdminRole) {
             return null;
         }
@@ -413,7 +413,7 @@ function showSection(sectionName) {
 }
 
 function getAdminFetchHeaders(extraHeaders = {}) {
-    const token = getStoredAdminToken();
+    const token = isAdminLoggedIn ? null : getStoredAdminToken();
     return {
         ...extraHeaders,
         ...(token ? { Authorization: `Bearer ${token}` } : {})

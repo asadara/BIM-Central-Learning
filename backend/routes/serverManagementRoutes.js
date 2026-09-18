@@ -1,34 +1,15 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { authenticatedUserId } = require('../utils/canonicalIdentity');
 
 function createServerManagementRoutes({ backendDir, jwt, secretKey, spawn, videoCache }) {
     const router = express.Router();
     const serverStartedAt = new Date();
 
     function authorizeServerManagement(req) {
-        if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
-            return { ok: true, method: "admin-session" };
-        }
-
-        const authHeader = req.headers.authorization || "";
-        if (authHeader.startsWith("Bearer ")) {
-            const token = authHeader.slice(7).trim();
-            if (token) {
-                try {
-                    const decoded = jwt.verify(token, secretKey);
-                    const role = String(decoded?.role || decoded?.jobRole || decoded?.user?.role || decoded?.userType || "").toLowerCase();
-                    const isAdminToken = decoded?.isAdmin === true || role.includes("admin") || role.includes("super");
-                    if (isAdminToken) {
-                        return { ok: true, method: "jwt" };
-                    }
-                } catch (error) {
-                    // Ignore invalid token.
-                }
-            }
-        }
-
-        return { ok: false, method: "none" };
+        const principal = require('../utils/auth').getRequestUser(req);
+        return {ok:!!principal?.isAdmin,method:principal ? (req.authPrincipal ? 'jwt' : 'admin-session') : 'none'};
     }
 
     function appendServerRestartLog(message) {

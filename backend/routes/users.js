@@ -2,7 +2,8 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const router = express.Router();
+const { hashPassword, passwordValidationError } = require('../utils/credentials');
+const { canonicalUserId, protectedUserField } = require('../utils/canonicalIdentity');
 const {
     requireAuthenticated,
     requireAuthenticatedPreferBearer,
@@ -31,16 +32,8 @@ const dbConfig = createPgConfig({
     connectionTimeoutMillis: 5000,
 });
 
-const pool = new Pool(dbConfig);
-pool.on('error', (err) => {
-    console.warn('WARN: PostgreSQL pool error in users routes:', err.message);
-});
-
-// Fallback JSON storage
 const USERS_FILE = path.join(__dirname, '..', 'users.json');
-
-// Helper functions for user management
-const readUsers = () => {
+const readLegacyUsers = () => {
     if (!fs.existsSync(USERS_FILE)) return [];
     try {
         const data = fs.readFileSync(USERS_FILE, 'utf-8');
@@ -50,6 +43,18 @@ const readUsers = () => {
         return [];
     }
 };
+
+
+function createUsersRoutes({ pool = new Pool(dbConfig), readUsers = readLegacyUsers } = {}) {
+const router = express.Router();
+pool.on('error', (err) => {
+    console.warn('WARN: PostgreSQL pool error in users routes:', err.message);
+});
+
+// Fallback JSON storage
+
+
+// Helper functions for user management
 
 async function fetchMappingAccessFromDb(userId, email) {
     const profile = await fetchAccessProfileFromDb(userId, email);
@@ -225,7 +230,10 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
             const safeUsers = users.map(user => {
                 const profileState = mapUserProfileState(user);
                 return ({
-                id: user.id || user.username, // JSON fallback uses string IDs
+                id: null, // Legacy identifiers are diagnostic; no canonical mapping is asserted.
+                legacyId: user.id || user.username || null,
+                identitySource: 'legacy_json',
+                canonicalIdentityResolved: false,
                 username: user.username,
                 email: user.email,
                 bimLevel: profileState.competencyLevel,
@@ -239,15 +247,15 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
                 lastLogin: user.lastLogin || user.last_login,
                 loginCount: user.loginCount || user.login_count || 0,
                 isActive: user.isActive !== undefined ? user.isActive : true,
-                mappingKompetensiAccess: user.mappingKompetensiAccess || false,
-                dokumenAccess: user.dokumenAccess || user.dokumen_access || false,
-                audit2026Access: user.audit2026Access || user.audit_2026_access || false,
-                projectDocumentAccess: user.projectDocumentAccess || user.project_document_access || false,
-                libraryDownloadAccess: user.libraryDownloadAccess || user.library_download_access || false,
-                watermarkFreeDownloadAccess: user.watermarkFreeDownloadAccess || user.watermark_free_download_access || false,
-                bimWorkspaceAccess: user.bimWorkspaceAccess || user.bim_workspace_access || false,
-                bimWorkspaceRole: user.bimWorkspaceRole || user.bim_workspace_role || 'staff_bim',
-                bimWorkspaceStaffRole: user.bimWorkspaceStaffRole || user.bim_workspace_staff_role || null
+                mappingKompetensiAccess: false,
+                dokumenAccess: false,
+                audit2026Access: false,
+                projectDocumentAccess: false,
+                libraryDownloadAccess: false,
+                watermarkFreeDownloadAccess: false,
+                bimWorkspaceAccess: false,
+                bimWorkspaceRole: 'viewer',
+                bimWorkspaceStaffRole: null
             });
             });
 
@@ -265,7 +273,7 @@ router.get('/get-all', requireAuthenticated, requireUserDirectoryAccess, async (
 });
 
 router.get('/verify/:id', requireAuthenticated, requireUserDirectoryAccess, async (req, res) => {
-    const requestedId = String(req.params.id || '').trim();
+    const requestedId = canonicalUserId(req.params.id);
 
     if (!requestedId) {
         return res.status(400).json({
@@ -280,7 +288,7 @@ router.get('/verify/:id', requireAuthenticated, requireUserDirectoryAccess, asyn
             const query = `
                 SELECT id, username, email, bim_level, job_role, organization, is_active
                 FROM users
-                WHERE id::text = $1 OR username = $1 OR email = $1
+                WHERE id = $1
                 LIMIT 1
             `;
             const result = await pool.query(query, [requestedId]);
@@ -306,40 +314,8 @@ router.get('/verify/:id', requireAuthenticated, requireUserDirectoryAccess, asyn
             console.warn('WARN: PostgreSQL not available for user verification:', dbError.message);
         }
 
-        const users = readUsers();
-        const matchedUser = users.find((user) => {
-            const candidateIds = [
-                user.id,
-                user.user_id,
-                user.username,
-                user.email
-            ].filter(Boolean).map((value) => String(value).trim());
+        return res.json({ exists: false, message: 'Canonical user not found', details: null });
 
-            return candidateIds.includes(requestedId);
-        });
-
-        if (!matchedUser) {
-            return res.json({
-                exists: false,
-                message: 'User not found in PostgreSQL or JSON storage',
-                details: null
-            });
-        }
-
-        return res.json({
-            exists: true,
-            message: 'User found in JSON storage',
-            details: {
-                source: 'json',
-                id: matchedUser.id || matchedUser.user_id || matchedUser.username,
-                username: matchedUser.username,
-                email: matchedUser.email,
-                bimLevel: matchedUser.bimLevel || matchedUser.bim_level || null,
-                jobRole: matchedUser.jobRole || matchedUser.job_role || null,
-                organization: matchedUser.organization || null,
-                isActive: matchedUser.isActive !== undefined ? matchedUser.isActive : matchedUser.is_active !== false
-            }
-        });
     } catch (error) {
         console.error('ERROR: Failed to verify user:', error);
         return res.status(500).json({
@@ -414,10 +390,14 @@ function getStatsFromJSON(res) {
 router.post('/create', requireAdmin, async (req, res) => {
     try {
         const { username, email, password, bimLevel, jobRole, positionLabel, organization } = req.body;
+        const protectedField = protectedUserField(req.body, { allowPassword: true });
+        if (protectedField) return res.status(400).json({ error: `Protected user field: ${protectedField}` });
+        const passwordError = passwordValidationError(password);
+        if (passwordError) return res.status(400).json({ error: passwordError });
         const normalizedBimLevel = normalizeBimCompetencyLevel(bimLevel);
         const normalizedPositionLabel = String(positionLabel || jobRole || '').trim().slice(0, 100);
 
-        if (!username || !email || !password) {
+        if (typeof username !== "string" || !username.trim() || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || !password) {
             return res.status(400).json({
                 error: 'Username, email, and password are required'
             });
@@ -427,7 +407,7 @@ router.post('/create', requireAdmin, async (req, res) => {
         try {
             await ensureAccessColumns(pool);
             // Check if user already exists
-            const checkQuery = 'SELECT id FROM users WHERE email = $1 OR username = $2';
+            const checkQuery = 'SELECT id FROM users WHERE lower(email) = lower($1) OR lower(username) = lower($2)';
             const checkResult = await pool.query(checkQuery, [email, username]);
 
             if (checkResult.rows.length > 0) {
@@ -436,8 +416,8 @@ router.post('/create', requireAdmin, async (req, res) => {
                 });
             }
 
-            // Hash password (simple for demo - use bcrypt in production)
-            const hashedPassword = password; // In production: await bcrypt.hash(password, 10);
+            // Shared credential policy; plaintext must never reach storage.
+            const hashedPassword = await hashPassword(password);
 
             // Create new user
             const insertQuery = `
@@ -445,15 +425,15 @@ router.post('/create', requireAdmin, async (req, res) => {
                     username, email, password, bim_level, job_role, position_label,
                     position_verification_status, competency_status, system_role, organization, is_active
                 )
-                VALUES ($1, $2, $3, $4, $5, $5, 'unverified', $6, 'employee', $7, $8)
+                VALUES ($1, $2, $3, $4, $5::text, $5::text, 'unverified', $6, 'employee', $7, $8)
                 RETURNING id, username, email, bim_level, job_role, position_label,
                           position_verification_status, competency_status, target_bim_level,
                           organization, registration_date, is_active
             `;
 
             const result = await pool.query(insertQuery, [
-                username,
-                email,
+                username.trim(),
+                email.trim(),
                 hashedPassword,
                 normalizedBimLevel,
                 normalizedPositionLabel || null,
@@ -497,71 +477,10 @@ router.post('/create', requireAdmin, async (req, res) => {
             });
 
         } catch (dbError) {
-            console.warn('⚠️ PostgreSQL not available for create, falling back to JSON:', dbError.message);
-
-            // Fallback to JSON
-            const users = readUsers();
-
-            // Check if user already exists
-            const existingUser = users.find(u => u.email === email || u.username === username);
-            if (existingUser) {
-                return res.status(409).json({
-                    error: 'User with this email or username already exists'
-                });
-            }
-
-            // Hash password (simple for demo - use bcrypt in production)
-            const hashedPassword = password;
-
-            // Create new user
-            const newUser = {
-                id: Date.now().toString(),
-                username,
-                email,
-                password: hashedPassword,
-                bimLevel: normalizedBimLevel,
-                competencyStatus: normalizedBimLevel ? 'self_declared' : 'not_assessed',
-                targetBimLevel: null,
-                jobRole: normalizedPositionLabel || null,
-                positionLabel: normalizedPositionLabel || null,
-                positionVerificationStatus: 'unverified',
-                systemRole: 'employee',
-                organization: organization || '',
-                registrationDate: new Date().toISOString(),
-                lastLogin: null,
-                loginCount: 0,
-                isActive: true,
-                mappingKompetensiAccess: false,
-                mapping_kompetensi_access: false,
-                dokumenAccess: false,
-                dokumen_access: false,
-                audit2026Access: false,
-                audit_2026_access: false,
-                projectDocumentAccess: false,
-                project_document_access: false,
-                libraryDownloadAccess: false,
-                library_download_access: false,
-                watermarkFreeDownloadAccess: false,
-                watermark_free_download_access: false,
-                bimWorkspaceAccess: false,
-                bim_workspace_access: false,
-                bimWorkspaceRole: 'staff_bim',
-                bim_workspace_role: 'staff_bim',
-                bimWorkspaceStaffRole: 'bim_specialist',
-                bim_workspace_staff_role: 'bim_specialist'
-            };
-
-            users.push(newUser);
-            fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-
-            console.log(`📄 Created new user in JSON fallback: ${username} (${email})`);
-
-            // Return safe user data
-            const { password: _, ...safeUser } = newUser;
-            return res.status(201).json({
-                message: 'User created successfully',
-                user: safeUser
-            });
+            if (dbError.code === '23505') return res.status(409).json({ error: 'Email or username already registered' });
+            if (dbError.code === '23503') return res.status(409).json({ error: 'User has dependent records' });
+            console.warn('Canonical user operation failed:', dbError.code || dbError.name);
+            return res.status(503).json({ error: 'Canonical user storage unavailable; legacy JSON was not modified' });
         }
 
     } catch (error) {
@@ -576,8 +495,11 @@ router.post('/create', requireAdmin, async (req, res) => {
 // PUT /api/users/:id - Update user (admin only)
 router.put('/:id', requireAdmin, async (req, res) => {
     try {
-        const userId = req.params.id;
+        const userId = canonicalUserId(req.params.id);
+        if (!userId) return res.status(400).json({ error: 'Canonical user ID required' });
         const updates = req.body;
+        const protectedField = protectedUserField(updates);
+        if (protectedField) return res.status(400).json({ error: `Protected user field: ${protectedField}` });
 
         console.log(`🔄 Updating user ${userId}:`, updates);
 
@@ -660,7 +582,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
             }
 
             const verifier = String(
-                req.authUser?.username || req.authUser?.email || req.authUser?.userId || req.user?.username || 'admin'
+                req.authUser?.id || req.user?.id
             ).slice(0, 120);
 
             if (seenUpdateColumns.has('position_verification_status')) {
@@ -703,9 +625,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
             const updateQuery = `
                 UPDATE users
                 SET ${updateFields.join(', ')}
-                WHERE id::text = $${paramIndex}
-                   OR username = $${paramIndex}
-                   OR lower(email) = lower($${paramIndex})
+                WHERE id = $${paramIndex}
                 RETURNING id, username, email, bim_level, job_role, position_label,
                          position_verification_status, competency_status, target_bim_level, system_role, organization,
                          registration_date, last_login, login_count, is_active,
@@ -758,163 +678,10 @@ router.put('/:id', requireAdmin, async (req, res) => {
             });
 
         } catch (dbError) {
-            console.warn('⚠️ PostgreSQL not available for update, falling back to JSON:', dbError.message);
-
-            // Fallback to JSON
-            const users = readUsers();
-            const requestedId = String(userId || '').trim();
-            const userIndex = users.findIndex((user) => {
-                const candidateIds = [
-                    user.id,
-                    user.user_id,
-                    user.username,
-                    user.email
-                ].filter(Boolean).map((value) => String(value).trim());
-
-                return candidateIds.includes(requestedId);
-            });
-
-            if (userIndex === -1) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            // Update user (exclude sensitive fields)
-            const safeUpdates = { ...updates };
-            delete safeUpdates.password; // Don't allow password updates via this endpoint
-
-            const accessUpdates = normalizeAccessProfile(safeUpdates);
-            const hasMappingUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'mappingKompetensiAccess') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'mapping_kompetensi_access');
-            const hasDokumenUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'dokumenAccess') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'dokumen_access');
-            const hasAudit2026Update =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'audit2026Access') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'audit_2026_access');
-            const hasProjectDocumentUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'projectDocumentAccess') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'project_document_access');
-            const hasLibraryUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'libraryDownloadAccess') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'library_download_access');
-            const hasWatermarkUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'watermarkFreeDownloadAccess') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'watermark_free_download_access');
-            const hasWorkspaceAccessUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'bimWorkspaceAccess') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_access');
-            const hasWorkspaceRoleUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'bimWorkspaceRole') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_role');
-            const hasWorkspaceStaffRoleUpdate =
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'bimWorkspaceStaffRole') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_workspace_staff_role');
-
-            users[userIndex] = { ...users[userIndex], ...safeUpdates };
-
-            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'positionLabel') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'position_label')) {
-                const value = String(safeUpdates.positionLabel ?? safeUpdates.position_label ?? '').trim().slice(0, 100) || null;
-                users[userIndex].positionLabel = value;
-                users[userIndex].position_label = value;
-                users[userIndex].jobRole = value;
-                users[userIndex].job_role = value;
-            }
-
-            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'positionVerificationStatus') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'position_verification_status')) {
-                const value = normalizePositionVerificationStatus(
-                    safeUpdates.positionVerificationStatus ?? safeUpdates.position_verification_status
-                );
-                users[userIndex].positionVerificationStatus = value;
-                users[userIndex].position_verification_status = value;
-                users[userIndex].positionVerifiedAt = value === 'verified' ? new Date().toISOString() : null;
-                users[userIndex].positionVerifiedBy = value === 'verified' ? 'admin' : null;
-            }
-
-            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'bimLevel') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'bim_level')) {
-                const value = normalizeBimCompetencyLevel(safeUpdates.bimLevel ?? safeUpdates.bim_level);
-                users[userIndex].bimLevel = value;
-                users[userIndex].bim_level = value;
-            }
-
-            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'competencyStatus') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'competency_status')) {
-                const value = normalizeCompetencyStatus(
-                    safeUpdates.competencyStatus ?? safeUpdates.competency_status,
-                    users[userIndex].bimLevel
-                );
-                users[userIndex].competencyStatus = value;
-                users[userIndex].competency_status = value;
-                users[userIndex].competencyVerifiedAt = value === 'verified' ? new Date().toISOString() : null;
-                users[userIndex].competencyVerifiedBy = value === 'verified' ? 'admin' : null;
-            }
-
-            if (Object.prototype.hasOwnProperty.call(safeUpdates, 'targetBimLevel') ||
-                Object.prototype.hasOwnProperty.call(safeUpdates, 'target_bim_level')) {
-                const value = normalizeBimCompetencyLevel(safeUpdates.targetBimLevel ?? safeUpdates.target_bim_level);
-                users[userIndex].targetBimLevel = value;
-                users[userIndex].target_bim_level = value;
-            }
-
-            if (hasMappingUpdate) {
-                users[userIndex].mappingKompetensiAccess = accessUpdates.mappingKompetensiAccess;
-                users[userIndex].mapping_kompetensi_access = accessUpdates.mappingKompetensiAccess;
-            }
-
-            if (hasDokumenUpdate) {
-                users[userIndex].dokumenAccess = accessUpdates.dokumenAccess;
-                users[userIndex].dokumen_access = accessUpdates.dokumenAccess;
-            }
-
-            if (hasAudit2026Update) {
-                users[userIndex].audit2026Access = accessUpdates.audit2026Access;
-                users[userIndex].audit_2026_access = accessUpdates.audit2026Access;
-            }
-
-            if (hasProjectDocumentUpdate) {
-                users[userIndex].projectDocumentAccess = accessUpdates.projectDocumentAccess;
-                users[userIndex].project_document_access = accessUpdates.projectDocumentAccess;
-            }
-
-            if (hasLibraryUpdate) {
-                users[userIndex].libraryDownloadAccess = accessUpdates.libraryDownloadAccess;
-                users[userIndex].library_download_access = accessUpdates.libraryDownloadAccess;
-            }
-
-            if (hasWatermarkUpdate) {
-                users[userIndex].watermarkFreeDownloadAccess = accessUpdates.watermarkFreeDownloadAccess;
-                users[userIndex].watermark_free_download_access = accessUpdates.watermarkFreeDownloadAccess;
-            }
-
-            if (hasWorkspaceAccessUpdate) {
-                users[userIndex].bimWorkspaceAccess = accessUpdates.bimWorkspaceAccess;
-                users[userIndex].bim_workspace_access = accessUpdates.bimWorkspaceAccess;
-            }
-
-            if (hasWorkspaceRoleUpdate) {
-                users[userIndex].bimWorkspaceRole = accessUpdates.bimWorkspaceRole;
-                users[userIndex].bim_workspace_role = accessUpdates.bimWorkspaceRole;
-            }
-
-            if (hasWorkspaceStaffRoleUpdate) {
-                users[userIndex].bimWorkspaceStaffRole = accessUpdates.bimWorkspaceStaffRole;
-                users[userIndex].bim_workspace_staff_role = accessUpdates.bimWorkspaceStaffRole;
-            }
-
-            // Save users
-            fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-
-            console.log(`📄 Updated user in JSON fallback: ${users[userIndex].username}`);
-
-            // Return safe user data
-            const { password: _, ...safeUser } = users[userIndex];
-            return res.json({
-                message: 'User updated successfully',
-                user: safeUser
-            });
+            if (dbError.code === '23505') return res.status(409).json({ error: 'Email or username already registered' });
+            if (dbError.code === '23503') return res.status(409).json({ error: 'User has dependent records' });
+            console.warn('Canonical user operation failed:', dbError.code || dbError.name);
+            return res.status(503).json({ error: 'Canonical user storage unavailable; legacy JSON was not modified' });
         }
 
     } catch (error) {
@@ -929,7 +696,8 @@ router.put('/:id', requireAdmin, async (req, res) => {
 // DELETE /api/users/:id - Delete user (admin only)
 router.delete('/:id', requireAdmin, async (req, res) => {
     try {
-        const userId = req.params.id;
+        const userId = canonicalUserId(req.params.id);
+        if (!userId) return res.status(400).json({ error: 'Canonical user ID required' });
         console.log(`🗑️ Deleting user ${userId}`);
 
         // Try PostgreSQL first
@@ -947,23 +715,10 @@ router.delete('/:id', requireAdmin, async (req, res) => {
             });
 
         } catch (dbError) {
-            console.warn('⚠️ PostgreSQL not available for delete, falling back to JSON:', dbError.message);
-
-            // Fallback to JSON
-            const users = readUsers();
-            const filteredUsers = users.filter(u => u.id !== userId);
-
-            if (filteredUsers.length === users.length) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            // Save filtered users
-            fs.writeFileSync(USERS_FILE, JSON.stringify(filteredUsers, null, 2));
-
-            console.log(`📄 Deleted user from JSON fallback: ${userId}`);
-            return res.json({
-                message: 'User deleted successfully'
-            });
+            if (dbError.code === '23505') return res.status(409).json({ error: 'Email or username already registered' });
+            if (dbError.code === '23503') return res.status(409).json({ error: 'User has dependent records' });
+            console.warn('Canonical user operation failed:', dbError.code || dbError.name);
+            return res.status(503).json({ error: 'Canonical user storage unavailable; legacy JSON was not modified' });
         }
 
     } catch (error) {
@@ -975,4 +730,8 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     }
 });
 
-module.exports = router;
+return router;
+}
+
+module.exports = createUsersRoutes();
+module.exports.createUsersRoutes = createUsersRoutes;

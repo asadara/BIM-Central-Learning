@@ -43,9 +43,6 @@ function getUserIdentity(userData) {
     return String(
         userData.id ||
         userData.userId ||
-        userData.email ||
-        userData.username ||
-        userData.name ||
         ''
     ).trim();
 }

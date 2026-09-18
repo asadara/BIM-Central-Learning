@@ -1,3 +1,11 @@
+// Shared server-confirmed logout for legacy page entrypoints.
+window.bclAuthReady = window.bclAuthReady || new Promise((resolve, reject) => {
+    if (window.BclAuth) return resolve(window.BclAuth);
+    const script = document.createElement('script'); script.src = '/js/auth-lifecycle.js';
+    script.onload = () => resolve(window.BclAuth); script.onerror = () => reject(new Error('Authentication client unavailable'));
+    document.head.appendChild(script);
+});
+window.bclAuthReady.catch(() => {});
 // ✅ Independent E-Learning User Management
 // This script manages user authentication specifically for the e-learning section
 
@@ -266,21 +274,7 @@ function setupLogoutHandler(user) {
 }
 
 function handleLogout() {
-   try {
-      localStorage.clear();
-      window.currentUser = null;
-
-      // Redirect to login page or refresh
-      if (window.location.pathname !== "/pages/login.html") {
-         window.location.href = "/pages/login.html";
-      } else {
-         window.location.reload();
-      }
-   } catch (error) {
-      console.error('❌ Error during logout:', error);
-      // Force redirect even if there's an error
-      window.location.href = "/pages/login.html";
-   }
+    return window.bclAuthReady.then(auth => auth.logout()).catch(() => alert("Logout belum tersedia. Muat ulang halaman dan coba lagi."));
 }
 
 // ✅ Fixed: Improved login form handler with better error handling
@@ -305,7 +299,7 @@ function setupLoginForm() {
       e.preventDefault();
 
       const email = document.getElementById("email")?.value.trim();
-      const password = document.getElementById("password")?.value.trim();
+      const password = document.getElementById("password")?.value;
 
       if (!email || !password) {
          alert("❌ Harap isi semua kolom!");
@@ -347,6 +341,7 @@ function setupLoginForm() {
 
          if (response.ok && (result.success || result.token)) {
             const user = {
+               id: result.id,
                name: result.name || result.username,
                email: result.email || email,
                role: result.positionLabel || result.role || '',

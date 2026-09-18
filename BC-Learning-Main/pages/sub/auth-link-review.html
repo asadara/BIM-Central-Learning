@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verifikasi hubungan Google — BCL Admin</title><link rel="stylesheet" href="/css/bootstrap.min.css"></head>
+<body><main class="container py-5" style="max-width:800px"><a href="/pages/sub/adminbcl.html">Kembali ke Admin</a>
+<h1 class="mt-4">Verifikasi hubungan Google</h1>
+<p>Pastikan pemilik Google juga pemilik akun BCL melalui pemeriksaan langsung atau bukti organisasi yang dapat diverifikasi. Kesamaan email saja tidak cukup.</p>
+<p>Gunakan ID BCL yang sudah ada. Kasus identitas ambigu (termasuk kandidat 15/20 dan orphan 23) membutuhkan verifikasi manual; halaman ini tidak melakukan merge atau pemindahan data.</p>
+<button id="refresh-requests" class="btn btn-outline-primary">Muat permintaan</button>
+<ul id="requests" class="mt-3"></ul>
+<form id="approval-form">
+<label class="d-block">Kode permintaan<input id="request-id" class="form-control" required autocomplete="off"></label>
+<label class="d-block mt-2">ID canonical BCL yang telah diverifikasi<input id="target-id" type="number" min="1" class="form-control" required></label>
+<label class="d-block mt-2">Metode verifikasi<select id="verification-method" class="form-select"><option value="in_person">Pemeriksaan langsung</option><option value="organization_identity_check">Pemeriksaan identitas organisasi</option></select></label>
+<label class="d-block mt-2">Catatan bukti (tanpa password/token)<textarea id="reason" class="form-control" minlength="20" maxlength="500" required></textarea></label>
+<label class="d-block mt-2">Password admin saat ini<input id="admin-password" class="form-control" type="password" autocomplete="current-password" required></label>
+<label class="d-block mt-3"><input id="confirmed" type="checkbox" required> Saya telah memverifikasi kepemilikan kedua akun dan ID tujuan.</label>
+<button class="btn btn-primary mt-3" type="submit">Setujui hubungan akun</button></form>
+<p id="status" role="status" aria-live="polite" class="mt-3"></p></main>
+<script src="/js/auth-lifecycle.js"></script><script src="/js/auth-link-review.js"></script></body></html>

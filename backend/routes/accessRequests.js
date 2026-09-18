@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { getRequestUser, requireAdmin, requireAuthenticated } = require('../utils/auth');
 const { ensureAccessColumns } = require('../utils/userAccess');
+const { canonicalUserId } = require('../utils/canonicalIdentity');
 
 const MANAGED_TYPES = new Set([
     'library_download',
@@ -105,14 +106,7 @@ function createAccessRequestRoutes({
     }
 
     function recordMatchesUser(record, authUser) {
-        if (!authUser) return false;
-        const userId = String(authUser.id || '').trim();
-        const userEmail = String(authUser.email || '').trim().toLowerCase();
-
-        return (
-            (userId && String(record.requesterUserId || '').trim() === userId) ||
-            (userEmail && String(record.requesterEmail || '').trim().toLowerCase() === userEmail)
-        );
+        return !!authUser?.id && String(record.requesterUserId || '') === String(authUser.id);
     }
 
     function findPendingDuplicate(records, requestType, authUser) {
@@ -254,8 +248,8 @@ function createAccessRequestRoutes({
             return true;
         }
 
-        const userId = String(record.requesterUserId || '').trim();
-        const userEmail = String(record.requesterEmail || '').trim();
+        const userId = canonicalUserId(record.requesterUserId);
+        if (!userId) return false;
 
         try {
             if (pgPool) {
@@ -264,10 +258,9 @@ function createAccessRequestRoutes({
                     UPDATE users
                     SET ${dbField} = true,
                         updated_at = CURRENT_TIMESTAMP
-                    WHERE ($1::text <> '' AND id::text = $1::text)
-                       OR ($2::text <> '' AND lower(email) = lower($2))
+                    WHERE id = $1 AND is_active = true
                     RETURNING id
-                `, [userId, userEmail]);
+                `, [userId]);
 
                 if (result.rowCount > 0) {
                     return true;
@@ -277,25 +270,7 @@ function createAccessRequestRoutes({
             console.warn('Failed to grant access in PostgreSQL:', error.message);
         }
 
-        const users = readUsers();
-        const userIndex = users.findIndex((entry) => (
-            (userId && (String(entry.id || '') === userId || String(entry.user_id || '') === userId)) ||
-            (userEmail && String(entry.email || '').toLowerCase() === userEmail.toLowerCase())
-        ));
-
-        if (userIndex === -1) {
-            return false;
-        }
-
-        if (record.type === 'library_download') {
-            users[userIndex].libraryDownloadAccess = true;
-            users[userIndex].library_download_access = true;
-        } else if (record.type === 'watermark_free_download') {
-            users[userIndex].watermarkFreeDownloadAccess = true;
-            users[userIndex].watermark_free_download_access = true;
-        }
-
-        return writeUsers(users);
+        return false; // Legacy JSON cannot receive privilege grants without canonical mapping.
     }
 
     router.get('/mine', requireAuthenticated, async (req, res) => {
@@ -431,7 +406,7 @@ function createAccessRequestRoutes({
                 record.status = nextStatus;
                 record.adminNote = adminNote;
                 record.updatedAt = new Date().toISOString();
-                record.reviewedBy = String(adminUser.email || adminUser.username || 'admin');
+                record.reviewedBy = String(adminUser.id);
                 record.reviewedAt = record.updatedAt;
                 record.resolutionApplied = nextStatus === 'approved' && record.type !== 'general_message';
                 return record;

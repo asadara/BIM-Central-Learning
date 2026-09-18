@@ -2068,8 +2068,8 @@
         }
 
         function isAdminLikeRole(userLike) {
-            const roleValue = String((userLike && userLike.role) || '').toLowerCase();
-            return !!(userLike && userLike.isAdmin) || roleValue.includes('admin') || roleValue.includes('administrator');
+            const roleValue = userLike?.systemRole || userLike?.system_role || '';
+            return roleValue === 'system_admin' || userLike?.isAdmin === true;
         }
 
         async function bridgeAdminSessionFromToken(token) {
@@ -2264,8 +2264,7 @@
         // Initialize Competency Interface
         function initializeCompetencyInterface() {
             // Show authority management menu if user is admin
-            const roleValue = (currentUser && currentUser.role) ? String(currentUser.role).toLowerCase() : '';
-            if (currentUser && (currentUser.isAdmin || roleValue.includes('admin') || roleValue.includes('administrator'))) {
+            if (isAdminLikeRole(currentUser)) {
                 document.getElementById('authorityMenu').style.display = 'block';
             }
 

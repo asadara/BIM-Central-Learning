@@ -50,73 +50,9 @@ class ManualMigrator {
     }
 
     async importUsers() {
-        console.log('\n📥 Importing users from JSON...');
-
-        try {
-            const usersPath = path.join(__dirname, 'backend', 'users.json');
-            if (!fs.existsSync(usersPath)) {
-                console.log('⚠️ Users file not found, skipping...');
-                return;
-            }
-
-            const users = JSON.parse(fs.readFileSync(usersPath, 'utf-8'));
-            console.log(`📊 Found ${users.length} users to import`);
-
-            for (const user of users) {
-                try {
-                    // Map JSON fields to PostgreSQL schema
-                    const pgUser = {
-                        username: user.username || user.id.replace('json_', ''),
-                        email: user.email || `${user.username || user.id}@bcl.local`,
-                        password: user.password,
-                        bim_level: user.bimLevel || 'BIM Modeller',
-                        job_role: user.jobRole || null,
-                        organization: user.organization || null,
-                        registration_date: user.registrationDate ? new Date(user.registrationDate) : new Date(),
-                        login_count: user.loginCount || 0,
-                        last_login: user.lastLogin ? new Date(user.lastLogin) : null,
-                        is_active: user.isActive !== false,
-                        created_at: new Date(),
-                        updated_at: new Date(),
-                        preferences: user.preferences ? JSON.stringify(user.preferences) : '{"theme": "light", "notifications": true, "language": "id"}',
-                        metadata: user.progress ? JSON.stringify({ progress: user.progress }) : '{}'
-                    };
-
-                    // Check if user already exists
-                    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [pgUser.email]);
-                    if (existing.rows.length > 0) {
-                        console.log(`⏭️ User ${pgUser.email} already exists, skipping...`);
-                        continue;
-                    }
-
-                    // Insert user
-                    const result = await pool.query(`
-                        INSERT INTO users (
-                            username, email, password, bim_level, job_role, organization,
-                            registration_date, login_count, last_login, is_active,
-                            created_at, updated_at, preferences, metadata
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-                        RETURNING id
-                    `, [
-                        pgUser.username, pgUser.email, pgUser.password, pgUser.bim_level,
-                        pgUser.job_role, pgUser.organization, pgUser.registration_date,
-                        pgUser.login_count, pgUser.last_login, pgUser.is_active,
-                        pgUser.created_at, pgUser.updated_at, pgUser.preferences, pgUser.metadata
-                    ]);
-
-                    console.log(`✅ Imported user: ${pgUser.username} (${pgUser.email})`);
-                    this.stats.usersImported++;
-
-                } catch (userError) {
-                    console.error(`❌ Failed to import user ${user.username || user.id}:`, userError.message);
-                    this.stats.errors.push(`User import error: ${userError.message}`);
-                }
-            }
-
-        } catch (error) {
-            console.error('❌ Error importing users:', error.message);
-            this.stats.errors.push(`Users import error: ${error.message}`);
-        }
+        // P0-1: importing legacy accounts would assign new canonical IDs without proof of identity.
+        // User records remain untouched until a reviewed mapping/migration exists in P0-3.
+        console.warn('Legacy user import disabled: approved canonical ID mapping is required.');
     }
 
     async importCategories() {

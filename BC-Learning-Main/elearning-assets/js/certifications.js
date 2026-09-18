@@ -30,7 +30,7 @@ function getUserData() {
 
 function getUserIdentity(user) {
     if (!user) return '';
-    return String(user.id || user.userId || user.email || user.username || user.name || '').trim();
+    return String(user.id || user.userId || '').trim();
 }
 
 async function fetchQuizStats(userIdentity) {

@@ -1,132 +1,23 @@
-const jwt = require('jsonwebtoken');
-const {
-    getJwtSecret,
-    getLegacyAdminBearerSecret,
-    getLegacyAdminToken
-} = require('../config/runtimeConfig');
-
-const SECRET_KEY = getJwtSecret();
-const LEGACY_ADMIN_TOKEN = getLegacyAdminToken();
-const LEGACY_ADMIN_BEARER = getLegacyAdminBearerSecret();
-
-function isAdminRole(roleValue) {
-    const normalizedRole = String(roleValue || '').toLowerCase();
-    return normalizedRole === 'system_admin';
-}
-
-function buildAdminUser(overrides = {}) {
-    return {
-        id: overrides.id || 'admin',
-        username: overrides.username || 'admin',
-        email: overrides.email || 'admin@bcl.local',
-        role: overrides.role || 'System Administrator',
-        isAdmin: true
-    };
-}
-
+// Only runtime middleware can validate a principal; signed tokens may be revoked.
+function isAdminRole(value) { return value === 'system_admin'; }
 function getBearerRequestUser(req) {
-    const authHeader = req.headers.authorization || '';
-    if (!authHeader.startsWith('Bearer ')) {
-        return null;
-    }
-
-    const token = authHeader.slice(7).trim();
-    if (!token) {
-        return null;
-    }
-
-    if (LEGACY_ADMIN_BEARER && token === LEGACY_ADMIN_BEARER) {
-        return buildAdminUser({
-            id: 'legacy-admin-bearer',
-            username: 'legacy_admin_bearer'
-        });
-    }
-
-    try {
-        const decoded = jwt.verify(token, SECRET_KEY);
-        const role = decoded.role || decoded.jobRole || '';
-        return {
-            id: decoded.userId || decoded.id || decoded.sub || decoded.email || '',
-            username: decoded.username || decoded.name || decoded.email || 'user',
-            email: decoded.email || '',
-            role,
-            isAdmin: decoded.isAdmin === true || isAdminRole(role)
-        };
-    } catch (error) {
-        return null;
-    }
+    return req.authChecked === true && req.headers.authorization !== undefined ? req.authPrincipal || null : null;
 }
-
 function getRequestUser(req) {
-    if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
-        return buildAdminUser({
-            id: req.session.adminUser.id,
-            username: req.session.adminUser.username,
-            email: req.session.adminUser.email,
-            role: req.session.adminUser.role || 'System Administrator'
-        });
-    }
-
-    const adminTokenHeader = String(req.headers['x-admin-token'] || '');
-    if (LEGACY_ADMIN_TOKEN && adminTokenHeader && adminTokenHeader === LEGACY_ADMIN_TOKEN) {
-        return buildAdminUser({
-            id: 'legacy-admin-token',
-            username: 'legacy_admin_token'
-        });
-    }
-
-    return getBearerRequestUser(req);
+    if(req.authChecked !== true) return null;
+    return req.headers.authorization !== undefined ? req.authPrincipal || null : req.adminPrincipal || null;
 }
-
-function getRequestUserPreferBearer(req) {
-    const authHeader = String(req.headers.authorization || '');
-    if (authHeader.startsWith('Bearer ')) {
-        return getBearerRequestUser(req);
-    }
-
-    return getRequestUser(req);
+const getRequestUserPreferBearer = getRequestUser;
+function requireAuthenticated(req,res,next) {
+    const user=getRequestUser(req);
+    if(!user) return res.status(req.authFailure||401).json({error:'Authentication required'});
+    req.authUser=user; req.user=user; return next();
 }
-
-function requireAuthenticated(req, res, next) {
-    const authUser = getRequestUser(req);
-    if (!authUser) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
-    req.authUser = authUser;
-    req.user = authUser;
-    next();
+function requireAdmin(req,res,next) {
+    return requireAuthenticated(req,res,()=>{
+        if(!req.authUser.isAdmin) return res.status(403).json({error:'Admin privileges required'});
+        return next();
+    });
 }
-
-function requireAuthenticatedPreferBearer(req, res, next) {
-    const authUser = getRequestUserPreferBearer(req);
-    if (!authUser) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    req.authUser = authUser;
-    req.user = authUser;
-    next();
-}
-
-function requireAdmin(req, res, next) {
-    const authUser = getRequestUser(req);
-    if (!authUser) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
-    if (!authUser.isAdmin) {
-        return res.status(403).json({ error: 'Admin privileges required' });
-    }
-    req.authUser = authUser;
-    req.user = authUser;
-    next();
-}
-
-module.exports = {
-    isAdminRole,
-    getBearerRequestUser,
-    getRequestUser,
-    getRequestUserPreferBearer,
-    requireAuthenticated,
-    requireAuthenticatedPreferBearer,
-    requireAdmin
-};
+module.exports={isAdminRole,getBearerRequestUser,getRequestUser,getRequestUserPreferBearer,
+    requireAuthenticated,requireAuthenticatedPreferBearer:requireAuthenticated,requireAdmin};

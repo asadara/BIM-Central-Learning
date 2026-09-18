@@ -172,6 +172,7 @@
 
       try {
         const userObj = JSON.parse(localStorage.getItem('user') || '{}');
+        userObj.id = resultUser.id;
         userObj.username = normalizedName;
         userObj.name = normalizedName;
         userObj.email = normalizedEmail;

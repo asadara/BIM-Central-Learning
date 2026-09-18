@@ -8,9 +8,14 @@ const fs = require("fs");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
-const bcrypt = require("bcrypt");
+const { hashPassword, verifyPassword } = require("./utils/credentials");
+const { authenticatedUserId, identityStoreUnavailable } = require("./utils/canonicalIdentity");
 const jwt = require("jsonwebtoken");
 const session = require("express-session");
+const { createAuthRuntime } = require('./services/authRuntime');
+const { createGoogleIdentityService } = require('./services/googleIdentityService');
+const { createAuthLifecycleRoutes } = require('./routes/authLifecycleRoutes');
+const AdminSessionStore = require('./services/adminSessionStore');
 const { exec, spawn } = require("child_process");
 const os = require("os");
 const { Pool } = require("pg");
@@ -67,7 +72,8 @@ try {
 }
 
 const app = express();
-app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+// The deployed nginx proxy connects over loopback. LAN clients are not trusted proxies.
+app.set('trust proxy', 'loopback');
 const HTTP_PORT = process.env.HTTP_PORT || 5052;
 const USE_HTTPS = false; // Force HTTP only for consistency
 
@@ -86,17 +92,8 @@ const apiLimiter = rateLimit({
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-// Stricter limiter for authentication endpoints
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 requests per windowMs for auth
-    message: {
-        error: 'Too many authentication attempts, please try again later.',
-        retryAfter: 15 * 60
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
+// Successful authentication and challenge allocation have independent limits.
+const { authLimiter, googleChallengeLimiter } = require('./utils/authLimiters')();
 
 console.log('\nðŸ”§ BCL Server Configuration');
 console.log('============================');
@@ -149,8 +146,10 @@ const VIDEO_SCAN_EXCLUDED_FOLDERS = ['INCOMING DATA', 'INCOMING', 'DATA', 'TENDE
 const USERS_FILE = path.join(__dirname, "users.json");
 const SECRET_KEY = getJwtSecret();
 const SESSION_SECRET = getSessionSecret();
+const pgPool = new Pool(createPgConfig({ max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 5000 }));
+pgPool.on('error', err => console.warn('PostgreSQL pool error:', err.message));
+const authRuntime = createAuthRuntime({ pool: pgPool, secret: SECRET_KEY, publicOrigin: process.env.BCL_BASE_URL || 'https://bcl.nke.net' });
 const GOOGLE_CLIENT_ID = getGoogleClientId();
-const GOOGLE_TOKENINFO_ENDPOINT = 'https://oauth2.googleapis.com/tokeninfo';
 
 // âœ… Fixed: Proper middleware order
 app.use(express.json({ limit: '15mb' })); // Must come before other middleware
@@ -158,17 +157,23 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' })); // Replaced depr
 
 // Session configuration for admin authentication
 const sessionConfig = {
+    name: 'bcl.admin.sid',
     secret: SESSION_SECRET,
+    store: new AdminSessionStore(pgPool),
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: {
-        secure: false, // Set to true in production with HTTPS
+        secure: true,
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 30 * 60 * 1000
     }
 };
 
 app.use(session(sessionConfig));
+app.use(authRuntime.middleware);
 
 // CORS: allow credentials and specific trusted origins (avoid wildcard with credentials)
 const corsOptions = {
@@ -314,9 +319,11 @@ async function requireSearchFileAccess(req, res, next) {
         const relativePath = normalizeSearchRelativePath(requestedPath, BASE_DIR);
         const policy = classifySearchContentPath(relativePath);
         const ticket = verifySearchFileTicket(req.query.ticket, policy.relativePath);
-        const authUser = ticket
-            ? { id: ticket.sub, username: ticket.sub, isAdmin: false }
-            : getRequestUserPreferBearer(req);
+        let authUser = getRequestUserPreferBearer(req);
+        if (req.headers.authorization !== undefined && !authUser) {
+            return res.status(req.authFailure || 401).json({error:'Authentication required'});
+        }
+        if (!authUser && ticket) authUser = await authRuntime.verifyFileAccess(ticket);
 
         if (policy.relativePath) {
             res.once('finish', () => {
@@ -328,8 +335,8 @@ async function requireSearchFileAccess(req, res, next) {
             return res.status(404).json({ error: 'File is outside the approved BCL content perimeter' });
         }
 
-        const accessProfile = ticket ? {} : await resolveAccessProfile(authUser);
-        const hasAccess = Boolean(ticket) || canAccessSearchContent(policy.accessRule, authUser, accessProfile);
+        const accessProfile = await resolveAccessProfile(authUser);
+        const hasAccess = canAccessSearchContent(policy.accessRule, authUser, accessProfile);
 
         if (!hasAccess) {
             const isApiRequest = String(req.originalUrl || req.path || '').startsWith('/api/');
@@ -349,7 +356,7 @@ async function requireSearchFileAccess(req, res, next) {
         return next();
     } catch (error) {
         console.error('ERROR: Failed to enforce search file perimeter:', error);
-        return res.status(500).json({ error: 'Failed to verify file access' });
+        return res.status(error.status || 503).json({ error: 'Failed to verify file access' });
     }
 }
 
@@ -414,44 +421,11 @@ app.use('/videos', requireSearchFileAccess);
 app.use(protectLegacyBaseMediaFile);
 
 // âœ… SECURITY: JWT Authentication middleware for API endpoints
-function requireAuth(req, res, next) {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-    if (!token) {
-        return res.status(401).json({ error: 'Access token required' });
-    }
-
-    jwt.verify(token, SECRET_KEY, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Invalid or expired token' });
-        }
-        req.user = user;
-        next();
-    });
-}
-
-// âœ… SECURITY: Optional auth middleware (allows access without token but logs)
-function optionalAuth(req, res, next) {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token) {
-        jwt.verify(token, SECRET_KEY, (err, user) => {
-            if (!err) {
-                req.user = user;
-            }
-        });
-    }
-    next();
-}
-
-// Admin session middleware
-function requireAdminSession(req, res, next) {
-    if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
-        return next();
-    }
-    res.status(401).json({ error: 'Admin authentication required' });
+function requireAuth(req,res,next) { return require('./utils/auth').requireAuthenticated(req,res,next); }
+function optionalAuth(req,res,next) { req.user=getRequestUser(req)||undefined; next(); }
+function requireAdminSession(req,res,next) {
+    if(req.adminPrincipal?.isAdmin) return next();
+    return res.status(401).json({error:'Admin authentication required'});
 }
 
 // Create default admin user if not exists
@@ -459,7 +433,6 @@ async function createDefaultAdminUser() {
     try {
         console.log('ðŸ” Checking for default admin user...');
 
-        let users = [];
         const adminUsername = 'admin_bcl';
         const adminPassword = getDefaultAdminPassword();
         const adminEmail = 'admin@bcl.local';
@@ -489,7 +462,7 @@ async function createDefaultAdminUser() {
                         registration_date, login_count, last_login, is_active,
                         created_at, updated_at, mapping_kompetensi_access
                     ) VALUES (
-                        $1, $2, $3, NULL, $4, $4,
+                        $1, $2, $3, NULL, $4::text, $4::text,
                         'unverified', 'not_assessed', 'system_admin', $5,
                         CURRENT_TIMESTAMP, 0, NULL, true,
                         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, true
@@ -501,63 +474,13 @@ async function createDefaultAdminUser() {
                 console.log('✅ Admin user already exists in PostgreSQL');
             }
         } catch (dbError) {
-            console.warn('⚠️ PostgreSQL not available, using JSON fallback for admin user:', dbError.message);
+            console.warn('⚠️ PostgreSQL not available, admin bootstrap deferred:', dbError.message);
 
-            // Fallback to JSON
-            users = readUsers();
-            const existingAdmin = users.find(u => u.username === adminUsername);
-
-            if (!existingAdmin) {
-                const hashedPassword = await hashPassword(adminPassword);
-
-                users.push({
-                    id: 'admin_' + Date.now(),
-                    username: adminUsername,
-                    email: adminEmail,
-                    password: hashedPassword,
-                    bimLevel: null,
-                    competencyStatus: 'not_assessed',
-                    jobRole: 'System Administrator',
-                    positionLabel: 'System Administrator',
-                    positionVerificationStatus: 'unverified',
-                    systemRole: 'system_admin',
-                    organization: 'BCL Enterprise',
-                    registrationDate: new Date().toISOString(),
-                    lastLogin: null,
-                    profileImage: null,
-                    isAdmin: true, // Special admin flag
-                    progress: {
-                        coursesCompleted: 0,
-                        practiceAttempts: 0,
-                        examsPassed: 0,
-                        certificatesEarned: 0,
-                        currentLevel: null,
-                        toNextLevel: 0,
-                        badges: ['Administrator'],
-                        achievements: ['System Admin'],
-                        learningPath: {
-                            completed: ['all-courses'],
-                            current: 'administration',
-                            available: ['system-management'],
-                            locked: []
-                        }
-                    },
-                    preferences: {
-                        notifications: true,
-                        theme: 'dark',
-                        language: 'id'
-                    }
-                });
-
-                writeUsers(users);
-                console.log('âœ… Default admin user created in JSON storage');
-            } else {
-                console.log('âœ… Admin user already exists in JSON storage');
-            }
+            // No privileged identity may be created outside PostgreSQL without an approved mapping.
+            throw dbError;
         }
-
     } catch (error) {
-        console.error('âŒ Error creating default admin user:', error);
+        console.error('Error creating default admin user:', error.message);
     }
 }
 
@@ -747,38 +670,7 @@ app.use(createAdminPreviewRoutes({
 app.use('/api/lan', lanMountRoutes);
 console.log('ðŸ”Œ LAN Mount API endpoints registered at /api/lan/*');
 
-// User Authentication API with PostgreSQL as primary storage
-const pgConfig = createPgConfig({
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000
-});
-
-const pgPool = new Pool(pgConfig);
-
-pgPool.on('error', (err) => {
-    console.warn('âš ï¸ PostgreSQL pool error:', err.message);
-});
-
 // Helper functions for secure user management
-const hashPassword = (password) => {
-    return new Promise((resolve, reject) => {
-        bcrypt.hash(password, 10, (err, hash) => {
-            if (err) reject(err);
-            else resolve(hash);
-        });
-    });
-};
-
-const verifyPassword = (password, hash) => {
-    return new Promise((resolve, reject) => {
-        bcrypt.compare(password, hash, (err, result) => {
-            if (err) reject(err);
-            else resolve(result);
-        });
-    });
-};
-
 const videoCatalogService = createVideoCatalogService({
     baseDir: VIDEO_DIR,
     excludedFolders: VIDEO_SCAN_EXCLUDED_FOLDERS,
@@ -788,14 +680,16 @@ const videoCatalogService = createVideoCatalogService({
 const userAuthService = createUserAuthService({
     backendDir: __dirname,
     googleClientId: GOOGLE_CLIENT_ID,
-    googleTokeninfoEndpoint: GOOGLE_TOKENINFO_ENDPOINT,
     pgPool,
     readUsers,
     writeUsers
 });
 
 
+const googleIdentity = createGoogleIdentityService({ auth: authRuntime, clientId: GOOGLE_CLIENT_ID });
+app.use(createAuthLifecycleRoutes({auth:authRuntime,google:googleIdentity,limiter:authLimiter,challengeLimiter:googleChallengeLimiter}));
 app.use(createUserAuthRoutes({
+    authRuntime,
     ...userAuthService,
     authLimiter,
     googleClientId: GOOGLE_CLIENT_ID,
@@ -810,6 +704,8 @@ app.use(createUserAuthRoutes({
 }));
 
 app.use(createAdminSessionRoutes({
+    authRuntime,
+    authLimiter,
     findUserInJsonByEmail: userAuthService.findUserInJsonByEmail,
     findUserInJsonByIdentity: userAuthService.findUserInJsonByIdentity,
     findUserInPostgresByEmail: userAuthService.findUserInPostgresByEmail,
@@ -1071,45 +967,9 @@ function readUsers() {
 }
 
 // Enhanced user storage functions with backup and validation
-function writeUsers(users) {
-    try {
-        // Validate users array
-        if (!Array.isArray(users)) {
-            console.error('âš ï¸ Invalid users data: not an array');
-            return false;
-        }
-
-        // Create backup before writing
-        const backupPath = USERS_FILE + '.backup.' + Date.now();
-        if (fs.existsSync(USERS_FILE)) {
-            fs.copyFileSync(USERS_FILE, backupPath);
-            console.log(`ðŸ“¦ Created backup: ${backupPath}`);
-        }
-
-        // Clean up old backups (keep last 10)
-        const backupFiles = fs.readdirSync(path.dirname(USERS_FILE))
-            .filter(file => file.startsWith('users.json.backup.'))
-            .sort()
-            .reverse();
-        if (backupFiles.length > 10) {
-            backupFiles.slice(10).forEach(backup => {
-                try {
-                    fs.unlinkSync(path.join(path.dirname(USERS_FILE), backup));
-                    console.log(`ðŸ—‘ï¸ Cleaned old backup: ${backup}`);
-                } catch (err) {
-                    console.warn(`âš ï¸ Failed to clean backup ${backup}:`, err.message);
-                }
-            });
-        }
-
-        // Write new data
-        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-        console.log(`âœ… Saved ${users.length} users to storage`);
-        return true;
-    } catch (err) {
-        console.error('âŒ Error writing users file:', err);
-        return false;
-    }
+function writeUsers() {
+    // Compatibility entrypoint retained; no unmapped legacy account mutations are permitted.
+    throw identityStoreUnavailable();
 }
 
 // Helper function to determine video MIME type
@@ -1152,8 +1012,10 @@ app.use('/api/access-requests', createAccessRequestRoutes({
 }));
 
 // ðŸ”§ SERVER STARTUP
-const startServer = () => {
+const startServer = async () => {
     try {
+        const authSchema = await pgPool.query("SELECT migration_key FROM bcl_schema_migrations WHERE migration_key='20260918_p0_2_auth'");
+        if (authSchema.rowCount !== 1) throw new Error('P0-2 auth schema is required. Run reviewed run-p0-auth-migration.js --apply before activation.');
         const httpServer = app.listen(HTTP_PORT, '0.0.0.0', () => {
             const localIP = getLocalIP();
             console.log(`\nðŸš€ BCL Server Started Successfully!`);

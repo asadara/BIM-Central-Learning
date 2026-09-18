@@ -276,26 +276,6 @@
             'BIM Specialist': 'Kompetensi spesialis dengan penguasaan teknis dan penerapan mendalam.',
             'BIM Manager': 'Kompetensi pengelolaan strategi, standar, dan implementasi BIM.'
         };
-        let googleSignupInitialized = false;
-
-        function setGoogleSignupSectionVisible(isVisible) {
-            ['google-signup-section', 'google-signup-ui'].forEach((id) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.hidden = !isVisible;
-                }
-            });
-        }
-
-        function getGoogleButtonWidth(container) {
-            const measuredWidth = Math.floor(container?.getBoundingClientRect?.().width || 0);
-            if (!measuredWidth) {
-                return 360;
-            }
-
-            return Math.min(Math.max(measuredWidth, 360), 460);
-        }
-
         // Update level description when selection changes
         document.getElementById('bim-level').addEventListener('change', function () {
             const selectedLevel = this.value;
@@ -324,8 +304,8 @@
                 return;
             }
 
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters long.');
+            if (password.length < 8 || new TextEncoder().encode(password).length > 72) {
+                alert('Password must be at least 8 characters and at most 72 UTF-8 bytes.');
                 return;
             }
 
@@ -377,135 +357,12 @@
             }
         });
 
-        async function initGoogleSignup() {
-            const noteEl = document.getElementById('google-signup-note');
-            const container = document.getElementById('google-signup-wrap');
-
-            if (!container || googleSignupInitialized) return;
-
-            if (!window.google || !window.google.accounts || !window.google.accounts.id) {
-                setTimeout(initGoogleSignup, 300);
-                return;
-            }
-
-            try {
-                const configRes = await fetch('/api/auth/google/config');
-                const config = await configRes.json();
-
-                if (!configRes.ok || !config.success || !config.enabled || !config.clientId) {
-                    setGoogleSignupSectionVisible(false);
-                    return;
-                }
-
-                setGoogleSignupSectionVisible(true);
-
-                window.google.accounts.id.initialize({
-                    client_id: config.clientId,
-                    callback: handleGoogleSignupResponse,
-                    auto_select: false,
-                    cancel_on_tap_outside: true
-                });
-
-                window.google.accounts.id.renderButton(container, {
-                    theme: 'outline',
-                    size: 'large',
-                    type: 'standard',
-                    text: 'signup_with',
-                    shape: 'rectangular',
-                    width: getGoogleButtonWidth(container)
-                });
-
-                googleSignupInitialized = true;
-                noteEl.textContent = '';
-            } catch (error) {
-                console.error('Google signup init error:', error);
-                setGoogleSignupSectionVisible(true);
-                noteEl.textContent = 'Gagal memuat Google Sign up. Coba lagi nanti.';
-            }
-        }
-
-        async function handleGoogleSignupResponse(response) {
-            const credential = response && response.credential ? response.credential : '';
-            if (!credential) {
-                alert('Google credential tidak valid. Coba lagi.');
-                return;
-            }
-
-            const bimLevel = document.getElementById('bim-level').value;
-            const jobRole = document.getElementById('job-role').value.trim();
-            const organization = document.getElementById('organization').value.trim();
-
-            try {
-                const res = await fetch('/api/auth/google', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        action: 'signup',
-                        idToken: credential,
-                        bimLevel: bimLevel || null,
-                        positionLabel: jobRole || null,
-                        organization: organization || null
-                    })
-                });
-
-                const data = await res.json();
-
-                if (!res.ok || !data.success || !data.token) {
-                    alert(data.error || 'Sign up with Google gagal.');
-                    return;
-                }
-
-                const normalizedUser = {
-                    name: data.name || data.username || 'Google User',
-                    email: data.email || '',
-                    role: data.positionLabel || data.role || '',
-                    positionLabel: data.positionLabel || data.role || '',
-                    positionVerificationStatus: data.positionVerificationStatus || 'unverified',
-                    level: data.bimLevel || bimLevel || null,
-                    competencyStatus: data.competencyStatus || (bimLevel ? 'self_declared' : 'not_assessed'),
-                    photo: data.photo || data.profileImage || '/img/user-default.svg',
-                    token: data.token
-                };
-
-                if (typeof setUserData === 'function') {
-                    setUserData(normalizedUser);
-                } else {
-                    localStorage.setItem('user', JSON.stringify(normalizedUser));
-                    localStorage.setItem('username', normalizedUser.name);
-                    localStorage.setItem('email', normalizedUser.email);
-                    localStorage.setItem('role', normalizedUser.role);
-                    localStorage.setItem('userimg', normalizedUser.photo);
-                    localStorage.setItem('token', normalizedUser.token);
-                }
-
-                localStorage.setItem('userData', JSON.stringify({
-                    name: normalizedUser.name,
-                    email: normalizedUser.email,
-                    level: data.bimLevel || bimLevel || null,
-                    competencyStatus: data.competencyStatus || (bimLevel ? 'self_declared' : 'not_assessed'),
-                    positionLabel: normalizedUser.positionLabel,
-                    role: normalizedUser.role,
-                    organization: data.organization || organization || ''
-                }));
-
-                alert(data.message || 'Sign up with Google berhasil.');
-                const nextPage = typeof getPostLoginDestination === 'function'
-                    ? getPostLoginDestination('/elearning-assets/dashboard.html')
-                    : '/elearning-assets/dashboard.html';
-                window.location.href = nextPage;
-            } catch (error) {
-                console.error('Google signup error:', error);
-                alert('Gagal terhubung ke server saat Sign up with Google.');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', initGoogleSignup);
     </script>
 
 
 
+    <script src="/js/auth-lifecycle.js"></script>
+    <script src="/js/google-auth.js"></script>
 </body>
 
 </html>

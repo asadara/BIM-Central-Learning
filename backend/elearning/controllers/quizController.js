@@ -1,3 +1,4 @@
+const { canonicalUserId } = require('../../utils/canonicalIdentity');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
@@ -342,11 +343,9 @@ async function resolveUserContext(req, payload = {}) {
         const query = await pool.query(
             `SELECT id, username, email, bim_level
              FROM users
-             WHERE ($1::text <> '' AND id::text = $1::text)
-                OR ($2::text <> '' AND lower(email) = lower($2))
-                OR ($3::text <> '' AND lower(username) = lower($3))
+             WHERE id::text = $1::text AND is_active = true
              LIMIT 1`,
-            [rawUserId || '', rawEmail || '', rawUsername || '']
+            [canonicalUserId(rawUserId) || '']
         );
         userRecord = query.rows[0] || null;
     }
@@ -364,8 +363,6 @@ async function resolveUserContext(req, payload = {}) {
     const userIdentifier = trimText(
         (userRecord && String(userRecord.id)) ||
         rawUserId ||
-        userEmail ||
-        userName ||
         'anonymous',
         255
     );
@@ -473,12 +470,10 @@ async function validateExamCertificateReadiness(userContext, quizId) {
                AND module_id = ANY($1::text[])
                AND (
                     ($2::text <> '' AND user_id = $2)
-                    OR ($3::text <> '' AND lower(COALESCE(user_email, '')) = $3)
                )`,
             [
                 requiredMaterialIds,
-                userContext?.userId == null ? '' : String(userContext.userId),
-                trimText(userContext?.userEmail, 255).toLowerCase()
+                userContext?.userId == null ? '' : String(userContext.userId)
             ]
         );
         completedMaterialIds = materialResult.rows
@@ -499,10 +494,6 @@ async function validateExamCertificateReadiness(userContext, quizId) {
         };
     }
 
-    const identifier = trimText(userContext?.userIdentifier, 255).toLowerCase();
-    const email = trimText(userContext?.userEmail, 255).toLowerCase();
-    const name = trimText(userContext?.userName, 120).toLowerCase();
-
     const result = await pool.query(
         `SELECT
             quiz_category,
@@ -514,17 +505,11 @@ async function validateExamCertificateReadiness(userContext, quizId) {
            AND quiz_category = ANY($1::text[])
            AND (
                 ($2::int IS NOT NULL AND user_id = $2)
-                OR ($3::text <> '' AND lower(COALESCE(user_identifier, '')) = $3)
-                OR ($4::text <> '' AND lower(COALESCE(user_email, '')) = $4)
-                OR ($5::text <> '' AND lower(COALESCE(user_name, '')) = $5)
            )
          GROUP BY quiz_category`,
         [
             targetCategories,
-            userContext?.userId || null,
-            identifier,
-            email,
-            name
+            userContext?.userId || null
         ]
     );
 
@@ -629,41 +614,18 @@ async function issueCertificateIfEligible({ userContext, payload, attemptData })
 }
 
 async function buildUserLookupContext(userIdentity) {
-    const identity = trimText(userIdentity, 255);
-    if (!identity) return { userId: null, matchValues: [] };
-
-    const userQuery = await pool.query(
-        `SELECT id, username, email
-         FROM users
-         WHERE id::text = $1::text
-            OR lower(email) = lower($1)
-            OR lower(username) = lower($1)
-         LIMIT 1`,
-        [identity]
-    );
-
-    const row = userQuery.rows[0] || null;
-    const matchValues = new Set([identity.toLowerCase()]);
-
-    if (row) {
-        matchValues.add(String(row.id).toLowerCase());
-        if (row.email) matchValues.add(String(row.email).toLowerCase());
-        if (row.username) matchValues.add(String(row.username).toLowerCase());
-    }
-
-    return {
-        userId: row ? toNullableInt(row.id) : toNullableInt(identity),
-        matchValues: Array.from(matchValues).filter(Boolean)
-    };
+    const id = canonicalUserId(userIdentity);
+    return { userId: id ? Number(id) : null };
 }
 
 function canReadUserEvidence(req, requestedIdentity) {
     const authUser = getRequestUser(req);
     if (!authUser) return false;
+    if (!canonicalUserId(requestedIdentity)) return false;
     if (authUser.isAdmin) return true;
 
     const requested = String(requestedIdentity || '').trim().toLowerCase();
-    return [authUser.id, authUser.email, authUser.username]
+    return [authUser.id]
         .map((value) => String(value || '').trim().toLowerCase())
         .filter(Boolean)
         .includes(requested);
@@ -865,25 +827,19 @@ exports.getUserQuizStats = async (req, res) => {
                 MAX(submitted_at) AS last_quiz_date
              FROM learning_attempts
              WHERE (
-                    ($1::int IS NOT NULL AND user_id = $1)
-                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+                    user_id = $1
                )`,
-            [userLookup.userId, userLookup.matchValues]
+            [userLookup.userId]
         );
 
         const categories = await pool.query(
             `SELECT DISTINCT quiz_category
              FROM learning_attempts
              WHERE (
-                    ($1::int IS NOT NULL AND user_id = $1)
-                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+                    user_id = $1
              )
              AND COALESCE(quiz_category, '') <> ''`,
-            [userLookup.userId, userLookup.matchValues]
+            [userLookup.userId]
         );
 
         const recent = await pool.query(
@@ -902,14 +858,11 @@ exports.getUserQuizStats = async (req, res) => {
                 submitted_at AS "submittedAt"
              FROM learning_attempts
              WHERE (
-                    ($1::int IS NOT NULL AND user_id = $1)
-                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+                    user_id = $1
                )
              ORDER BY submitted_at DESC
              LIMIT 5`,
-            [userLookup.userId, userLookup.matchValues]
+            [userLookup.userId]
         );
 
         const certs = await pool.query(
@@ -917,12 +870,9 @@ exports.getUserQuizStats = async (req, res) => {
              FROM user_certificates
              WHERE is_verified = true
                AND (
-                    ($1::int IS NOT NULL AND user_id = $1)
-                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+                    user_id = $1
                )`,
-            [userLookup.userId, userLookup.matchValues]
+            [userLookup.userId]
         );
 
         const row = stats.rows[0] || {};
@@ -965,12 +915,9 @@ exports.getUserQuizHistory = async (req, res) => {
             `SELECT COUNT(*)::int AS total_results
              FROM learning_attempts
              WHERE (
-                    ($1::int IS NOT NULL AND user_id = $1)
-                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+                    user_id = $1
                )`,
-            [userLookup.userId, userLookup.matchValues]
+            [userLookup.userId]
         );
 
         const rows = await pool.query(
@@ -989,14 +936,11 @@ exports.getUserQuizHistory = async (req, res) => {
                 submitted_at AS "submittedAt"
              FROM learning_attempts
              WHERE (
-                    ($1::int IS NOT NULL AND user_id = $1)
-                    OR lower(COALESCE(user_identifier, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_email, '')) = ANY($2::text[])
-                    OR lower(COALESCE(user_name, '')) = ANY($2::text[])
+                    user_id = $1
                )
              ORDER BY submitted_at DESC
-             LIMIT $3 OFFSET $4`,
-            [userLookup.userId, userLookup.matchValues, limit, offset]
+             LIMIT $2 OFFSET $3`,
+            [userLookup.userId, limit, offset]
         );
 
         const totalResults = toNonNegativeInt(totalQuery.rows[0]?.total_results, 0);

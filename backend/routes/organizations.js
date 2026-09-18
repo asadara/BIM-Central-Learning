@@ -1,4 +1,5 @@
 const express = require('express');
+const { canonicalUserId, authenticatedUserId } = require('../utils/canonicalIdentity');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
@@ -23,59 +24,25 @@ pool.on('error', (err) => {
     console.warn('WARN: PostgreSQL pool error in organizations:', err.message);
 });
 
-function getAuthFromRequest(req) {
-    if (req.session && req.session.adminUser && req.session.adminUser.isAdmin) {
-        return {
-            id: req.session.adminUser.id,
-            email: req.session.adminUser.email,
-            role: req.session.adminUser.role,
-            isAdmin: true
-        };
-    }
-
-    const authHeader = req.headers.authorization || '';
-    if (!authHeader.startsWith('Bearer ')) {
-        return null;
-    }
-
-    try {
-        const token = authHeader.slice(7);
-        const decoded = jwt.verify(token, SECRET_KEY);
-        return {
-            id: decoded.userId,
-            email: decoded.email,
-            role: decoded.role,
-            isAdmin: false
-        };
-    } catch (error) {
-        return null;
-    }
-}
+function getAuthFromRequest(req) { return require('../utils/auth').getRequestUser(req); }
 
 async function fetchMappingAccessFromDb(userId, email) {
+    const id = canonicalUserId(userId);
+    if (!id) return null;
     const result = await pool.query(
         `SELECT mapping_kompetensi_access
          FROM users
-         WHERE ($1::text IS NOT NULL AND id::text = $1::text)
-            OR ($2::text IS NOT NULL AND email = $2)
+         WHERE id = $1 AND is_active = true
          LIMIT 1`,
-        [userId ? String(userId) : null, email || null]
+        [id]
     );
 
     if (result.rows.length === 0) return null;
     return !!result.rows[0].mapping_kompetensi_access;
 }
 
-function fetchMappingAccessFromJson(userId, email) {
-    if (!fs.existsSync(USERS_FILE)) return null;
-    const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-    const user = users.find(u =>
-        (userId && (u.id === userId || u.id == userId)) ||
-        (email && u.email === email)
-    );
-
-    if (!user) return null;
-    return !!(user.mappingKompetensiAccess || user.mapping_kompetensi_access);
+function fetchMappingAccessFromJson() {
+    return null; // Unmapped legacy records cannot grant access.
 }
 
 async function ensureMappingAccess(req, res) {

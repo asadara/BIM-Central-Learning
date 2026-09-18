@@ -1,4 +1,5 @@
-const crypto = require("crypto");
+const { passwordValidationError } = require("../utils/credentials");
+const { authenticatedUserId, protectedUserField } = require("../utils/canonicalIdentity");
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -9,41 +10,36 @@ const {
 } = require("../utils/userProfileSchema");
 
 function createUserAuthRoutes({
+    authRuntime,
     authLimiter,
-    buildGoogleUsernameSeed,
     ensureUniqueProfileIdentity,
     ensureUserProgressInPostgres,
     fetchProfileImageFromPostgres,
-    findAvailableUsernameInJson,
-    findAvailableUsernameInPostgres,
     findUserForProfileUpdate,
-    findUserInJsonByEmail,
     findUserInPostgresByEmail,
     googleClientId,
     hashPassword,
-    incrementUserLoginInJson,
-    incrementUserLoginInPostgres,
     isPostgresConnectionError,
-    jwt,
     normalizeBimLevelInput,
-    normalizeGoogleAction,
     normalizeUserRecord,
     pgPool,
     profileImageUpload,
     profileUpdateUpload,
-    readUsers,
     requireAuth,
     sanitizeOptionalText,
-    secretKey,
-    updateProfileImageInJson,
     updateProfileImageInPostgres,
-    updateUserProfileInJson,
     updateUserProfileInPostgres,
-    verifyGoogleIdToken,
     verifyPassword,
-    writeUsers
 }) {
     const router = express.Router();
+    const handleAsync = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
+    function sendStorageError(error, res) {
+        const unavailable = isPostgresConnectionError(error) || error.status === 503;
+        return res.status(unavailable ? 503 : 500).json({
+            success: false,
+            error: unavailable ? "Canonical user storage unavailable" : "Profile operation failed"
+        });
+    }
     const profileImageDir = path.join(__dirname, "..", "public", "uploads", "profile-images");
 
     function normalizeProfileImageUrl(imageUrl) {
@@ -77,11 +73,12 @@ function createUserAuthRoutes({
         }
 
         try {
-            const decoded = jwt.verify(token, secretKey);
-            const lookup = await findUserForProfileUpdate(decoded.email || null, decoded.userId || null);
-            return lookup && lookup.user ? lookup.user : null;
+            const decoded = req.authPrincipal;
+            if (!decoded) return null;
+            return await findUserForProfileUpdate(null, authenticatedUserId(decoded)).then(lookup => lookup?.user || null);
         } catch (error) {
-            return null;
+            if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError" || error.name === "NotBeforeError") return null;
+            throw error;
         }
     }
 
@@ -198,7 +195,7 @@ function createUserAuthRoutes({
         return res.sendFile(imagePath);
     });
 
-    router.get("/api/profile", requireAuth, async (req, res) => {
+    router.get("/api/profile", requireAuth, handleAsync(async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
             return res.status(404).json({ success: false, error: "Profile not found" });
@@ -227,9 +224,9 @@ function createUserAuthRoutes({
             lastLogin: user.lastLogin || user.last_login || null,
             updatedAt: user.updatedAt || user.updated_at || null
         });
-    });
+    }));
 
-    router.get("/api/profile/stats", requireAuth, async (req, res) => {
+    router.get("/api/profile/stats", requireAuth, handleAsync(async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
             return res.status(404).json({ error: "Profile not found" });
@@ -249,9 +246,9 @@ function createUserAuthRoutes({
                 .sort((a, b) => new Date(b) - new Date(a))[0] || null,
             source: stats.source
         });
-    });
+    }));
 
-    router.get("/api/profile/achievements", requireAuth, async (req, res) => {
+    router.get("/api/profile/achievements", requireAuth, handleAsync(async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
             return res.json([]);
@@ -294,9 +291,9 @@ function createUserAuthRoutes({
         }
 
         return res.json(achievements);
-    });
+    }));
 
-    router.get("/api/profile/activity", requireAuth, async (req, res) => {
+    router.get("/api/profile/activity", requireAuth, handleAsync(async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user) {
             return res.json([]);
@@ -362,9 +359,9 @@ function createUserAuthRoutes({
 
         activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         return res.json(activities.slice(0, 20));
-    });
+    }));
 
-    router.get("/api/profile/courses", requireAuth, async (req, res) => {
+    router.get("/api/profile/courses", requireAuth, handleAsync(async (req, res) => {
         const user = await resolveProfileUser(req);
         if (!user || !pgPool) {
             return res.json([]);
@@ -399,272 +396,30 @@ function createUserAuthRoutes({
             }
             throw error;
         }
-    });
+    }));
 
-    router.get("/api/profile/social", requireAuth, async (req, res) => {
+    router.get("/api/profile/social", requireAuth, handleAsync(async (req, res) => {
         return res.json({
             available: false,
             followers: null,
             following: null,
             discussions: null
         });
-    });
+    }));
 
     router.get("/api/auth/google/config", (req, res) => {
         res.json({
             success: true,
             enabled: !!googleClientId,
+            authContract: 'p0-2',
             clientId: googleClientId || null
         });
     });
 
-    router.post("/api/auth/google", authLimiter, async (req, res) => {
+    router.post("/api/signup", authLimiter, async (req, res) => {
         try {
-            const action = normalizeGoogleAction(req.body?.action);
-            const idToken = String(req.body?.idToken || "").trim();
-
-            if (!googleClientId) {
-                return res.status(503).json({
-                    success: false,
-                    error: "Google login belum dikonfigurasi di server."
-                });
-            }
-
-            if (!idToken) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Google ID token is required"
-                });
-            }
-
-            const googleProfile = await verifyGoogleIdToken(idToken);
-            const email = googleProfile.email;
-
-            let user = null;
-            let storageType = "postgresql";
-            let postgresLookupFailed = false;
-            let createdUser = false;
-
-            try {
-                user = await findUserInPostgresByEmail(email, true);
-            } catch (dbError) {
-                postgresLookupFailed = isPostgresConnectionError(dbError);
-                console.warn(
-                    postgresLookupFailed
-                        ? "⚠️ PostgreSQL unavailable for Google auth, falling back to JSON:"
-                        : "⚠️ PostgreSQL lookup failed for Google auth:",
-                    dbError.message
-                );
-
-                if (!postgresLookupFailed) {
-                    throw dbError;
-                }
-            }
-
-            if (!user) {
-                const jsonUser = findUserInJsonByEmail(email, true, false);
-                if (jsonUser) {
-                    user = jsonUser;
-                    storageType = "json";
-                }
-            }
-
-            if (!user) {
-                const bimLevel = normalizeBimLevelInput(req.body?.bimLevel);
-                const positionLabel = sanitizeOptionalText(req.body?.positionLabel || req.body?.jobRole, 80);
-                const organization = sanitizeOptionalText(req.body?.organization, 120) || null;
-                const usernameSeed = buildGoogleUsernameSeed(googleProfile);
-                const generatedPasswordHash = await hashPassword(crypto.randomBytes(24).toString("hex"));
-
-                if (!postgresLookupFailed) {
-                    try {
-                        const username = await findAvailableUsernameInPostgres(usernameSeed);
-                        const insertResult = await pgPool.query(
-                            `INSERT INTO users (
-                                username, email, password, bim_level, job_role, position_label,
-                                position_verification_status, competency_status, system_role, organization,
-                                registration_date, login_count, last_login, is_active, profile_image,
-                                created_at, updated_at
-                            ) VALUES (
-                                $1, $2, $3, $4, $5, $5,
-                                'unverified', $6, 'employee', $7,
-                                $8, 0, NULL, true, $9,
-                                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-                            )
-                            RETURNING id, username, email, bim_level, job_role, position_label,
-                                      position_verification_status, competency_status, system_role,
-                                      organization, profile_image, login_count, is_active`,
-                            [
-                                username,
-                                email,
-                                generatedPasswordHash,
-                                bimLevel,
-                                positionLabel || null,
-                                bimLevel ? 'self_declared' : 'not_assessed',
-                                organization,
-                                new Date().toISOString(),
-                                googleProfile.picture || null
-                            ]
-                        );
-
-                        user = normalizeUserRecord(insertResult.rows[0]);
-                        storageType = "postgresql";
-                        createdUser = true;
-                        console.log(`✅ Google user registered in PostgreSQL: ${email} (ID: ${user.id})`);
-                    } catch (dbInsertError) {
-                        if (dbInsertError && dbInsertError.code === "23505") {
-                            user = await findUserInPostgresByEmail(email, true);
-                            if (user) {
-                                storageType = "postgresql";
-                            } else {
-                                return res.status(409).json({
-                                    success: false,
-                                    error: "Email already registered"
-                                });
-                            }
-                        } else if (isPostgresConnectionError(dbInsertError)) {
-                            postgresLookupFailed = true;
-                            storageType = "json";
-                            console.warn("⚠️ PostgreSQL insert failed for Google auth, fallback to JSON:", dbInsertError.message);
-                        } else {
-                            throw dbInsertError;
-                        }
-                    }
-                }
-
-                if (!user) {
-                    const users = readUsers();
-                    const existingByEmail = users.find((item) => String(item.email || "").toLowerCase() === email);
-
-                    if (existingByEmail) {
-                        user = normalizeUserRecord(existingByEmail);
-                        storageType = "json";
-                    } else {
-                        const username = findAvailableUsernameInJson(usernameSeed);
-                        const newUser = {
-                            id: `json_google_${Date.now()}`,
-                            username,
-                            email,
-                            password: generatedPasswordHash,
-                            bimLevel,
-                            jobRole: positionLabel || null,
-                            positionLabel: positionLabel || null,
-                            positionVerificationStatus: "unverified",
-                            competencyStatus: bimLevel ? "self_declared" : "not_assessed",
-                            systemRole: "employee",
-                            organization,
-                            registrationDate: new Date().toISOString(),
-                            lastLogin: null,
-                            loginCount: 0,
-                            isActive: true,
-                            profileImage: googleProfile.picture || null,
-                            metadata: {
-                                provider: "google",
-                                googleSub: googleProfile.sub || null
-                            }
-                        };
-
-                        users.push(newUser);
-                        writeUsers(users);
-                        user = normalizeUserRecord(newUser);
-                        storageType = "json";
-                        createdUser = true;
-                        console.log(`✅ Google user registered in JSON fallback: ${email} (ID: ${user.id})`);
-                    }
-                }
-            }
-
-            if (!user) {
-                return res.status(500).json({
-                    success: false,
-                    error: "Failed to resolve user account"
-                });
-            }
-
-            const userProfileState = mapUserProfileState(user);
-            const bimLevel = userProfileState.competencyLevel || normalizeBimLevelInput(req.body?.bimLevel);
-
-            if (storageType === "postgresql" && user.id) {
-                await ensureUserProgressInPostgres(user.id, bimLevel);
-                await incrementUserLoginInPostgres(user.id);
-            } else if (user.id) {
-                incrementUserLoginInJson(user.id);
-            }
-
-            const systemRole = userProfileState.systemRole || "employee";
-            const token = jwt.sign(
-                {
-                    userId: user.id,
-                    email: user.email,
-                    role: systemRole
-                },
-                secretKey,
-                { expiresIn: "7d" }
-            );
-
-            const existingProfileImage = user.profileImage || user.profile_image || null;
-            const finalProfileImage = normalizeProfileImageUrl(
-                existingProfileImage || googleProfile.picture || "/img/user-default.svg"
-            );
-
-            if (!existingProfileImage && googleProfile.picture) {
-                if (storageType === "postgresql") {
-                    await updateProfileImageInPostgres(user.id, user.email, googleProfile.picture);
-                } else {
-                    updateProfileImageInJson(user.id, user.email, googleProfile.picture);
-                }
-            }
-
-            return res.json({
-                success: true,
-                token,
-                id: user.id,
-                name: user.username,
-                username: user.username,
-                email: user.email,
-                role: userProfileState.positionLabel,
-                positionLabel: userProfileState.positionLabel,
-                positionVerificationStatus: userProfileState.positionVerificationStatus,
-                systemRole,
-                isAdmin: systemRole === 'system_admin',
-                bimLevel,
-                competencyStatus: userProfileState.competencyStatus,
-                targetBimLevel: userProfileState.targetCompetencyLevel,
-                organization: user.organization || sanitizeOptionalText(req.body?.organization, 120) || null,
-                photo: finalProfileImage,
-                profileImage: finalProfileImage,
-                createdUser,
-                storage: storageType,
-                message: action === "signup" && createdUser
-                    ? "Akun Google berhasil dibuat dan login."
-                    : "Login dengan Google berhasil."
-            });
-        } catch (error) {
-            const message = String(error.message || "");
-            if (message === "GOOGLE_CLIENT_ID_NOT_CONFIGURED") {
-                return res.status(503).json({
-                    success: false,
-                    error: "Google login belum dikonfigurasi di server."
-                });
-            }
-
-            if (message.startsWith("GOOGLE_")) {
-                return res.status(401).json({
-                    success: false,
-                    error: "Token Google tidak valid atau akun belum terverifikasi."
-                });
-            }
-
-            console.error("❌ Google auth error:", error);
-            return res.status(500).json({
-                success: false,
-                error: "Google authentication failed. Please try again."
-            });
-        }
-    });
-
-    router.post("/api/signup", async (req, res) => {
-        try {
+            const protectedField = protectedUserField(req.body, { allowPassword: true });
+            if (protectedField) return res.status(400).json({ success: false, error: `Protected user field: ${protectedField}` });
             const {
                 username,
                 email,
@@ -677,7 +432,7 @@ function createUserAuthRoutes({
                 progress
             } = req.body;
 
-            if (!username || !email || !password) {
+            if (typeof username !== "string" || !username.trim() || typeof email !== "string" || !email.trim() || !password) {
                 return res.status(400).json({
                     success: false,
                     error: "Username, email, and password are required"
@@ -695,10 +450,11 @@ function createUserAuthRoutes({
                 });
             }
 
-            if (password.length < 6) {
+            const passwordError = passwordValidationError(password);
+            if (passwordError) {
                 return res.status(400).json({
                     success: false,
-                    error: "Password must be at least 6 characters long"
+                    error: passwordError
                 });
             }
 
@@ -731,7 +487,7 @@ function createUserAuthRoutes({
                         registration_date, login_count, last_login, is_active,
                         created_at, updated_at
                     ) VALUES (
-                        $1, $2, $3, $4, $5, $5,
+                        $1, $2, $3, $4, $5::text, $5::text,
                         'unverified', $6, 'employee', $7,
                         $8, 0, NULL, true,
                         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
@@ -764,84 +520,13 @@ function createUserAuthRoutes({
                     throw dbError;
                 }
 
-                console.warn("⚠️ PostgreSQL unavailable, falling back to JSON storage:", dbError.message);
-                storageType = "json";
-
-                const users = readUsers();
-                const existingUser = users.find((u) =>
-                    String(u.email || "").toLowerCase() === String(email).toLowerCase() ||
-                    String(u.username || "").toLowerCase() === String(username).toLowerCase()
-                );
-
-                if (existingUser) {
-                    return res.status(409).json({
-                        success: false,
-                        error: "Email or username already registered"
-                    });
-                }
-
-                userId = `json_${Date.now()}`;
-                const newUser = {
-                    id: userId,
-                    username: username.trim(),
-                    email: email.trim(),
-                    password: hashedPassword,
-                    bimLevel: normalizedBimLevel,
-                    jobRole: normalizedPositionLabel || null,
-                    positionLabel: normalizedPositionLabel || null,
-                    positionVerificationStatus: 'unverified',
-                    competencyStatus: normalizedBimLevel ? 'self_declared' : 'not_assessed',
-                    systemRole: 'employee',
-                    organization: organization || null,
-                    registrationDate: registrationDate || new Date().toISOString(),
-                    lastLogin: null,
-                    profileImage: null,
-                    progress: progress || {
-                        coursesCompleted: 0,
-                        practiceAttempts: 0,
-                        examsPassed: 0,
-                        certificatesEarned: 0,
-                        currentLevel: normalizedBimLevel,
-                        levelProgress: {
-                            toCoordinator: normalizedBimLevel === "BIM Modeller" ? 0 : null,
-                            toManager: normalizedBimLevel === "BIM Coordinator" ? null : null
-                        },
-                        badges: [],
-                        achievements: [],
-                        learningPath: {
-                            completed: [],
-                            current: normalizedBimLevel === "BIM Modeller" ? "autocad-basics"
-                                : normalizedBimLevel === "BIM Coordinator" ? "bim-coordination"
-                                    : null,
-                            available: normalizedBimLevel === "BIM Modeller"
-                                ? ["autocad-basics", "revit-introduction", "sketchup-basics"]
-                                : normalizedBimLevel === "BIM Coordinator"
-                                    ? ["bim-coordination", "advanced-modeling"]
-                                    : [],
-                            locked: normalizedBimLevel === "BIM Modeller"
-                                ? ["bim-coordination", "advanced-modeling", "bim-management"]
-                                : normalizedBimLevel === "BIM Coordinator"
-                                    ? ["bim-management"]
-                                    : []
-                        }
-                    },
-                    preferences: {
-                        notifications: true,
-                        theme: "light",
-                        language: "id"
-                    }
-                };
-
-                users.push(newUser);
-                writeUsers(users);
-                console.log(`✅ User registered in JSON fallback: ${email} (ID: ${userId})`);
+                console.warn("⚠️ PostgreSQL unavailable:", dbError.message);
+                return res.status(503).json({ success: false, error: "Canonical user storage unavailable" });
             }
 
             res.status(201).json({
                 success: true,
-                message: storageType === "postgresql"
-                    ? "Account created successfully!"
-                    : "Account created successfully (using local storage)!",
+                message: "Account created successfully!",
                 user: {
                     id: userId,
                     username: username.trim(),
@@ -866,117 +551,6 @@ function createUserAuthRoutes({
         }
     });
 
-    router.post("/api/login", authLimiter, async (req, res) => {
-        try {
-            const identifier = String(req.body.email || req.body.username || "").trim();
-            const { password } = req.body;
-
-            if (!identifier || !password) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Email/username and password are required"
-                });
-            }
-
-            let user = null;
-            let storageType = "postgresql";
-            let postgresLookupFailed = false;
-
-            try {
-                user = await findUserInPostgresByEmail(identifier, true);
-            } catch (dbError) {
-                postgresLookupFailed = isPostgresConnectionError(dbError);
-                console.warn(
-                    postgresLookupFailed
-                        ? "⚠️ PostgreSQL unavailable, falling back to JSON storage:"
-                        : "⚠️ PostgreSQL lookup failed:",
-                    dbError.message
-                );
-
-                if (!postgresLookupFailed) {
-                    throw dbError;
-                }
-            }
-
-            if (!user && postgresLookupFailed) {
-                user = findUserInJsonByEmail(identifier, true);
-                storageType = "json";
-            }
-
-            if (!user) {
-                return res.status(401).json({
-                    success: false,
-                    error: "Invalid email or password"
-                });
-            }
-
-            const isValidPassword = await verifyPassword(password, user.password);
-            if (!isValidPassword) {
-                return res.status(401).json({
-                    success: false,
-                    error: "Invalid email or password"
-                });
-            }
-
-            const userProfileState = mapUserProfileState(user);
-            const bimLevel = userProfileState.competencyLevel;
-
-            if (storageType === "postgresql") {
-                await ensureUserProgressInPostgres(user.id, bimLevel);
-                await incrementUserLoginInPostgres(user.id);
-            } else if (user.id) {
-                incrementUserLoginInJson(user.id);
-            }
-
-            const token = jwt.sign(
-                {
-                    userId: user.id,
-                    email: user.email,
-                    role: userProfileState.systemRole || "employee"
-                },
-                secretKey,
-                { expiresIn: "7d" }
-            );
-
-            console.log(`✅ User logged in from ${storageType}: ${user.email || user.username} (ID: ${user.id})`);
-
-            const loginCount = user.loginCount || user.login_count || 0;
-            const storedProfileImage = normalizeProfileImageUrl(
-                (await fetchProfileImageFromPostgres(user.id, user.email)) ||
-                user.profileImage ||
-                user.profile_image ||
-                null
-            );
-
-            res.json({
-                success: true,
-                token,
-                id: user.id,
-                username: user.username,
-                name: user.username,
-                email: user.email,
-                role: userProfileState.positionLabel,
-                positionLabel: userProfileState.positionLabel,
-                positionVerificationStatus: userProfileState.positionVerificationStatus,
-                systemRole: userProfileState.systemRole,
-                isAdmin: userProfileState.systemRole === 'system_admin',
-                bimLevel,
-                competencyStatus: userProfileState.competencyStatus,
-                targetBimLevel: userProfileState.targetCompetencyLevel,
-                organization: user.organization,
-                loginCount: loginCount + 1,
-                photo: storedProfileImage || "/img/user-default.svg",
-                profileImage: storedProfileImage || null
-            });
-        } catch (error) {
-            console.error("❌ Login error:", error);
-            res.status(500).json({
-                success: false,
-                error: "Login failed. Please try again."
-            });
-        }
-    });
-
     router.post("/api/upload-profile-image", requireAuth, (req, res) => {
         profileImageUpload(req, res, async (err) => {
             if (err) {
@@ -992,27 +566,17 @@ function createUserAuthRoutes({
                 return res.status(400).json({ error: "No image uploaded" });
             }
 
-            const userId = req.user && req.user.userId ? req.user.userId : null;
-            const email = req.user && req.user.email ? req.user.email : null;
-            const imageUrl = `/uploads/profile-images/${uploadedImage.filename}`;
-
-            let saved = false;
-            if (userId || email) {
-                saved = await updateProfileImageInPostgres(userId, email, imageUrl);
-                if (!saved) {
-                    saved = updateProfileImageInJson(userId, email, imageUrl);
-                }
+            try {
+                const protectedField = protectedUserField(req.body);
+                if (protectedField) return res.status(400).json({ error: `Protected user field: ${protectedField}` });
+                const userId = authenticatedUserId(req.user);
+                const imageUrl = `/uploads/profile-images/${uploadedImage.filename}`;
+                const saved = await updateProfileImageInPostgres(userId, null, imageUrl);
+                if (!saved) return res.status(404).json({ error: "User not found for profile update" });
+                return res.json({ success: true, imageUrl: normalizeProfileImageUrl(imageUrl), storedPath: imageUrl });
+            } catch (error) {
+                return sendStorageError(error, res);
             }
-
-            if (!saved) {
-                return res.status(404).json({ error: "User not found for profile update" });
-            }
-
-            res.json({
-                success: true,
-                imageUrl: normalizeProfileImageUrl(imageUrl),
-                storedPath: imageUrl
-            });
         });
     });
 
@@ -1029,17 +593,16 @@ function createUserAuthRoutes({
 
                 if (bearerToken) {
                     try {
-                        authUser = jwt.verify(bearerToken, secretKey);
+                        authUser = req.authPrincipal;
+                        if (!authUser) throw new Error("Authentication required");
                     } catch (tokenError) {
                         return res.status(403).json({ success: false, error: "Invalid or expired token" });
                     }
                 }
 
+                const protectedField = protectedUserField(req.body);
+                if (protectedField) return res.status(400).json({ success: false, error: `Protected user field: ${protectedField}` });
                 const requestedEmail = sanitizeOptionalText(req.body?.email, 120).toLowerCase();
-                const currentEmail = sanitizeOptionalText(
-                    req.body?.current_email || req.body?.email,
-                    120
-                ).toLowerCase();
                 const requestedUsername = sanitizeOptionalText(
                     req.body?.name || req.body?.username,
                     80
@@ -1049,9 +612,9 @@ function createUserAuthRoutes({
                 const requestedPositionLabel = hasPositionUpdate
                     ? sanitizeOptionalText(req.body?.positionLabel || req.body?.position_label, 100)
                     : null;
-                const oldPassword = String(req.body?.old_pass || req.body?.oldPassword || "").trim();
-                const newPassword = String(req.body?.new_pass || req.body?.newPassword || "").trim();
-                const confirmPassword = String(req.body?.c_pass || req.body?.confirmPassword || "").trim();
+                const oldPassword = (req.body?.old_pass ?? req.body?.oldPassword ?? "");
+                const newPassword = (req.body?.new_pass ?? req.body?.newPassword ?? "");
+                const confirmPassword = (req.body?.c_pass ?? req.body?.confirmPassword ?? "");
 
                 if (!requestedUsername || !requestedEmail) {
                     return res.status(400).json({
@@ -1068,10 +631,11 @@ function createUserAuthRoutes({
                     });
                 }
 
-                if (newPassword && newPassword.length < 6) {
+                const passwordError = newPassword ? passwordValidationError(newPassword) : null;
+                if (passwordError) {
                     return res.status(400).json({
                         success: false,
-                        error: "Password must be at least 6 characters long"
+                        error: passwordError
                     });
                 }
 
@@ -1082,8 +646,8 @@ function createUserAuthRoutes({
                     });
                 }
 
-                const lookupEmail = authUser?.email || currentEmail || requestedEmail;
-                const lookupUserId = authUser?.userId || null;
+                const lookupEmail = null;
+                const lookupUserId = authenticatedUserId(authUser || {});
                 const { user: currentUser } = await findUserForProfileUpdate(lookupEmail, lookupUserId);
 
                 if (!currentUser) {
@@ -1139,34 +703,14 @@ function createUserAuthRoutes({
                 };
                 if (hasPositionUpdate) updates.positionLabel = requestedPositionLabel;
 
-                let updatedUser = null;
-                let storage = "postgresql";
-
-                if (pgPool) {
-                    try {
-                        updatedUser = await updateUserProfileInPostgres(currentUser, updates);
-                    } catch (dbError) {
-                        if (dbError && dbError.code === "23505") {
-                            return res.status(409).json({
-                                success: false,
-                                error: "Email or username already in use"
-                            });
-                        }
-
-                        if (!isPostgresConnectionError(dbError)) {
-                            throw dbError;
-                        }
-
-                        console.warn("⚠️ PostgreSQL unavailable during profile update, falling back to JSON:", dbError.message);
-                        storage = "json";
-                    }
-                } else {
-                    storage = "json";
-                }
-
-                if (!updatedUser) {
-                    updatedUser = updateUserProfileInJson(currentUser, updates);
-                    storage = "json";
+                let updatedUser;
+                const storage = "postgresql";
+                try {
+                    updatedUser = await updateUserProfileInPostgres(currentUser, updates);
+                } catch (dbError) {
+                    if (dbError.code === "23505") return res.status(409).json({ success: false, error: "Email or username already in use" });
+                    if (isPostgresConnectionError(dbError) || dbError.status === 503) return res.status(503).json({ success: false, error: "Canonical user storage unavailable" });
+                    throw dbError;
                 }
 
                 if (!updatedUser) {
@@ -1177,15 +721,9 @@ function createUserAuthRoutes({
                 }
 
                 const refreshedProfileState = mapUserProfileState(updatedUser);
-                const refreshedToken = jwt.sign(
-                    {
-                        userId: updatedUser.id,
-                        email: updatedUser.email,
-                        role: refreshedProfileState.systemRole || "employee"
-                    },
-                    secretKey,
-                    { expiresIn: "7d" }
-                );
+                const refreshedToken = updates.passwordHash
+                    ? await authRuntime.issue(updatedUser.id, 'pwd')
+                    : await authRuntime.reissue(req.authPrincipal);
 
                 return res.json({
                     success: true,
@@ -1214,14 +752,15 @@ function createUserAuthRoutes({
                 });
             } catch (error) {
                 console.error("❌ Update profile error:", error);
-                return res.status(500).json({
-                    success: false,
-                    error: "Failed to update profile"
-                });
+                return sendStorageError(error, res);
             }
         });
     });
 
+    router.use((error, req, res, next) => {
+        if (res.headersSent) return next(error);
+        return sendStorageError(error, res);
+    });
     return router;
 }
 

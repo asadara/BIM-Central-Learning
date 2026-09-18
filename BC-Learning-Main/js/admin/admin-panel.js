@@ -73,8 +73,8 @@ class AdminPanel {
             const storedUser = localStorage.getItem('user');
             const parsedUser = storedUser ? JSON.parse(storedUser) : null;
             const token = parsedUser?.token || localStorage.getItem('token');
-            const role = (parsedUser?.role || localStorage.getItem('role') || '').toLowerCase();
-            const isAdminRole = role.includes('admin') || role.includes('administrator');
+            const role = parsedUser?.systemRole || parsedUser?.system_role || '';
+            const isAdminRole = role === 'system_admin';
             if (!token || !isAdminRole) {
                 return null;
             }
@@ -424,7 +424,8 @@ class AdminPanel {
     logout() {
         if (confirm('Are you sure you want to logout from admin panel?')) {
             fetch('/api/admin/logout', { method: 'POST', credentials: 'include' })
-                .then(() => {
+                .then(response => {
+                    if (!response.ok) throw new Error('Server did not confirm admin logout');
                     this.adminUser = null;
                     this.isAdminLoggedIn = false;
                     document.getElementById('auth-section').classList.remove('d-none');

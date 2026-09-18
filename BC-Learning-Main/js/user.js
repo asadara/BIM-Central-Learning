@@ -1,3 +1,11 @@
+// Shared server-confirmed logout for legacy page entrypoints.
+window.bclAuthReady = window.bclAuthReady || new Promise((resolve, reject) => {
+    if (window.BclAuth) return resolve(window.BclAuth);
+    const script = document.createElement('script'); script.src = '/js/auth-lifecycle.js';
+    script.onload = () => resolve(window.BclAuth); script.onerror = () => reject(new Error('Authentication client unavailable'));
+    document.head.appendChild(script);
+});
+window.bclAuthReady.catch(() => {});
 // ✅ Fixed: JWT Token expiration check
 function isTokenExpired(token) {
    if (!token) return true;
@@ -295,33 +303,8 @@ document.addEventListener('click', (e) => {
     }
 });
 
-async function handleLogout() {
-   try {
-      // 1. Clear local storage (Client-side JWT logout)
-      localStorage.clear();
-      window.currentUser = null;
-
-      // 2. Call server logout (Server-side Session logout)
-      // This is crucial if the user has an active Admin Session cookie
-      try {
-          await fetch('/api/admin/logout', {
-              method: 'POST',
-              credentials: 'include'
-          });
-       } catch (serverErr) {
-       }
-
-      // 3. Redirect to login page or refresh
-      if (window.location.pathname !== "/pages/login.html") {
-         window.location.href = "/pages/login.html";
-      } else {
-         window.location.reload();
-      }
-   } catch (error) {
-      console.error('❌ Logout error:', error);
-      // Force redirect even if there's an error
-      window.location.href = "/pages/login.html";
-   }
+function handleLogout() {
+    return window.bclAuthReady.then(auth => auth.logout()).catch(() => alert("Logout belum tersedia. Muat ulang halaman dan coba lagi."));
 }
 
 // ✅ Fixed: Improved login form handler with better error handling and fallback
@@ -333,7 +316,7 @@ function setupLoginForm() {
       e.preventDefault();
 
       const email = document.getElementById("email")?.value.trim();
-      const password = document.getElementById("password")?.value.trim();
+      const password = document.getElementById("password")?.value;
 
       if (!email || !password) {
          alert("❌ Harap isi semua kolom!");
@@ -365,6 +348,7 @@ function setupLoginForm() {
 
          if (response.ok && (result.success || result.token)) {
             const user = {
+               id: result.id,
                name: result.name || result.username,
                email: result.email || email,
                role: result.positionLabel || result.role || '',

@@ -317,7 +317,7 @@ class AuthGuard {
 
     async handleLogin() {
         const email = document.getElementById('login-email').value.trim();
-        const password = document.getElementById('login-password').value.trim();
+        const password = document.getElementById('login-password').value;
 
         if (!email || !password) {
             this.showError('Lengkapi semua kolom.');
@@ -338,6 +338,7 @@ class AuthGuard {
             if (response.ok && result.success) {
                 // Save user data
                 const userData = {
+                    id: result.id,
                     name: result.name || result.username,
                     email: result.email,
                     role: result.positionLabel || result.role || '',
@@ -386,7 +387,7 @@ class AuthGuard {
     async handleSignup() {
         const username = document.getElementById('signup-username').value.trim();
         const email = document.getElementById('signup-email').value.trim();
-        const password = document.getElementById('signup-password').value.trim();
+        const password = document.getElementById('signup-password').value;
         const bimLevel = document.getElementById('signup-bim-level')?.value || '';
         const jobRole = document.getElementById('signup-job-role')?.value.trim() || '';
         const organization = document.getElementById('signup-organization').value.trim();

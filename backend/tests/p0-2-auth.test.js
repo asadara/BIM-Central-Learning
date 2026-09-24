@@ -341,6 +341,89 @@ module.exports=async function runAuthTests(){
             await post('/api/admin/logout',{}, {cookie:admin.cookie});
             assert.equal((await request(adminUrl)).status,401);
         });
+        const legacy=require('../scripts/run-google-legacy-link-migration');
+        const legacyUsers=[
+            [101,'legacy101','legacy101@gmail.com'],[102,'legacy102','legacy102@workspace.test'],
+            [103,'legacy103','legacy103@external.test'],[104,'legacy104','legacy104@gmail.com'],
+            [105,'legacy105','legacy105@gmail.com'],[106,'legacy106','legacy106@gmail.com'],
+            [107,'legacy106@gmail.com','legacy107@gmail.com'],[108,'legacy108','legacy108@gmail.com'],
+            [109,'legacy109','legacy109@gmail.com'],[111,'legacy111','legacy111@gmail.com'],
+            [112,'legacy112','legacy112@gmail.com'],[115,'legacy115','legacy115@gmail.com']
+        ];
+        await check('legacy eligibility migration preserves every user field and freezes eligibility once',async()=>{
+            for(const [id,name,email] of legacyUsers) await pool.query(`INSERT INTO users(id,username,email,password,system_role,is_active)
+                VALUES($1,$2,$3,$4,'employee',true)`,[id,name,email,oldHash]);
+            await pool.query("UPDATE users SET system_role='system_admin' WHERE id=109");
+            await pool.query(`INSERT INTO bcl_provider_identities(provider,issuer,subject,user_id,proof_method)
+                VALUES('google','https://accounts.google.com','already-linked-108',108,'local_reauthentication')`);
+            const before=await p1.userSnapshot(pool);
+            const db=await pool.connect();
+            try {await db.query('BEGIN');await legacy.applyMigration(db);await db.query('COMMIT');} finally {db.release();}
+            assert.deepEqual(await p1.userSnapshot(pool),before);
+            assert.equal((await pool.query('SELECT 1 FROM bcl_google_legacy_candidates WHERE user_id IN (106,108)')).rowCount,0);
+            await pool.query(`INSERT INTO users(id,username,email,password,system_role,is_active)
+                VALUES(113,'legacy113','legacy113@gmail.com',$1,'employee',true)`,[oldHash]);
+            const repeat=await pool.connect();
+            try {await repeat.query('BEGIN');await legacy.applyMigration(repeat);await repeat.query('COMMIT');} finally {repeat.release();}
+            assert.equal((await pool.query('SELECT 1 FROM bcl_google_legacy_candidates WHERE user_id=113')).rowCount,0);
+        });
+        await check('verified Gmail selection links the old ID, revokes old sessions, preserves password/profile, and persists',async()=>{
+            const old=(await post('/api/login',{email:'legacy101',password:'old123'})).data.token;
+            const before=(await pool.query('SELECT * FROM users WHERE id=101')).rows[0];
+            const n=(await pool.query('SELECT count(*)::int n FROM users')).rows[0].n;
+            const result=await googleLogin('legacy-sub-101','LEGACY101@gmail.com');
+            assert.equal(result.status,200,JSON.stringify(result.data));assert.equal(result.data.id,101);assert.equal(result.data.createdUser,false);
+            const after=(await pool.query('SELECT * FROM users WHERE id=101')).rows[0];
+            for(const key of Object.keys(before)) if(!['last_login','login_count','updated_at'].includes(key)) assert.deepEqual(after[key],before[key],key);
+            assert.equal((await request('/api/test/identity',{bearer:old})).status,401);
+            assert.equal((await request('/api/test/identity',{bearer:result.data.token})).status,200);
+            assert.equal((await pool.query('SELECT count(*)::int n FROM users')).rows[0].n,n);
+            assert.equal((await pool.query('SELECT proof_method FROM bcl_provider_identities WHERE user_id=101')).rows[0].proof_method,'verified_google_legacy_email');
+            assert.equal((await pool.query("SELECT 1 FROM bcl_auth_events WHERE user_id=101 AND event='google_linked'")).rowCount,1);
+            const fresh=createGoogleIdentityService({auth,clientId:'fixture-google-client',client:googleClient});
+            const p=await proof('legacy-sub-101','changed@external.test');
+            assert.equal((await fresh.login(await fresh.verifyProof(p.idToken,p.challengeId,'login'))).user.id,101);
+        });
+        await check('Workspace hosted-domain proof can link; third-party email and client claims cannot',async()=>{
+            const workspace=await post('/api/auth/google',{action:'login',...await proof('legacy-sub-102','legacy102@workspace.test','login',undefined,{hd:'workspace.test'})});
+            assert.equal(workspace.status,200,JSON.stringify(workspace.data));assert.equal(workspace.data.id,102);
+            const third=await post('/api/auth/google',{action:'login',authoritativeEmail:true,hd:'external.test',...await proof('legacy-sub-103','legacy103@external.test')});
+            assert.equal(third.status,409);assert.equal(third.data.code,'GOOGLE_LINK_REQUIRED');
+            assert.equal((await pool.query('SELECT 1 FROM bcl_provider_identities WHERE user_id=103')).rowCount,0);
+        });
+        await check('changed email, changed credentials, inactive user, namespace collision and later registration cannot auto-link',async()=>{
+            await pool.query("UPDATE users SET email='replacement104@gmail.com' WHERE id=104");
+            await pool.query('UPDATE users SET is_active=false WHERE id=105');
+            await pool.query('UPDATE users SET password=$1 WHERE id=112',[await bcrypt.hash('changed112',10)]);
+            for(const [id,email] of [[104,'replacement104@gmail.com'],[106,'legacy106@gmail.com'],[113,'legacy113@gmail.com'],[112,'legacy112@gmail.com']]) {
+                const r=await googleLogin('untrusted-'+id,email);assert.equal(r.status,409,JSON.stringify(r.data));
+                assert.equal((await pool.query('SELECT 1 FROM bcl_provider_identities WHERE user_id=$1',[id])).rowCount,0);
+            }
+            assert.equal((await googleLogin('disabled-105','legacy105@gmail.com')).status,401);
+            assert.equal((await googleLogin('old-email-104','legacy104@gmail.com')).status,409);
+            assert.equal((await googleLogin('unknown-google','not-a-user@gmail.com')).status,409);
+        });
+        await check('existing Google ownership cannot be overwritten and unverified Gmail cannot claim an account',async()=>{
+            assert.equal((await googleLogin('different-sub-108','legacy108@gmail.com')).status,409);
+            assert.equal((await pool.query('SELECT subject FROM bcl_provider_identities WHERE user_id=108')).rows[0].subject,'already-linked-108');
+            const rejected=await post('/api/auth/google',{action:'login',...await proof('bad-109','legacy109@gmail.com','login',undefined,{email_verified:false})});
+            assert.equal(rejected.status,401);assert.equal((await pool.query('SELECT 1 FROM bcl_provider_identities WHERE user_id=109')).rowCount,0);
+            const admin=await googleLogin('verified-admin-109','legacy109@gmail.com');
+            assert.equal(admin.status,200,JSON.stringify(admin.data));assert.equal(admin.data.id,109);assert.equal(admin.data.systemRole,'system_admin');
+        });
+        await check('concurrent verified legacy logins persist one owner and repeated login uses the saved mapping',async()=>{
+            const results=await Promise.all([googleLogin('legacy-sub-111','legacy111@gmail.com'),googleLogin('legacy-sub-111','legacy111@gmail.com')]);
+            for(const r of results) {assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.id,111);}
+            assert.equal((await pool.query('SELECT 1 FROM bcl_provider_identities WHERE user_id=111')).rowCount,1);
+            assert.equal((await pool.query("SELECT 1 FROM bcl_auth_events WHERE user_id=111 AND event='google_linked'")).rowCount,1);
+            assert.equal((await googleLogin('legacy-sub-111','new-address@gmail.com')).data.id,111);
+        });
+        await check('competing Google subjects cannot both claim the same legacy account',async()=>{
+            const results=await Promise.all([googleLogin('competing-a','legacy115@gmail.com'),googleLogin('competing-b','legacy115@gmail.com')]);
+            assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
+            assert.equal((await pool.query('SELECT 1 FROM bcl_provider_identities WHERE user_id=115')).rowCount,1);
+            assert.equal((await pool.query("SELECT 1 FROM bcl_auth_events WHERE user_id=115 AND event='google_linked'")).rowCount,1);
+        });
         console.log('P0-2 integration checks passed: '+count);
     }finally{
         if(server)await new Promise(resolve=>server.close(resolve));

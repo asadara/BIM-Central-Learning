@@ -32,7 +32,12 @@ function createGoogleIdentityService({auth,clientId,client=new OAuth2Client(clie
             typeof payload.nonce!=='string'||digest(payload.nonce)!==row.nonce_hash) throw fail('GOOGLE_CLAIMS_INVALID');
         const consumed=await auth.pool.query('UPDATE bcl_google_challenges SET used_at=now() WHERE id=$1 AND used_at IS NULL AND expires_at>now() RETURNING id',[challengeId]);
         if(consumed.rowCount!==1) throw fail('GOOGLE_CHALLENGE_REPLAYED');
-        return {issuer:ISSUER,sub:payload.sub,email:payload.email.trim().toLowerCase(),name:String(payload.name||'Google user').slice(0,100)};
+        const email=payload.email.trim().toLowerCase();
+        // Only a verified Google token can establish email ownership. Third-party
+        // email addresses without a Workspace hosted-domain claim need other proof.
+        const authoritativeEmail=email.endsWith('@gmail.com')||
+            (typeof payload.hd==='string'&&payload.hd.trim().length>0);
+        return {issuer:ISSUER,sub:payload.sub,email,authoritativeEmail,name:String(payload.name||'Google user').slice(0,100)};
     }
     async function mapping(proof,db=auth.pool) {
         return (await db.query('SELECT user_id FROM bcl_provider_identities WHERE provider=$1 AND issuer=$2 AND subject=$3',['google',proof.issuer,proof.sub])).rows[0];
@@ -50,12 +55,39 @@ function createGoogleIdentityService({auth,clientId,client=new OAuth2Client(clie
         await auth.audit('google_linked',userId,actorId||userId,{method,provider:'google',issuer:proof.issuer,subjectDigest:digest(proof.sub)},db);
     }
     async function login(proof) {
-        const linked=await mapping(proof);
+        const linked=await mapping(proof)||await claimLegacyAccount(proof);
         if(!linked) return {needsLink:true,...await pending(proof)};
         return auth.transaction(async db=>{
             const user=await auth.userState(linked.user_id,db,true);
             await db.query('UPDATE users SET login_count=COALESCE(login_count,0)+1,last_login=now() WHERE id=$1',[user.id]);
             return {user,token:await auth.issue(user.id,'google',db)};
+        });
+    }
+    async function claimLegacyAccount(proof) {
+        if(proof.authoritativeEmail!==true) return null;
+        // An installation without the additive migration keeps manual linking.
+        const schema=await auth.pool.query("SELECT to_regclass('public.bcl_google_legacy_candidates') AS relation");
+        if(!schema.rows[0].relation) return null;
+        return auth.transaction(async db=>{
+            const candidate=(await db.query(`SELECT user_id,email,auth_version FROM bcl_google_legacy_candidates
+                WHERE email=$1 AND claimed_at IS NULL`,[proof.email])).rows[0];
+            if(!candidate) return mapping(proof,db); // Another login may have just claimed it.
+            // Serialize with password/role changes and every other linking route.
+            const user=await auth.userState(candidate.user_id,db,true);
+            const existing=await mapping(proof,db);
+            if(existing) return existing;
+            if(user.auth_version!==candidate.auth_version||user.email.trim().toLowerCase()!==candidate.email) return null;
+            const matches=await db.query(`SELECT id FROM users
+                WHERE lower(btrim(email))=$1 OR lower(btrim(username))=$1`,[proof.email]);
+            if(matches.rowCount!==1||String(matches.rows[0].id)!==String(user.id)) return null;
+            const other=await db.query("SELECT 1 FROM bcl_provider_identities WHERE user_id=$1 AND provider='google'",[user.id]);
+            if(other.rowCount) return null;
+            const claimed=await db.query(`UPDATE bcl_google_legacy_candidates SET claimed_at=now()
+                WHERE user_id=$1 AND claimed_at IS NULL RETURNING user_id`,[user.id]);
+            if(claimed.rowCount!==1) return null;
+            await insertMapping(proof,user.id,'verified_google_legacy_email',db);
+            await auth.revokeUser(user.id,db);
+            return {user_id:user.id};
         });
     }
     async function register(proof,{username}) {

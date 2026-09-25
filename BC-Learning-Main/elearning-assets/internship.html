@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program Magang / Internship - BCL</title>
+    <link rel="icon" href="/img/icons/trimmed/main_ico_bcl.ico" type="image/x-icon">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://use.fontawesome.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://use.fontawesome.com https://cdn.jsdelivr.net; img-src 'self' data: https:; media-src 'self' https:; connect-src 'self'; frame-src 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.2/css/all.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/workspace-theme.css?v=20260717b">
+    <link rel="stylesheet" href="css/internship.css?v=20260925c">
+</head>
+
+<body class="elearn-workspace-theme">
+    <div class="header-container"></div>
+    <div class="side-bar" id="sidebar-container"></div>
+
+    <main class="internship-shell elearn-page-shell" id="internship-page">
+        <header class="internship-page-intro">
+            <div>
+                <p class="elearn-page-kicker">Training</p>
+                <h1>Program Magang / Internship</h1>
+                <p>Learning Path, Progress &amp; Mentor Guidance</p>
+            </div>
+            <div class="internship-intro-actions">
+                <a class="internship-review-entry" id="internship-review-entry" href="/elearning-assets/internship-review.html" hidden><i class="fas fa-clipboard-check" aria-hidden="true"></i> Buka Review Queue</a>
+                <label class="internship-program-picker" id="internship-program-picker" hidden>
+                    <span>Pilih program</span>
+                    <select id="internship-program-select" aria-label="Pilih program magang"></select>
+                </label>
+            </div>
+        </header>
+
+        <section class="internship-state" id="internship-state" aria-live="polite">
+            <span class="internship-state-icon" aria-hidden="true"><i class="fas fa-circle-notch fa-spin"></i></span>
+            <div>
+                <h2>Memuat program Anda</h2>
+                <p>Menyiapkan learning path dan progress terbaru dari BCL.</p>
+            </div>
+        </section>
+
+        <div class="internship-content" id="internship-content" hidden>
+            <section class="internship-overview" aria-labelledby="internship-program-title">
+                <div class="internship-overview-copy">
+                    <div class="internship-overview-topline">
+                        <span id="internship-program-code"></span>
+                        <span class="internship-program-status" id="internship-program-status"></span>
+                    </div>
+                    <h2 id="internship-program-title"></h2>
+                    <p class="internship-participant" id="internship-participant"></p>
+
+                    <dl class="internship-meta">
+                        <div>
+                            <dt>Learning track</dt>
+                            <dd id="internship-track"></dd>
+                        </div>
+                        <div>
+                            <dt>Mentor</dt>
+                            <dd id="internship-mentor"></dd>
+                        </div>
+                        <div>
+                            <dt>Periode</dt>
+                            <dd id="internship-period"></dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div class="internship-overall" aria-label="Learning progress">
+                    <span>Learning progress</span>
+                    <strong id="internship-progress-value">0%</strong>
+                    <div class="internship-progress-track" role="progressbar" id="internship-progress-bar"
+                        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <span id="internship-progress-fill"></span>
+                    </div>
+                    <small id="internship-progress-caption"></small>
+                </div>
+            </section>
+
+            <section class="internship-program-summary" id="internship-program-summary" aria-labelledby="internship-program-summary-title" hidden>
+                <header>
+                    <div>
+                        <p class="elearn-page-kicker">Program progress</p>
+                        <h2 id="internship-program-summary-title">Status penyelesaian program</h2>
+                    </div>
+                    <strong id="internship-completion-status"></strong>
+                </header>
+                <dl class="internship-program-metrics" id="internship-program-metrics"></dl>
+                <div class="internship-program-blockers" id="internship-program-blockers"></div>
+            </section>
+
+            <section class="internship-focus" id="internship-focus" aria-labelledby="internship-focus-title">
+                <div class="internship-focus-index" id="internship-focus-index" aria-hidden="true"></div>
+                <div class="internship-focus-copy">
+                    <p>Fokus saat ini</p>
+                    <h2 id="internship-focus-title"></h2>
+                    <span id="internship-focus-description"></span>
+                </div>
+                <a class="internship-primary-action" id="internship-focus-action" href="#">
+                    <span>Lanjut belajar</span>
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </section>
+
+            <div class="internship-workspace">
+                <section class="internship-path" aria-labelledby="internship-path-title">
+                    <div class="internship-section-heading">
+                        <div>
+                            <p class="elearn-page-kicker">Roadmap</p>
+                            <h2 id="internship-path-title">Learning Path</h2>
+                        </div>
+                        <span id="internship-path-version"></span>
+                    </div>
+                    <div class="internship-path-list" id="internship-path-list"></div>
+                </section>
+
+                <aside class="internship-context" aria-label="Ringkasan program">
+                    <section class="internship-summary" aria-labelledby="internship-summary-title">
+                        <h2 id="internship-summary-title">Ringkasan progress</h2>
+                        <dl>
+                            <div>
+                                <dt>Selesai</dt>
+                                <dd id="internship-summary-completed"></dd>
+                            </div>
+                            <div>
+                                <dt>Tahap saat ini</dt>
+                                <dd id="internship-summary-current"></dd>
+                            </div>
+                            <div>
+                                <dt>Berikutnya</dt>
+                                <dd id="internship-summary-next"></dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <section class="internship-training-link" aria-labelledby="internship-training-link-title">
+                        <span aria-hidden="true"><i class="fas fa-chalkboard-user"></i></span>
+                        <div>
+                            <h2 id="internship-training-link-title">Butuh detail batch?</h2>
+                            <p>Jadwal dan aktivitas operasional tetap tersedia di My Training.</p>
+                            <a href="/elearning-assets/my-training.html">Buka My Training <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+
+            <section class="internship-assignments" id="internship-assignments" aria-labelledby="internship-assignments-title" hidden>
+                <div class="internship-section-heading">
+                    <div>
+                        <p class="elearn-page-kicker">Practical application</p>
+                        <h2 id="internship-assignments-title">Tugas Praktik</h2>
+                    </div>
+                    <span id="internship-assignment-summary"></span>
+                </div>
+                <div class="internship-assignment-state" id="internship-assignment-state" hidden></div>
+                <div class="internship-assignment-list" id="internship-assignment-list"></div>
+            </section>
+        </div>
+    </main>
+
+    <div class="footer-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/component-loader.js?v=20260717b"></script>
+    <script src="js/script.js"></script>
+    <script src="js/sidebar-loader.js?v=20260717b"></script>
+    <script src="js/internship-submission.js?v=20260925b"></script>
+    <script src="js/internship.js?v=20260925c"></script>
+</body>
+
+</html>

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "bcl-internship-rubric-package-v2",
+  "packageVersion": "internship-pilot-rubrics-v2",
+  "status": "proposed",
+  "programCode": "INT-BIM-2026-PILOT",
+  "basedOnPackageVersion": "internship-pilot-rubrics-v1",
+  "scoreBehavior": {
+    "criterionMinimum": 0,
+    "criterionMaximum": 5,
+    "meaning": "descriptive_assessment_support",
+    "acceptanceAuthority": "explicit_reviewer_decision",
+    "automaticScoreThreshold": null,
+    "revisionPenalty": false
+  },
+  "rubrics": [
+    {
+      "rubricKey": "rubric-model-quality-v1",
+      "assignmentKey": "model-quality-information-review",
+      "title": "Model Quality & Information Review Rubric",
+      "acceptanceAuthority": "explicit_reviewer_decision",
+      "automaticScoreThreshold": null,
+      "acceptanceExpectation": "The output is usable and technically coherent, evidence supports findings, and no critical QA/QC issue is left unexplained.",
+      "criteria": [
+        { "criterionKey": "model-structure-information", "title": "Model Structure & Information", "description": "Reviews structure, naming, levels/grids, parameters, and completeness.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 10 },
+        { "criterionKey": "accuracy-consistency", "title": "Accuracy & Consistency", "description": "Identifies material inconsistencies and supports conclusions with evidence.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 20 },
+        { "criterionKey": "quality-method", "title": "QA/QC Method", "description": "Uses a systematic, reproducible method and severity logic.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 30 },
+        { "criterionKey": "technical-reasoning", "title": "Findings & Technical Reasoning", "description": "Prioritises findings and proposes defensible corrective action.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 40 },
+        { "criterionKey": "documentation-quality", "title": "Documentation Quality", "description": "Produces clear, traceable report/checklist evidence.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 50 }
+      ]
+    },
+    {
+      "rubricKey": "rubric-federated-coordination-v1",
+      "assignmentKey": "federated-coordination-clash-review",
+      "title": "Federated Coordination & Clash Review Rubric",
+      "acceptanceAuthority": "explicit_reviewer_decision",
+      "automaticScoreThreshold": null,
+      "acceptanceExpectation": "Federation assumptions are explicit, significant issues are correctly classified and traceable, and coordination actions are usable.",
+      "criteria": [
+        { "criterionKey": "federation-setup", "title": "Federation & Setup", "description": "Verifies discipline scope, coordinates, units, alignment, and assumptions.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 10 },
+        { "criterionKey": "clash-identification", "title": "Clash Identification", "description": "Finds material issues without relying on unfiltered clash counts.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 20 },
+        { "criterionKey": "issue-classification", "title": "Issue Classification", "description": "Groups, prioritises, and assigns meaningful categories.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 30 },
+        { "criterionKey": "coordination-reasoning", "title": "Coordination Reasoning", "description": "Proposes ownership, actions, and recheck logic with justification.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 40 },
+        { "criterionKey": "coordination-report", "title": "Report & Traceability", "description": "Links issue log, screenshots, status, and recommendations.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 50 }
+      ]
+    },
+    {
+      "rubricKey": "rubric-4d-linkage-v1",
+      "assignmentKey": "model-schedule-4d-linkage",
+      "title": "4D Model-Schedule Linkage Rubric",
+      "acceptanceAuthority": "explicit_reviewer_decision",
+      "automaticScoreThreshold": null,
+      "acceptanceExpectation": "WBS interpretation, common-ID rules, grouping, mapping, validation, and sequence reasoning are coherent and traceable.",
+      "criteria": [
+        { "criterionKey": "wbs-understanding", "title": "WBS & Activity Understanding", "description": "Interprets IDs, dates, dependencies, scope, and intent correctly.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 10 },
+        { "criterionKey": "model-breakdown", "title": "Model Breakdown", "description": "Defines usable grouping logic aligned with construction scope.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 20 },
+        { "criterionKey": "schedule-mapping", "title": "Common-ID Model-Schedule Mapping", "description": "Creates complete, traceable links and validates missing/duplicate/format cases.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 30 },
+        { "criterionKey": "sequence-logic", "title": "Sequence Logic", "description": "Evaluates sequence states and identifies linkage/data issues.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 40 },
+        { "criterionKey": "4d-documentation", "title": "Documentation", "description": "Explains assumptions, problems, corrections, and evidence clearly.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 50 }
+      ]
+    },
+    {
+      "rubricKey": "rubric-qto-5d-v1",
+      "assignmentKey": "qto-5d-validation",
+      "title": "QTO / 5D Validation Rubric",
+      "acceptanceAuthority": "explicit_reviewer_decision",
+      "automaticScoreThreshold": null,
+      "acceptanceExpectation": "Extraction and reconciliation are reproducible, discrepancies are reasoned, and no critical reliability concern is unresolved.",
+      "criteria": [
+        { "criterionKey": "model-readiness", "title": "Model Readiness", "description": "Checks scope, categories, units, classification, and parameters.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 10 },
+        { "criterionKey": "quantity-extraction", "title": "Quantity Extraction", "description": "Produces a controlled and reproducible quantity extract.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 20 },
+        { "criterionKey": "validation-method", "title": "Validation Method", "description": "Uses an appropriate comparison and reconciliation method.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 30 },
+        { "criterionKey": "discrepancy-analysis", "title": "Discrepancy Analysis", "description": "Explains differences, assumptions, and reliability risks.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 40 },
+        { "criterionKey": "qto-documentation", "title": "Documentation", "description": "Presents methodology, tables, evidence, and limitations clearly.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 50 }
+      ]
+    },
+    {
+      "rubricKey": "rubric-automation-improvement-v2",
+      "assignmentKey": "automation-digital-workflow-improvement",
+      "title": "Automation / Digital Workflow Improvement Rubric v2",
+      "acceptanceAuthority": "explicit_reviewer_decision",
+      "automaticScoreThreshold": null,
+      "acceptanceExpectation": "The improvement is useful and repeatable, outputs are validated, benefits are measured, feedback is incorporated, and external release governance is traceable.",
+      "criteria": [
+        { "criterionKey": "problem-baseline", "title": "Problem & Baseline", "description": "Defines a material workflow problem, users, inputs, baseline, and success measure.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 10 },
+        { "criterionKey": "information-workflow-architecture", "title": "Information & Workflow Architecture", "description": "Defines coherent IDs, transformations, controls, and safe operating boundaries.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 20 },
+        { "criterionKey": "functional-validation", "title": "Functional Result & Validation", "description": "Demonstrates useful derived output and tests missing, duplicate, format, and failure cases.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 30 },
+        { "criterionKey": "benchmark-benefit", "title": "Benchmark & Practical Benefit", "description": "Compares time, steps, errors, and repeatability against the baseline.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 40 },
+        { "criterionKey": "feedback-improvement", "title": "Feedback & Improvement Cycle", "description": "Records mentor/user feedback and a traceable revision response.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 50 },
+        { "criterionKey": "safe-governed-handover", "title": "Safe Use, Governance & Handover", "description": "Documents limitations, SOP, external release identity, responsibility, and next action without uploading source or executables.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 60 }
+      ]
+    },
+    {
+      "rubricKey": "rubric-documentation-delivery-v2",
+      "assignmentKey": "bim-documentation-delivery-package",
+      "title": "BIM Documentation, Governance & Handover Rubric v2",
+      "acceptanceAuthority": "explicit_reviewer_decision",
+      "automaticScoreThreshold": null,
+      "acceptanceExpectation": "The package is structured, consistent, traceable, explicit about governance and limitations, usable for handover, and supported by closeout evidence.",
+      "criteria": [
+        { "criterionKey": "deliverable-structure", "title": "Deliverable Structure", "description": "Organises scope, register fields, files, and status coherently.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 10 },
+        { "criterionKey": "naming-status-control", "title": "Naming, Status & Authority", "description": "Applies naming, suitability/status, revision, and information-authority logic.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 20 },
+        { "criterionKey": "issue-consistency", "title": "Issue Traceability & Consistency", "description": "Links revisions, issue states, decisions, model-derived outputs, drawings, and registers.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 30 },
+        { "criterionKey": "workflow-sop-limitations", "title": "Workflow, SOP & Limitations", "description": "Documents use, inputs/outputs, validation, responsibilities, limitations, and external artifact references where applicable.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 40 },
+        { "criterionKey": "handover-knowledge-transfer", "title": "Handover & Knowledge Transfer", "description": "Provides a usable handover narrative, backlog, and knowledge-transfer evidence.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 50 },
+        { "criterionKey": "presentation-closeout", "title": "Presentation & Closeout", "description": "Communicates problem, method, result, limitations, next development, and mentor sign-off clearly.", "maxScore": 5, "weight": 1, "required": true, "sortOrder": 60 }
+      ]
+    }
+  ],
+  "integrity": { "algorithm": "sha256", "digest": "d51443e064536ab314c1873656667321c4f84cc544ae8c98c49f033a7a9e8273" }
+}

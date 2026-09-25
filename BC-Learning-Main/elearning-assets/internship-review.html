@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Internship - BCL</title>
+    <link rel="icon" href="/img/icons/trimmed/main_ico_bcl.ico" type="image/x-icon">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://use.fontawesome.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://use.fontawesome.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.2/css/all.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/workspace-theme.css?v=20260717b">
+    <link rel="stylesheet" href="css/internship-review.css?v=20260925c">
+</head>
+<body class="elearn-workspace-theme">
+    <div class="header-container"></div>
+    <div class="side-bar" id="sidebar-container"></div>
+    <main class="internship-review-shell elearn-page-shell">
+        <header class="internship-review-intro">
+            <div>
+                <p class="elearn-page-kicker">Internship · Mentor workspace</p>
+                <h1>Review Tugas Praktik</h1>
+                <p>Nilai evidence, berikan feedback, lalu tetapkan keputusan secara eksplisit.</p>
+            </div>
+            <label id="review-program-picker" hidden><span>Program</span><select id="review-program-select"></select></label>
+        </header>
+
+        <section class="review-page-state" id="review-page-state" aria-live="polite">
+            <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+            <div><h2>Memuat antrean review</h2><p>Menyiapkan submission dalam lingkup program Anda.</p></div>
+        </section>
+
+        <div class="review-workspace" id="review-workspace" hidden>
+            <aside class="review-queue" aria-label="Antrean review">
+                <div class="review-queue-heading"><div><span>Queue</span><strong id="review-queue-count">0 submission</strong></div><button type="button" id="review-refresh" aria-label="Muat ulang antrean"><i class="fas fa-rotate"></i></button></div>
+                <section class="review-participants" id="review-participants" aria-label="Status peserta" hidden>
+                    <strong>Program status</strong>
+                    <div id="review-participant-list"></div>
+                </section>
+                <label class="review-filter"><span>Status</span><select id="review-status-filter"><option value="all">Semua</option><option value="not_started">Belum dimulai</option><option value="under_review">Sedang direview</option><option value="revision_requested">Perlu revisi</option><option value="accepted">Diterima</option></select></label>
+                <div id="review-queue-list" class="review-queue-list"></div>
+            </aside>
+
+            <section class="review-detail" id="review-detail" aria-live="polite">
+                <div class="review-detail-empty"><i class="fas fa-inbox"></i><h2>Pilih submission</h2><p>Detail evidence dan rubric akan terbuka di sini.</p></div>
+            </section>
+        </div>
+    </main>
+    <div class="footer-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/component-loader.js?v=20260717b"></script>
+    <script src="js/script.js"></script>
+    <script src="js/sidebar-loader.js?v=20260717b"></script>
+    <script src="js/internship-review.js?v=20260925c"></script>
+</body>
+</html>

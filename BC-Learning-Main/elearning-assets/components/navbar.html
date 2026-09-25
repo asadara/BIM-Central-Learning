@@ -127,6 +127,9 @@
                 <div class="dropdown-menu fade-down m-0">
                     <a href="/pages/elearning.html" class="dropdown-item">Pusat Belajar</a>
                     <a href="/elearning-assets/dashboard.html" class="dropdown-item">Jalur Belajar</a>
+                    <a href="/elearning-assets/internship.html" class="dropdown-item" data-internship-nav hidden style="display: none;">
+                        <i class="fas fa-route bcl-inline-icon-md"></i>Magang / Internship
+                    </a>
                     <a href="https://bcl-scoring.asadara83.workers.dev/" class="dropdown-item" target="_blank" rel="noopener noreferrer">
                         <i class="fas fa-external-link-alt bcl-inline-icon-md"></i>BCL Scoring
                     </a>
@@ -1181,4 +1184,42 @@
     } else {
         initializeResponsiveNavbar();
     }
+
+    function readBclInternshipToken() {
+        try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            return localStorage.getItem('token') || user.token || '';
+        } catch (error) {
+            return localStorage.getItem('token') || '';
+        }
+    }
+
+    async function refreshBclInternshipNavigation() {
+        const links = document.querySelectorAll('[data-internship-nav]');
+        links.forEach(link => {
+            link.hidden = true;
+            link.style.display = 'none';
+        });
+
+        const token = readBclInternshipToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/training/internships/me', {
+                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'same-origin',
+                cache: 'no-store'
+            });
+            if (!response.ok) return;
+            links.forEach(link => {
+                link.hidden = false;
+                link.style.removeProperty('display');
+            });
+        } catch (error) {
+            // Default-hidden keeps existing navigation unchanged when unavailable.
+        }
+    }
+
+    window.BCLRefreshInternshipNavigation = refreshBclInternshipNavigation;
+    refreshBclInternshipNavigation();
 </script>

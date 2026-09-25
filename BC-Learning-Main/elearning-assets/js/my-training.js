@@ -380,6 +380,7 @@ function renderTrainingPlan(plan) {
     const topics = Array.isArray(plan.topics) ? plan.topics : [];
     const unassignedItems = Array.isArray(plan.unassignedItems) ? plan.unassignedItems : [];
     const totalItems = topics.reduce((total, topic) => total + (Array.isArray(topic.items) ? topic.items.length : 0), 0) + unassignedItems.length;
+    const participantSubmissionEnabled = !plan.capabilities || plan.capabilities.participantSubmission !== false;
 
     panel.classList.remove('is-hidden');
     panel.innerHTML = `
@@ -394,12 +395,12 @@ function renderTrainingPlan(plan) {
         </div>
         ${topics.length || unassignedItems.length ? `
             <div class="training-topic-list">
-                ${topics.map(renderTrainingTopic).join('')}
+                ${topics.map((topic) => renderTrainingTopic(topic, participantSubmissionEnabled)).join('')}
                 ${unassignedItems.length ? renderTrainingTopic({
                     title: 'Aktivitas tanpa sesi',
                     description: '',
                     items: unassignedItems
-                }) : ''}
+                }, participantSubmissionEnabled) : ''}
             </div>
         ` : `
             <div class="my-training-empty">
@@ -411,7 +412,7 @@ function renderTrainingPlan(plan) {
     `;
 }
 
-function renderTrainingTopic(topic) {
+function renderTrainingTopic(topic, participantSubmissionEnabled = true) {
     const items = Array.isArray(topic.items) ? topic.items : [];
     return `
         <article class="training-topic">
@@ -419,7 +420,7 @@ function renderTrainingTopic(topic) {
                 <h3>${escapeMyTrainingHtml(topic.title || 'Sesi Training')}</h3>
                 ${topic.description ? `<p>${escapeMyTrainingHtml(topic.description)}</p>` : ''}
             </div>
-            ${items.length ? items.map(renderTrainingPlanItem).join('') : `
+            ${items.length ? items.map((item) => renderTrainingPlanItem(item, participantSubmissionEnabled)).join('') : `
                 <div class="training-plan-item">
                     <div>
                         <h4>Belum ada aktivitas</h4>
@@ -431,12 +432,12 @@ function renderTrainingTopic(topic) {
     `;
 }
 
-function renderTrainingPlanItem(item) {
+function renderTrainingPlanItem(item, participantSubmissionEnabled = true) {
     const batchId = myTrainingState.selectedBatchId;
     const cacheKey = getSubmissionCacheKey(batchId, item.id);
     const cachedSubmission = myTrainingState.submissions[cacheKey];
     const isPracticeTask = String(item.type || '').toLowerCase() === 'practice_task';
-    const canSubmit = isPracticeTask && isSelectedBatchParticipant();
+    const canSubmit = participantSubmissionEnabled && isPracticeTask && isSelectedBatchParticipant();
     const submissionStatus = cachedSubmission?.status || cachedSubmission?.data?.status || '';
 
     return `

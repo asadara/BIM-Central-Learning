@@ -1,0 +1,232 @@
+{
+  "schemaVersion": "bcl-internship-pilot-manifest-v2",
+  "manifestVersion": "INT-BIM-PILOT-MANIFEST-v2",
+  "status": "proposed",
+  "auditDate": "2026-09-25",
+  "basedOnManifestVersion": "INT-BIM-PILOT-MANIFEST-v1",
+  "changeReason": "Adds an explicit curriculum, practical assignment, rubric, and evidence-safe package without modifying v1 or activating the pilot.",
+  "program": {
+    "programCode": "INT-BIM-2026-PILOT",
+    "programTitle": "BCL BIM Internship Pilot",
+    "programType": "internship",
+    "batchId": "int-bim-2026-pilot",
+    "status": "configuration_pending",
+    "startDate": null,
+    "endDate": null,
+    "taxonomy": [
+      "bim_fundamental",
+      "bim_coordination",
+      "automation_digital_engineering",
+      "documentation_delivery"
+    ],
+    "taxonomyAllocationNote": "25/25/25/25 is program organization only, never progress or score weighting."
+  },
+  "policy": {
+    "policyVersionId": "INT-BIM-PILOT-POLICY-v2",
+    "versionNumber": 2,
+    "expectedStatus": "frozen_after_approval",
+    "contractVersion": "internship-completion-v1",
+    "attendanceGate": false,
+    "finalEvaluationGate": false,
+    "closeoutRequired": true,
+    "acceptanceRule": "explicit_reviewer_acceptance",
+    "revisionPolicy": "latest_revision_controls",
+    "certificateEligibility": "after_explicit_closeout"
+  },
+  "learningPath": {
+    "learningPathId": "bim-mindset-foundation",
+    "versionId": "6a6d1f8a-67cf-4dcb-b4e9-c4a2be0f1a01",
+    "versionNumber": 1,
+    "expectedStatus": "published",
+    "contractVersion": "internship-learning-path-v1"
+  },
+  "stages": [
+    { "stageId": "01-foundation-quality", "title": "BIM Fundamental, Information & Model Quality", "taxonomy": "bim_fundamental" },
+    { "stageId": "02-coordination-clash", "title": "Federated Coordination & Clash", "taxonomy": "bim_coordination" },
+    { "stageId": "03-4d-integration", "title": "4D Model-Schedule Integration", "taxonomy": "bim_coordination" },
+    { "stageId": "04-5d-qto", "title": "5D / QTO Validation", "taxonomy": "bim_fundamental" },
+    { "stageId": "05-digital-improvement", "title": "Automation / Digital Engineering", "taxonomy": "automation_digital_engineering" },
+    { "stageId": "06-documentation-delivery", "title": "Documentation / Delivery", "taxonomy": "documentation_delivery" }
+  ],
+  "learning": [
+    {
+      "contentId": "page:bim-mindset",
+      "title": "Konsep BIM Mindset",
+      "contentType": "page",
+      "stageId": "01-foundation-quality",
+      "taxonomy": "bim_fundamental",
+      "competency": "BIM as information-management practice",
+      "requirement": "required",
+      "availability": "active",
+      "completionAuthority": "server_activity_evidence",
+      "quizRelation": "none",
+      "rationale": "Only currently published Internship path mapping explicitly approved as required."
+    },
+    {
+      "contentId": "pdf:manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-4-memproduksi-data-model-bim-pdf",
+      "title": "Memproduksi Data Model BIM Struktur dan Arsitektur",
+      "contentType": "pdf",
+      "stageId": "01-foundation-quality",
+      "taxonomy": "bim_fundamental",
+      "competency": "model production and quality readiness",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Canonical active material supports the assignment but is not an approved required Internship mapping."
+    },
+    {
+      "contentId": "pdf:manual-book-bim-modeller-3-manajemen-data-kolaboratif-2-prosedur-awal-penyiapan-data-model-untuk-koordinasi-pdf",
+      "title": "Prosedur Awal Penyiapan Data Model untuk Koordinasi",
+      "contentType": "pdf",
+      "stageId": "02-coordination-clash",
+      "taxonomy": "bim_coordination",
+      "competency": "coordination model preparation",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Canonical active coordination reference; no required-path promotion without SME approval."
+    },
+    {
+      "contentId": "pdf:manual-book-bim-modeller-3-manajemen-data-kolaboratif-3-memasukkan-data-model-ke-dalam-common-data-environment-pdf",
+      "title": "Memasukkan Data Model ke Common Data Environment",
+      "contentType": "pdf",
+      "stageId": "02-coordination-clash",
+      "taxonomy": "bim_coordination",
+      "competency": "controlled model exchange",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Supports information control and delivery discipline."
+    },
+    {
+      "contentId": "video:7__audio_visual_learning_5__software_6__navisworks_rich_1__video_tutorial_25__navisworks_tutorial__lesson_25_how_to_use_clash_detective_tool_in_navisworks_manage_2018_mp4",
+      "title": "Navisworks Lesson 25 — Clash Detective",
+      "contentType": "video",
+      "stageId": "02-coordination-clash",
+      "taxonomy": "bim_coordination",
+      "competency": "clash identification",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Active canonical reference; SME path mapping remains candidate."
+    },
+    {
+      "contentId": "video:7__audio_visual_learning_5__software_6__navisworks_rich_1__video_tutorial_31__navisworks_tutorial__lesson_31_part_1_timeliner_appearance__creating_and_adding_tasks_mp4",
+      "title": "Navisworks Lesson 31 — Timeliner Tasks",
+      "contentType": "video",
+      "stageId": "03-4d-integration",
+      "taxonomy": "bim_coordination",
+      "competency": "model-schedule task mapping",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Real canonical 4D reference; candidate mapping cannot become required silently."
+    },
+    {
+      "contentId": "video:7__audio_visual_learning_5__software_6__navisworks_rich_cara_membuat_permodelan_4d_dan_5d_menggunakan_naviswork_mp4",
+      "title": "Pemodelan 4D dan 5D Menggunakan Navisworks",
+      "contentType": "video",
+      "stageId": "03-4d-integration",
+      "taxonomy": "automation_digital_engineering",
+      "competency": "integrated 4D/5D workflow overview",
+      "requirement": "optional",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Useful overview, but current SME disposition is elective/candidate."
+    },
+    {
+      "contentId": "pdf:manual-book-bim-modeller-2-quantity-takeoff-1-konsep-dasar-quantity-take-off-pdf",
+      "title": "Konsep Dasar Quantity Take Off",
+      "contentType": "pdf",
+      "stageId": "04-5d-qto",
+      "taxonomy": "bim_fundamental",
+      "competency": "QTO concepts",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Canonical active QTO reference."
+    },
+    {
+      "contentId": "pdf:manual-book-bim-modeller-2-quantity-takeoff-2-mempersiapkan-data-model-bim-untuk-qto-pdf",
+      "title": "Mempersiapkan Data Model BIM untuk QTO",
+      "contentType": "pdf",
+      "stageId": "04-5d-qto",
+      "taxonomy": "bim_fundamental",
+      "competency": "QTO model readiness",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Canonical active QTO preparation reference."
+    },
+    {
+      "contentId": "pdf:manual-book-bim-modeller-2-quantity-takeoff-3-mengekstraksi-informasi-kuantitas-dari-model-bim-pdf",
+      "title": "Mengekstraksi Informasi Kuantitas dari Model BIM",
+      "contentType": "pdf",
+      "stageId": "04-5d-qto",
+      "taxonomy": "documentation_delivery",
+      "competency": "quantity extraction and reconciliation",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Canonical active extraction reference."
+    },
+    {
+      "contentId": "pdf:manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-5-dokumentasi-gambar-teknis-dari-model-bim-pdf",
+      "title": "Dokumentasi Gambar Teknis dari Model BIM",
+      "contentType": "pdf",
+      "stageId": "06-documentation-delivery",
+      "taxonomy": "documentation_delivery",
+      "competency": "structured model documentation",
+      "requirement": "reference_only",
+      "availability": "active",
+      "completionAuthority": "not_in_completion_denominator",
+      "quizRelation": "none",
+      "rationale": "Canonical active documentation reference."
+    }
+  ],
+  "quizzes": [],
+  "quizDecision": {
+    "requiredCount": 0,
+    "rationale": "The selected published Internship path has no registered assessment; quiz-like pages are not treated as verified quiz IDs."
+  },
+  "assignments": [
+    { "assignmentKey": "model-quality-information-review", "entityState": "planned", "title": "Model Quality & Information Review", "stageId": "01-foundation-quality", "requirement": "required", "prerequisiteContentIds": ["page:bim-mindset"], "requiredDeliverable": "PDF report plus XLSX/CSV checklist", "evidenceCompatibility": "evidence_ready", "rubricKey": "rubric-model-quality-v1", "readiness": "ready_required" },
+    { "assignmentKey": "federated-coordination-clash-review", "entityState": "planned", "title": "Federated Model Coordination & Clash Review", "stageId": "02-coordination-clash", "requirement": "required", "prerequisiteContentIds": ["page:bim-mindset"], "requiredDeliverable": "PDF coordination report plus XLSX/CSV issue log and screenshots", "evidenceCompatibility": "evidence_ready", "rubricKey": "rubric-federated-coordination-v1", "readiness": "ready_required" },
+    { "assignmentKey": "model-schedule-4d-linkage", "entityState": "planned", "title": "4D Model-Schedule Linkage", "stageId": "03-4d-integration", "requirement": "required", "prerequisiteContentIds": ["page:bim-mindset"], "requiredDeliverable": "PDF workflow report plus XLSX/CSV mapping and screenshots", "evidenceCompatibility": "evidence_ready", "rubricKey": "rubric-4d-linkage-v1", "readiness": "ready_required" },
+    { "assignmentKey": "qto-5d-validation", "entityState": "planned", "title": "QTO / 5D Validation", "stageId": "04-5d-qto", "requirement": "required", "prerequisiteContentIds": ["page:bim-mindset"], "requiredDeliverable": "XLSX/CSV reconciliation plus PDF methodology report", "evidenceCompatibility": "evidence_ready", "rubricKey": "rubric-qto-5d-v1", "readiness": "ready_required" },
+    { "assignmentKey": "bim-documentation-delivery-package", "entityState": "planned", "title": "BIM Documentation / Delivery Package", "stageId": "06-documentation-delivery", "requirement": "required", "prerequisiteContentIds": ["page:bim-mindset"], "requiredDeliverable": "PDF/DOCX narrative plus XLSX/CSV delivery register", "evidenceCompatibility": "evidence_ready", "rubricKey": "rubric-documentation-delivery-v1", "readiness": "ready_required" },
+    { "assignmentKey": "automation-digital-workflow-improvement", "entityState": "planned", "title": "Automation / Digital Workflow Improvement", "stageId": "05-digital-improvement", "requirement": "optional", "prerequisiteContentIds": ["page:bim-mindset"], "requiredDeliverable": "PDF/DOCX report plus XLSX/CSV outputs and screenshots", "evidenceCompatibility": "evidence_conditional", "rubricKey": "rubric-automation-improvement-v1", "readiness": "conditional_optional" },
+    { "assignmentKey": "capstone-improvement-project", "entityState": "planned", "title": "Capstone / Improvement Project", "stageId": null, "requirement": "exclude", "prerequisiteContentIds": [], "requiredDeliverable": null, "evidenceCompatibility": "evidence_incompatible", "rubricKey": null, "readiness": "future_gap" },
+    { "assignmentKey": "legacy-smoke-practice-task", "entityState": "existing_external_batch", "existingAssignmentId": "work_1783073999842_ykhvcd9e", "title": "Smoke Practice Task", "stageId": null, "requirement": "exclude", "prerequisiteContentIds": [], "requiredDeliverable": null, "evidenceCompatibility": "evidence_incompatible", "rubricKey": null, "readiness": "excluded_wrong_batch" }
+  ],
+  "assignmentPackage": "internship-pilot-assignments-v1",
+  "rubricPackage": "internship-pilot-rubrics-v1",
+  "contentGaps": [
+    { "gapKey": "automation-learning-module", "priority": "P1", "requiredBeforePilot": false },
+    { "gapKey": "as-built-handover-practical-module", "priority": "P1", "requiredBeforePilot": false },
+    { "gapKey": "capstone-case-and-governance", "priority": "P2", "requiredBeforePilot": false }
+  ],
+  "roles": {
+    "participant": { "canonicalUserId": null, "batchRole": "participant", "status": "required_operational_input" },
+    "mentor": { "canonicalUserId": null, "batchRole": "mentor", "status": "required_operational_input" },
+    "reviewer": { "canonicalUserId": null, "batchRole": "reviewer", "status": "optional_operational_input", "programCloseout": false },
+    "observer": { "canonicalUserId": null, "batchRole": "hc_observer", "status": "not_configured", "access": "read_only" }
+  },
+  "assignmentDefault": {
+    "unknownClassification": "not_required",
+    "warningCode": "unclassified_assignments_ignored"
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "digest": "fe3e922f7f47da3bea1ef2087b6dcc82baf3cd3b92f8e11c4a782c4a3fbcae21"
+  }
+}

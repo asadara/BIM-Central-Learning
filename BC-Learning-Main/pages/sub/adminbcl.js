@@ -1203,6 +1203,7 @@ async function loadTrainingPlan(batchId) {
         }
 
         currentTrainingBatch = result.batch || allTrainingBatches.find((batch) => batch.id === batchId) || null;
+        window.currentTrainingPlanCapabilities = result.capabilities || {};
         renderTrainingPlan(result.topics || [], result.unassignedItems || []);
     } catch (error) {
         console.error('Failed to load training plan:', error);
@@ -2090,6 +2091,8 @@ function renderTrainingTopicCard(topic) {
 
 function renderClassworkItemRow(item) {
     const isPracticeTask = String(item.type || '').toLowerCase() === 'practice_task';
+    const submissionsEnabled = !window.currentTrainingPlanCapabilities
+        || window.currentTrainingPlanCapabilities.participantSubmission !== false;
 
     return `
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border rounded p-3 mb-2 bg-white">
@@ -2100,12 +2103,21 @@ function renderClassworkItemRow(item) {
                     ${item.linkedResourceType ? ` - ${bclEscapeHtml(item.linkedResourceType)}:${bclEscapeHtml(item.linkedResourceId || '')}` : ''}
                 </small>
                 ${item.instructions ? `<div class="small text-muted mt-1">${bclEscapeHtml(item.instructions)}</div>` : ''}
+                ${item.requiredDeliverable ? `<div class="small mt-1"><strong>Output:</strong> ${bclEscapeHtml(item.requiredDeliverable)}</div>` : ''}
+                ${Array.isArray(item.learningReferences) && item.learningReferences.length ? `
+                    <div class="small text-muted mt-1">
+                        Learning: ${item.learningReferences.map((reference) => bclEscapeHtml(
+                            `${reference.relationship}: ${reference.contentId || `quiz:${reference.quizId}`}`
+                        )).join(', ')}
+                    </div>
+                ` : ''}
             </div>
             <div class="text-end">
                 ${getClassworkStatusBadge(item.status)}
                 <div class="small text-muted mt-1">Due: ${formatTrainingDate(item.dueAt)}</div>
+                ${item.availableAt ? `<div class="small text-muted">Available: ${formatTrainingDate(item.availableAt)}</div>` : ''}
                 <div class="small text-muted">Points: ${Number(item.points || 0)}</div>
-                ${isPracticeTask ? `
+                ${isPracticeTask && submissionsEnabled ? `
                     <button class="btn btn-outline-primary btn-sm mt-2" onclick="showClassworkSubmissions('${bclEscapeHtml(item.id)}')">
                         <i class="fas fa-inbox me-1"></i>Submissions
                     </button>
@@ -2638,6 +2650,8 @@ function showClassworkModal(topicId = '') {
     }
 
     const topics = Array.isArray(window.currentTrainingPlanTopics) ? window.currentTrainingPlanTopics : [];
+    const isInternship = String(currentTrainingBatch.programType || '').toLowerCase() === 'internship'
+        && window.currentTrainingPlanCapabilities?.internshipAssignments === true;
     const topicOptions = topics.map((topic) => `
         <option value="${bclEscapeHtml(topic.id)}" ${topic.id === topicId ? 'selected' : ''}>${bclEscapeHtml(topic.title)}</option>
     `).join('');
@@ -2702,6 +2716,20 @@ function showClassworkModal(topicId = '') {
                                     <label class="form-label">Due At</label>
                                     <input type="datetime-local" class="form-control" id="classworkDueAt">
                                 </div>
+                                ${isInternship ? `
+                                    <div class="col-md-6">
+                                        <label class="form-label">Available At</label>
+                                        <input type="datetime-local" class="form-control" id="classworkAvailableAt">
+                                        <div class="form-text">Digunakan untuk availability Practice Task Internship.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Participant Visibility</label>
+                                        <select class="form-select" id="classworkParticipantVisibility">
+                                            <option value="visible">Visible</option>
+                                            <option value="hidden">Hidden</option>
+                                        </select>
+                                    </div>
+                                ` : ''}
                                 <div class="col-md-6">
                                     <label class="form-label">Urutan</label>
                                     <input type="number" class="form-control" id="classworkSortOrder" value="0" min="0">
@@ -2710,6 +2738,22 @@ function showClassworkModal(topicId = '') {
                                     <label class="form-label">Instruksi</label>
                                     <textarea class="form-control" id="classworkInstructions" rows="3"></textarea>
                                 </div>
+                                ${isInternship ? `
+                                    <div class="col-12">
+                                        <label class="form-label">Required Deliverable</label>
+                                        <textarea class="form-control" id="classworkRequiredDeliverable" rows="2" placeholder="Deskripsikan output yang harus disiapkan; belum ada submission pada Phase 2A."></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Prerequisite Canonical IDs</label>
+                                        <textarea class="form-control" id="classworkPrerequisites" rows="3" placeholder="page:bim-mindset&#10;quiz:bim-mindset-quiz"></textarea>
+                                        <div class="form-text">Satu ID per baris atau dipisahkan koma.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Reference Canonical IDs</label>
+                                        <textarea class="form-control" id="classworkReferences" rows="3" placeholder="pdf:coordination-guide"></textarea>
+                                        <div class="form-text">Reference mendukung tugas tetapi tidak mengunci availability.</div>
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -2740,9 +2784,17 @@ async function handleClassworkSubmit(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...';
     submitButton.disabled = true;
 
+    const classworkType = document.getElementById('classworkType').value;
+    const parseReferences = (value, relationship) => String(value || '')
+        .split(/[\n,]+/)
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .map((entry) => entry.toLowerCase().startsWith('quiz:')
+            ? { relationship, quizId: entry.slice(5) }
+            : { relationship, contentId: entry });
     const payload = {
         title: document.getElementById('classworkTitle').value.trim(),
-        type: document.getElementById('classworkType').value,
+        type: classworkType,
         topicId: document.getElementById('classworkTopicId').value,
         status: document.getElementById('classworkStatus').value,
         points: Number(document.getElementById('classworkPoints').value || 0),
@@ -2752,6 +2804,15 @@ async function handleClassworkSubmit(event) {
         sortOrder: Number(document.getElementById('classworkSortOrder').value || 0),
         instructions: document.getElementById('classworkInstructions').value.trim()
     };
+    if (classworkType === 'practice_task' && document.getElementById('classworkAvailableAt')) {
+        payload.availableAt = document.getElementById('classworkAvailableAt').value;
+        payload.requiredDeliverable = document.getElementById('classworkRequiredDeliverable').value.trim();
+        payload.participantVisibility = document.getElementById('classworkParticipantVisibility').value;
+        payload.learningReferences = [
+            ...parseReferences(document.getElementById('classworkPrerequisites').value, 'prerequisite'),
+            ...parseReferences(document.getElementById('classworkReferences').value, 'reference')
+        ];
+    }
 
     try {
         const response = await fetch(`/api/training/batches/${encodeURIComponent(currentTrainingBatch.id)}/classwork`, {

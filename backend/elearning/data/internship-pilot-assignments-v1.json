@@ -1,0 +1,267 @@
+{
+  "schemaVersion": "bcl-internship-assignment-package-v1",
+  "packageVersion": "internship-pilot-assignments-v1",
+  "status": "proposed",
+  "programCode": "INT-BIM-2026-PILOT",
+  "defaults": {
+    "classworkType": "practice_task",
+    "publicationState": "draft",
+    "participantVisibility": "hidden_until_phase5b_release",
+    "unknownClassification": "not_required",
+    "maxFiles": 5,
+    "maxBytesPerFile": 10485760,
+    "allowedEvidenceFormats": ["pdf", "docx", "xlsx", "csv", "jpg", "jpeg", "png"]
+  },
+  "topics": [
+    { "topicKey": "topic-foundation-quality", "title": "01 — BIM Fundamental, Information & Model Quality", "sortOrder": 10 },
+    { "topicKey": "topic-coordination-clash", "title": "02 — Federated Coordination & Clash", "sortOrder": 20 },
+    { "topicKey": "topic-4d-integration", "title": "03 — 4D Model-Schedule Integration", "sortOrder": 30 },
+    { "topicKey": "topic-5d-qto", "title": "04 — 5D / QTO Validation", "sortOrder": 40 },
+    { "topicKey": "topic-digital-improvement", "title": "05 — Automation / Digital Engineering", "sortOrder": 50 },
+    { "topicKey": "topic-documentation-delivery", "title": "06 — Documentation / Delivery", "sortOrder": 60 }
+  ],
+  "assignments": [
+    {
+      "assignmentKey": "model-quality-information-review",
+      "entityState": "planned_configuration",
+      "title": "Model Quality & Information Review",
+      "topicKey": "topic-foundation-quality",
+      "stageId": "01-foundation-quality",
+      "taxonomy": ["bim_fundamental", "documentation_delivery"],
+      "competencyObjective": "Inspect model structure and information consistency, identify production-readiness risks, and recommend corrective action.",
+      "context": "Use an approved sanitized or synthetic training model locally. Native model files remain outside BCL evidence upload.",
+      "instructions": "Review the assigned model against the provided QA/QC checklist. Document model structure, naming, levels/grids, parameters, completeness, information consistency, drawing/QTO readiness, critical findings, and corrective recommendations.",
+      "expectedWorkflow": [
+        "Confirm the case scope and review checklist.",
+        "Inspect model structure, naming, levels/grids, and key parameters.",
+        "Record findings with severity and reproducible evidence.",
+        "Assess drawing and QTO readiness.",
+        "Prioritize corrective recommendations and prepare the review package."
+      ],
+      "prerequisiteContentIds": ["page:bim-mindset"],
+      "referenceContentIds": ["pdf:manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-4-memproduksi-data-model-bim-pdf"],
+      "requiredDeliverable": "PDF model-quality review report plus XLSX/CSV checklist and optional annotated PNG/JPG screenshots.",
+      "deliverables": [
+        { "name": "Model-quality review report", "formats": ["pdf"], "required": true },
+        { "name": "QA/QC findings checklist", "formats": ["xlsx", "csv"], "required": true },
+        { "name": "Annotated findings screenshots", "formats": ["png", "jpg", "jpeg"], "required": false }
+      ],
+      "evidence": { "classification": "evidence_ready", "allowedFormats": ["pdf", "xlsx", "csv", "png", "jpg", "jpeg"], "maxFiles": 5, "maxBytesPerFile": 10485760, "nativeSourceRequired": false },
+      "rubricKey": "rubric-model-quality-v1",
+      "acceptanceExpectation": "Accepted means the review is technically coherent, findings are traceable and prioritized, and no critical QA/QC issue is left unexplained.",
+      "estimatedEffortHours": { "minimum": 12, "maximum": 20 },
+      "dependencies": ["Local access to an approved model-viewing/authoring tool", "Mentor-approved QA/QC case scope"],
+      "caseData": { "status": "phase5b_operational_input", "mode": "sanitized_or_synthetic", "executionContract": "Provide one non-confidential training model with known structure and information-quality issues plus a review checklist." },
+      "recommendation": "required",
+      "readiness": "ready_required"
+    },
+    {
+      "assignmentKey": "federated-coordination-clash-review",
+      "entityState": "planned_configuration",
+      "title": "Federated Model Coordination & Clash Review",
+      "topicKey": "topic-coordination-clash",
+      "stageId": "02-coordination-clash",
+      "taxonomy": ["bim_coordination", "documentation_delivery"],
+      "competencyObjective": "Review federated discipline alignment, classify coordination issues, assign priorities/ownership recommendations, and communicate a recheck workflow.",
+      "context": "Perform federation and clash work locally with an approved ARS/STR/MEP exercise set; submit only derived reports, logs, and screenshots.",
+      "instructions": "Verify alignment of the supplied discipline models, run or review clash tests, classify and prioritize material issues, propose responsible discipline/owner and resolution action, explain revision/recheck logic, and produce a structured coordination report.",
+      "expectedWorkflow": [
+        "Verify discipline files, coordinates, units, and alignment assumptions.",
+        "Define clash-test scope and tolerances supplied by the exercise.",
+        "Identify, group, classify, and prioritize coordination issues.",
+        "Recommend ownership and resolution actions.",
+        "Document recheck status and issue traceability."
+      ],
+      "prerequisiteContentIds": ["page:bim-mindset"],
+      "referenceContentIds": [
+        "pdf:manual-book-bim-modeller-3-manajemen-data-kolaboratif-2-prosedur-awal-penyiapan-data-model-untuk-koordinasi-pdf",
+        "pdf:manual-book-bim-modeller-3-manajemen-data-kolaboratif-3-memasukkan-data-model-ke-dalam-common-data-environment-pdf",
+        "video:7__audio_visual_learning_5__software_6__navisworks_rich_1__video_tutorial_25__navisworks_tutorial__lesson_25_how_to_use_clash_detective_tool_in_navisworks_manage_2018_mp4"
+      ],
+      "requiredDeliverable": "PDF coordination report plus XLSX/CSV clash/issue log and representative PNG/JPG screenshots.",
+      "deliverables": [
+        { "name": "Federated coordination report", "formats": ["pdf"], "required": true },
+        { "name": "Clash and issue log", "formats": ["xlsx", "csv"], "required": true },
+        { "name": "Coordination screenshots", "formats": ["png", "jpg", "jpeg"], "required": true }
+      ],
+      "evidence": { "classification": "evidence_ready", "allowedFormats": ["pdf", "xlsx", "csv", "png", "jpg", "jpeg"], "maxFiles": 5, "maxBytesPerFile": 10485760, "nativeSourceRequired": false },
+      "rubricKey": "rubric-federated-coordination-v1",
+      "acceptanceExpectation": "Accepted means setup assumptions are explicit, significant issues are correctly classified and traceable, and proposed coordination actions are technically usable.",
+      "estimatedEffortHours": { "minimum": 16, "maximum": 24 },
+      "dependencies": ["Local coordination software", "Approved sanitized/synthetic ARS/STR/MEP exercise set"],
+      "caseData": { "status": "phase5b_operational_input", "mode": "sanitized_or_synthetic", "executionContract": "Provide aligned non-confidential discipline models containing a known set of coordination issues and an approved clash-test brief." },
+      "recommendation": "required",
+      "readiness": "ready_required"
+    },
+    {
+      "assignmentKey": "model-schedule-4d-linkage",
+      "entityState": "planned_configuration",
+      "title": "4D Model-Schedule Linkage",
+      "topicKey": "topic-4d-integration",
+      "stageId": "03-4d-integration",
+      "taxonomy": ["bim_coordination", "automation_digital_engineering"],
+      "competencyObjective": "Translate a WBS/activity structure into model grouping and a coherent model-schedule linkage, then evaluate sequence and data issues.",
+      "context": "Use a mentor-approved synthetic model/WBS exercise locally. Video upload is not required; evidence is a report, mapping table, and sequence screenshots.",
+      "instructions": "Interpret the supplied WBS, define model breakdown/selection groups, map groups to activities, review sequence logic, identify linkage/data problems, and document corrections and assumptions.",
+      "expectedWorkflow": [
+        "Review WBS, activity IDs, dates, and sequencing assumptions.",
+        "Define model breakdown and selection/grouping rules.",
+        "Create and validate the model-to-activity mapping table.",
+        "Review key sequence states and identify linkage/data problems.",
+        "Document assumptions, findings, and corrections."
+      ],
+      "prerequisiteContentIds": ["page:bim-mindset"],
+      "referenceContentIds": ["video:7__audio_visual_learning_5__software_6__navisworks_rich_1__video_tutorial_31__navisworks_tutorial__lesson_31_part_1_timeliner_appearance__creating_and_adding_tasks_mp4"],
+      "requiredDeliverable": "PDF 4D workflow report, XLSX/CSV model-activity mapping table, and PNG/JPG sequence screenshots.",
+      "deliverables": [
+        { "name": "4D workflow report", "formats": ["pdf"], "required": true },
+        { "name": "Model-activity mapping", "formats": ["xlsx", "csv"], "required": true },
+        { "name": "Sequence review screenshots", "formats": ["png", "jpg", "jpeg"], "required": true }
+      ],
+      "evidence": { "classification": "evidence_ready", "allowedFormats": ["pdf", "xlsx", "csv", "png", "jpg", "jpeg"], "maxFiles": 5, "maxBytesPerFile": 10485760, "nativeSourceRequired": false, "videoRequired": false },
+      "rubricKey": "rubric-4d-linkage-v1",
+      "acceptanceExpectation": "Accepted means WBS interpretation, model grouping, activity mapping, and sequence reasoning are coherent and supported by traceable evidence.",
+      "estimatedEffortHours": { "minimum": 14, "maximum": 22 },
+      "dependencies": ["Local 4D-capable tool", "Approved synthetic model and schedule exercise"],
+      "caseData": { "status": "phase5b_operational_input", "mode": "synthetic", "executionContract": "Provide a non-confidential model breakdown and schedule containing stable activity IDs, dates, dependencies, and deliberate mapping issues." },
+      "recommendation": "required",
+      "readiness": "ready_required"
+    },
+    {
+      "assignmentKey": "qto-5d-validation",
+      "entityState": "planned_configuration",
+      "title": "QTO / 5D Validation",
+      "topicKey": "topic-5d-qto",
+      "stageId": "04-5d-qto",
+      "taxonomy": ["bim_fundamental", "documentation_delivery"],
+      "competencyObjective": "Extract quantities, validate model/category/parameter readiness, reconcile against a supplied reference, and explain material discrepancies.",
+      "context": "Use an approved synthetic or sanitized quantity case locally; submit tabular extracts and methodology/reconciliation evidence only.",
+      "instructions": "Check model readiness for the selected quantity scope, extract quantities, compare them with the supplied manual/BOQ/reference quantities, analyze discrepancies, reconcile justified differences, and document reliability limitations.",
+      "expectedWorkflow": [
+        "Confirm measurement scope, categories, units, and reference basis.",
+        "Check model parameters and object classification used for extraction.",
+        "Produce a controlled quantity extract.",
+        "Compare and reconcile against the supplied reference quantity.",
+        "Explain discrepancies, assumptions, and reliability limits."
+      ],
+      "prerequisiteContentIds": ["page:bim-mindset"],
+      "referenceContentIds": [
+        "pdf:manual-book-bim-modeller-2-quantity-takeoff-1-konsep-dasar-quantity-take-off-pdf",
+        "pdf:manual-book-bim-modeller-2-quantity-takeoff-2-mempersiapkan-data-model-bim-untuk-qto-pdf",
+        "pdf:manual-book-bim-modeller-2-quantity-takeoff-3-mengekstraksi-informasi-kuantitas-dari-model-bim-pdf"
+      ],
+      "requiredDeliverable": "XLSX/CSV quantity extract and reconciliation plus PDF methodology/discrepancy report with optional PNG/JPG screenshots.",
+      "deliverables": [
+        { "name": "Quantity extract and reconciliation", "formats": ["xlsx", "csv"], "required": true },
+        { "name": "Methodology and discrepancy report", "formats": ["pdf"], "required": true },
+        { "name": "Supporting screenshots", "formats": ["png", "jpg", "jpeg"], "required": false }
+      ],
+      "evidence": { "classification": "evidence_ready", "allowedFormats": ["xlsx", "csv", "pdf", "png", "jpg", "jpeg"], "maxFiles": 5, "maxBytesPerFile": 10485760, "nativeSourceRequired": false },
+      "rubricKey": "rubric-qto-5d-v1",
+      "acceptanceExpectation": "Accepted means extraction is reproducible, validation method is appropriate, discrepancies are reasoned rather than hidden, and no critical reliability concern is unresolved.",
+      "estimatedEffortHours": { "minimum": 12, "maximum": 20 },
+      "dependencies": ["Local model/QTO tool", "Approved quantity case and reference quantity"],
+      "caseData": { "status": "phase5b_operational_input", "mode": "sanitized_or_synthetic", "executionContract": "Provide a non-confidential model quantity scope and reference table containing known reconciliations and discrepancies." },
+      "recommendation": "required",
+      "readiness": "ready_required"
+    },
+    {
+      "assignmentKey": "automation-digital-workflow-improvement",
+      "entityState": "planned_configuration",
+      "title": "Automation / Digital Workflow Improvement",
+      "topicKey": "topic-digital-improvement",
+      "stageId": "05-digital-improvement",
+      "taxonomy": ["automation_digital_engineering"],
+      "competencyObjective": "Identify a repetitive BIM/data task, design and test a practical improvement, measure its benefit, and document limitations.",
+      "context": "Source code or executable artifacts are not uploaded. The participant may prototype locally and submit derived reports, screenshots, and outputs.",
+      "instructions": "Describe the current manual workflow, define an improvement hypothesis, build or simulate a controlled automation/data workflow, validate output against a baseline, measure practical effect, and document limitations and safe-use boundaries.",
+      "expectedWorkflow": [
+        "Define the repetitive problem and baseline workflow.",
+        "Design a controlled improvement and validation method.",
+        "Prototype or simulate the workflow locally.",
+        "Compare output with the baseline and record errors/limitations.",
+        "Document benefit, constraints, and recommended next action."
+      ],
+      "prerequisiteContentIds": ["page:bim-mindset"],
+      "referenceContentIds": [],
+      "requiredDeliverable": "PDF/DOCX technical report plus CSV/XLSX outputs and PNG/JPG before/after evidence; no source-code upload.",
+      "deliverables": [
+        { "name": "Technical improvement report", "formats": ["pdf", "docx"], "required": true },
+        { "name": "Before/after output data", "formats": ["csv", "xlsx"], "required": true },
+        { "name": "Workflow evidence screenshots", "formats": ["png", "jpg", "jpeg"], "required": true }
+      ],
+      "evidence": { "classification": "evidence_conditional", "allowedFormats": ["pdf", "docx", "csv", "xlsx", "png", "jpg", "jpeg"], "maxFiles": 5, "maxBytesPerFile": 10485760, "nativeSourceRequired": false, "sourceCodeRequired": false },
+      "rubricKey": "rubric-automation-improvement-v1",
+      "acceptanceExpectation": "If undertaken, a mentor accepts only a demonstrably useful, validated workflow with explicit limitations; no numeric threshold auto-accepts it.",
+      "estimatedEffortHours": { "minimum": 16, "maximum": 32 },
+      "dependencies": ["Mentor-approved non-confidential repetitive workflow", "Locally approved tooling"],
+      "caseData": { "status": "phase5b_operational_input", "mode": "participant_proposed_and_mentor_approved", "executionContract": "Mentor approves one non-confidential repetitive workflow and baseline dataset before work starts." },
+      "recommendation": "optional",
+      "readiness": "conditional_optional"
+    },
+    {
+      "assignmentKey": "bim-documentation-delivery-package",
+      "entityState": "planned_configuration",
+      "title": "BIM Documentation / Delivery Package",
+      "topicKey": "topic-documentation-delivery",
+      "stageId": "06-documentation-delivery",
+      "taxonomy": ["documentation_delivery", "bim_coordination"],
+      "competencyObjective": "Assemble a traceable BIM delivery package with controlled naming/status, revision and issue records, consistency checks, and handover notes.",
+      "context": "Use derived outputs from an approved exercise; do not expose internal storage locations or production project files.",
+      "instructions": "Organize a delivery register, verify model/report/drawing consistency, record revision and issue status, apply naming/status logic, document CDE/handover assumptions, and produce a concise quality summary.",
+      "expectedWorkflow": [
+        "Define delivery scope, naming/status rules, and information authority.",
+        "Build the deliverable and revision register.",
+        "Check consistency across model-derived reports, drawings, and issue records.",
+        "Record open issues, approvals, and handover assumptions.",
+        "Prepare the controlled delivery package summary."
+      ],
+      "prerequisiteContentIds": ["page:bim-mindset"],
+      "referenceContentIds": [
+        "pdf:manual-book-bim-modeller-1-pemodelan-dan-produksi-data-bim-struktur-dan-arsitektur-5-dokumentasi-gambar-teknis-dari-model-bim-pdf",
+        "pdf:manual-book-bim-modeller-3-manajemen-data-kolaboratif-3-memasukkan-data-model-ke-dalam-common-data-environment-pdf"
+      ],
+      "requiredDeliverable": "PDF/DOCX delivery narrative plus XLSX/CSV deliverable/revision/issue register.",
+      "deliverables": [
+        { "name": "Delivery and handover narrative", "formats": ["pdf", "docx"], "required": true },
+        { "name": "Deliverable, revision, and issue register", "formats": ["xlsx", "csv"], "required": true }
+      ],
+      "evidence": { "classification": "evidence_ready", "allowedFormats": ["pdf", "docx", "xlsx", "csv"], "maxFiles": 5, "maxBytesPerFile": 10485760, "nativeSourceRequired": false },
+      "rubricKey": "rubric-documentation-delivery-v1",
+      "acceptanceExpectation": "Accepted means the package is structured, internally consistent, traceable, and clear about status, revisions, open issues, and handover assumptions.",
+      "estimatedEffortHours": { "minimum": 12, "maximum": 20 },
+      "dependencies": ["Approved exercise outputs", "Mentor-approved delivery register template or required fields"],
+      "caseData": { "status": "phase5b_operational_input", "mode": "sanitized_or_synthetic", "executionContract": "Provide non-confidential derived outputs and a delivery scenario with revisions, issue states, and handover requirements." },
+      "recommendation": "required",
+      "readiness": "ready_required"
+    },
+    {
+      "assignmentKey": "capstone-improvement-project",
+      "entityState": "planned_configuration",
+      "title": "Capstone / Improvement Project",
+      "topicKey": null,
+      "stageId": null,
+      "taxonomy": [],
+      "competencyObjective": "Future cross-domain improvement project.",
+      "context": "No approved case, scope, prerequisite bundle, or governance currently exists.",
+      "instructions": "Not configured for the pilot.",
+      "expectedWorkflow": [],
+      "prerequisiteContentIds": [],
+      "referenceContentIds": [],
+      "requiredDeliverable": null,
+      "deliverables": [],
+      "evidence": { "classification": "evidence_incompatible", "allowedFormats": [], "maxFiles": 5, "maxBytesPerFile": 10485760, "nativeSourceRequired": false },
+      "rubricKey": null,
+      "acceptanceExpectation": null,
+      "estimatedEffortHours": null,
+      "dependencies": ["Future scope, case, mentor capacity, and rubric approval"],
+      "caseData": { "status": "missing", "mode": "future", "executionContract": "Future decision required." },
+      "recommendation": "exclude",
+      "readiness": "future_gap"
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "digest": "c8c38539fdb4da692fb215809ab5b9e6221070c5ba34a8b3599f41aa14a0797d"
+  }
+}

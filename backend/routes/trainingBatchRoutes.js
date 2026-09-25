@@ -1,6 +1,6 @@
 const express = require('express');
 const { Pool } = require('pg');
-const { createPgConfig } = require('../config/runtimeConfig');
+const { createPgConfig, getBooleanEnv } = require('../config/runtimeConfig');
 const { requireAuthenticated, requireAdmin } = require('../utils/auth');
 
 const router = express.Router();
@@ -25,6 +25,12 @@ const REVIEW_RESULT_STATUSES = new Set(['reviewed', 'returned', 'accepted', 'com
 const EVALUATION_STATUSES = new Set(['in_progress', 'passed', 'completed', 'needs_revision', 'failed', 'dropped']);
 const ATTENDANCE_STATUSES = new Set(['present', 'late', 'absent', 'excused']);
 const REVIEWER_ROLES = new Set(['mentor', 'reviewer', 'admin', 'hc_observer']);
+const ASSIGNMENT_RELATIONSHIPS = new Set(['prerequisite', 'reference']);
+const PARTICIPANT_VISIBILITIES = new Set(['visible', 'hidden']);
+const CANONICAL_CONTENT_ID_PATTERN = /^(video|pdf|page):[a-z0-9][a-z0-9_:-]*$/i;
+const QUIZ_ID_PATTERN = /^[a-z0-9][a-z0-9._:-]{0,119}$/i;
+const internshipAssignmentsEnabled = getBooleanEnv('INTERNSHIP_ENABLED', false)
+    && getBooleanEnv('INTERNSHIP_ASSIGNMENTS_ENABLED', false);
 
 let ensureTablesPromise = null;
 
@@ -134,6 +140,7 @@ function ensureTables() {
                     description TEXT,
                     max_score NUMERIC(10,2) NOT NULL DEFAULT 100,
                     weight NUMERIC(10,2) NOT NULL DEFAULT 1,
+                    required BOOLEAN NOT NULL DEFAULT TRUE,
                     sort_order INTEGER DEFAULT 0,
                     created_by TEXT,
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -344,6 +351,54 @@ function normalizeStatus(value, allowed, fallback) {
     return allowed.has(normalized) ? normalized : fallback;
 }
 
+function normalizeLearningReferences(value) {
+    if (value == null) return null;
+    if (!Array.isArray(value) || value.length > 30) {
+        const error = new Error('learningReferences must be an array with at most 30 entries');
+        error.status = 400;
+        throw error;
+    }
+
+    const unique = new Map();
+    for (const entry of value) {
+        const relationship = normalizeStatus(entry && entry.relationship, ASSIGNMENT_RELATIONSHIPS, '');
+        const contentId = trimText(entry && entry.contentId, 180);
+        const quizId = trimText(entry && entry.quizId, 120);
+        if (!relationship || Boolean(contentId) === Boolean(quizId)) {
+            const error = new Error('Each learning reference requires one controlled relationship and one target');
+            error.status = 400;
+            throw error;
+        }
+        if (contentId && !CANONICAL_CONTENT_ID_PATTERN.test(contentId)) {
+            const error = new Error('Invalid canonical content ID');
+            error.status = 400;
+            throw error;
+        }
+        if (quizId && !QUIZ_ID_PATTERN.test(quizId)) {
+            const error = new Error('Invalid quiz ID');
+            error.status = 400;
+            throw error;
+        }
+        unique.set(`${relationship}:${contentId || `quiz:${quizId}`}`, {
+            relationship,
+            contentId: contentId || null,
+            quizId: quizId || null
+        });
+    }
+    return [...unique.values()];
+}
+
+function normalizeOptionalTimestamp(value, fieldName) {
+    const text = trimText(value, 80);
+    if (!text) return null;
+    if (Number.isNaN(Date.parse(text))) {
+        const error = new Error(`${fieldName} must be a valid date/time`);
+        error.status = 400;
+        throw error;
+    }
+    return text;
+}
+
 function normalizeCode(value) {
     return trimText(value, 80)
         .toUpperCase()
@@ -372,6 +427,7 @@ function mapBatch(row) {
         id: row.id,
         code: row.code,
         title: row.title,
+        programType: row.program_type || 'training',
         learningPathId: row.learning_path_id || null,
         description: row.description || '',
         startDate: row.start_date || null,
@@ -432,7 +488,10 @@ function mapClassworkItem(row) {
         instructions: row.instructions || '',
         linkedResourceType: row.linked_resource_type || null,
         linkedResourceId: row.linked_resource_id || null,
+        availableAt: row.available_at || null,
         dueAt: row.due_at || null,
+        requiredDeliverable: row.required_deliverable || '',
+        participantVisibility: row.participant_visibility || 'visible',
         points: Number(row.points || 0),
         status: row.status,
         sortOrder: Number(row.sort_order || 0),
@@ -492,6 +551,7 @@ function mapReviewCriterion(row) {
         description: row.description || '',
         maxScore: Number(row.max_score || 0),
         weight: Number(row.weight || 1),
+        required: row.required !== false,
         sortOrder: Number(row.sort_order || 0),
         createdBy: row.created_by || null,
         createdAt: row.created_at || null,
@@ -689,6 +749,86 @@ async function fetchClassworkItem(itemId, batchId) {
         [itemId, batchId]
     );
     return result.rows[0] || null;
+}
+
+async function validateClassworkLearningReferences(queryable, batch, itemType, references) {
+    if (!Array.isArray(references)) return;
+    if (batch && batch.program_type === 'internship' && itemType !== 'practice_task') {
+        const error = new Error('Internship learning references are only supported for practice_task classwork');
+        error.status = 400;
+        throw error;
+    }
+
+    const contentIds = references.map((reference) => reference.contentId).filter(Boolean);
+    if (contentIds.length) {
+        const result = await queryable.query(
+            `SELECT content_id
+             FROM learning_content_registry
+             WHERE content_id = ANY($1::text[])
+               AND status = 'active'`,
+            [contentIds]
+        );
+        const found = new Set(result.rows.map((row) => row.content_id));
+        if (contentIds.some((contentId) => !found.has(contentId))) {
+            const error = new Error('Unknown or inactive canonical learning content reference');
+            error.status = 400;
+            throw error;
+        }
+    }
+
+    const quizIds = references.map((reference) => reference.quizId).filter(Boolean);
+    if (quizIds.length) {
+        const result = await queryable.query(
+            `SELECT lpv.definition
+             FROM internship_batch_config ibc
+             INNER JOIN learning_path_versions lpv ON lpv.id = ibc.learning_path_version_id
+             WHERE ibc.batch_id = $1
+               AND lpv.status = 'published'
+             LIMIT 1`,
+            [batch.id]
+        );
+        const assessments = result.rows[0] && Array.isArray(result.rows[0].definition?.assessments)
+            ? result.rows[0].definition.assessments
+            : [];
+        const publishedQuizIds = new Set(assessments
+            .filter((assessment) => assessment && assessment.quizId && (!assessment.status || assessment.status === 'published'))
+            .map((assessment) => String(assessment.quizId)));
+        if (quizIds.some((quizId) => !publishedQuizIds.has(quizId))) {
+            const error = new Error('Unknown or unpublished Internship quiz reference');
+            error.status = 400;
+            throw error;
+        }
+    }
+}
+
+async function replaceClassworkLearningReferences(queryable, classworkId, references) {
+    if (!Array.isArray(references)) return;
+    await queryable.query('DELETE FROM classwork_content_links WHERE classwork_id = $1', [classworkId]);
+    for (const reference of references) {
+        await queryable.query(
+            `INSERT INTO classwork_content_links (
+                classwork_id, content_id, quiz_id, relationship_type
+             ) VALUES ($1, $2, $3, $4)`,
+            [classworkId, reference.contentId, reference.quizId, reference.relationship]
+        );
+    }
+}
+
+async function rejectPhase2InternshipWorkflow(req, res, next) {
+    if (!internshipAssignmentsEnabled) return next();
+    try {
+        const batch = await fetchBatch(req.params.id);
+        if (batch && batch.program_type === 'internship') {
+            return res.status(409).json({
+                error: 'Internship submission and review are not available in Phase 2A',
+                code: 'INTERNSHIP_SUBMISSION_NOT_AVAILABLE'
+            });
+        }
+        return next();
+    } catch (error) {
+        console.error('Internship Phase 2A workflow guard error:', error);
+        return res.status(500).json({ error: 'Failed to verify classwork capability' });
+    }
 }
 
 async function fetchSubmission(classworkItemId, userId) {
@@ -1683,12 +1823,23 @@ router.get('/batches/:id/training-plan', requireAuthenticated, requireBatchAcces
             return res.status(404).json({ error: 'Training batch not found' });
         }
 
+        let restrictInternshipParticipantView = false;
+        if (internshipAssignmentsEnabled && batch.program_type === 'internship' && !(req.authUser && req.authUser.isAdmin)) {
+            const userId = toNullableInt(req.authUser && req.authUser.id);
+            const member = userId ? await fetchBatchMember(req.params.id, userId) : null;
+            restrictInternshipParticipantView = member && member.role === 'participant';
+        }
+
         const topicsResult = await pool.query(
             `SELECT
                 bt.*,
                 COUNT(ci.id)::int AS item_count
              FROM batch_topics bt
-             LEFT JOIN classwork_items ci ON ci.topic_id = bt.id
+             LEFT JOIN classwork_items ci
+               ON ci.topic_id = bt.id
+              ${restrictInternshipParticipantView
+                    ? "AND ci.status IN ('published', 'closed') AND ci.participant_visibility = 'visible'"
+                    : ''}
              WHERE bt.batch_id = $1
              GROUP BY bt.id
              ORDER BY bt.sort_order ASC, bt.created_at ASC`,
@@ -1699,13 +1850,38 @@ router.get('/batches/:id/training-plan', requireAuthenticated, requireBatchAcces
             `SELECT *
              FROM classwork_items
              WHERE batch_id = $1
+               ${restrictInternshipParticipantView
+                    ? "AND status IN ('published', 'closed') AND participant_visibility = 'visible'"
+                    : ''}
              ORDER BY sort_order ASC, due_at NULLS LAST, created_at ASC`,
             [req.params.id]
         );
 
+        const linksByClasswork = new Map();
+        if (internshipAssignmentsEnabled && batch.program_type === 'internship' && itemsResult.rows.length) {
+            const linkResult = await pool.query(
+                `SELECT classwork_id, content_id, quiz_id, relationship_type
+                 FROM classwork_content_links
+                 WHERE classwork_id = ANY($1::text[])
+                 ORDER BY id ASC`,
+                [itemsResult.rows.map((row) => row.id)]
+            );
+            linkResult.rows.forEach((row) => {
+                if (!linksByClasswork.has(row.classwork_id)) linksByClasswork.set(row.classwork_id, []);
+                linksByClasswork.get(row.classwork_id).push({
+                    relationship: row.relationship_type,
+                    contentId: row.content_id || undefined,
+                    quizId: row.quiz_id || undefined
+                });
+            });
+        }
+
         const itemsByTopic = new Map();
         const unassignedItems = [];
-        itemsResult.rows.map(mapClassworkItem).forEach((item) => {
+        itemsResult.rows.map((row) => ({
+            ...mapClassworkItem(row),
+            learningReferences: linksByClasswork.get(row.id) || []
+        })).forEach((item) => {
             if (!item.topicId) {
                 unassignedItems.push(item);
                 return;
@@ -1719,6 +1895,10 @@ router.get('/batches/:id/training-plan', requireAuthenticated, requireBatchAcces
         return res.json({
             success: true,
             batch: mapBatch(batch),
+            capabilities: {
+                internshipAssignments: internshipAssignmentsEnabled && batch.program_type === 'internship',
+                participantSubmission: !(internshipAssignmentsEnabled && batch.program_type === 'internship')
+            },
             topics: topicsResult.rows.map((row) => ({
                 ...mapTopic(row),
                 items: itemsByTopic.get(row.id) || []
@@ -1819,6 +1999,7 @@ router.put('/batches/:id/topics/:topicId', requireAdmin, async (req, res) => {
 });
 
 router.post('/batches/:id/classwork', requireAdmin, async (req, res) => {
+    let client = null;
     try {
         await ensureTables();
 
@@ -1841,17 +2022,56 @@ router.post('/batches/:id/classwork', requireAdmin, async (req, res) => {
         }
 
         const id = trimText(req.body.id, 120) || generateId('work');
+        const requestedType = trimText(req.body.type, 64).toLowerCase();
+        if (internshipAssignmentsEnabled && batch.program_type === 'internship'
+            && requestedType && !CLASSWORK_TYPES.has(requestedType)) {
+            return res.status(400).json({ error: 'Unsupported Internship classwork type' });
+        }
         const type = normalizeStatus(req.body.type, CLASSWORK_TYPES, 'material');
         const instructions = trimText(req.body.instructions, 10000) || null;
         const linkedResourceType = trimText(req.body.linkedResourceType || req.body.linked_resource_type, 80) || null;
         const linkedResourceId = trimText(req.body.linkedResourceId || req.body.linked_resource_id, 255) || null;
         const dueAt = trimText(req.body.dueAt || req.body.due_at, 80) || null;
         const points = toNonNegativeNumber(req.body.points, 0);
+        const requestedStatus = trimText(req.body.status, 64).toLowerCase();
+        if (internshipAssignmentsEnabled && batch.program_type === 'internship'
+            && requestedStatus && !CLASSWORK_STATUSES.has(requestedStatus)) {
+            return res.status(400).json({ error: 'Unsupported Internship classwork status' });
+        }
         const status = normalizeStatus(req.body.status, CLASSWORK_STATUSES, 'draft');
         const sortOrder = toNullableInt(req.body.sortOrder ?? req.body.sort_order) || 0;
         const createdBy = getActorId(req);
+        const assignmentExtension = internshipAssignmentsEnabled
+            && batch.program_type === 'internship'
+            && type === 'practice_task';
+        const availableAt = assignmentExtension
+            ? normalizeOptionalTimestamp(req.body.availableAt || req.body.available_at, 'availableAt')
+            : null;
+        const requiredDeliverable = assignmentExtension
+            ? trimText(req.body.requiredDeliverable || req.body.required_deliverable, 10000) || null
+            : null;
+        const participantVisibility = assignmentExtension
+            ? normalizeStatus(
+                req.body.participantVisibility || req.body.participant_visibility,
+                PARTICIPANT_VISIBILITIES,
+                'visible'
+            )
+            : 'visible';
+        const requestedVisibility = trimText(req.body.participantVisibility || req.body.participant_visibility, 64).toLowerCase();
+        if (assignmentExtension && requestedVisibility && !PARTICIPANT_VISIBILITIES.has(requestedVisibility)) {
+            return res.status(400).json({ error: 'Unsupported participant visibility' });
+        }
+        const learningReferences = assignmentExtension
+            ? normalizeLearningReferences(req.body.learningReferences) || []
+            : null;
 
-        const result = await pool.query(
+        const queryable = assignmentExtension ? (client = await pool.connect()) : pool;
+        if (client) await client.query('BEGIN');
+        if (assignmentExtension) {
+            await validateClassworkLearningReferences(queryable, batch, type, learningReferences);
+        }
+
+        let result = await queryable.query(
             `INSERT INTO classwork_items (
                 id,
                 batch_id,
@@ -1891,20 +2111,43 @@ router.post('/batches/:id/classwork', requireAdmin, async (req, res) => {
             ]
         );
 
+        if (assignmentExtension) {
+            result = await queryable.query(
+                `UPDATE classwork_items
+                 SET available_at = $2::timestamptz,
+                     required_deliverable = $3,
+                     participant_visibility = $4,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $1
+                 RETURNING *`,
+                [id, availableAt, requiredDeliverable, participantVisibility]
+            );
+            await replaceClassworkLearningReferences(queryable, id, learningReferences);
+            await client.query('COMMIT');
+        }
+
         return res.status(201).json({
             success: true,
-            data: mapClassworkItem(result.rows[0])
+            data: {
+                ...mapClassworkItem(result.rows[0]),
+                learningReferences: learningReferences || []
+            }
         });
     } catch (error) {
+        if (client) await client.query('ROLLBACK').catch(() => {});
+        if (error.status === 400) return res.status(400).json({ error: error.message });
         if (error.code === '23505') {
             return res.status(409).json({ error: 'Classwork ID already exists' });
         }
         console.error('Training classwork create error:', error);
         return res.status(500).json({ error: 'Failed to create classwork item' });
+    } finally {
+        if (client) client.release();
     }
 });
 
 router.put('/batches/:id/classwork/:itemId', requireAdmin, async (req, res) => {
+    let client = null;
     try {
         await ensureTables();
 
@@ -1912,6 +2155,7 @@ router.put('/batches/:id/classwork/:itemId', requireAdmin, async (req, res) => {
         if (!existing) {
             return res.status(404).json({ error: 'Classwork item not found' });
         }
+        const batch = await fetchBatch(req.params.id);
 
         const topicId = req.body.topicId != null || req.body.topic_id != null
             ? trimText(req.body.topicId || req.body.topic_id, 120) || null
@@ -1924,9 +2168,18 @@ router.put('/batches/:id/classwork/:itemId', requireAdmin, async (req, res) => {
             }
         }
 
+        const requestedType = req.body.type != null ? trimText(req.body.type, 64).toLowerCase() : '';
+        if (internshipAssignmentsEnabled && batch && batch.program_type === 'internship'
+            && requestedType && !CLASSWORK_TYPES.has(requestedType)) {
+            return res.status(400).json({ error: 'Unsupported Internship classwork type' });
+        }
         const type = req.body.type != null
             ? normalizeStatus(req.body.type, CLASSWORK_TYPES, existing.type)
             : existing.type;
+        if (internshipAssignmentsEnabled && batch && batch.program_type === 'internship'
+            && existing.type === 'practice_task' && type !== 'practice_task') {
+            return res.status(400).json({ error: 'Internship practice_task type cannot be changed while Assignment is enabled' });
+        }
         const title = trimText(req.body.title, 255) || existing.title;
         const instructions = req.body.instructions != null
             ? trimText(req.body.instructions, 10000) || null
@@ -1943,14 +2196,50 @@ router.put('/batches/:id/classwork/:itemId', requireAdmin, async (req, res) => {
         const points = req.body.points != null
             ? toNonNegativeNumber(req.body.points, 0)
             : Number(existing.points || 0);
+        const requestedStatus = req.body.status != null ? trimText(req.body.status, 64).toLowerCase() : '';
+        if (internshipAssignmentsEnabled && batch && batch.program_type === 'internship'
+            && requestedStatus && !CLASSWORK_STATUSES.has(requestedStatus)) {
+            return res.status(400).json({ error: 'Unsupported Internship classwork status' });
+        }
         const status = req.body.status != null
             ? normalizeStatus(req.body.status, CLASSWORK_STATUSES, existing.status)
             : existing.status;
         const sortOrder = req.body.sortOrder != null || req.body.sort_order != null
             ? toNullableInt(req.body.sortOrder ?? req.body.sort_order) || 0
             : Number(existing.sort_order || 0);
+        const assignmentExtension = internshipAssignmentsEnabled
+            && batch && batch.program_type === 'internship'
+            && type === 'practice_task';
+        const availableAt = req.body.availableAt != null || req.body.available_at != null
+            ? normalizeOptionalTimestamp(req.body.availableAt || req.body.available_at, 'availableAt')
+            : existing.available_at || null;
+        const requiredDeliverable = req.body.requiredDeliverable != null || req.body.required_deliverable != null
+            ? trimText(req.body.requiredDeliverable || req.body.required_deliverable, 10000) || null
+            : existing.required_deliverable || null;
+        const participantVisibility = req.body.participantVisibility != null || req.body.participant_visibility != null
+            ? normalizeStatus(
+                req.body.participantVisibility || req.body.participant_visibility,
+                PARTICIPANT_VISIBILITIES,
+                existing.participant_visibility || 'visible'
+            )
+            : existing.participant_visibility || 'visible';
+        const requestedVisibility = req.body.participantVisibility != null || req.body.participant_visibility != null
+            ? trimText(req.body.participantVisibility || req.body.participant_visibility, 64).toLowerCase()
+            : '';
+        if (assignmentExtension && requestedVisibility && !PARTICIPANT_VISIBILITIES.has(requestedVisibility)) {
+            return res.status(400).json({ error: 'Unsupported participant visibility' });
+        }
+        const learningReferences = assignmentExtension && Object.prototype.hasOwnProperty.call(req.body, 'learningReferences')
+            ? normalizeLearningReferences(req.body.learningReferences)
+            : null;
 
-        const result = await pool.query(
+        const queryable = assignmentExtension ? (client = await pool.connect()) : pool;
+        if (client) await client.query('BEGIN');
+        if (learningReferences) {
+            await validateClassworkLearningReferences(queryable, batch, type, learningReferences);
+        }
+
+        let result = await queryable.query(
             `UPDATE classwork_items
              SET
                 topic_id = $3,
@@ -1983,17 +2272,40 @@ router.put('/batches/:id/classwork/:itemId', requireAdmin, async (req, res) => {
             ]
         );
 
+        if (assignmentExtension) {
+            result = await queryable.query(
+                `UPDATE classwork_items
+                 SET available_at = $3::timestamptz,
+                     required_deliverable = $4,
+                     participant_visibility = $5,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $1
+                   AND batch_id = $2
+                 RETURNING *`,
+                [req.params.itemId, req.params.id, availableAt, requiredDeliverable, participantVisibility]
+            );
+            await replaceClassworkLearningReferences(queryable, req.params.itemId, learningReferences);
+            await client.query('COMMIT');
+        }
+
         return res.json({
             success: true,
-            data: mapClassworkItem(result.rows[0])
+            data: {
+                ...mapClassworkItem(result.rows[0]),
+                ...(learningReferences ? { learningReferences } : {})
+            }
         });
     } catch (error) {
+        if (client) await client.query('ROLLBACK').catch(() => {});
+        if (error.status === 400) return res.status(400).json({ error: error.message });
         console.error('Training classwork update error:', error);
         return res.status(500).json({ error: 'Failed to update classwork item' });
+    } finally {
+        if (client) client.release();
     }
 });
 
-router.get('/batches/:id/classwork/:itemId/submission', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.get('/batches/:id/classwork/:itemId/submission', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     try {
         await ensureTables();
 
@@ -2033,7 +2345,7 @@ router.get('/batches/:id/classwork/:itemId/submission', requireAuthenticated, re
     }
 });
 
-router.post('/batches/:id/classwork/:itemId/submission', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.post('/batches/:id/classwork/:itemId/submission', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     const client = await pool.connect();
 
     try {
@@ -2174,7 +2486,7 @@ router.post('/batches/:id/classwork/:itemId/submission', requireAuthenticated, r
     }
 });
 
-router.get('/batches/:id/classwork/:itemId/submissions', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.get('/batches/:id/classwork/:itemId/submissions', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     try {
         await ensureTables();
 
@@ -2285,7 +2597,7 @@ router.get('/batches/:id/classwork/:itemId/submissions', requireAuthenticated, r
     }
 });
 
-router.get('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.get('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     try {
         await ensureTables();
 
@@ -2306,7 +2618,7 @@ router.get('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticate
     }
 });
 
-router.post('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.post('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     try {
         await ensureTables();
 
@@ -2337,13 +2649,14 @@ router.post('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticat
                     description,
                     max_score,
                     weight,
+                    required,
                     sort_order,
                     created_by,
                     created_at,
                     updated_at
                  ) VALUES (
                     $1, $2, $3, $4, $5, $6,
-                    $7, $8, $9, $10,
+                    $7, $8, $9, $10, $11,
                     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                  )
                  ON CONFLICT (id) DO UPDATE SET
@@ -2351,6 +2664,7 @@ router.post('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticat
                     description = EXCLUDED.description,
                     max_score = EXCLUDED.max_score,
                     weight = EXCLUDED.weight,
+                    required = EXCLUDED.required,
                     sort_order = EXCLUDED.sort_order,
                     updated_at = CURRENT_TIMESTAMP
                  RETURNING *`,
@@ -2363,6 +2677,7 @@ router.post('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticat
                     trimText(payload.description, 2000) || null,
                     toNullableScore(payload.maxScore ?? payload.max_score) || 100,
                     toNonNegativeNumber(payload.weight, 1) || 1,
+                    payload.required !== false,
                     Number.isFinite(Number(payload.sortOrder ?? payload.sort_order))
                         ? Number(payload.sortOrder ?? payload.sort_order)
                         : created.length,
@@ -2387,7 +2702,7 @@ router.post('/batches/:id/classwork/:itemId/review-criteria', requireAuthenticat
     }
 });
 
-router.get('/batches/:id/classwork/:itemId/submissions/:submissionId/review', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.get('/batches/:id/classwork/:itemId/submissions/:submissionId/review', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     try {
         await ensureTables();
 
@@ -2416,7 +2731,7 @@ router.get('/batches/:id/classwork/:itemId/submissions/:submissionId/review', re
     }
 });
 
-router.get('/batches/:id/classwork/:itemId/submission/review', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.get('/batches/:id/classwork/:itemId/submission/review', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     try {
         await ensureTables();
 
@@ -2455,7 +2770,7 @@ router.get('/batches/:id/classwork/:itemId/submission/review', requireAuthentica
     }
 });
 
-router.post('/batches/:id/classwork/:itemId/submissions/:submissionId/review', requireAuthenticated, requireBatchAccess, async (req, res) => {
+router.post('/batches/:id/classwork/:itemId/submissions/:submissionId/review', requireAuthenticated, requireBatchAccess, rejectPhase2InternshipWorkflow, async (req, res) => {
     const client = await pool.connect();
 
     try {

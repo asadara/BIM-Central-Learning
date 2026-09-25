@@ -59,12 +59,23 @@ BC-Learning-Main/elearning-assets/js/practice-backup.js
 # Local database / generated storage
 postgres/
 data/
+!backend/elearning/data/
+backend/elearning/data/*
+!backend/elearning/data/internship-pilot-manifest-v1.json
+!backend/elearning/data/internship-pilot-manifest-v2.json
+!backend/elearning/data/internship-pilot-manifest-v3.json
+!backend/elearning/data/internship-pilot-assignments-v1.json
+!backend/elearning/data/internship-pilot-assignments-v2.json
+!backend/elearning/data/internship-pilot-rubrics-v1.json
+!backend/elearning/data/internship-pilot-rubrics-v2.json
+!backend/elearning/data/internship-mentor-program-37-v1.json
 backend/public/cache/
 backend/public/converted/
 backend/public/uploads/
 backend/public/thumbnails/
 backend/converted/
 backend/uploads/
+backend/private/
 BC-Learning-Main/uploads/
 backend/users.json*
 backend/videoViews.json

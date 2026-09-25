@@ -1,0 +1,147 @@
+{
+  "schemaVersion": "bcl-internship-pilot-manifest-v1",
+  "manifestVersion": "INT-BIM-PILOT-MANIFEST-v1",
+  "freezeStatus": "frozen",
+  "auditDate": "2026-09-25",
+  "authority": {
+    "learning": "published learning-path version mappings mirrored by this manifest",
+    "quizzes": "this frozen manifest plus verified server attempts",
+    "assignments": "this frozen manifest; unclassified classwork is never required",
+    "changeRule": "Any denominator change requires a new manifest and policy version with an audit reason."
+  },
+  "program": {
+    "programCode": "INT-BIM-2026-PILOT",
+    "programTitle": "BCL BIM Internship Pilot",
+    "programType": "internship",
+    "batchId": "int-bim-2026-pilot",
+    "status": "configuration_pending",
+    "startDate": null,
+    "endDate": null
+  },
+  "policy": {
+    "policyVersionId": "INT-BIM-PILOT-POLICY-v1",
+    "versionNumber": 1,
+    "expectedStatus": "frozen",
+    "contractVersion": "internship-completion-v1",
+    "attendanceGate": false,
+    "finalEvaluationGate": false,
+    "closeoutRequired": true,
+    "acceptanceRule": "explicit_reviewer_acceptance",
+    "revisionPolicy": "latest_revision_controls",
+    "certificateEligibility": "after_explicit_closeout"
+  },
+  "learningPath": {
+    "learningPathId": "bim-mindset-foundation",
+    "versionId": "6a6d1f8a-67cf-4dcb-b4e9-c4a2be0f1a01",
+    "versionNumber": 1,
+    "expectedStatus": "published",
+    "contractVersion": "internship-learning-path-v1"
+  },
+  "stages": [
+    {
+      "stageId": "01-foundation",
+      "title": "Foundation / BIM Mindset",
+      "status": "ready",
+      "sourceModuleKey": "bim-mindset-information-management"
+    }
+  ],
+  "learning": [
+    {
+      "contentId": "page:bim-mindset",
+      "title": "Konsep BIM Mindset",
+      "contentType": "page",
+      "moduleId": "bim-mindset-information-management",
+      "stageId": "01-foundation",
+      "requirement": "required",
+      "required": true,
+      "quizRequirement": "none",
+      "route": "/pages/bim-mindset.html",
+      "availability": "available",
+      "sourceVersion": "6a6d1f8a-67cf-4dcb-b4e9-c4a2be0f1a01",
+      "rationale": "The published Internship path mapping explicitly marks this active canonical page as required and approved.",
+      "validationStatus": "validated"
+    }
+  ],
+  "quizzes": [],
+  "assignments": [
+    {
+      "assignmentId": "work_1783073999842_ykhvcd9e",
+      "title": "Smoke Practice Task",
+      "sourceBatchId": "batch_1783073999784_0xdq8qmk",
+      "topicId": "topic_1783073999824_td7gnjic",
+      "stageId": null,
+      "requirement": "exclude",
+      "required": false,
+      "availability": "not_pilot_scoped",
+      "prerequisiteContentIds": [],
+      "referenceContentIds": [],
+      "requiredDeliverable": null,
+      "publicationState": "published",
+      "archiveState": "not_archived",
+      "releaseAt": null,
+      "dueAt": null,
+      "assignmentValid": false,
+      "instructionsReady": false,
+      "rubricReadiness": "rubric_missing",
+      "evidenceFormats": [],
+      "rationale": "Existing generic smoke task belongs to another batch and has no deliverable or approved pilot competency mapping.",
+      "pilotInclusionStatus": "excluded"
+    }
+  ],
+  "assignmentDefault": {
+    "unknownClassification": "not_required",
+    "warningCode": "unclassified_assignments_ignored",
+    "rationale": "Visibility, publication, closed state, or practice_task type is not approval evidence."
+  },
+  "roles": {
+    "participant": {
+      "canonicalUserId": null,
+      "batchRole": "participant",
+      "status": "required_operational_input"
+    },
+    "mentor": {
+      "canonicalUserId": null,
+      "batchRole": "mentor",
+      "status": "required_operational_input"
+    },
+    "reviewer": {
+      "canonicalUserId": null,
+      "batchRole": "reviewer",
+      "status": "not_configured",
+      "programCloseout": false
+    },
+    "observer": {
+      "canonicalUserId": null,
+      "batchRole": "hc_observer",
+      "status": "not_configured",
+      "access": "read_only"
+    }
+  },
+  "evidenceAllowlist": ["pdf", "docx", "xlsx", "csv", "jpg", "jpeg", "png"],
+  "gaps": {
+    "blockers": [
+      "No executable assignment has been explicitly approved as required.",
+      "Pilot batch and frozen policy are not deployed in the current database."
+    ],
+    "operationalInputs": [
+      "Canonical participant user ID",
+      "Canonical mentor user ID",
+      "Program start date",
+      "Program end date"
+    ],
+    "future": [
+      "Information Management / Governance",
+      "Model Production & Quality",
+      "Coordination & Clash Detection",
+      "4D / Model-Schedule Integration",
+      "5D / Quantity / QTO",
+      "Automation & Digital Engineering",
+      "Documentation / Delivery",
+      "Capstone"
+    ]
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "digest": "a58214620fe1827e3d8a0ede159da5897194347312528e60e9569fbd49620433"
+  }
+}

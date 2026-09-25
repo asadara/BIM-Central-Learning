@@ -556,6 +556,7 @@ const createProjectMediaUtilityService = require('./services/projectMediaUtility
 const createVideoCatalogService = require('./services/videoCatalogService');
 const createUnifiedLearningCatalogService = require('./services/unifiedLearningCatalogService');
 const createUnifiedLearningRoutes = require('./routes/unifiedLearningRoutes');
+const { registerInternshipFeature } = require('./features/internshipFeature');
 const createLearningMappingQueueService = require('./services/learningMappingQueueService');
 const createLearningMappingAdminRoutes = require('./routes/learningMappingAdminRoutes');
 const { loadLearningMaterialsData } = require('./services/learningMaterialsSource');
@@ -917,13 +918,27 @@ const projectCatalogService = createProjectCatalogService({
     validVideoExt: VALID_VIDEO_EXT
 });
 
-if (getBooleanEnv('UNIFIED_LEARNING_CATALOG_ENABLED', false)) {
-    const unifiedLearningCatalogService = createUnifiedLearningCatalogService({
+const unifiedLearningCatalogEnabled = getBooleanEnv('UNIFIED_LEARNING_CATALOG_ENABLED', false);
+const internshipEnabled = getBooleanEnv('INTERNSHIP_ENABLED', false);
+const internshipAssignmentsEnabled = internshipEnabled && getBooleanEnv('INTERNSHIP_ASSIGNMENTS_ENABLED', false);
+const internshipSubmissionsEnabled = internshipAssignmentsEnabled
+    && getBooleanEnv('INTERNSHIP_SUBMISSIONS_ENABLED', false);
+const internshipReviewEnabled = internshipSubmissionsEnabled
+    && getBooleanEnv('INTERNSHIP_REVIEW_ENABLED', false);
+const internshipCompletionEnabled = internshipReviewEnabled
+    && getBooleanEnv('INTERNSHIP_COMPLETION_ENABLED', false);
+let unifiedLearningCatalogService = null;
+
+if (unifiedLearningCatalogEnabled || internshipEnabled) {
+    unifiedLearningCatalogService = createUnifiedLearningCatalogService({
         loadVideos: tutorialRoutes.loadTutorialCatalog,
         loadMaterials: loadLearningMaterialsData,
         readLearningPaths,
         pgPool
     });
+}
+
+if (unifiedLearningCatalogEnabled) {
     app.use('/api/learning', createUnifiedLearningRoutes({
         catalogService: unifiedLearningCatalogService
     }));
@@ -931,6 +946,32 @@ if (getBooleanEnv('UNIFIED_LEARNING_CATALOG_ENABLED', false)) {
 } else {
     console.log('Unified learning catalog disabled (UNIFIED_LEARNING_CATALOG_ENABLED=false)');
 }
+
+const internshipFeature = registerInternshipFeature({
+    app,
+    enabled: internshipEnabled,
+    assignmentsEnabled: internshipAssignmentsEnabled,
+    submissionsEnabled: internshipSubmissionsEnabled,
+    reviewEnabled: internshipReviewEnabled,
+    completionEnabled: internshipCompletionEnabled,
+    pgPool,
+    catalogService: unifiedLearningCatalogService
+});
+console.log(internshipFeature.enabled
+    ? 'Internship Phase 1A API enabled at /api/training/internships'
+    : 'Internship Phase 1A API disabled (INTERNSHIP_ENABLED=false)');
+console.log(internshipFeature.assignmentsEnabled
+    ? 'Internship Phase 2A Assignment API enabled'
+    : 'Internship Phase 2A Assignment API disabled (INTERNSHIP_ASSIGNMENTS_ENABLED=false)');
+console.log(internshipFeature.submissionsEnabled
+    ? 'Internship Phase 2B-1 Submission API enabled'
+    : 'Internship Phase 2B-1 Submission API disabled (INTERNSHIP_SUBMISSIONS_ENABLED=false)');
+console.log(internshipFeature.reviewEnabled
+    ? 'Internship Phase 3A Review API enabled'
+    : 'Internship Phase 3A Review API disabled (INTERNSHIP_REVIEW_ENABLED=false)');
+console.log(internshipFeature.completionEnabled
+    ? 'Internship Phase 4B Program Progress API enabled'
+    : 'Internship Phase 4B Program Progress API disabled (INTERNSHIP_COMPLETION_ENABLED=false)');
 
 const learningMappingQueueService = createLearningMappingQueueService({ pgPool });
 app.use('/api/admin/learning-mapping', createLearningMappingAdminRoutes({
